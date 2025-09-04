@@ -2,7 +2,7 @@ import numpy as np
 import astropy.io.fits as pyfits
 
 
-from Probes import Probes
+from corgihowfsc.sensing.Probes import Probes
 from howfsc.sensing.probephase import probe_ap
 from howfsc.util.insertinto import insertinto
 

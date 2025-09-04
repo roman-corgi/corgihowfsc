@@ -8,7 +8,64 @@ import logging
 import numpy as np
 import astropy.io.fits as pyfits
 
+
+def get_args_jupyter(niter=5,
+                    mode='narrowfov',
+                    profile=False,
+                    fracbadpix=0,
+                    nbadpacket=0,
+                    nbadframe=0,
+                    logfile=None,
+                    precomp='load_all',
+                    num_process=None,
+                    num_threads=None,
+                    fileout=None,
+                    stellarvmag=None,
+                    stellartype=None,
+                    stellarvmagtarget=None,
+                    stellartypetarget=None,
+                    jacpath=None):
+        """
+        Initialize HOWFSC simulation with all required variables and configurations.
+        Returns all variables needed for the main simulation loop.
+        """
+
+        # Copy the path setup from original script
+        # eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
+        # howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
+        #
+        # defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
+
+        # Create args object with all the original parameters
+        class Args:
+            pass
+
+        args = Args()
+        args.niter = niter
+        args.mode = mode
+        args.profile = profile
+        args.fracbadpix = fracbadpix
+        args.nbadpacket = nbadpacket
+        args.nbadframe = nbadframe
+        args.logfile = logfile
+        args.precomp = precomp
+        args.num_process = num_process
+        args.num_threads = num_threads
+        args.fileout = fileout
+        args.stellarvmag = stellarvmag
+        args.stellartype = stellartype
+        args.stellarvmagtarget = stellarvmagtarget
+        args.stellartypetarget = stellartypetarget
+        args.jacpath = jacpath
+
+        return args
 def get_args(defjacpath):
+    '''
+    Note: this cannot be run from jupyter notebook
+
+    :param defjacpath:
+    :return:
+    '''
     # setup for cmd line args
     ap = argparse.ArgumentParser(prog='python nulltest_gitl.py',
                                  description="Run a nulling sequence, using the optical model as the data source.  Outputs will be displayed to the command line.")
@@ -55,3 +112,97 @@ def get_args(defjacpath):
     args = ap.parse_args()
 
     return args
+
+
+
+def load_files(args, howfscpath):
+    # User params
+    mode = args.mode
+    isprof = args.profile
+    logfile = args.logfile
+    nbadpacket = args.nbadpacket
+    nbadframe = args.nbadframe
+
+    jacpath = args.jacpath
+    if nbadpacket < 0:
+        raise ValueError('Number of bad packets cannot be less than 0.')
+    if nbadframe < 0:
+        raise ValueError('Number of bad frames cannot be less than 0.')
+
+    if isprof:
+        pr = cProfile.Profile()
+        pass
+
+    # Set up logging
+    if logfile is not None:
+        logging.basicConfig(filename=logfile, level=logging.INFO)
+        pass
+    else:
+        logging.basicConfig(level=logging.INFO)
+        pass
+    log = logging.getLogger(__name__)
+
+    exptime = 10  # FIXME this should be derived from contrast eventually
+    contrast = 1e-5  # "starting" value to bootstrap getting we0
+
+    if mode == 'nfov_dm':
+        modelpath = os.path.join(howfscpath, 'model', 'testdata', 'narrowfov')
+        cfgfile = os.path.join(modelpath, 'narrowfov_dm.yaml')
+        jacfile = os.path.join(jacpath, 'nfov_dm_jac_full.fits')
+        cstratfile = os.path.join(modelpath, 'cstrat_nfov_dm.yaml')
+        probe0file = os.path.join(modelpath,
+                                  'nfov_dm_dmrel_1.0e-05_cos.fits')
+        probe1file = os.path.join(modelpath,
+                                  'nfov_dm_dmrel_1.0e-05_sinlr.fits')
+        probe2file = os.path.join(modelpath,
+                                  'nfov_dm_dmrel_1.0e-05_sinud.fits')
+        hconffile = os.path.join(modelpath, 'hconf_nfov_dm.yaml')
+        n2clistfiles = [
+            os.path.join(modelpath, 'nfov_dm_n2c_idx0.fits'),
+            os.path.join(modelpath, 'nfov_dm_n2c_idx1.fits'),
+            os.path.join(modelpath, 'nfov_dm_n2c_idx2.fits'),
+        ]
+        pass
+    elif mode == 'nfov_flat':
+        modelpath = os.path.join(howfscpath, 'model', 'testdata', 'narrowfov')
+        cfgfile = os.path.join(modelpath, 'narrowfov_flat.yaml')
+        jacfile = os.path.join(jacpath, 'nfov_flat_jac_full.fits')
+        cstratfile = os.path.join(modelpath, 'cstrat_nfov_flat.yaml')
+        probe0file = os.path.join(modelpath,
+                                  'nfov_flat_dmrel_1.0e-05_cos.fits')
+        probe1file = os.path.join(modelpath,
+                                  'nfov_flat_dmrel_1.0e-05_sinlr.fits')
+        probe2file = os.path.join(modelpath,
+                                  'nfov_flat_dmrel_1.0e-05_sinud.fits')
+        hconffile = os.path.join(modelpath, 'hconf_nfov_flat.yaml')
+        n2clistfiles = [
+            os.path.join(modelpath, 'nfov_flat_n2c_idx0.fits'),
+            os.path.join(modelpath, 'nfov_flat_n2c_idx1.fits'),
+            os.path.join(modelpath, 'nfov_flat_n2c_idx2.fits'),
+        ]
+        pass
+    elif mode == 'narrowfov':
+        modelpath = os.path.join(howfscpath, 'model', 'testdata', 'narrowfov')
+        cfgfile = os.path.join(modelpath, 'narrowfov.yaml')
+        jacfile = os.path.join(jacpath, 'narrowfov_jac_full.fits')
+        cstratfile = os.path.join(modelpath, 'cstrat_narrowfov.yaml')
+        probe0file = os.path.join(modelpath,
+                                  'narrowfov_dmrel_1.0e-05_cos.fits')
+        probe1file = os.path.join(modelpath,
+                                  'narrowfov_dmrel_1.0e-05_sinlr.fits')
+        probe2file = os.path.join(modelpath,
+                                  'narrowfov_dmrel_1.0e-05_sinud.fits')
+        hconffile = os.path.join(modelpath, 'hconf_narrowfov.yaml')
+        n2clistfiles = [
+            os.path.join(modelpath, 'narrowfov_n2c_idx0.fits'),
+            os.path.join(modelpath, 'narrowfov_n2c_idx1.fits'),
+            os.path.join(modelpath, 'narrowfov_n2c_idx2.fits'),
+        ]
+        pass
+
+    else:
+        # should not reach here; argparse should catch this
+        raise ValueError('Invalid coronagraph mode type')
+
+
+    return modelpath, cfgfile, jacfile, cstratfile, probe0file, probe1file, probe2file, hconffile, n2clistfiles
