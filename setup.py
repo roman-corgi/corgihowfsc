@@ -35,6 +35,8 @@ setup(
     package_data={
         'corgihowfsc': [
             'scripts/*',
+            'sensing/*',
+            'utils/*'
         ]
     },
     include_package_data=True,
