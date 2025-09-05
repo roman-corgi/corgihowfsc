@@ -84,25 +84,24 @@ def validate_zip_file(zip_path):
 
 
 def get_downloads_directory():
-    """Get the downloads directory from command line or use default"""
+    """Get the downloads directory from command line (required)"""
     parser = argparse.ArgumentParser(
         description="Install CGI packages from downloaded zip files",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python setup_cgi_packages.py /home/user/cgi-files/     # Use absolute path
-  python setup_cgi_packages.py C:\\Users\\user\\cgi\\    # Windows example
+  python setup_cgi_packages.py /home/user/cgi-files/     # Linux/Mac
+  python setup_cgi_packages.py C:\\Users\\user\\cgi\\    # Windows
+  python setup_cgi_packages.py ~/Downloads/              # Using ~ shortcut
         """
     )
     parser.add_argument(
         'downloads_path',
-        nargs='?',
-        default='downloads',
-        help='Path to directory containing downloaded zip files'
+        help='Path to directory containing downloaded zip files (REQUIRED)'
     )
 
     args = parser.parse_args()
-    downloads_dir = Path(args.downloads_path).resolve()
+    downloads_dir = Path(args.downloads_path).expanduser().resolve()
 
     return downloads_dir
 
@@ -113,7 +112,7 @@ def main():
     # Check environment
     check_environment()
 
-    # Get downloads directory
+    # Get downloads directory (required argument)
     downloads_dir = get_downloads_directory()
 
     # Define package information
@@ -138,8 +137,8 @@ def main():
         }
     ]
 
-    # Set up directories
-    work_dir = Path("cgi_extracted")
+    # Set up directories - extract inside the downloads directory
+    work_dir = downloads_dir / "cgi_extracted"
     work_dir.mkdir(exist_ok=True)
 
     # Validate downloads directory
@@ -151,7 +150,7 @@ def main():
         sys.exit(1)
 
     print(f"📁 Downloads directory: {downloads_dir}")
-    print(f"📁 Working directory: {work_dir.absolute()}\n")
+    print(f"📁 Extraction directory: {work_dir}\n")
 
     # Check for all required files first and validate them
     missing_files = []
@@ -191,20 +190,67 @@ def main():
         zip_path = downloads_dir / pkg['zip']
         dir_path = work_dir / pkg['dir']
 
-        # Extract if needed
+        # Step 1: Extract ZIP file
         if not dir_path.exists():
-            print(f"   📦 Extracting {pkg['zip']}...")
+            print(f"   📦 Extracting ZIP file: {pkg['zip']}")
+            print(f"      From: {zip_path}")
+            print(f"      To: {work_dir}")
             try:
                 with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                    # List contents for verification
+                    file_list = zip_ref.namelist()
+                    print(f"      Found {len(file_list)} files in ZIP")
+
+                    # Extract all files
                     zip_ref.extractall(work_dir)
-                print(f"   ✓ Extracted to {dir_path}")
+
+                    # Find the actual extracted directory name
+                    # (in case it differs from our expected pkg['dir'])
+                    extracted_dirs = [name for name in zip_ref.namelist()
+                                      if '/' in name and name.endswith('/')]
+                    if extracted_dirs:
+                        actual_dir_name = extracted_dirs[0].rstrip('/')
+                        actual_dir_path = work_dir / actual_dir_name
+
+                        # If extracted directory name differs from expected, rename it
+                        if actual_dir_name != pkg['dir'] and actual_dir_path.exists():
+                            print(f"      Renaming extracted directory: {actual_dir_name} → {pkg['dir']}")
+                            actual_dir_path.rename(dir_path)
+
+                print(f"   ✅ Successfully extracted {pkg['zip']}")
+            except zipfile.BadZipFile:
+                print(f"   ❌ Error: {pkg['zip']} is not a valid ZIP file or is corrupted")
+                continue
             except Exception as e:
                 print(f"   ❌ Extraction failed: {e}")
+                # Cleanup partial extraction
+                if dir_path.exists():
+                    print(f"   🧹 Cleaning up partial extraction...")
+                    shutil.rmtree(dir_path, ignore_errors=True)
                 continue
         else:
-            print(f"   📁 Directory already exists: {dir_path}")
+            print(f"   📁 ZIP already extracted - using existing directory: {dir_path}")
 
-        # Install package
+        # Step 2: Verify setup.py exists
+        setup_py = dir_path / "setup.py"
+        if not setup_py.exists():
+            print(f"   ❌ Error: setup.py not found in {dir_path}")
+            print(f"      Expected structure after extraction:")
+            print(f"      {dir_path}/setup.py")
+            # List what's actually in the directory for debugging
+            if dir_path.exists():
+                try:
+                    contents = list(dir_path.iterdir())
+                    print(f"      Actual contents: {[p.name for p in contents[:5]]}")
+                    if len(contents) > 5:
+                        print(f"      ... and {len(contents) - 5} more files")
+                except Exception:
+                    print(f"      Could not list directory contents")
+            continue
+        print(f"   ✓ Found setup.py in extracted directory")
+
+        # Step 3: Install package using pip
+        print(f"   🔧 Installing {pkg['name']} using pip...")
         if run_pip_install(dir_path):
             print(f"   ✅ {pkg['name']} installed successfully\n")
             success_count += 1
@@ -221,7 +267,8 @@ def main():
         print(f"⚠️  {success_count}/{len(packages)} packages installed successfully")
         print("Please check the errors above and try again.")
 
-    print("\n📝 Note: Extracted files are in cgi_extracted/ (you can delete this later)")
+    print(f"\n📝 Note: Extracted files are in {work_dir}")
+    print("      You can delete this directory after successful installation.")
     return success_count == len(packages)
 
 
