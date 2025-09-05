@@ -1,0 +1,14 @@
+name: corgiloop
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - pip
+  - unzip
+  - astropy
+  - numpy
+  - jupyter
+  - pip:
+    - git+https://github.com/roman-corgi/cgi-howfsc.git
+    - git+https://github.com/nasa-jpl/cgi-eetc.git
