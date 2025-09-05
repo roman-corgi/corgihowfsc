@@ -53,8 +53,8 @@ Test that everything is installed correctly:
 import proper
 import roman_preflight_proper
 import cgisim
-import cgi_howfsc
-import cgi_eetc
+import howfsc
+import eetc
 
 print("✅ All CGI packages imported successfully!")
 ```
