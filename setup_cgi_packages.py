@@ -18,6 +18,7 @@ import sys
 from pathlib import Path
 import zipfile
 import argparse
+import shutil
 
 
 def check_environment():
@@ -34,7 +35,7 @@ def run_pip_install(package_dir):
     """Install a package using pip in the current environment"""
     print(f"   Installing from {package_dir}...")
     try:
-        result = subprocess.run([sys.executable, "-m", "pip", "install", ".", "-e"],
+        result = subprocess.run([sys.executable, "-m", "pip", "install", "-e", "."],
                                 cwd=package_dir,
                                 check=True,
                                 capture_output=True,
@@ -44,6 +45,42 @@ def run_pip_install(package_dir):
         print(f"   ❌ Installation failed: {e}")
         print(f"   Error output: {e.stderr}")
         return False
+
+
+def validate_zip_file(zip_path):
+    """Validate that a ZIP file is readable and contains expected structure"""
+    try:
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            file_list = zip_ref.namelist()
+            # Check if ZIP contains files (not empty)
+            if not file_list:
+                return False, "ZIP file is empty"
+
+            # Look for setup.py in the root level after extraction
+            # Check if there's a top-level directory and setup.py within it
+            root_dirs = set()
+            setup_found = False
+
+            for file_path in file_list:
+                parts = file_path.split('/')
+                if len(parts) > 1:
+                    root_dirs.add(parts[0])
+                if file_path.endswith('setup.py'):
+                    # Check if setup.py is in a single top-level directory
+                    if len(parts) == 2 and parts[1] == 'setup.py':
+                        setup_found = True
+
+            if not setup_found:
+                return False, "No setup.py found in top-level directory of ZIP"
+
+            if len(root_dirs) != 1:
+                return False, f"ZIP should contain exactly one top-level directory, found: {len(root_dirs)}"
+
+            return True, f"Valid ZIP with {len(file_list)} files, top-level dir: {list(root_dirs)[0]}"
+    except zipfile.BadZipFile:
+        return False, "Not a valid ZIP file or corrupted"
+    except Exception as e:
+        return False, f"Error reading ZIP: {e}"
 
 
 def get_downloads_directory():
@@ -116,12 +153,18 @@ def main():
     print(f"📁 Downloads directory: {downloads_dir}")
     print(f"📁 Working directory: {work_dir.absolute()}\n")
 
-    # Check for all required files first
+    # Check for all required files first and validate them
     missing_files = []
+    invalid_files = []
     for pkg in packages:
         zip_path = downloads_dir / pkg['zip']
         if not zip_path.exists():
             missing_files.append({'zip': pkg['zip'], 'url': pkg['url']})
+        else:
+            # Validate ZIP file
+            is_valid, message = validate_zip_file(zip_path)
+            if not is_valid:
+                invalid_files.append({'zip': pkg['zip'], 'error': message})
 
     if missing_files:
         print("❌ ERROR: Missing required files in downloads directory:")
@@ -131,7 +174,14 @@ def main():
         print(f"\nPlease download all files to: {downloads_dir}")
         sys.exit(1)
 
-    print("✓ All required zip files found!\n")
+    if invalid_files:
+        print("❌ ERROR: Invalid or corrupted ZIP files:")
+        for invalid in invalid_files:
+            print(f"   • {invalid['zip']}: {invalid['error']}")
+        print(f"\nPlease re-download the corrupted files to: {downloads_dir}")
+        sys.exit(1)
+
+    print("✓ All required ZIP files found and validated!\n")
 
     # Process each package
     success_count = 0
