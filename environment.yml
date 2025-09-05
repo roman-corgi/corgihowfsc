@@ -6,11 +6,9 @@ dependencies:
   - python=3.9
   - pip
   - unzip
-  # Common scientific packages that might be needed
-  #  - numpy
-  #  - scipy
-  #  - matplotlib
-  #  - astropy
+  - astropy
+  - numpy
+  - jupyter
   - pip:
     - git+https://github.com/roman-corgi/cgi-howfsc.git
     - git+https://github.com/nasa-jpl/cgi-eetc.git
