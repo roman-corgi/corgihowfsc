@@ -20,7 +20,7 @@ jobs:
       with:
           auto-update-conda: true
           auto-activate-base: false
-          environment-file: environment.yml
+          environment-file: docs/environment.yml
           activate-environment: build-env
 
     - name: Install dependencies
