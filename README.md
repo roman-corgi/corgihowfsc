@@ -37,7 +37,7 @@ git clone https://github.com/roman-corgi/corgihowfsc.git
 cd cgi-eetc
 git lfs pull
 ```
-`
+
 #### 4. Run Installation of corgihowfsc
 
 Execute these commands in order:
