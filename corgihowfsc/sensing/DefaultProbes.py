@@ -60,7 +60,7 @@ class DefaultProbes(Probes):
 
         return dm1_list, dm2_list
 
-    def get_probe_ap(self, cfg, dm1_list, dm2_list):
+    def get_probe_ap(self, cfg, dm1_list, dm2_list, other = dict()):
 
         nlam = len(cfg.sl_list)
         nprobepair = (self.ndm - 1) // 2
@@ -74,7 +74,7 @@ class DefaultProbes(Probes):
         # This is a catch-all dictionary for HOWFSC information we want to export
         # from the call, but don't strictly need to set up the next iteration.
         # Will contain things like electric-field estimates, etc.
-        other = dict()
+
         for n in range(nprobepair):
             # log.info('Probe pair %d of %d', n + 1, nprobepair)
             # Extract phases from model

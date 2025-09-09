@@ -63,7 +63,8 @@ eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 
 def howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
                        croplist, prev_exptime_list,
-                       cstrat, n2clist, hconf, iteration):
+                       cstrat, n2clist, hconf, iteration,
+                       estimator, controller, imager, normalization):
     """
     Wrapper for the main HOWFSC computation loop, to handle exceptions in a
     way consistent with the interface specifications (outputs indicated by a
@@ -77,7 +78,8 @@ def howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         out = _main_howfsc_computation(framelist, dm1_list, dm2_list,
                                        cfg, jac, jtwj_map,
                                        croplist, prev_exptime_list,
-                                       cstrat, n2clist, hconf, iteration)
+                                       cstrat, n2clist, hconf, iteration,
+                                       estimator, controller, imager, normalization)
         log.info('howfsc_computation main loop complete')
         return out
     # Note: while in principle _main_howfsc_computation() could output a result
@@ -171,7 +173,8 @@ def howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
 
 def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
                              croplist, prev_exptime_list,
-                             cstrat, n2clist, hconf, iteration):
+                             cstrat, n2clist, hconf, iteration,
+                             estimator, controller, imager, normalization):
     """
     Execute the HOWFSC GITL computation as defined in the HOWFSC FDD
 
@@ -359,9 +362,11 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         intlist.append(np.zeros((ndm, nrow, ncol))) # int storage for whole lam
         log.info('Wavelength %d of %d', j+1, nlam)
         log.info('Get flux for this CFAM filter')
-        _, peakflux = cgi_eetc.calc_flux_rate(
-            sequence_name=hconf['hardware']['sequence_list'][j],
-        )
+        # _, peakflux = normalization.calc_flux_rate(
+        #     sequence_name=hconf['hardware']['sequence_list'][j],
+        # )
+        _, peakflux = normalization.calc_flux_rate(hconf)
+
         log.info('Expect %g photons/sec', peakflux)
         for k in range(ndm):
             log.info('DM setting %d of %d', k+1, ndm)
@@ -456,7 +461,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
 
         # Measured e-field at this setting
         log.info('Measured e-field at this setting')
-        efield = estimate_efield(
+        efield = estimator.estimate_efield(
             intlist[j],
             plist[j],
             min_good_probes=hconf['howfsc']['min_good_probes'],
