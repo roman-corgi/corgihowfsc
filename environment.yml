@@ -11,4 +11,3 @@ dependencies:
   - jupyter
   - pip:
     - git+https://github.com/roman-corgi/cgi-howfsc.git
-    - git+https://github.com/nasa-jpl/cgi-eetc.git

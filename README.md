@@ -5,8 +5,9 @@ A high order wavefront sensing and control simulation suite for the Nancy Grace 
 
 ### Prerequisites
 
-- **Conda/Miniconda** installed on your system
+- **Conda/Miniconda** installed on your system: https://docs.conda.io/en/latest/miniconda.html
 - **Git** installed on your system
+- **Git LFS** installed on your system: https://git-lfs.github.com/
 - **Internet connection** (for downloading packages and git repos)
 
 ### Installation Steps
@@ -21,7 +22,23 @@ Download these files manually by clicking on the following links and save them t
 | `roman_preflight_proper_public_v2.0.1_python.zip` | [CGISim](https://sourceforge.net/projects/cgisim/files/roman_preflight_proper_public_v2.0.1_python.zip/download)                                                        |
 | `cgisim_v4.0.zip` | [CGISim](https://sourceforge.net/projects/cgisim/files/cgisim_v4.0.zip/download)                                                        |
 
-#### 2. Run Installation
+#### 2. Clone required repositories
+
+Navigate to a directory where you want to clone the repositories, then clone the CGI-EETC repo and this repo, CorgiSim-howfsc:
+
+```bash
+git clone https://github.com/nasa-jpl/cgi-eetc.git
+git clone https://github.com/roman-corgi/corgihowfsc.git
+````
+
+#### 3. Get large files for cgi-eetc
+
+```bash
+cd cgi-eetc
+git lfs pull
+```
+`
+#### 4. Run Installation of corgihowfsc
 
 Execute these commands in order:
 
@@ -44,7 +61,7 @@ python setup_cgi_packages.py C:\Users\username\Downloads\
 python setup_cgi_packages.py /home/user/cgi-files/
 ```
 
-#### 3. Verify Installation
+#### 5. Verify Installation
 
 Test that everything is installed correctly:
 
@@ -95,4 +112,3 @@ you are probably missing the LFS files from cgi-eetc.
 To fix this...
 - Make sure you have Git LFS installed: https://git-lfs.github.com/
 - If you installed from a cgi-eetc repo clone, run `git lfs pull` in that directory to download the large files.
-- If you installed through pip from a URL by using the environment.yml file, ...
