@@ -9,7 +9,7 @@ import os
 
 import numpy as np
 
-from howfsc.model.mode import CoronagraphMode
+# from howfsc.model.mode import CoronagraphMode
 import howfsc.util.check as check
 from howfsc.util.insertinto import insertinto as pad_crop
 from howfsc.util.loadyaml import loadyaml
@@ -24,7 +24,7 @@ CCD_DEFAULT = {
     'full_well': 80000,
     'dark_rate': 8e-4,
     'cic_noise': 0.016,
-    'read_noise': 140.0,
+    'read_noise': 178.0, #140.0,
     'bias': 1000,
     'cr_rate': 0,
     'e_per_dn': 6,
@@ -33,16 +33,17 @@ CCD_DEFAULT = {
 }
 
 
-def gen_cgisim_excam_frame_for_gitl(
+def gen_cgisim_excam_frame(
         exptime, gain,
         dm1v, dm2v,
         cor, bandpass,
         crop,
-        param_dict=None,
+        param_dict={},
         ccd=CCD_DEFAULT,
         star_spectrum='a5v', vmag=2.56,  # del Leo
         polaxis=10,
         cleanrow=1024, cleancol=1024,
+        fixedbp=np.zeros((1024, 1024), dtype=bool)
         ):
     """
     Create simulated GITL frames using the HOWFSC repo's optical model
@@ -53,7 +54,8 @@ def gen_cgisim_excam_frame_for_gitl(
     Only the following spectral types are supported: 'b3v', 'a0v', 'a5v', 'f5v', 'g0v', 'g5v', 'k0v', 'k5v', 'm0v', 'm5v'
 
     Arguments:
-     cfg: CoronagraphMode object
+     dm1v: ndarray, absolute voltage map for DM1.
+     dm2v: ndarray, absolute voltage map for DM2.
      dmlist: list of ndarrays, of the same size as the arrays expected by
       cfg.dmlist objects. These are DM voltages.  This should have the same
       number of DMs as the model.
@@ -84,7 +86,7 @@ def gen_cgisim_excam_frame_for_gitl(
 
     """
     # Frozen inputs
-    fixedbp = np.zeros((cleanrow, cleancol), dtype=bool)  # TEMPORARY
+    # fixedbp = np.zeros((cleanrow, cleancol), dtype=bool)  # TEMPORARY
     mode = 'excam'
     
     # Check inputs
@@ -102,7 +104,8 @@ def gen_cgisim_excam_frame_for_gitl(
 
     # check.real_positive_scalar(peakflux, 'peakflux', TypeError)
     check.real_positive_scalar(exptime, 'exptime', TypeError)
-
+    check.real_positive_scalar(gain, 'gain', TypeError)
+    
     if not isinstance(crop, tuple):
         raise TypeError('crop must be a tuple')
     if len(crop) != 4:
