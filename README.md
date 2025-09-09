@@ -93,3 +93,6 @@ OSError: No SIMPLE card found, this file does not appear to be a valid FITS file
 you are probably missing the LFS files from cgi-eetc.
 
 To fix this...
+- Make sure you have Git LFS installed: https://git-lfs.github.com/
+- If you installed from a cgi-eetc repo clone, run `git lfs pull` in that directory to download the large files.
+- If you installed through pip from a URL by using the environment.yml file, ...
