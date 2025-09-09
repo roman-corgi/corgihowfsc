@@ -21,7 +21,7 @@ Download these files manually by clicking on the following links and save them t
 | `roman_preflight_proper_public_v2.0.1_python.zip` | [CGISim](https://sourceforge.net/projects/cgisim/files/roman_preflight_proper_public_v2.0.1_python.zip/download)                                                        |
 | `cgisim_v4.0.zip` | [CGISim](https://sourceforge.net/projects/cgisim/files/cgisim_v4.0.zip/download)                                                        |
 
-#### 3. Run Installation
+#### 2. Run Installation
 
 Execute these commands in order:
 
@@ -44,7 +44,7 @@ python setup_cgi_packages.py C:\Users\username\Downloads\
 python setup_cgi_packages.py /home/user/cgi-files/
 ```
 
-#### 4. Verify Installation
+#### 3. Verify Installation
 
 Test that everything is installed correctly:
 
