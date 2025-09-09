@@ -1,0 +1,13 @@
+name: build-env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - sphinx>=4.0
+  - sphinx_rtd_theme
+  - pip
+  - pip:
+    - myst-parser
+    - linkify-it-py
+    - sphinx-autodoc-typehints
