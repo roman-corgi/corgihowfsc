@@ -1,6 +1,7 @@
 # GITL with cgi-howfsc on compact model
 
 This example shows how to run the baseline GITL nulling test with the `cgi-howfsc` code as published by NASA.
+All examples are set up to run on the NFOV HLC mode.
 
 The original code was published under [https://github.com/nasa-jpl/cgi-howfsc](https://github.com/nasa-jpl/cgi-howfsc).
 For CPP work, it was decided to fork this repository into [https://github.com/roman-corgi/cgi-howfsc](https://github.com/roman-corgi/cgi-howfsc)
@@ -20,7 +21,7 @@ output = '/Users/user/directory/first_jacobian.fits'
 calculate_jacobian_multiprocessed(output=output, proc=0)
 ```
 
-The function docstring contains more information about the parameters.
+The resulting file has a size of 2.2 GB. The function docstring contains more information about the input parameters.
 
 ## Run a nulling test with GITL on compact model
 
