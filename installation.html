@@ -1,0 +1,272 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installation &mdash; corgihowfsc 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="https://roman-corgi.github.io/corgihowfsc/installation.html" />
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="_static/doctools.js?v=9a2dae69"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="GITL with cgi-howfsc on compact model" href="nulling_test_gitl_cgi_howfsc.html" />
+    <link rel="prev" title="corgihowfsc documentation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            corgihowfsc
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installation-steps">Installation Steps</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#download-required-files">1. Download Required Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#clone-required-repositories">2. Clone required repositories</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#get-large-files-for-cgi-eetc">3. Get large files for cgi-eetc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#run-installation-of-corgihowfsc">4. Run Installation of corgihowfsc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#verify-installation">5. Verify Installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#help">Help</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#missing-downloads">Missing Downloads</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#environment-issues">Environment Issues</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#path-issues">Path Issues</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#installation-failures">Installation Failures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#valid-fits-file-error">Valid FITS file error</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">HOWFSC Loops and Models</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="nulling_test_gitl_cgi_howfsc.html">GITL with cgi-howfsc on compact model</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">corgihowfsc</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Installation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/installation.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Conda/Miniconda</strong> installed on your system: <a class="reference external" href="https://docs.conda.io/en/latest/miniconda.html">https://docs.conda.io/en/latest/miniconda.html</a></p></li>
+<li><p><strong>Git</strong> installed on your system</p></li>
+<li><p><strong>Git LFS</strong> installed on your system: <a class="reference external" href="https://git-lfs.github.com/">https://git-lfs.github.com/</a></p></li>
+<li><p><strong>Internet connection</strong> (for downloading packages and git repos)</p></li>
+</ul>
+</section>
+<section id="installation-steps">
+<h2>Installation Steps<a class="headerlink" href="#installation-steps" title="Link to this heading"></a></h2>
+<section id="download-required-files">
+<h3>1. Download Required Files<a class="headerlink" href="#download-required-files" title="Link to this heading"></a></h3>
+<p>Download these files manually by clicking on the following links and save them to any <strong>directory of your choice</strong>, e.g.: <code class="docutils literal notranslate"><span class="pre">/path/to/your/downloads/</span></code>:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Download Link</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">proper_v3.3.3_python.zip</span></code></p></td>
+<td><p><a class="reference external" href="https://sourceforge.net/projects/proper-library/files/proper_v3.3.3_python.zip/download">Proper Library</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">roman_preflight_proper_public_v2.0.1_python.zip</span></code></p></td>
+<td><p><a class="reference external" href="https://sourceforge.net/projects/cgisim/files/roman_preflight_proper_public_v2.0.1_python.zip/download">CGISim</a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">cgisim_v4.0.zip</span></code></p></td>
+<td><p><a class="reference external" href="https://sourceforge.net/projects/cgisim/files/cgisim_v4.0.zip/download">CGISim</a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="clone-required-repositories">
+<h3>2. Clone required repositories<a class="headerlink" href="#clone-required-repositories" title="Link to this heading"></a></h3>
+<p>Navigate to a directory where you want to clone the repositories, then clone the CGI-EETC repo and this repo, CorgiSim-howfsc:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/nasa-jpl/cgi-eetc.git
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/roman-corgi/corgihowfsc.git
+</pre></div>
+</div>
+</section>
+<section id="get-large-files-for-cgi-eetc">
+<h3>3. Get large files for cgi-eetc<a class="headerlink" href="#get-large-files-for-cgi-eetc" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>cgi-eetc
+git<span class="w"> </span>lfs<span class="w"> </span>pull
+</pre></div>
+</div>
+</section>
+<section id="run-installation-of-corgihowfsc">
+<h3>4. Run Installation of corgihowfsc<a class="headerlink" href="#run-installation-of-corgihowfsc" title="Link to this heading"></a></h3>
+<p>Execute these commands in order:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Navigate to your corgihowfsc repository clone</span>
+<span class="nb">cd</span><span class="w"> </span>/path/to/corgihowfsc
+
+<span class="c1"># Step 1: Create conda environment and install git-based packages</span>
+conda<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>environment.yml
+
+<span class="c1"># Step 2: Activate the environment</span>
+conda<span class="w"> </span>activate<span class="w"> </span>corgiloop
+
+<span class="c1"># Step 3: Install manual packages by providing the path to your downloads</span>
+python<span class="w"> </span>setup_cgi_packages.py<span class="w"> </span>/path/to/your/downloads/
+
+<span class="c1"># Examples:</span>
+python<span class="w"> </span>setup_cgi_packages.py<span class="w"> </span>~/Downloads/
+python<span class="w"> </span>setup_cgi_packages.py<span class="w"> </span>C:<span class="se">\U</span>sers<span class="se">\u</span>sername<span class="se">\D</span>ownloads<span class="se">\</span>
+python<span class="w"> </span>setup_cgi_packages.py<span class="w"> </span>/home/user/cgi-files/
+</pre></div>
+</div>
+</section>
+<section id="verify-installation">
+<h3>5. Verify Installation<a class="headerlink" href="#verify-installation" title="Link to this heading"></a></h3>
+<p>Test that everything is installed correctly:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># In Python, try importing the packages</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">proper</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">roman_preflight_proper</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">cgisim</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">howfsc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">eetc</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✅ All CGI packages imported successfully!&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="help">
+<h3>Help<a class="headerlink" href="#help" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>setup_cgi_packages.py<span class="w"> </span>--help
+</pre></div>
+</div>
+</section>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<section id="missing-downloads">
+<h3>Missing Downloads<a class="headerlink" href="#missing-downloads" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Verify all 3 zip files are in your specified directory</p></li>
+<li><p>Check file names match exactly (case-sensitive)</p></li>
+<li><p>Use absolute paths to avoid confusion</p></li>
+</ul>
+</section>
+<section id="environment-issues">
+<h3>Environment Issues<a class="headerlink" href="#environment-issues" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Ensure you activated the environment: <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">activate</span> <span class="pre">corgiloop</span></code></p></li>
+<li><p>Check conda environment exists: <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">env</span> <span class="pre">list</span></code></p></li>
+</ul>
+</section>
+<section id="path-issues">
+<h3>Path Issues<a class="headerlink" href="#path-issues" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Use absolute paths: <code class="docutils literal notranslate"><span class="pre">/full/path/to/downloads/</span></code> instead of <code class="docutils literal notranslate"><span class="pre">~/Downloads/</span></code></p></li>
+<li><p>On Windows, use forward slashes or escape backslashes: <code class="docutils literal notranslate"><span class="pre">C:/Users/name/Downloads/</span></code></p></li>
+<li><p>Check directory exists and contains the zip files</p></li>
+</ul>
+</section>
+<section id="installation-failures">
+<h3>Installation Failures<a class="headerlink" href="#installation-failures" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Check internet connection for git repositories</p></li>
+<li><p>Verify zip files are not corrupted</p></li>
+<li><p>Try running <code class="docutils literal notranslate"><span class="pre">setup_cgi_packages.py</span></code> again</p></li>
+</ul>
+</section>
+<section id="valid-fits-file-error">
+<h3>Valid FITS file error<a class="headerlink" href="#valid-fits-file-error" title="Link to this heading"></a></h3>
+<p>If you encounter an error like this:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>OSError:<span class="w"> </span>No<span class="w"> </span>SIMPLE<span class="w"> </span>card<span class="w"> </span>found,<span class="w"> </span>this<span class="w"> </span>file<span class="w"> </span>does<span class="w"> </span>not<span class="w"> </span>appear<span class="w"> </span>to<span class="w"> </span>be<span class="w"> </span>a<span class="w"> </span>valid<span class="w"> </span>FITS<span class="w"> </span>file.<span class="w"> </span>If<span class="w"> </span>this<span class="w"> </span>is<span class="w"> </span>really<span class="w"> </span>a<span class="w"> </span>FITS<span class="w"> </span>file,<span class="w"> </span>try<span class="w"> </span>with<span class="w"> </span><span class="nv">ignore_missing_simple</span><span class="o">=</span>True
+</pre></div>
+</div>
+<p>you are probably missing the LFS files from cgi-eetc.</p>
+<p>To fix this…</p>
+<ul class="simple">
+<li><p>Make sure you have Git LFS installed: <a class="reference external" href="https://git-lfs.github.com/">https://git-lfs.github.com/</a></p></li>
+<li><p>If you installed from a cgi-eetc repo clone, run <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">lfs</span> <span class="pre">pull</span></code> in that directory to download the large files.</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="corgihowfsc documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="nulling_test_gitl_cgi_howfsc.html" class="btn btn-neutral float-right" title="GITL with cgi-howfsc on compact model" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Roman Corongraph CPP Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
