@@ -9,7 +9,6 @@ corgihowfsc documentation
 
 .. toctree::
    :maxdepth: 1
-   :caption: GITL with compact model
+   :caption: HOWFSC Loops and Models
 
-   calc_jacobian_cgihowfsc
-   nulling_test_gitl_cgihowfsc
+   nulling_test_gitl_cgi_howfsc
