@@ -84,3 +84,12 @@ python setup_cgi_packages.py --help
 - Check internet connection for git repositories
 - Verify zip files are not corrupted
 - Try running `setup_cgi_packages.py` again
+
+#### Valid FITS file error
+If you encounter an error like this:
+```bash
+OSError: No SIMPLE card found, this file does not appear to be a valid FITS file. If this is really a FITS file, try with ignore_missing_simple=True
+```
+you are probably missing the LFS files from cgi-eetc.
+
+To fix this...
