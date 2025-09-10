@@ -40,7 +40,7 @@ howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
 
 
-def nulling_gitl(cstrat, estrat, probing, normstrat, cfg, imager, modelpath, jacfile, probefiles, hconffile, n2clistfiles):
+def nulling_gitl(cstrat, estrat, probing, normstrat, imager, cfg, args, modelpath, jacfile, probefiles, hconffile, n2clistfiles):
                 # (niter=5, mode='narrowfov', isprof=False, logfile=None, fracbadpix=0, nbadpacket=0,
                 #       nbadframe=0, fileout=None, stellar_vmag=None, stellar_type=None,
                 #       stellar_vmag_target=None, stellar_type_target=None, jacpath=defjacpath,
@@ -113,6 +113,23 @@ def nulling_gitl(cstrat, estrat, probing, normstrat, cfg, imager, modelpath, jac
         If None (the default), the environment variable MKL_NUM_THREADS or
         HOWFS_CALCJAC_NUM_THREADS is used if it exists; otherwise, it does nothing.
     """
+
+    # User params
+    niter = args.niter
+    mode = args.mode
+    isprof = args.profile
+    logfile = args.logfile
+    fracbadpix = args.fracbadpix
+    nbadpacket = args.nbadpacket
+    nbadframe = args.nbadframe
+    fileout = args.fileout
+    stellar_vmag = args.stellarvmag
+    stellar_type = args.stellartype
+    stellar_vmag_target = args.stellarvmagtarget
+    stellar_type_target = args.stellartypetarget
+    jacpath = args.jacpath
+    precomp = args.precomp
+
     otherlist = []
     abs_dm1list = []
     abs_dm2list = []
@@ -219,6 +236,7 @@ def nulling_gitl(cstrat, estrat, probing, normstrat, cfg, imager, modelpath, jac
     if stellar_type_target is not None:
         hconf['star']['stellar_type_target'] = stellar_type_target
 
+    # TODO: update this to allow other stars? Not sure why its always v
     cgi_eetc = CGIEETC(mag=hconf['star']['stellar_vmag'],
                        phot='v', # only using V-band magnitudes as a standard
                        spt=hconf['star']['stellar_type'],
@@ -232,7 +250,7 @@ def nulling_gitl(cstrat, estrat, probing, normstrat, cfg, imager, modelpath, jac
     framelist = []
     for indj, sl in enumerate(cfg.sl_list):
         crop = croplist[indj]
-        _, peakflux = normstrat.calc_flux_rate(hconf)
+        _, peakflux = normstrat.calc_flux_rate(cgi_eetc, hconf, indj)
         for indk in range(ndm):
             dmlist = [dm1_list[indj*ndm + indk],
                       dm2_list[indj*ndm + indk]]
@@ -347,9 +365,7 @@ def nulling_gitl(cstrat, estrat, probing, normstrat, cfg, imager, modelpath, jac
             # _, peakflux = cgi_eetc.calc_flux_rate(
             #     sequence_name=hconf['hardware']['sequence_list'][indj],
             # )
-            _, peakflux = normstrat.calc_flux_rate(
-                sequence_name=hconf['hardware']['sequence_list'][indj],
-            )
+            _, peakflux = normstrat.calc_flux_rate(cgi_eetc, hconf, indj)
             for indk in range(ndm):
                 dmlist = [dm1_list[indj*ndm + indk],
                           dm2_list[indj*ndm + indk]]

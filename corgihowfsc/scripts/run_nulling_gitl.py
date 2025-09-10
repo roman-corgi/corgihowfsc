@@ -1,8 +1,31 @@
+
+import time
+import os
+import argparse
+import cProfile
+import pstats
+import logging
+
+import numpy as np
+import astropy.io.fits as pyfits
+
+import howfsc
+import eetc
 from howfsc.control.cs import ControlStrategy
+from howfsc.model.mode import CoronagraphMode
+
 from corgihowfsc.utils.howfsc_initialization import get_args, load_files
 from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
+from corgihowfsc.sensing.DefaultProbes import DefaultProbes
+from corgihowfsc.utils.contrast_nomalization import EETCNormalization
+from corgihowfsc.utils.Imager import Imager
+from corgihowfsc.gitl.nulling_gitl import nulling_gitl
 
+eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
+howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
+defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
 
+defjacpath = r'C:\Users\sredmond\Documents\github_repos\roman-corgi-repos\cgi-howfsc'
 args = get_args(jacpath=defjacpath)
 
 # Initialize variables etc
@@ -51,8 +74,9 @@ cfg = CoronagraphMode(cfgfile)
 cstrat = ControlStrategy(cstratfile)
 estrat = DefaultEstimator()
 
-imager = corgisimImager()
-# imager = compactImager()
+# imager = corgisimImager()
+imager = Imager()
+normstrat = EETCNormalization()
 
-nulling_gitl(cstrat, estrat, probing, cfg, imager, modelpath, jacfile, probefiles, hconffile, n2clistfiles)
+nulling_gitl(cstrat, estrat, probing, normstrat, imager, cfg, args, modelpath, jacfile, probefiles, hconffile, n2clistfiles)
 

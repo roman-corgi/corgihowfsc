@@ -366,7 +366,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         # _, peakflux = normalization.calc_flux_rate(
         #     sequence_name=hconf['hardware']['sequence_list'][j],
         # )
-        _, peakflux = normstrat.calc_flux_rate(hconf)
+        _, peakflux = normstrat.calc_flux_rate(cgi_eetc, hconf, j)
 
         log.info('Expect %g photons/sec', peakflux)
         for k in range(ndm):

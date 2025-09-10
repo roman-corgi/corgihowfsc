@@ -11,9 +11,9 @@ class EETCNormalization(Normalization):
     def __init__(self):
         super().__init__()
 
-    def calc_flux_rate(self, hconf):
+    def calc_flux_rate(self, cgi_eetc, hconf, sl_ind):
         a, peakflux = cgi_eetc.calc_flux_rate(
-            sequence_name=hconf['hardware']['sequence_list'][j],
+            sequence_name=hconf['hardware']['sequence_list'][sl_ind],
         )
         return a, peakflux
 
