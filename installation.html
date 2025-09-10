@@ -50,8 +50,8 @@
 <li class="toctree-l2"><a class="reference internal" href="#installation-steps">Installation Steps</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#download-required-files">1. Download Required Files</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#clone-required-repositories">2. Clone required repositories</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#get-large-files-for-cgi-eetc">3. Get large files for cgi-eetc</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#run-installation-of-corgihowfsc">4. Run Installation of corgihowfsc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#run-installation-of-corgihowfsc">3. Run Installation of corgihowfsc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#get-large-files-and-install-cgi-eetc">4. Get large files and install cgi-eetc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#verify-installation">5. Verify Installation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#help">Help</a></li>
 </ul>
@@ -139,15 +139,8 @@ git<span class="w"> </span>clone<span class="w"> </span>https://github.com/roman
 </pre></div>
 </div>
 </section>
-<section id="get-large-files-for-cgi-eetc">
-<h3>3. Get large files for cgi-eetc<a class="headerlink" href="#get-large-files-for-cgi-eetc" title="Link to this heading"></a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>cgi-eetc
-git<span class="w"> </span>lfs<span class="w"> </span>pull
-</pre></div>
-</div>
-</section>
 <section id="run-installation-of-corgihowfsc">
-<h3>4. Run Installation of corgihowfsc<a class="headerlink" href="#run-installation-of-corgihowfsc" title="Link to this heading"></a></h3>
+<h3>3. Run Installation of corgihowfsc<a class="headerlink" href="#run-installation-of-corgihowfsc" title="Link to this heading"></a></h3>
 <p>Execute these commands in order:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Navigate to your corgihowfsc repository clone</span>
 <span class="nb">cd</span><span class="w"> </span>/path/to/corgihowfsc
@@ -165,6 +158,14 @@ python<span class="w"> </span>setup_cgi_packages.py<span class="w"> </span>/path
 python<span class="w"> </span>setup_cgi_packages.py<span class="w"> </span>~/Downloads/
 python<span class="w"> </span>setup_cgi_packages.py<span class="w"> </span>C:<span class="se">\U</span>sers<span class="se">\u</span>sername<span class="se">\D</span>ownloads<span class="se">\</span>
 python<span class="w"> </span>setup_cgi_packages.py<span class="w"> </span>/home/user/cgi-files/
+</pre></div>
+</div>
+</section>
+<section id="get-large-files-and-install-cgi-eetc">
+<h3>4. Get large files and install cgi-eetc<a class="headerlink" href="#get-large-files-and-install-cgi-eetc" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>cgi-eetc
+git<span class="w"> </span>lfs<span class="w"> </span>pull
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
 </pre></div>
 </div>
 </section>
