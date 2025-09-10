@@ -187,6 +187,6 @@ class GitlImage:
 
         elif self.name == 'cgi-howfsc':
             dmlist = [dm1v, dm2v] 
-            frame = self.gitlframe_cgihowfsc(self.cfg, dmlist, peakflux, self.cstrat.fixedbp, exptime, crop, lind, cleanrow=1024, cleancol=1024, wfe=None)
+            frame = self.gitlframe_cgihowfsc(self.cfg, dmlist, peakflux, bandpass, exptime, crop, lind, cleanrow=1024, cleancol=1024, wfe=None)
 
         return frame

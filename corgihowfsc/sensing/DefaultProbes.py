@@ -81,7 +81,7 @@ class DefaultProbes(Probes):
             # element zero is unprobed, not used here
             # data collection will do plus then minus
             for j in range(nlam):
-                other[j] = dict()
+                # other[j] = dict()
                 plist.append(np.zeros((nprobepair, nrow, ncol)))
                 # log.info('Wavelength %d of %d', j + 1, nlam)
                 # log.info('Get probe phase from model and DM settings')

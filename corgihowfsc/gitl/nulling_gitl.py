@@ -244,6 +244,14 @@ def nulling_gitl(cstrat, estrat, probing, normstrat, imager, cfg, args, modelpat
                                                  hconf['hardware']['pointer']),
     )
 
+    nframes, exptime, gain, snr_out, optflag = \
+        cgi_eetc.calc_exp_time(
+            sequence_name=hconf['hardware']['sequence_list'][0],
+            snr=1,
+            scale=contrast,
+            scale_bright=contrast,
+        )
+
     # framelist
     # do last, needs peak flux
     rng = np.random.default_rng(12345)
@@ -254,13 +262,24 @@ def nulling_gitl(cstrat, estrat, probing, normstrat, imager, cfg, args, modelpat
         for indk in range(ndm):
             dmlist = [dm1_list[indj*ndm + indk],
                       dm2_list[indj*ndm + indk]]
-            f = imager.get_frame(cfg,
-                              dmlist,
-                              cstrat.fixedbp,
-                              peakflux,
-                              exptime,
-                              crop,
-                              indj)
+            # f = imager.get_image(cfg,
+            #                   dmlist,
+            #                   cstrat.fixedbp,
+            #                   peakflux,
+            #                   exptime,
+            #                   crop,
+            #                   indj)
+            f = imager.get_image(exptime, gain,
+                                dm1_list[indj*ndm + indk], dm2_list[indj*ndm + indk],
+                                args.mode, cstrat.fixedbp,
+                                lind=indj,
+                                peakflux=peakflux,
+                                crop=crop,
+                                polaxis=10,
+                                cleanrow=1024, cleancol=1024,
+                                fixedbp=cstrat.fixedbp,
+                                wfe=None)
+
             bpmeas = rng.random(f.shape) > (1 - fracbadpix)
             f[bpmeas] = np.nan
             framelist.append(f)
@@ -357,6 +376,7 @@ def nulling_gitl(cstrat, estrat, probing, normstrat, imager, cfg, args, modelpat
 
         # prev_exptime_list
         prev_exptime_list = param_order_to_list(exptime_list)
+        prev_gain_list = param_order_to_list(gain_list)
 
         # new framelist
         framelist = []
@@ -369,15 +389,26 @@ def nulling_gitl(cstrat, estrat, probing, normstrat, imager, cfg, args, modelpat
             for indk in range(ndm):
                 dmlist = [dm1_list[indj*ndm + indk],
                           dm2_list[indj*ndm + indk]]
-                f = imager.sim_frame(cfg,
-                                  dmlist,
-                                  cstrat.fixedbp,
-                                  peakflux,
-                                  prev_exptime_list[indj*ndm + indk],
-                                  crop,
-                                  indj,
-                                  cleanrow=hconf['excam']['cleanrow'],
-                                  cleancol=hconf['excam']['cleancol'])
+                # f = imager.sim_frame(cfg,
+                #                   dmlist,
+                #                   cstrat.fixedbp,
+                #                   peakflux,
+                #                   prev_exptime_list[indj*ndm + indk],
+                #                   crop,
+                #                   indj,
+                #                   cleanrow=hconf['excam']['cleanrow'],
+                #                   cleancol=hconf['excam']['cleancol'])
+
+                f = imager.get_image(prev_exptime_list[indj*ndm + indk], prev_gain_list[indj*ndm + indk],
+                                     dm1_list[indj * ndm + indk], dm2_list[indj * ndm + indk],
+                                     args.mode, cstrat.fixedbp,
+                                     lind=indj,
+                                     peakflux=peakflux,
+                                     crop=crop,
+                                     polaxis=10,
+                                     cleanrow=1024, cleancol=1024,
+                                     fixedbp=cstrat.fixedbp,
+                                     wfe=None)
                 framelist.append(f)
                 pass
             pass

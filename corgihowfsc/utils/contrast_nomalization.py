@@ -17,6 +17,9 @@ class EETCNormalization(Normalization):
         )
         return a, peakflux
 
+    def normalize(self):
+        raise NotImplementedError()
+
 
 class CorgiNormalization(Normalization):
     def __init__(self):

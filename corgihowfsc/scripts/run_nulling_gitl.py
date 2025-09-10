@@ -18,8 +18,9 @@ from corgihowfsc.utils.howfsc_initialization import get_args, load_files
 from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
 from corgihowfsc.sensing.DefaultProbes import DefaultProbes
 from corgihowfsc.utils.contrast_nomalization import EETCNormalization
-from corgihowfsc.utils.Imager import Imager
+# from corgihowfsc.utils.Imager import Imager
 from corgihowfsc.gitl.nulling_gitl import nulling_gitl
+from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
@@ -75,7 +76,7 @@ cstrat = ControlStrategy(cstratfile)
 estrat = DefaultEstimator()
 
 # imager = corgisimImager()
-imager = Imager()
+imager = GitlImage("cgi-howfsc", cfg=cfg)
 normstrat = EETCNormalization()
 
 nulling_gitl(cstrat, estrat, probing, normstrat, imager, cfg, args, modelpath, jacfile, probefiles, hconffile, n2clistfiles)
