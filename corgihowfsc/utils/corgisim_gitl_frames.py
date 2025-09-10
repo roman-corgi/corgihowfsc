@@ -28,13 +28,16 @@ class GitlImage:
         self._mode = 'excam'  # default and the only mode we are using for the camera
 
         if name not in ['corgihowfsc', 'cgi-howfsc']:
+            print(name)
             raise ValueError("name must be 'corgihowfsc' or 'cgi-howfsc'")
+        
         self.name = name
 
         host_star_properties = {'Vmag': Vmag,
                                 'spectral_type': sptype,
                                 'magtype': 'vegamag',
                                 'ref_flag': ref_flag}
+
         # cgi-howfsc configs
         self.cfg = cfg 
         self.cstrat = cstrat
@@ -115,18 +118,12 @@ class GitlImage:
             check.positive_scalar_integer(cleancol, 'cleancol', TypeError)
 
     def gitlframe_corgisim(self,
-            exptime, gain,
-            dm1v, dm2v,
-            cor, bandpass,
-            crop,
-            emccd_dict,
-            polaxis,
-            cleanrow, cleancol, fixedbp, wfe=None):
+            exptime, gain, dm1v, dm2v, mode, bandpass, crop,polaxis,cleanrow, cleancol, fixedbp, wfe=None):
 
         self.check_gitlframeinputs(dm1v, dm2v, fixedbp, exptime=exptime, crop=crop, cleanrow=cleanrow, cleancol=cleancol)
 
         # TODO: update this to be optics_keywords - newer version of corgisim will call this optics keywords 
-        proper_keywords = {'cor_type': cor, 'use_errors': 2, 'polaxis': polaxis, 'output_dim': self.output_dim, \
+        proper_keywords = {'cor_type': mode, 'use_errors': 2, 'polaxis': polaxis, 'output_dim': self.output_dim, \
                            'use_dm1': 1, 'dm1_v': dm1v, 'use_dm2': 1, 'dm2_v': dm2v, 'use_fpm': 1, 'use_lyot_stop': 1,
                            'use_field_stop': 1}
 
@@ -136,8 +133,8 @@ class GitlImage:
         image_star_corgi = sim_scene.host_star_image.data
 
         # emccd parameters for excam
-        if emccd_dict is None: 
-            emccd_dict = {'em_gain': gain, 'cr_rate': 0}
+        # cr_rate always = 0 
+        emccd_dict = {'em_gain': gain, 'cr_rate': 0}
 
         detector = instrument.CorgiDetector(emccd_dict)
 
@@ -158,11 +155,10 @@ class GitlImage:
 
     def get_image(self, exptime, gain,
             dm1v, dm2v,
-            cor, bandpass,
+            mode, bandpass,
             lind=0,
             peakflux=None, 
             crop=None,
-            emccd_dict=None,
             polaxis=10,
             cleanrow=1024, cleancol=1024, 
             fixedbp=np.zeros((1024, 1024), dtype=bool),
@@ -170,16 +166,33 @@ class GitlImage:
         """
         Get a simulated GITL frame using either corgisim or cgi-howfsc repo's optical model
 
+        Arguments:
+         exptime: Exposure time used when collecting the data in in.      Should be a real scalar > 0 when noise is included. 
+         gain: EM gain setting for the EMCCD.  Real scalar >= 1.
+         dm1v: ndarray, absolute voltage map for DM1.
+         dm2v: ndarray, absolute voltage map for DM2.
+         mode: coronagraph mode. Currently taking from args.mode, which will be 'narrowfov' for cgi-howfsc loop. If calling corgisim, this will be fixed to 'hlc' for now. 
+         bandpass: depending on which mode we are in, it can be a instance object (passing as cfg.sl) or string if we are using corgisim (e.g. '1a', '1b', etc.)
+         lind: integer >= 0 indicating which wavelength channel in cfg to use.
+          Must be < the length of cfg.sl_list. Only used if name = 'cgi-howfsc'.
+         peakflux: float 
+         crop: 4-tuple of (lower row, lower col, number of rows,
+          number of columns), indicating where in a clean frame a PSF is taken.
+          All are integers; the first two must be >= 0 and the second two must be > 0. Only used if name = 'cgi-howfsc'.
+         polaxis: integer, polarization axis setting for the camera.  Must be one of [0, 10, 20, 30].  Default is 10.
+         cleanrow: Number of rows in a clean frame.  Integer > 0.  Defaults to 1024, the number of active area rows on the EXCAM detector; under nominal conditions, there should be no reason to use anything else.
+
         wfe is a placeholder argument for now to keep the option of passing additional wavefront error (e.g. zernike coefficients) to modify the frame generation
 
         This get_image method should be compatible with both cgi-howfsc and corgisim 
         """
         if self.name == 'corgihowfsc':
+            mode = 'hlc' # fixed for corgisim for now
+            bandpass = '1a' # fixed for corgisim for now
             frame = self.gitlframe_corgisim(exptime, gain,
                 dm1v, dm2v,
-                cor, bandpass,
+                mode, bandpass,
                 crop=crop,
-                emccd_dict=emccd_dict,
                 polaxis=polaxis,
                 cleanrow=cleanrow, cleancol=cleancol,
                 fixedbp=fixedbp,
