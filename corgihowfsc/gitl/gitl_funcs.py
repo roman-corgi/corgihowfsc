@@ -383,5 +383,5 @@ def check_inputs(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
 
     log.info('Input checks complete')
 
-    return
+    return lenflist, nlam, ndm, nprobepair, lendm1list, lendm2list, dm1nact, dm2nact, allpix, lencroplist, nrow, ncol, subcroplist, lenpelist
 

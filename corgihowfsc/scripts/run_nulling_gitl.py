@@ -1,9 +1,9 @@
 from howfsc.control.cs import ControlStrategy
 from corgihowfsc.utils.howfsc_initialization import get_args, load_files
+from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
 
 
-
-args = get_args_jupyter(jacpath=defjacpath)
+args = get_args(jacpath=defjacpath)
 
 # Initialize variables etc
 
@@ -49,9 +49,10 @@ probing = DefaultProbes('default')
 cfg = CoronagraphMode(cfgfile)
 
 cstrat = ControlStrategy(cstratfile)
-estrat = EstimatorStrategy()
+estrat = DefaultEstimator()
 
 imager = corgisimImager()
+# imager = compactImager()
 
 nulling_gitl(cstrat, estrat, probing, cfg, imager, modelpath, jacfile, probefiles, hconffile, n2clistfiles)
 

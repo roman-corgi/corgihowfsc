@@ -40,11 +40,12 @@ howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
 
 
-def nulling_gitl(niter=5, mode='narrowfov', isprof=False, logfile=None, fracbadpix=0, nbadpacket=0,
-                      nbadframe=0, fileout=None, stellar_vmag=None, stellar_type=None,
-                      stellar_vmag_target=None, stellar_type_target=None, jacpath=defjacpath,
-                      precomp='load_all', num_process=None, num_threads=None,
-                      cstrat=None, normalization=None, probing=None, imager=None):
+def nulling_gitl(cstrat, estrat, probing, normstrat, cfg, imager, modelpath, jacfile, probefiles, hconffile, n2clistfiles):
+                # (niter=5, mode='narrowfov', isprof=False, logfile=None, fracbadpix=0, nbadpacket=0,
+                #       nbadframe=0, fileout=None, stellar_vmag=None, stellar_type=None,
+                #       stellar_vmag_target=None, stellar_type_target=None, jacpath=defjacpath,
+                #       precomp='load_all', num_process=None, num_threads=None,
+                #       cstrat=None, normstrat=None, probing=None, imager=None):
     """Run a nulling sequence, using the compact optical model as the data source.
 
     Parameters:
@@ -137,12 +138,15 @@ def nulling_gitl(niter=5, mode='narrowfov', isprof=False, logfile=None, fracbadp
         pass
     log = logging.getLogger(__name__)
 
+
     exptime = 10 # FIXME this should be derived from contrast eventually
     contrast = 1e-5 # "starting" value to bootstrap getting we0
 
     # dm1_list, dm2
     # Get DM lists
-    dm1_list, dm2_list = probing.get_dm_probes(cfg, probefiles)
+    dm1_list, dm2_list, dmrel_list, dm10, dm20 = probing.get_dm_probes(cfg, probefiles)
+    nlam = len(cfg.sl_list)
+    ndm = 2 * len(dmrel_list) + 1
 
     # cstratfile
     # cstrat = ControlStrategy(cstratfile)
@@ -228,7 +232,7 @@ def nulling_gitl(niter=5, mode='narrowfov', isprof=False, logfile=None, fracbadp
     framelist = []
     for indj, sl in enumerate(cfg.sl_list):
         crop = croplist[indj]
-        _, peakflux = normalization.calc_flux_rate(hconf)
+        _, peakflux = normstrat.calc_flux_rate(hconf)
         for indk in range(ndm):
             dmlist = [dm1_list[indj*ndm + indk],
                       dm2_list[indj*ndm + indk]]
@@ -277,7 +281,8 @@ def nulling_gitl(niter=5, mode='narrowfov', isprof=False, logfile=None, fracbadp
         nframes_list, prev_c, next_c, next_time, status, other = \
         howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
                            croplist, prev_exptime_list,
-                           cstrat, n2clist, hconf, iteration)
+                           cstrat, n2clist, hconf, iteration,
+                           estrat, imager, normstrat, probing)
         if isprof:
             pr.disable()
             pass
@@ -339,7 +344,10 @@ def nulling_gitl(niter=5, mode='narrowfov', isprof=False, logfile=None, fracbadp
         framelist = []
         for indj, sl in enumerate(cfg.sl_list):
             crop = croplist[indj]
-            _, peakflux = cgi_eetc.calc_flux_rate(
+            # _, peakflux = cgi_eetc.calc_flux_rate(
+            #     sequence_name=hconf['hardware']['sequence_list'][indj],
+            # )
+            _, peakflux = normstrat.calc_flux_rate(
                 sequence_name=hconf['hardware']['sequence_list'][indj],
             )
             for indk in range(ndm):
@@ -452,7 +460,7 @@ if __name__ == "__main__":
     num_process = args.num_process
     num_threads = args.num_threads
 
-    nulling_test_gitl(niter, mode, isprof, logfile, fracbadpix, nbadpacket,
+    nulling_gitl(niter, mode, isprof, logfile, fracbadpix, nbadpacket,
                       nbadframe, fileout, stellar_vmag, stellar_type,
                       stellar_vmag_target, stellar_type_target, jacpath,
                       precomp, num_process, num_threads)

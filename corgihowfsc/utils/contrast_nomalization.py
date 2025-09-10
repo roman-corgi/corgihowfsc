@@ -1,4 +1,4 @@
-from eetc.cgi_eetc import CGIEETC
+from eetc import cgi_eetc
 
 class Normalization():
     # def __init__(self):
@@ -7,7 +7,7 @@ class Normalization():
         raise NotImplementedError()
 
 
-class EETCNormalization():
+class EETCNormalization(Normalization):
     def __init__(self):
         super().__init__()
 
@@ -18,7 +18,7 @@ class EETCNormalization():
         return a, peakflux
 
 
-class CorgiNormalization():
+class CorgiNormalization(Normalization):
     def __init__(self):
         super().__init__()
 

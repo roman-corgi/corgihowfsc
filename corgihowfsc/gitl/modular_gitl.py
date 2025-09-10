@@ -64,7 +64,7 @@ eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 def howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
                        croplist, prev_exptime_list,
                        cstrat, n2clist, hconf, iteration,
-                       estimator, controller, imager, normalization):
+                       estrat, imager, normstrat, probing):
     """
     Wrapper for the main HOWFSC computation loop, to handle exceptions in a
     way consistent with the interface specifications (outputs indicated by a
@@ -79,7 +79,7 @@ def howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
                                        cfg, jac, jtwj_map,
                                        croplist, prev_exptime_list,
                                        cstrat, n2clist, hconf, iteration,
-                                       estimator, controller, imager, normalization)
+                                       estrat, imager, normstrat, probing)
         log.info('howfsc_computation main loop complete')
         return out
     # Note: while in principle _main_howfsc_computation() could output a result
@@ -174,7 +174,7 @@ def howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
 def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
                              croplist, prev_exptime_list,
                              cstrat, n2clist, hconf, iteration,
-                             estimator, controller, imager, normalization):
+                             estrat, imager, normstrat, probing):
     """
     Execute the HOWFSC GITL computation as defined in the HOWFSC FDD
 
@@ -323,9 +323,10 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
     #--------------
     # Check inputs
     #--------------
-    check_inputs(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
-                 croplist, prev_exptime_list,
-                 cstrat, n2clist, hconf, iteration)
+    (lenflist, nlam, ndm, nprobepair, lendm1list, lendm2list, dm1nact, dm2nact,
+     allpix, lencroplist, nrow, ncol, subcroplist, lenpelist) = check_inputs(framelist, dm1_list, dm2_list, cfg, jac,
+                                                                             jtwj_map, croplist, prev_exptime_list,
+                                                                             cstrat, n2clist, hconf, iteration)
 
     #--------------------
     # HOWFSC Computation
@@ -365,7 +366,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         # _, peakflux = normalization.calc_flux_rate(
         #     sequence_name=hconf['hardware']['sequence_list'][j],
         # )
-        _, peakflux = normalization.calc_flux_rate(hconf)
+        _, peakflux = normstrat.calc_flux_rate(hconf)
 
         log.info('Expect %g photons/sec', peakflux)
         for k in range(ndm):
@@ -463,7 +464,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
 
         # Measured e-field at this setting
         log.info('Measured e-field at this setting')
-        efield = estimator.estimate_efield(
+        efield = estrat.estimate_efield(
             intlist[j],
             plist[j],
             min_good_probes=hconf['howfsc']['min_good_probes'],
