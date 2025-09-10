@@ -9,7 +9,7 @@ import numpy as np
 import astropy.io.fits as pyfits
 
 
-def get_args_jupyter(niter=5,
+def get_args(niter=5,
                     mode='narrowfov',
                     profile=False,
                     fracbadpix=0,
@@ -59,7 +59,7 @@ def get_args_jupyter(niter=5,
         args.jacpath = jacpath
 
         return args
-def get_args(defjacpath):
+def get_args_cmd(defjacpath):
     '''
     Note: this cannot be run from jupyter notebook
 
@@ -156,6 +156,10 @@ def load_files(args, howfscpath):
                                   'nfov_dm_dmrel_1.0e-05_sinlr.fits')
         probe2file = os.path.join(modelpath,
                                   'nfov_dm_dmrel_1.0e-05_sinud.fits')
+        probefiles = {}
+        probefiles[0] = probe0file
+        probefiles[2] = probe1file
+        probefiles[1] = probe2file
         hconffile = os.path.join(modelpath, 'hconf_nfov_dm.yaml')
         n2clistfiles = [
             os.path.join(modelpath, 'nfov_dm_n2c_idx0.fits'),
@@ -174,6 +178,10 @@ def load_files(args, howfscpath):
                                   'nfov_flat_dmrel_1.0e-05_sinlr.fits')
         probe2file = os.path.join(modelpath,
                                   'nfov_flat_dmrel_1.0e-05_sinud.fits')
+        probefiles = {}
+        probefiles[0] = probe0file
+        probefiles[2] = probe1file
+        probefiles[1] = probe2file
         hconffile = os.path.join(modelpath, 'hconf_nfov_flat.yaml')
         n2clistfiles = [
             os.path.join(modelpath, 'nfov_flat_n2c_idx0.fits'),
@@ -192,6 +200,10 @@ def load_files(args, howfscpath):
                                   'narrowfov_dmrel_1.0e-05_sinlr.fits')
         probe2file = os.path.join(modelpath,
                                   'narrowfov_dmrel_1.0e-05_sinud.fits')
+        probefiles = {}
+        probefiles[0] = probe0file
+        probefiles[2] = probe1file
+        probefiles[1] = probe2file
         hconffile = os.path.join(modelpath, 'hconf_narrowfov.yaml')
         n2clistfiles = [
             os.path.join(modelpath, 'narrowfov_n2c_idx0.fits'),
@@ -205,4 +217,4 @@ def load_files(args, howfscpath):
         raise ValueError('Invalid coronagraph mode type')
 
 
-    return modelpath, cfgfile, jacfile, cstratfile, probe0file, probe1file, probe2file, hconffile, n2clistfiles
+    return modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles

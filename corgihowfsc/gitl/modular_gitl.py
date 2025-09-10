@@ -20,7 +20,7 @@ from howfsc.status_codes import status_codes
 
 from howfsc.sensing.preclean import extract_bp, normalize, eval_c
 from howfsc.sensing.probephase import probe_ap
-from howfsc.sensing.pairwise_sensing import estimate_efield
+# from howfsc.sensing.pairwise_sensing import estimate_efield
 
 from howfsc.control.cs import ControlStrategy, get_wdm, get_we0
 from howfsc.control.parse_cs import CSException
@@ -418,30 +418,32 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
     # field maps
     log.info('4. Estimate complex electric fields and return fields ' +
                  'with bad electric field maps')
-    plist = [] # for model-based phase storage, chunked by lam
-    for n in range(nprobepair):
-        log.info('Probe pair %d of %d', n+1, nprobepair)
-        # Extract phases from model
-        # element zero is unprobed, not used here
-        # data collection will do plus then minus
-        for j in range(nlam):
-            plist.append(np.zeros((nprobepair, nrow, ncol)))
-            log.info('Wavelength %d of %d', j+1, nlam)
-            log.info('Get probe phase from model and DM settings')
-            _, tmpph = probe_ap(cfg,
-                    dm1_list[j*ndm + 1+2*n], # positive
-                    dm1_list[j*ndm + 2+2*n], # negative
-                    dm2_list[j*ndm],
-                    j)
+    plist, other = probing.get_probe_ap(cfg, dm1_list, dm2_list, other=other)
 
-            plist[j][n, :, :] = insertinto(tmpph, (nrow, ncol))
-
-            # Save the probe phases for later
-            key_n = 'probe_ph' + str(n)
-            other[j][key_n] = np.squeeze(plist[j][n, :, :])
-            pass
-
-        pass
+    # plist = [] # for model-based phase storage, chunked by lam
+    # for n in range(nprobepair):
+    #     log.info('Probe pair %d of %d', n+1, nprobepair)
+    #     # Extract phases from model
+    #     # element zero is unprobed, not used here
+    #     # data collection will do plus then minus
+    #     for j in range(nlam):
+    #         plist.append(np.zeros((nprobepair, nrow, ncol)))
+    #         log.info('Wavelength %d of %d', j+1, nlam)
+    #         log.info('Get probe phase from model and DM settings')
+    #         _, tmpph = probe_ap(cfg,
+    #                 dm1_list[j*ndm + 1+2*n], # positive
+    #                 dm1_list[j*ndm + 2+2*n], # negative
+    #                 dm2_list[j*ndm],
+    #                 j)
+    #
+    #         plist[j][n, :, :] = insertinto(tmpph, (nrow, ncol))
+    #
+    #         # Save the probe phases for later
+    #         key_n = 'probe_ph' + str(n)
+    #         other[j][key_n] = np.squeeze(plist[j][n, :, :])
+    #         pass
+    #
+    #     pass
 
     # Initialize accumulators for average modulated/unmodulated signal across
     # all filters for 1133642

@@ -30,20 +30,21 @@ from howfsc.model.mode import CoronagraphMode
 from howfsc.util.loadyaml import loadyaml
 from howfsc.util.gitl_tools import param_order_to_list
 
-from howfsc.gitl import howfsc_computation
+from corgihowfsc.gitl.modular_gitl import howfsc_computation
 from howfsc.precomp import howfsc_precomputation
 
-from howfsc.scripts.gitlframes import sim_gitlframe
+# from howfsc.scripts.gitlframes import sim_gitlframe
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
 
 
-def nulling_test_gitl(niter=5, mode='narrowfov', isprof=False, logfile=None, fracbadpix=0, nbadpacket=0,
+def nulling_gitl(niter=5, mode='narrowfov', isprof=False, logfile=None, fracbadpix=0, nbadpacket=0,
                       nbadframe=0, fileout=None, stellar_vmag=None, stellar_type=None,
                       stellar_vmag_target=None, stellar_type_target=None, jacpath=defjacpath,
-                      precomp='load_all', num_process=None, num_threads=None):
+                      precomp='load_all', num_process=None, num_threads=None,
+                      cstrat=None, normalization=None, probing=None, imager=None):
     """Run a nulling sequence, using the compact optical model as the data source.
 
     Parameters:
@@ -139,136 +140,9 @@ def nulling_test_gitl(niter=5, mode='narrowfov', isprof=False, logfile=None, fra
     exptime = 10 # FIXME this should be derived from contrast eventually
     contrast = 1e-5 # "starting" value to bootstrap getting we0
 
-    if mode == 'nfov_dm':
-        modelpath = os.path.join(howfscpath, 'model', 'testdata', 'narrowfov')
-        cfgfile = os.path.join(modelpath, 'narrowfov_dm.yaml')
-        jacfile = os.path.join(jacpath, 'nfov_dm_jac_full.fits')
-        cstratfile = os.path.join(modelpath, 'cstrat_nfov_dm.yaml')
-        probe0file = os.path.join(modelpath,
-                                  'nfov_dm_dmrel_1.0e-05_cos.fits')
-        probe1file = os.path.join(modelpath,
-                                  'nfov_dm_dmrel_1.0e-05_sinlr.fits')
-        probe2file = os.path.join(modelpath,
-                                  'nfov_dm_dmrel_1.0e-05_sinud.fits')
-        hconffile = os.path.join(modelpath, 'hconf_nfov_dm.yaml')
-        n2clistfiles = [
-            os.path.join(modelpath, 'nfov_dm_n2c_idx0.fits'),
-            os.path.join(modelpath, 'nfov_dm_n2c_idx1.fits'),
-            os.path.join(modelpath, 'nfov_dm_n2c_idx2.fits'),
-        ]
-        pass
-    elif mode == 'nfov_flat':
-        modelpath = os.path.join(howfscpath, 'model', 'testdata', 'narrowfov')
-        cfgfile = os.path.join(modelpath, 'narrowfov_flat.yaml')
-        jacfile = os.path.join(jacpath, 'nfov_flat_jac_full.fits')
-        cstratfile = os.path.join(modelpath, 'cstrat_nfov_flat.yaml')
-        probe0file = os.path.join(modelpath,
-                                  'nfov_flat_dmrel_1.0e-05_cos.fits')
-        probe1file = os.path.join(modelpath,
-                                  'nfov_flat_dmrel_1.0e-05_sinlr.fits')
-        probe2file = os.path.join(modelpath,
-                                  'nfov_flat_dmrel_1.0e-05_sinud.fits')
-        hconffile = os.path.join(modelpath, 'hconf_nfov_flat.yaml')
-        n2clistfiles = [
-            os.path.join(modelpath, 'nfov_flat_n2c_idx0.fits'),
-            os.path.join(modelpath, 'nfov_flat_n2c_idx1.fits'),
-            os.path.join(modelpath, 'nfov_flat_n2c_idx2.fits'),
-        ]
-        pass
-    elif mode == 'narrowfov':
-        modelpath = os.path.join(howfscpath, 'model', 'testdata', 'narrowfov')
-        cfgfile = os.path.join(modelpath, 'narrowfov.yaml')
-        jacfile = os.path.join(jacpath, 'narrowfov_jac_full.fits')
-        cstratfile = os.path.join(modelpath, 'cstrat_narrowfov.yaml')
-        probe0file = os.path.join(modelpath,
-                                  'narrowfov_dmrel_1.0e-05_cos.fits')
-        probe1file = os.path.join(modelpath,
-                                  'narrowfov_dmrel_1.0e-05_sinlr.fits')
-        probe2file = os.path.join(modelpath,
-                                  'narrowfov_dmrel_1.0e-05_sinud.fits')
-        hconffile = os.path.join(modelpath, 'hconf_narrowfov.yaml')
-        n2clistfiles = [
-            os.path.join(modelpath, 'narrowfov_n2c_idx0.fits'),
-            os.path.join(modelpath, 'narrowfov_n2c_idx1.fits'),
-            os.path.join(modelpath, 'narrowfov_n2c_idx2.fits'),
-        ]
-        pass
-    elif mode == 'widefov':
-        modelpath = os.path.join(howfscpath, 'model', 'testdata', 'widefov')
-        cfgfile = os.path.join(modelpath, 'widefov.yaml')
-        jacfile = os.path.join(jacpath, 'widefov_jac_full.fits')
-        cstratfile = os.path.join(modelpath, 'cstrat_widefov.yaml')
-        probe0file = os.path.join(modelpath,
-                                  'widefov_dmrel_1.0e-05_cos.fits')
-        probe1file = os.path.join(modelpath,
-                                  'widefov_dmrel_1.0e-05_sinlr.fits')
-        probe2file = os.path.join(modelpath,
-                                  'widefov_dmrel_1.0e-05_sinud.fits')
-        hconffile = os.path.join(modelpath, 'hconf_widefov.yaml')
-        n2clistfiles = [
-            os.path.join(modelpath, 'widefov_n2c_idx0.fits'),
-            os.path.join(modelpath, 'widefov_n2c_idx1.fits'),
-            os.path.join(modelpath, 'widefov_n2c_idx2.fits'),
-        ]
-        pass
-    elif mode == 'spectroscopy':
-        modelpath = os.path.join(howfscpath, 'model', 'testdata',
-                                 'spectroscopy')
-        cfgfile = os.path.join(modelpath, 'spectroscopy.yaml')
-        jacfile = os.path.join(jacpath, 'spectroscopy_jac_full.fits')
-        cstratfile = os.path.join(modelpath, 'cstrat_spectroscopy.yaml')
-        probe0file = os.path.join(modelpath,
-                                  'spectroscopy_dmrel_1.0e-05_cos.fits')
-        probe1file = os.path.join(modelpath,
-                                  'spectroscopy_dmrel_1.0e-05_sinlr.fits')
-        probe2file = os.path.join(modelpath,
-                                  'spectroscopy_dmrel_1.0e-05_sinud.fits')
-        hconffile = os.path.join(modelpath, 'hconf_spectroscopy.yaml')
-        n2clistfiles = [
-            os.path.join(modelpath, 'spectroscopy_n2c_idx0.fits'),
-            os.path.join(modelpath, 'spectroscopy_n2c_idx1.fits'),
-            os.path.join(modelpath, 'spectroscopy_n2c_idx2.fits'),
-            os.path.join(modelpath, 'spectroscopy_n2c_idx3.fits'),
-            os.path.join(modelpath, 'spectroscopy_n2c_idx4.fits'),
-        ]
-        pass
-    else:
-        # should not reach here; argparse should catch this
-        raise ValueError('Invalid coronagraph mode type')
-
-
-    # cfg
-    cfg = CoronagraphMode(cfgfile)
-
     # dm1_list, dm2
-    dmrel_list = [pyfits.getdata(probe0file),
-                  pyfits.getdata(probe1file),
-                  pyfits.getdata(probe2file),
-                  ] # these are 1e-5 probe relative DM settings
-    # relative to 1e-5 for these, sqrt (0.1 = 1e-7)
-    scalelist = [0.3, 0.3, 0.3, -0.3, -0.3, -0.3]
-
-    nlam = len(cfg.sl_list)
-    ndm = 2*len(dmrel_list) + 1
-
-    dm10 = cfg.initmaps[0]
-    dm20 = cfg.initmaps[1]
-    dm1_list = []
-    dm2_list = []
-    for index in range(nlam):
-        # DM1 same per wavelength
-        dm1_list.append(dm10)
-        dm1_list.append(dm10 + scalelist[0]*dmrel_list[0])
-        dm1_list.append(dm10 + scalelist[3]*dmrel_list[0])
-        dm1_list.append(dm10 + scalelist[1]*dmrel_list[1])
-        dm1_list.append(dm10 + scalelist[4]*dmrel_list[1])
-        dm1_list.append(dm10 + scalelist[2]*dmrel_list[2])
-        dm1_list.append(dm10 + scalelist[5]*dmrel_list[2])
-        for j in range(ndm):
-            # DM2 always same
-            dm2_list.append(dm20)
-            pass
-        pass
+    # Get DM lists
+    dm1_list, dm2_list = probing.get_dm_probes(cfg, probefiles)
 
     # cstratfile
     # cstrat = ControlStrategy(cstratfile)
@@ -354,13 +228,11 @@ def nulling_test_gitl(niter=5, mode='narrowfov', isprof=False, logfile=None, fra
     framelist = []
     for indj, sl in enumerate(cfg.sl_list):
         crop = croplist[indj]
-        _, peakflux = cgi_eetc.calc_flux_rate(
-            sequence_name=hconf['hardware']['sequence_list'][indj],
-        )
+        _, peakflux = normalization.calc_flux_rate(hconf)
         for indk in range(ndm):
             dmlist = [dm1_list[indj*ndm + indk],
                       dm2_list[indj*ndm + indk]]
-            f = sim_gitlframe(cfg,
+            f = imager.get_frame(cfg,
                               dmlist,
                               cstrat.fixedbp,
                               peakflux,
@@ -473,7 +345,7 @@ def nulling_test_gitl(niter=5, mode='narrowfov', isprof=False, logfile=None, fra
             for indk in range(ndm):
                 dmlist = [dm1_list[indj*ndm + indk],
                           dm2_list[indj*ndm + indk]]
-                f = sim_gitlframe(cfg,
+                f = imager.sim_frame(cfg,
                                   dmlist,
                                   cstrat.fixedbp,
                                   peakflux,
