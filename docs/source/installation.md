@@ -28,14 +28,7 @@ git clone https://github.com/nasa-jpl/cgi-eetc.git
 git clone https://github.com/roman-corgi/corgihowfsc.git
 ````
 
-### 3. Get large files for cgi-eetc
-
-```bash
-cd cgi-eetc
-git lfs pull
-```
-
-### 4. Run Installation of corgihowfsc
+### 3. Run Installation of corgihowfsc
 
 Execute these commands in order:
 
@@ -56,6 +49,14 @@ python setup_cgi_packages.py /path/to/your/downloads/
 python setup_cgi_packages.py ~/Downloads/
 python setup_cgi_packages.py C:\Users\username\Downloads\
 python setup_cgi_packages.py /home/user/cgi-files/
+```
+
+### 4. Get large files and install cgi-eetc
+
+```bash
+cd cgi-eetc
+git lfs pull
+pip install -e .
 ```
 
 ### 5. Verify Installation
