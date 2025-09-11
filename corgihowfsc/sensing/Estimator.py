@@ -2,6 +2,9 @@
 import numpy as np
 
 class Estimator():
+    """
+    Abstract estimator base class
+    """
     # def __init__():
 
     def estimate_efield(self, intensities, phases,

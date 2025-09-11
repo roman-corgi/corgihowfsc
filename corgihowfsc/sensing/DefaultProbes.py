@@ -60,7 +60,7 @@ class DefaultProbes(Probes):
 
         return dm1_list, dm2_list, dmrel_list, dm10, dm20
 
-    def get_probe_ap(self, cfg, dm1_list, dm2_list, other = dict()):
+    def get_probe_ap(self, cfg, dm1_list, dm2_list, other=dict()):
 
         nlam = len(cfg.sl_list)
         nprobepair = (self.ndm - 1) // 2
