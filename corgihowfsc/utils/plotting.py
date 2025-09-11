@@ -161,7 +161,7 @@ def main():
     """Main analysis function."""
     # =============================================================================
     # USER CONFIGURATION: Define your wavelengths here
-    WAVELENGTHS = [550, 650, 750]  # Wavelengths in nanometers
+    WAVELENGTHS = [523, 550, 578]  # Wavelengths in nanometers
     # =============================================================================
 
     data_dir = Path('/Users/ilaginja/data_from_repos/corgiloop/acts1')
