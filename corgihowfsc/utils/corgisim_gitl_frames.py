@@ -208,7 +208,7 @@ class GitlImage:
 
         return frame
 
-    def get_image(self, dm1v, dm2v, peakflux, exptime, gain, crop, lind, cleanrow=1024, cleancol=1024, fixedbp=np.zeros((1024, 1024), dtype=bool), wfe=None):
+    def get_image(self, dm1v, dm2v, exptime, gain, crop, lind, peakflux=1,cleanrow=1024, cleancol=1024, fixedbp=np.zeros((1024, 1024), dtype=bool), wfe=None):
         """
         Get a simulated GITL frame using either corgisim or cgi-howfsc repo's optical model
 
