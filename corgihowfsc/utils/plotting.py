@@ -142,13 +142,13 @@ def create_wavelength_plot(images_data, efield_data, wavelength, iteration, outp
 
     # Plot electric field real part (top right)
     im3 = axes[0, 3].imshow(efield_data['real'], cmap='RdBu_r')
-    axes[0, 3].set_title('E-field Real Part')
+    axes[0, 3].set_title('Estimated E-field Real Part')
     axes[0, 3].axis('off')
     plt.colorbar(im3, ax=axes[0, 3], shrink=0.6)
 
     # Plot electric field imaginary part (bottom right)
     im4 = axes[1, 3].imshow(efield_data['imaginary'], cmap='RdBu_r')
-    axes[1, 3].set_title('E-field Imaginary Part')
+    axes[1, 3].set_title('Estimated E-field Imaginary Part')
     axes[1, 3].axis('off')
     plt.colorbar(im4, ax=axes[1, 3], shrink=0.6)
 
