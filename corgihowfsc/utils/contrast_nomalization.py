@@ -17,8 +17,13 @@ class EETCNormalization(Normalization):
         )
         return a, peakflux
 
-    def normalize(self):
-        raise NotImplementedError()
+        # implement normalize as a class method
+    def normalize(self, im, peakflux, exptime):
+        check.twoD_array(im, 'im', TypeError)
+        check.real_positive_scalar(peakflux, 'peakflux', TypeError)
+        check.real_positive_scalar(exptime, 'exptime', TypeError)
+
+        return im/exptime/peakflux
 
 
 class CorgiNormalization(Normalization):
