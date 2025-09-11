@@ -8,6 +8,7 @@ estimations, creating visualization plots organized by wavelength and iteration.
 import glob
 from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
+import numpy as np
 from astropy.io import fits
 from pathlib import Path
 import re
@@ -125,14 +126,20 @@ def create_wavelength_plot(images_data, efield_data, wavelength, iteration, outp
             positive, negative = images_data['probe_pairs'][col]
 
             # Positive probe (top row)
-            im1 = axes[0, col].imshow(positive, cmap='inferno', norm=LogNorm())
-            axes[0, col].set_title(f'Positive probe {col + 1}')
+            cmap1 = plt.cm.inferno.copy()
+            cmap1.set_bad(color='black')
+            positive_safe = np.where(positive > 0, positive, np.nan)
+            im1 = axes[0, col].imshow(positive_safe, cmap=cmap1, norm=LogNorm())
+            axes[0, col].set_title(f'Positive Probe {col + 1}')
             axes[0, col].axis('off')
             plt.colorbar(im1, ax=axes[0, col], shrink=0.6)
 
-            # Negative prone (bottom row)
-            im2 = axes[1, col].imshow(negative, cmap='inferno', norm=LogNorm())
-            axes[1, col].set_title(f'Negative probe {col + 1}')
+            # Negative probe (bottom row)
+            cmap2 = plt.cm.inferno.copy()
+            cmap2.set_bad(color='black')
+            negative_safe = np.where(negative > 0, negative, np.nan)
+            im2 = axes[1, col].imshow(negative_safe, cmap=cmap2, norm=LogNorm())
+            axes[1, col].set_title(f'Negative Probe {col + 1}')
             axes[1, col].axis('off')
             plt.colorbar(im2, ax=axes[1, col], shrink=0.6)
         else:
@@ -141,13 +148,17 @@ def create_wavelength_plot(images_data, efield_data, wavelength, iteration, outp
             axes[1, col].axis('off')
 
     # Plot electric field real part (top right)
-    im3 = axes[0, 3].imshow(efield_data['real'], cmap='RdBu_r')
+    cmap3 = plt.cm.RdBu_r.copy()
+    cmap3.set_bad(color='black')
+    im3 = axes[0, 3].imshow(efield_data['real'], cmap=cmap3)
     axes[0, 3].set_title('Estimated E-field Real Part')
     axes[0, 3].axis('off')
     plt.colorbar(im3, ax=axes[0, 3], shrink=0.6)
 
     # Plot electric field imaginary part (bottom right)
-    im4 = axes[1, 3].imshow(efield_data['imaginary'], cmap='RdBu_r')
+    cmap4 = plt.cm.RdBu_r.copy()
+    cmap4.set_bad(color='black')
+    im4 = axes[1, 3].imshow(efield_data['imaginary'], cmap=cmap4)
     axes[1, 3].set_title('Estimated E-field Imaginary Part')
     axes[1, 3].axis('off')
     plt.colorbar(im4, ax=axes[1, 3], shrink=0.6)
@@ -164,7 +175,7 @@ def main():
     WAVELENGTHS = [523, 550, 578]  # Wavelengths in nanometers
     # =============================================================================
 
-    data_dir = Path('/Users/username/data_from_repos/corgiloop/loop1')
+    data_dir = Path('/Users/ilaginja/data_from_repos/corgiloop/loop1')
     output_dir = data_dir / 'probing_plots'
 
     # Create output directory
