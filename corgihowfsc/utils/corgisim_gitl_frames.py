@@ -22,14 +22,25 @@ import time
 
 class GitlImage:
     def __init__(self, name, cor, bandpass, polaxis=10, cfg=None, cstrat=None, Vmag=2.56, sptype='A5V', ref_flag=False, is_noise_free=True, output_dim=51):
-        
         """
-        Gitl Image class should be able to handle either corgisim, or calling cgisim, following the defintion from sim_gitlframe in howfsc.util.gitlframes
+        Gitl Image class should be able to handle either corgisim, or calling cgisim, following the defintion from sim_gitlframe in howfsc.util.gitlframes.
+        Mode not supported yet: widefov. 
 
-        mode not supported yet: widefov
-
-        bandpass: depending on which mode we are in, it can be a instance object (passing as cfg.sl) or string if we are using corgisim (e.g. '1a', '1b', etc.)
-
+        Arguments:
+            name: string, must be either 'corgihowfsc' or 'cgi-howfsc'. An other value will raise an error. 
+            cor: coronagraph mode. 
+                If name = 'corgihowfsc', this must be 'hlc'. 
+                If name = 'cgi-howfsc', this must be one of ['narrowfov', 'nfov_flat', 'nfov_dm']. 
+            bandpass: If name = 'corgihowfsc', this must be one of ['1', '2', '3', '4'], corresponding to corgisim bandpass options. 
+                If name = 'cgi-howfsc', this must  be a howfsc.util.loadyaml.SpectralChannel object, e.g. cfg.sl_list[0].
+            polaxis: integer, polarization axis setting for the camera.  Must be one of [0, 10, 20, 30].  Default is 10.
+            cfg: CoronagraphMode object, only required if name = 'cgi-howfsc'.
+            cstrat: ControlStrategy object, only required if name = 'cgi-howfsc'.
+            Vmag: float, V magnitude of the host star, default to 2.56 (del Leo).
+            sptype: string, spectral type of the host star, default to 'A5V'.
+            ref_flag: boolean, if True, use reference spectrum from pysynphot, otherwise use Pickles atlas. Default to False.               
+            is_noise_free: boolean, if True, generate a noise-free frame. Default to True. Only used if name = 'corgihowfsc'.
+            output_dim: integer, output dimension of the cropped image from corgisim. Default to 51. 
         """
         # common configs
         self._mode = 'excam'  # default and the only mode we are using for the camera
@@ -166,17 +177,22 @@ class GitlImage:
 
     def gitlframe_corgisim(self, dm1v, dm2v, fixedbp, exptime, crop, lind=0, gain=1, cleanrow=1024, cleancol=1024, wfe=None):
         """
-        Generate a GITL frame using the CorgiSim optical model.
-        lind: subband index, default to 0 since corgisim only has one subband per bandpass
+        Generate a GITL frame using the CorgiSim optical model. Following the procedure in sim_gitlframe in howfsc.util.gitlframes.
+
+        Arguments:
+         dm1v: ndarray, absolute voltage map for DM1.
+         dm2v: ndarray, absolute voltage map for DM2.
+         fixedbp: this is a fixed bad pixel map for a clean frame, and will be a 2D
+          boolean array with the same size as a cleaned frame.
+         exptime: Exposure time used when collecting the data in in.  Should be a
+          real scalar > 0. If is_noise_free = True, this can be any positive value.
+         crop: 4-tuple of (lower row, lower col, number of rows, number of cols). Currently not in used
         """
         subband_option = ['a', 'b', 'c'] 
-        bandpass_receipe = self.bandpass + subband_option[lind] # default to 'a' subband for now
-
-        print(f'Bandpass used for corgisim: {bandpass_receipe}')
+        bandpass_receipe = self.bandpass + subband_option[lind] 
         
         self.check_gitlframeinputs(dm1v, dm2v, fixedbp, exptime=exptime, crop=crop, cleanrow=cleanrow, cleancol=cleancol)
 
-        # TODO: update this to be optics_keywords - newer version of corgisim will call this optics keywords 
         optics_keywords = {'cor_type': self.cor, 'use_errors': 2, 'polaxis': self.polaxis, 'output_dim': self.output_dim, \
                            'use_dm1': 1, 'dm1_v': dm1v, 'use_dm2': 1, 'dm2_v': dm2v, 'use_fpm': 1, 'use_lyot_stop': 1,
                            'use_field_stop': 1}
@@ -201,7 +217,10 @@ class GitlImage:
         return frame
 
     def gitlframe_cgihowfsc(self, cfg, dmlist, peakflux, fixedbp, exptime, crop, lind, cleanrow=1024, cleancol=1024, wfe=None):
-
+        """ 
+        Generate a GITL frame using the cgi-howfsc optical model. Following the procedure in sim_gitlframe in howfsc.util.gitlframes.
+        This is adapted from sim_gitlframe in howfsc.util.gitlframes.
+        """
         frame = sim_gitlframe(cfg, dmlist, fixedbp, peakflux, exptime, crop, lind, cleanrow=1024, cleancol=1024)
 
         return frame
@@ -224,7 +243,7 @@ class GitlImage:
          polaxis: integer, polarization axis setting for the camera.  Must be one of [0, 10, 20, 30].  Default is 10.
          cleanrow: Number of rows in a clean frame.  Integer > 0.  Defaults to 1024, the number of active area rows on the EXCAM detector; under nominal conditions, there should be no reason to use anything else.
 
-         exptime: Exposure time used when collecting the data in in.      Should be a real scalar > 0 when noise is included. 
+         exptime: Exposure time used when collecting the data in in. Should be a real scalar > 0 when noise is included. If is_noise_free = True, this can be any positive value.
          gain: EM gain setting for the EMCCD.  Real scalar >= 1.
 
         wfe is a placeholder argument for now to keep the option of passing additional wavefront error (e.g. zernike coefficients) to modify the frame generation
