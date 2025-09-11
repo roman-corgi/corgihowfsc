@@ -26,7 +26,6 @@ eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
 
-defjacpath = r'C:\Users\sredmond\Documents\github_repos\roman-corgi-repos\cgi-howfsc'
 args = get_args(jacpath=defjacpath)
 
 # Initialize variables etc
@@ -55,16 +54,18 @@ jacpath = args.jacpath
 
 modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles = load_files(args, howfscpath)
 
-# Initialize default probes class
-probing = DefaultProbes('default')
 
 # cfg
 cfg = CoronagraphMode(cfgfile)
 
+# Define control and estimator strategy
 cstrat = ControlStrategy(cstratfile)
 estrat = DefaultEstimator()
 
-# imager = corgisimImager()
+# Initialize default probes class
+probing = DefaultProbes('default')
+
+# Define imager and normalization (counts->contrast) strategy
 imager = GitlImage("cgi-howfsc", cfg=cfg)
 normstrat = EETCNormalization()
 

@@ -351,16 +351,6 @@ def nulling_gitl(cstrat, estrat, probing, normstrat, imager, cfg, args, modelpat
             for indk in range(ndm):
                 dmlist = [dm1_list[indj*ndm + indk],
                           dm2_list[indj*ndm + indk]]
-                # f = imager.sim_frame(cfg,
-                #                   dmlist,
-                #                   cstrat.fixedbp,
-                #                   peakflux,
-                #                   prev_exptime_list[indj*ndm + indk],
-                #                   crop,
-                #                   indj,
-                #                   cleanrow=hconf['excam']['cleanrow'],
-                #                   cleancol=hconf['excam']['cleancol'])
-
                 f = imager.get_image(prev_exptime_list[indj*ndm + indk], prev_gain_list[indj*ndm + indk],
                                      dm1_list[indj * ndm + indk], dm2_list[indj * ndm + indk],
                                      args.mode, cstrat.fixedbp,

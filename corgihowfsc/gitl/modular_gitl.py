@@ -286,6 +286,20 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
       startup; iteration 1 is the first iteration calculated by HOWFSC GITL,
       and the data collection for that iteration follows the first calculation.
 
+     estrat: a Estimator object;
+          this will be used to define the behavior
+          of the wavefront estimator by determining the method to take the probe images and convert into an e-field estimate.
+
+     probing: a Probe object;
+        Defines the probing sequence for the Estimation scheme. Determines the number of probes, shape of probes, etc.
+
+     normstrat: a Normalization object;
+        Defines the counts->contrast conversion including calculating the peakflux and performing the conversion.
+
+     imager: a Imaging object;
+        Defines the imaging behaviour, can use corgisim or compact model.
+
+
     Returns:
      - An absolute DM setting for DM1
      - An absolute DM setting for DM2
@@ -420,31 +434,6 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
     log.info('4. Estimate complex electric fields and return fields ' +
                  'with bad electric field maps')
     plist, other = probing.get_probe_ap(cfg, dm1_list, dm2_list, other=other)
-
-    # plist = [] # for model-based phase storage, chunked by lam
-    # for n in range(nprobepair):
-    #     log.info('Probe pair %d of %d', n+1, nprobepair)
-    #     # Extract phases from model
-    #     # element zero is unprobed, not used here
-    #     # data collection will do plus then minus
-    #     for j in range(nlam):
-    #         plist.append(np.zeros((nprobepair, nrow, ncol)))
-    #         log.info('Wavelength %d of %d', j+1, nlam)
-    #         log.info('Get probe phase from model and DM settings')
-    #         _, tmpph = probe_ap(cfg,
-    #                 dm1_list[j*ndm + 1+2*n], # positive
-    #                 dm1_list[j*ndm + 2+2*n], # negative
-    #                 dm2_list[j*ndm],
-    #                 j)
-    #
-    #         plist[j][n, :, :] = insertinto(tmpph, (nrow, ncol))
-    #
-    #         # Save the probe phases for later
-    #         key_n = 'probe_ph' + str(n)
-    #         other[j][key_n] = np.squeeze(plist[j][n, :, :])
-    #         pass
-    #
-    #     pass
 
     # Initialize accumulators for average modulated/unmodulated signal across
     # all filters for 1133642
