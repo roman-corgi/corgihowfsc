@@ -60,27 +60,26 @@ class GitlImage:
         self.cstrat = cstrat
 
         # bandpass check 
+        corgi_bandpass_option = ['1', '2', '3', '4'] # corgisim bandpass options
+
         if self.name == 'corgihowfsc': 
-            corgi_bandpass_option = ['1', '2', '3', '4'] # corgisim bandpass options
             if bandpass not in corgi_bandpass_option:
                 raise ValueError(f"bandpass must be one of {corgi_bandpass_option} for corgisim")
 
         if self.name == 'cgi-howfsc':
-            print('Using cgi-howfsc bandpass check ...')
-            bandpass_option = [575e-9, 660e-9, 730e-9, 825e-9] # central wvl for 4 bands
-            corgi_bandpass_option = ['1', '2', '3', '4'] # corgisim bandpass options
+            bandpass = bandpass[1].lam # Hardcoded index for the central wavelength for cgi-howfsc 
 
-            _bandpass = cfg.sl_list[1].lam # Hardcoded index for the central wavelength for cgi-howfsc 
+            bandpass_option = [575e-9, 660e-9, 730e-9, 825e-9] # central wvl for 4 bands
 
             tol = 3e-9 # match within +/- 3 nm -> 3e-9 m
-            match = [bp for bp in bandpass_option if abs(_bandpass - bp) <= tol]
+            match = [bp for bp in bandpass_option if abs(bandpass - bp) <= tol]
 
             if not match:
                 nm_opts = [bp * 1e9 for bp in bandpass_option]
-                raise ValueError(f"bandpass {_bandpass*1e9:.1f} nm does not match any allowed options {nm_opts} nm within +/- {tol*1e9} nm")
+                raise ValueError(f"bandpass {bandpass*1e9:.1f} nm does not match any allowed options {nm_opts} nm within +/- {tol*1e9} nm")
 
-            # map to corgisim bandpass label
-            bandpass = corgi_bandpass_option[bandpass_option.index(match[0])]
+            # # map to corgisim bandpass label - we do not need this for moment
+            # bandpass = corgi_bandpass_option[bandpass_option.index(match[0])] 
 
         self.bandpass = bandpass # map this back to corgisim 
 
@@ -141,7 +140,6 @@ class GitlImage:
             pass 
 
         elif self.name == 'cgi-howfsc':
-            print('Using cgi-howfsc input checks ...')
             # do cgi-howfsc check 
             check.real_positive_scalar(exptime, 'exptime', TypeError)
 
