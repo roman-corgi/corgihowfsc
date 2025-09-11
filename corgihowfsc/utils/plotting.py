@@ -164,7 +164,7 @@ def main():
     WAVELENGTHS = [523, 550, 578]  # Wavelengths in nanometers
     # =============================================================================
 
-    data_dir = Path('/Users/ilaginja/data_from_repos/corgiloop/acts1')
+    data_dir = Path('/Users/username/data_from_repos/corgiloop/loop1')
     output_dir = data_dir / 'probing_plots'
 
     # Create output directory
