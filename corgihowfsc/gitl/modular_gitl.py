@@ -64,7 +64,7 @@ eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 def howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
                        croplist, prev_exptime_list,
                        cstrat, n2clist, hconf, iteration,
-                       estrat, imager, normstrat, probing):
+                       estimator, imager, normalization_strategy, probes):
     """
     Wrapper for the main HOWFSC computation loop, to handle exceptions in a
     way consistent with the interface specifications (outputs indicated by a
@@ -79,7 +79,7 @@ def howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
                                        cfg, jac, jtwj_map,
                                        croplist, prev_exptime_list,
                                        cstrat, n2clist, hconf, iteration,
-                                       estrat, imager, normstrat, probing)
+                                       estimator, imager, normalization_strategy, probes)
         log.info('howfsc_computation main loop complete')
         return out
     # Note: while in principle _main_howfsc_computation() could output a result
@@ -174,7 +174,7 @@ def howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
 def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
                              croplist, prev_exptime_list,
                              cstrat, n2clist, hconf, iteration,
-                             estrat, imager, normstrat, probing):
+                             estimator, imager, normalization_strategy, probes):
     """
     Execute the HOWFSC GITL computation as defined in the HOWFSC FDD
 
@@ -286,14 +286,14 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
       startup; iteration 1 is the first iteration calculated by HOWFSC GITL,
       and the data collection for that iteration follows the first calculation.
 
-     estrat: a Estimator object;
+     estimator: a Estimator object;
           this will be used to define the behavior
           of the wavefront estimator by determining the method to take the probe images and convert into an e-field estimate.
 
-     probing: a Probe object;
+     probes: a Probe object;
         Defines the probing sequence for the Estimation scheme. Determines the number of probes, shape of probes, etc.
 
-     normstrat: a Normalization object;
+     normalization_strategy: a Normalization object;
         Defines the counts->contrast conversion including calculating the peakflux and performing the conversion.
 
      imager: a Imaging object;
@@ -380,7 +380,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         # _, peakflux = normalization.calc_flux_rate(
         #     sequence_name=hconf['hardware']['sequence_list'][j],
         # )
-        _, peakflux = normstrat.calc_flux_rate(cgi_eetc, hconf, j)
+        _, peakflux = normalization_strategy.calc_flux_rate(cgi_eetc, hconf, j)
 
         log.info('Expect %g photons/sec', peakflux)
         for k in range(ndm):
@@ -433,7 +433,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
     # field maps
     log.info('4. Estimate complex electric fields and return fields ' +
                  'with bad electric field maps')
-    plist, other = probing.get_probe_ap(cfg, dm1_list, dm2_list, other=other)
+    plist, other = probes.get_probe_ap(cfg, dm1_list, dm2_list, other=other)
 
     # Initialize accumulators for average modulated/unmodulated signal across
     # all filters for 1133642
@@ -453,7 +453,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
 
         # Measured e-field at this setting
         log.info('Measured e-field at this setting')
-        efield = estrat.estimate_efield(
+        efield = estimator.estimate_efield(
             intlist[j],
             plist[j],
             min_good_probes=hconf['howfsc']['min_good_probes'],

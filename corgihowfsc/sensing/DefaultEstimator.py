@@ -1,6 +1,6 @@
 import numpy as np
 
-from corgihowfsc.sensing.Estimate import Estimator
+from corgihowfsc.sensing.Estimator import Estimator
 from howfsc.sensing.pairwise_sensing import estimate_efield
 class DefaultEstimator(Estimator):
     # def __init__():

@@ -40,7 +40,7 @@ howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
 
 
-def nulling_gitl(cstrat, estrat, probing, normstrat, imager, cfg, args, modelpath, jacfile, probefiles, hconffile, n2clistfiles):
+def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, modelpath, jacfile, probefiles, hconffile, n2clistfiles):
     """Run a nulling sequence, using the compact optical model as the data source.
 
     Parameters:
@@ -50,14 +50,14 @@ def nulling_gitl(cstrat, estrat, probing, normstrat, imager, cfg, args, modelpat
           of the wavefront control by setting the regularization, per-pixel
           weighting, multiplicative gain, and next-iteration probe height.  It will
           also contain information about fixed bad pixels.
-    estrat: a Estimator object;
+    estimator: a Estimator object;
       this will be used to define the behavior
       of the wavefront estimator by determining the method to take the probe images and convert into an e-field estimate.
 
-    probing: a Probe object;
+    probes: a Probe object;
         Defines the probing sequence for the Estimation scheme. Determines the number of probes, shape of probes, etc.
 
-    normstrat: a Normalization object;
+    normalization_strategy: a Normalization object;
         Defines the counts->contrast conversion including calculating the peakflux and performing the conversion.
 
     imager: a Imaging object;
@@ -129,7 +129,7 @@ def nulling_gitl(cstrat, estrat, probing, normstrat, imager, cfg, args, modelpat
 
     # dm1_list, dm2
     # Get DM lists
-    dm1_list, dm2_list, dmrel_list, dm10, dm20 = probing.get_dm_probes(cfg, probefiles)
+    dm1_list, dm2_list, dmrel_list, dm10, dm20 = probes.get_dm_probes(cfg, probefiles)
     nlam = len(cfg.sl_list)
     ndm = 2 * len(dmrel_list) + 1
 
@@ -226,7 +226,7 @@ def nulling_gitl(cstrat, estrat, probing, normstrat, imager, cfg, args, modelpat
     framelist = []
     for indj, sl in enumerate(cfg.sl_list):
         crop = croplist[indj]
-        _, peakflux = normstrat.calc_flux_rate(cgi_eetc, hconf, indj)
+        _, peakflux = normalization_strategy.calc_flux_rate(cgi_eetc, hconf, indj)
         for indk in range(ndm):
             dmlist = [dm1_list[indj*ndm + indk],
                       dm2_list[indj*ndm + indk]]
@@ -281,7 +281,7 @@ def nulling_gitl(cstrat, estrat, probing, normstrat, imager, cfg, args, modelpat
         howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
                            croplist, prev_exptime_list,
                            cstrat, n2clist, hconf, iteration,
-                           estrat, imager, normstrat, probing)
+                           estimator, imager, normalization_strategy, probes)
         if isprof:
             pr.disable()
             pass
@@ -344,10 +344,7 @@ def nulling_gitl(cstrat, estrat, probing, normstrat, imager, cfg, args, modelpat
         framelist = []
         for indj, sl in enumerate(cfg.sl_list):
             crop = croplist[indj]
-            # _, peakflux = cgi_eetc.calc_flux_rate(
-            #     sequence_name=hconf['hardware']['sequence_list'][indj],
-            # )
-            _, peakflux = normstrat.calc_flux_rate(cgi_eetc, hconf, indj)
+            _, peakflux = normalization_strategy.calc_flux_rate(cgi_eetc, hconf, indj)
             for indk in range(ndm):
                 dmlist = [dm1_list[indj*ndm + indk],
                           dm2_list[indj*ndm + indk]]

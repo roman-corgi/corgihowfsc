@@ -25,7 +25,7 @@ from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
-
+defjacpath = r'C:\Users\sredmond\Documents\github_repos\roman-corgi-repos\cgi-howfsc'
 args = get_args(jacpath=defjacpath)
 
 # Initialize variables etc
@@ -60,14 +60,14 @@ cfg = CoronagraphMode(cfgfile)
 
 # Define control and estimator strategy
 cstrat = ControlStrategy(cstratfile)
-estrat = DefaultEstimator()
+estimator = DefaultEstimator()
 
 # Initialize default probes class
-probing = DefaultProbes('default')
+probes = DefaultProbes('default')
 
 # Define imager and normalization (counts->contrast) strategy
 imager = GitlImage("cgi-howfsc", cfg=cfg)
-normstrat = EETCNormalization()
+normalization_strategy = EETCNormalization()
 
-nulling_gitl(cstrat, estrat, probing, normstrat, imager, cfg, args, modelpath, jacfile, probefiles, hconffile, n2clistfiles)
+nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, modelpath, jacfile, probefiles, hconffile, n2clistfiles)
 

@@ -3,7 +3,7 @@
 # Any commercial use must be negotiated with the Office of Technology Transfer
 # at the California Institute of Technology.
 """
-Runs the end-to-end HOWFSC Computation activity
+Helper functions for gitl loop
 """
 
 import logging

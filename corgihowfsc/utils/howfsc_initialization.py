@@ -205,9 +205,6 @@ def load_files(args, howfscpath):
         pass
     log = logging.getLogger(__name__)
 
-    exptime = 10  # FIXME this should be derived from contrast eventually
-    contrast = 1e-5  # "starting" value to bootstrap getting we0
-
     if mode == 'nfov_dm':
         modelpath = os.path.join(howfscpath, 'model', 'testdata', 'narrowfov')
         cfgfile = os.path.join(modelpath, 'narrowfov_dm.yaml')
