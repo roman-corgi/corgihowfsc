@@ -28,6 +28,69 @@ def get_args(niter=5,
         """
         Initialize HOWFSC simulation with all required variables and configurations.
         Returns all variables needed for the main simulation loop.
+
+        niter : int, optional
+            Number of iterations to run.  Defaults to 5.
+        mode : str, optional
+            Coronagraph mode from test data; must be one of 'widefov', 'narrowfov',
+            'nfov_dm', 'nfov_flat', or 'spectroscopy'.  Defaults to 'narrowfov'.
+        isprof : bool, optional
+            If True, runs the Python cProfile profiler on howfsc_computation and
+            displays the top 20 howfsc/ contributors to cumulative time.
+        logfile : str, optional
+            If present, absolute path to file location to log to.
+        fracbadpix : float, optional
+            Fraction of pixels, in [0, 1], to make randomly bad (e.g. due to cosmic
+            rays).  Defaults to 0, with no bad pixels.
+        nbadpacket : int, optional
+            Number of GITL packets (3 rows x 153 cols) irrecoverably lost due to
+            errors, to be replaced by NaNs. Same number is applied to every iteration,
+            although not in the same place. Defaults to 0.
+        nbadframe : int, optional
+            Number of entire GITL frames (153 x 153) irrecoverably lost due to
+            errors, to be replaced by NaNs. Same number is applied to every iteration,
+            although not in the same place. Defaults to 0.
+        fileout : str, optional
+            If present, absolute path to file location (including .fits at the end) to
+            write output FITS file containing the final set of frames. prev_exptime_list,
+            as well as nlam are stored as a header.
+        stellar_vmag : float, optional
+            If present, overrides the V-band magnitude of the star in the
+            hconf file.
+        stellar_type : str, optional
+            If present, overrides the stellar type of the star in the hconf file for
+            the mode.
+        stellar_vmag_target : float, optional
+            If present, overrides the V-band magnitude of the target in the
+            hconf file.
+        stellar_type_target : str, optional
+            If present, overrides the stellar type of the target in the hconf file.
+        jacpath : str, optional
+            Path to directory containing precomputed Jacobians. Expected file names
+            are hard-coded for each coronagraph mode. Defaults to the jacdata directory
+            in the howfsc repository.
+        precomp : str, optional
+            One of 'load_all', 'precomp_jacs_once', 'precomp_jacs_always',
+            or 'precomp_all_once'.  This determines how the Jacobians and related
+            data are handled.  Defaults to 'load_all'.
+            'load_all' means that the Jacobians, JTWJ map, and n2clist are all
+            loaded from files in jacpath and leaves them fixed throughout a loop.
+            'precomp_jacs_once' means that the Jacobians and JTWJ map are computed
+            once at the start of the sequence, and the n2clist is loaded from files
+            in jacpath.
+            'precomp_jacs_always' means that the Jacobians and JTWJ map are computed
+            at the start of the sequence and then recomputed at the start of every
+            iteration except the last one; the n2clist is loaded from files in jacpath.
+            'precomp_all_once' means that the Jacobians, JTWJ map, and n2clist are
+            all computed once at the start of the sequence.
+        num_process : int, optional
+            Number of processes to use for Jacobian computation.  If None (the
+            default), no multiprocessing is used.  If 0, uses half the number of CPU
+            cores on the machine.
+        num_threads : int, optional
+            Sets mkl_num_threads to this value for parallel processing of calcjacs().
+            If None (the default), the environment variable MKL_NUM_THREADS or
+            HOWFS_CALCJAC_NUM_THREADS is used if it exists; otherwise, it does nothing.
         """
 
         # Copy the path setup from original script

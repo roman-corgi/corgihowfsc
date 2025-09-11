@@ -58,17 +58,6 @@ modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles = l
 # Initialize default probes class
 probing = DefaultProbes('default')
 
-# # Get DM lists
-# probefiles = {}
-# probefiles[0] = probe0file
-# probefiles[2] = probe1file
-# probefiles[1] = probe2file
-# dm1_list, dm2_list = probing.get_dm_probes(cfg, probefiles,
-#                       scalelist=[0.3, 0.3, 0.3, -0.3, -0.3, -0.3])
-#
-# # Get probe amplitude lists (this step is slow)
-# plist, other = probing.get_probe_ap(cfg, dm1_list, dm2_list)
-
 # cfg
 cfg = CoronagraphMode(cfgfile)
 
