@@ -1,0 +1,12 @@
+#  10 Sept 2025
+
+from howfsc.scripts.jactest_mp import calculate_jacobian_multiprocessed
+from howfsc.scripts.nulltest_gitl import nulling_test_gitl
+
+jacout = "C:\\dansWork\\roman_cpp\\runs\\jacobians\\nfov_flat_jac_ful.fits"
+calculate_jacobian_multiprocessed(output=jacout, mode = 'nfov_flat', proc=0)
+
+jacpath = "C:\\dansWork\\roman_cpp\\runs\\jacobians"
+fileout = "C:\\dansWork\\roman_cpp\\runs\\loop_nfov_flat\\fileout.log"
+logfile = "C:\\dansWork\\roman_cpp\\runs\\loop_nfov_flat\\logging.log"
+nulling_test_gitl(logfile=logfile, fileout=fileout, jacpath=jacpath)
