@@ -6,6 +6,7 @@ dependencies:
   - python=3.9
   - pip
   - astropy
+  - matplotlib
   - numpy
   - jupyter
   - sphinx>=4.0
