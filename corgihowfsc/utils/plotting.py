@@ -5,10 +5,8 @@ FITS Data Analysis Script for Modulated Images and Electric Field Estimations
 This script processes FITS files containing modulated images and electric field
 estimations, creating visualization plots organized by wavelength and iteration.
 """
-
-import os
 import glob
-import numpy as np
+from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
 from astropy.io import fits
 from pathlib import Path
@@ -127,13 +125,13 @@ def create_wavelength_plot(images_data, efield_data, wavelength, iteration, outp
             positive, negative = images_data['probe_pairs'][col]
 
             # Positive probe (top row)
-            im1 = axes[0, col].imshow(positive, cmap='viridis')
+            im1 = axes[0, col].imshow(positive, cmap='inferno', norm=LogNorm())
             axes[0, col].set_title(f'Positive probe {col + 1}')
             axes[0, col].axis('off')
             plt.colorbar(im1, ax=axes[0, col], shrink=0.6)
 
             # Negative prone (bottom row)
-            im2 = axes[1, col].imshow(negative, cmap='viridis')
+            im2 = axes[1, col].imshow(negative, cmap='inferno', norm=LogNorm())
             axes[1, col].set_title(f'Negative probe {col + 1}')
             axes[1, col].axis('off')
             plt.colorbar(im2, ax=axes[1, col], shrink=0.6)
