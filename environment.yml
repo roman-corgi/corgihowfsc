@@ -15,3 +15,4 @@ dependencies:
     - myst-parser               # Markdown support in Sphinx
     - linkify-it-py
     - git+https://github.com/roman-corgi/cgi-howfsc.git
+    - git+https://github.com/roman-corgi/corgisim.git@main
