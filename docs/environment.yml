@@ -4,6 +4,7 @@ channels:
   - defaults
 dependencies:
   - python=3.9
+  - matplotlib
   - sphinx>=4.0
   - sphinx_rtd_theme
   - pip
