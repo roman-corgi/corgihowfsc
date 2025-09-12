@@ -20,8 +20,11 @@ import proper
 from corgisim import outputs
 import time
 
+# TODO - mapping cgi-howfsc to corgisim, so when set up cgi-howfsc, we will be able to have its config in corgisim too
+# TODO - then using that input, we create a new class --> then we run corgisim 
+
 class GitlImage:
-    def __init__(self, name, cor, bandpass, polaxis=10, cfg=None, cstrat=None, Vmag=2.56, sptype='A5V', ref_flag=False, is_noise_free=True, output_dim=51):
+    def __init__(self, name, cor, bandpass=None, polaxis=10, cfg=None, cstrat=None, Vmag=2.56, sptype='A5V', ref_flag=False, is_noise_free=True, output_dim=51):
         """
         Gitl Image class should be able to handle either corgisim, or calling cgisim, following the defintion from sim_gitlframe in howfsc.util.gitlframes.
         Mode not supported yet: widefov. 
@@ -32,7 +35,7 @@ class GitlImage:
                 If name = 'corgihowfsc', this must be 'hlc'. 
                 If name = 'cgi-howfsc', this must be one of ['narrowfov', 'nfov_flat', 'nfov_dm']. 
             bandpass: If name = 'corgihowfsc', this must be one of ['1', '2', '3', '4'], corresponding to corgisim bandpass options. 
-                If name = 'cgi-howfsc', this must  be a howfsc.util.loadyaml.SpectralChannel object, e.g. cfg.sl_list[0].
+                If name = 'cgi-howfsc', this is always taken from cfg.sl_list.lam. 
             polaxis: integer, polarization axis setting for the camera.  Must be one of [0, 10, 20, 30].  Default is 10.
             cfg: CoronagraphMode object, only required if name = 'cgi-howfsc'.
             cstrat: ControlStrategy object, only required if name = 'cgi-howfsc'.
@@ -49,64 +52,48 @@ class GitlImage:
         # name check for corgisim or cgi-howfsc 
         if name not in ['corgihowfsc', 'cgi-howfsc']:
             raise ValueError("name must be 'corgihowfsc' or 'cgi-howfsc'")
-        else:
-            self.name = name
 
+        self.name = name
         # mode check and mapping 
         allowed_mode = ['hlc','narrowfov', 'nfov_flat', 'nfov_dm']
+        
         if self.name == 'corgihowfsc':
-            if cor not in allowed_mode:
-                raise ValueError(f"cor must be one of {allowed_mode} for corgisim")
-            else: 
-                self.cor = 'hlc'
-
-        if self.name == 'cgi-howfsc':
-            if cor not in allowed_mode:
-                raise ValueError(f"mode must be one of {allowed_mode} for cgi-howfsc")
+            # corgisim setup
+            self.mode = mode if mode is not None else 'hlc'
+            if self.mode != 'hlc':
+                raise ValueError("mode must be 'hlc' for corgisim")
+            if bandpass is None or bandpass not in ['1', '2', '3', '4']:
+                raise ValueError("bandpass must be one of ['1', '2', '3', '4'] for corgihowfsc and cannot be None")
             else:
-                self.cor = cor
+                self.bandpass = bandpass
+            
+            self.is_noise_free = is_noise_free
+            self.output_dim = output_dim
 
-        # cgi-howfsc configs
-        self.cfg = cfg 
-        self.cstrat = cstrat
+            # host star properties (shared between corgihowfsc and cgi-howfsc)
+            host_star_properties = {'Vmag': Vmag,
+                                    'spectral_type': sptype,
+                                    'magtype': 'vegamag',
+                                    'ref_flag': ref_flag}
+            # corgisim configs
+            point_source_info = [] # default is just none, tbc whether there should be point source or not
+            self.base_scene = scene.Scene(host_star_properties, point_source_info)
+        else:
+            # cgi-howfsc setup - requires cfg and cstrat as input files (from cgi-howfsc repo)
+            if mode is None:
+                raise ValueError("mode is required for cgi-howfsc or corgihowfsc")
+            if mode not in ['narrowfov', 'nfov_flat', 'nfov_dm']:
+                raise ValueError("mode must be one of ['narrowfov', 'nfov_flat', 'nfov_dm'] for cgi-howfsc")
+            if cfg is None or cstrat is None:
+                raise ValueError("cfg and cstrat are required for cgi-howfsc")
+            
+            self.mode = mode
+            self.cfg = cfg
+            self.cstrat = cstrat
 
-        # bandpass check 
-        corgi_bandpass_option = ['1', '2', '3', '4'] # corgisim bandpass options
-
-        if self.name == 'corgihowfsc': 
-            if bandpass not in corgi_bandpass_option:
-                raise ValueError(f"bandpass must be one of {corgi_bandpass_option} for corgisim")
-
-        if self.name == 'cgi-howfsc':
-            bandpass = bandpass[1].lam # Hardcoded index for the central wavelength for cgi-howfsc 
-
-            bandpass_option = [575e-9, 660e-9, 730e-9, 825e-9] # central wvl for 4 bands
-
-            tol = 3e-9 # match within +/- 3 nm -> 3e-9 m
-            match = [bp for bp in bandpass_option if abs(bandpass - bp) <= tol]
-
-            if not match:
-                nm_opts = [bp * 1e9 for bp in bandpass_option]
-                raise ValueError(f"bandpass {bandpass*1e9:.1f} nm does not match any allowed options {nm_opts} nm within +/- {tol*1e9} nm")
-
-            # # map to corgisim bandpass label - we do not need this for moment
-            # bandpass = corgi_bandpass_option[bandpass_option.index(match[0])] 
-
-        self.bandpass = bandpass # map this back to corgisim 
-
-        # host star properties (shared between corgihowfsc and cgi-howfsc)
-        host_star_properties = {'Vmag': Vmag,
-                                'spectral_type': sptype,
-                                'magtype': 'vegamag',
-                                'ref_flag': ref_flag}
-
-        # corgisim configs
-        self.is_noise_free = is_noise_free # corgisim only 
-        self.output_dim = output_dim
-
-        # corgisim configs
-        point_source_info = [] # default is just none, tbc whether there should be point source or not
-        self.base_scene = scene.Scene(host_star_properties, point_source_info)
+            # bandpass is indeed no needed for cgi-howfsc, as it is taken from cfg.sl_list.lam
+            if not hasattr(cfg, 'sl_list') or len(cfg.sl_list) == 0:
+                raise ValueError("cfg.sl_list must contain spectral line information")
 
     def check_gitlframeinputs(self, dm1v, dm2v, fixedbp, exptime, crop, cleanrow, cleancol): 
         """ 
@@ -227,8 +214,7 @@ class GitlImage:
 
     def get_image(self, dm1v, dm2v, exptime, gain, crop, lind, peakflux=1,cleanrow=1024, cleancol=1024, fixedbp=np.zeros((1024, 1024), dtype=bool), wfe=None):
         """
-        Get a simulated GITL frame using either corgisim or cgi-howfsc repo's optical model
-
+        Get a simulated GITL frame using either corgisim or cgi-howfsc repo's optical model. This get_image method should be compatible with both cgi-howfsc and corgisim. 
         Arguments:
          dm1v: ndarray, absolute voltage map for DM1.
          dm2v: ndarray, absolute voltage map for DM2.
@@ -247,8 +233,6 @@ class GitlImage:
          gain: EM gain setting for the EMCCD.  Real scalar >= 1.
 
         wfe is a placeholder argument for now to keep the option of passing additional wavefront error (e.g. zernike coefficients) to modify the frame generation
-
-        This get_image method should be compatible with both cgi-howfsc and corgisim 
         """
         if self.name == 'corgihowfsc':
             frame = self.gitlframe_corgisim(dm1v, dm2v, fixedbp, exptime, crop, lind, gain, cleanrow, cleancol, wfe)
