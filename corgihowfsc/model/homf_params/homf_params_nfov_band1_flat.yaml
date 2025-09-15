@@ -1,0 +1,55 @@
+# SUBBANDS and WAVELENGTHS
+coro_mode: 'nfov_band1_flat'
+cal_bandpass: '1b'
+lam_central: 575.0E-9
+ppl_meas_ref: 2.2746
+subband_list: ['1A', '1B', '1C']
+n_subband: 3
+fn_ref_howfsc_yaml: '../models/homf_dmreg/howfsc_optical_model_dmreg_only_band_1b.yaml'
+
+# STAR
+spectral_type: 'f5v'
+
+# MASKS
+is_hlc: true
+mask_folder: 'HLC_20190210b_NFOV'
+fn_lyot: 'LS_HLC_20190210b_NFOV_1000_XCS.fits'
+fn_spm: null
+mag_pupil_vs_ref:  0.3006302  # !eval 300.6302092914187/1000  # See beam diameter in scripts/data/spam/calib_spam_results.csv
+use_spm: false
+is_fpm_open: true
+n_fpm: 75
+ppl_fpm_central: 12
+
+# FIELD STOP 
+fn_fs: 'FS_HLC_20190210b_NFOV_25pixPerLamD.fits'
+ppl_fs_ref: 25
+fs_rot_deg: 0  # degrees
+fs_x_offset: 0  # in EXCAM pixels
+fs_y_offset: 0  # in EXCAM pixels
+
+# DARK HOLE PIXELS
+dh_match_fs: false  # Whether to set the dark hole to be a thresholded version of the field stop
+fs_thresh_for_dh:  0.1  # only used if dh_match_fs==true. Not know what best value is.
+dh_dict:  # if dh_match_fs==true, these inputs are used for 'build_sls.add_dh'
+    shape: 'annulus'
+    radiusInnerLamD: 2.8
+    radiusOuterLamD: 9.7
+    xOffset: 0  # from star center. Star center added separately
+    yOffset: 0  # from star center. Star center added separately
+    
+
+# PUPIL E-FIELD AND ASSOCIATED DM SETTINGS
+fn_dm1v_epup: './data/pupil/1b/v_flat_phase_band1_dm1.fits'
+fn_dm2v_epup: './data/pupil/1b/v_flat_phase_band1_dm2.fits'
+fn_amp_end2end: './data/pupil/1b/poked_none/amp_end2end.fits'
+fn_ph_end2end: './data/pupil/1b/poked_none/phase_end2end.fits'
+fn_ph_backend: './data/pupil/1b/poked_none/phase_backend.fits'
+
+# DO NOT CHANGE 
+n_excam: 153  # Has to match FSW!!!
+fn_howfsc_yaml: 'howfsc_optical_model.yaml' 
+# n_subband: !eval len(subband_list)
+
+tip_list: [0, 0, 0]  # x_excam
+tilt_list: [0, 0, 0]  # y_excam

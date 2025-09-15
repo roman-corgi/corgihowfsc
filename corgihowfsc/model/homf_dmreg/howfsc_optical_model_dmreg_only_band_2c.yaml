@@ -1,0 +1,47 @@
+dms:
+  DM1:
+    pitch: 0.0009906
+    registration:
+      dx: -0.03858263550037617
+      dy: -0.04190417220762893
+      inffn: ../dm1/dm_1236-2_brian_inf_v1.0.fits
+      nact: 48
+      ppact_cx: 6.436708883242701
+      ppact_cy: 6.339459240269172
+      ppact_d: 13
+      thact: 90.02539215750797
+      flipx: true
+    voltages:
+      gainfn: gain_map_dm1.fits
+      vmax: 100
+      vmin: 0
+      vneighbor: 50.0
+      vcorner: 75.0
+      vquant: 0.001678466796875
+      tiefn: ../dm1/tied_actuator_map.fits
+      flatfn: ../dm1/dm_allzeros.fits
+      crosstalkfn: null
+    z: 0.0
+  DM2:
+    pitch: 0.0009906
+    registration:
+      dx: 0.10149819030418444
+      dy: -0.5737292380651876
+      inffn: ../dm2/dm_1236-5_brian_inf_v1.0.fits
+      nact: 48
+      ppact_cx: 6.4315512015467
+      ppact_cy: 6.334385856229302
+      ppact_d: 13
+      thact: 90.00912561099196
+      flipx: false
+    voltages:
+      gainfn: gain_map_dm2.fits
+      vmax: 100
+      vmin: 0
+      vneighbor: 50.0
+      vcorner: 75.0
+      vquant: 0.001678466796875
+      tiefn: ../dm2/tied_actuator_map.fits
+      flatfn: ../dm2/dm_allzeros.fits
+      crosstalkfn: ../dm2/crosstalk_dm2_20240719.yaml
+    z: 1.0
