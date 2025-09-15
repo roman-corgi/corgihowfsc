@@ -60,15 +60,15 @@ class GitlImage:
 
     def _init_corgihowfsc (self, cor, bandpass, Vmag, sptype, ref_flag, is_noise_free, output_dim, hconf):
         """Initialise for corgihowfsc mode."""
-        # Set coronagraph mode
-        self.cor = cor if cor is not None else 'hlc'
-        if self.cor != 'hlc':
-            raise ValueError("cor must be 'hlc' for corgisim")
-            
+
         # Validate bandpass 
         if bandpass is None or bandpass not in ['1', '2', '3', '4']:
             raise ValueError("bandpass must be one of ['1', '2', '3', '4'] for corgihowfsc and cannot be None")
+
         self.bandpass = bandpass
+
+        # Set coronagraph mode
+        self.cor = 'hlc' + ('_band' + bandpass)
 
         # Set other corgihowfsc specific parameters 
         self.is_noise_free = is_noise_free
@@ -324,7 +324,7 @@ def map_cgi_to_corgi_config(cgi_config, bandpass=None, output_dim=None, polaxis=
     # Build corgi config with clear parameter precedence
     corgi_config = {
         'name': 'corgihowfsc',
-        'cor': 'hlc',  # corgihowfsc only supports hlc
+        'cor': 'hlc' + ('_band' + bandpass if bandpass in ['1','2', '3', '4'] else ''),
         'bandpass': bandpass,
         'output_dim': output_dim if output_dim is not None else 51,
         'polaxis': polaxis if polaxis is not None else cgi_config.get('polaxis', 10),
