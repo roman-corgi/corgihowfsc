@@ -300,8 +300,7 @@ def map_cgi_to_corgi_config(cgi_config, bandpass=None, output_dim=None, polaxis=
         output_dim: Output dimension for corgisim. If None, defaults to 51
         polaxis: Polarization axis. If None, uses value from cgi_config or defaults to 10
         is_noise_free: Noise setting. If None, defaults to True
-        
-        # Stellar property overrides (optional - will use hconf values if not specified)
+        Stellar property overrides (optional - will use hconf values if not specified)
         Vmag: V magnitude override. If None, uses value from hconf in cgi_config
         sptype: Spectral type override. If None, uses value from hconf in cgi_config
         ref_flag: Reference flag override. If None, uses value from hconf in cgi_config
@@ -311,7 +310,7 @@ def map_cgi_to_corgi_config(cgi_config, bandpass=None, output_dim=None, polaxis=
         
     Note:
         By default, stellar properties (Vmag, sptype, ref_flag) come from hconf in cgi_config.
-        You can override individual stellar properties if needed, but this is optional.
+        You can override individual properties if needed, but this is optional. All these properties can be overridden: bandpass, output_dim, polaxis, is_noise_free, Vmag, sptype, ref_flag
     """
     # First validate cgi cor type
     if 'cor' not in cgi_config or cgi_config['cor'] not in ['narrowfov', 'nfov_flat', 'nfov_dm']:
