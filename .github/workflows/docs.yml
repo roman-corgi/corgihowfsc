@@ -1,47 +1,60 @@
 name: Documentation
-
 on:
   workflow_dispatch:
-    branches: [ main ]
   push:
     branches: [ main ]
   pull_request:
     types: [ready_for_review]
     branches: [ main ]
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   build_docs:
     name: Build
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
-    - uses: conda-incubator/setup-miniconda@v2
+    
+    - uses: conda-incubator/setup-miniconda@v3
       with:
-          auto-update-conda: true
-          auto-activate-base: false
-          environment-file: docs/environment.yml
-          activate-environment: build-env
+        auto-update-conda: true
+        auto-activate-base: false
+        miniconda-version: "latest"
+        environment-file: docs/environment.yml
+        activate-environment: build-env
 
-    - name: Install dependencies
+    - name: Debug environment
       shell: bash -l {0}
       run: |
-        pip install -e .
-
+        echo "=== Environment info ==="
+        conda info
+        echo "=== Installed packages ==="
+        conda list
+        echo "=== Environment file contents ==="
+        cat docs/environment.yml
+        echo "=== Checking for any other environment files ==="
+        find . -name "*.yml" -o -name "requirements*.txt" | head -10
+    
     - name: Build documentation
       shell: bash -l {0}
       run: |
-        conda activate build-env
         cd docs
         make html
-    - name: Upload artifact
+    
+    - name: Setup Pages
+      if: github.ref == 'refs/heads/main'
+      uses: actions/configure-pages@v4
+      
+    - name: Upload to GitHub Pages
+      if: github.ref == 'refs/heads/main'
       uses: actions/upload-pages-artifact@v3
       with:
         path: ./docs/build/html
-
+        
     - name: Deploy to GitHub Pages
       if: github.ref == 'refs/heads/main'
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./docs/build/html
+      uses: actions/deploy-pages@v4
