@@ -26,8 +26,6 @@ jobs:
     - name: Install dependencies
       shell: bash -l {0}
       run: |
-        conda env create --name build-env --file environment.yml
-        conda activate build-env
         pip install -e .
 
     - name: Build documentation
