@@ -18,7 +18,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    
     - uses: conda-incubator/setup-miniconda@v3
       with:
         auto-update-conda: true
@@ -26,18 +25,6 @@ jobs:
         miniconda-version: "latest"
         environment-file: docs/environment.yml
         activate-environment: build-env
-
-    - name: Debug environment
-      shell: bash -l {0}
-      run: |
-        echo "=== Environment info ==="
-        conda info
-        echo "=== Installed packages ==="
-        conda list
-        echo "=== Environment file contents ==="
-        cat docs/environment.yml
-        echo "=== Checking for any other environment files ==="
-        find . -name "*.yml" -o -name "requirements*.txt" | head -10
     
     - name: Build documentation
       shell: bash -l {0}
