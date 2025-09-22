@@ -3,7 +3,7 @@ name: Documentation
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [ main, fix/deplo ]
   pull_request:
     types: [ready_for_review]
     branches: [ main ]
