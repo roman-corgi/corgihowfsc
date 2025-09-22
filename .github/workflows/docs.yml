@@ -46,7 +46,6 @@ jobs:
         
   deploy:
     name: Deploy to GitHub Pages
-    if: github.ref == 'refs/heads/main'
     needs: build_docs
     runs-on: ubuntu-latest
     environment:
