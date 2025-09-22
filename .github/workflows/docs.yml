@@ -3,7 +3,7 @@ name: Documentation
 on:
   workflow_dispatch:
   push:
-    branches: [ main, fix/deplo ]
+    branches: [ main ]
   pull_request:
     types: [ready_for_review]
     branches: [ main ]
@@ -35,15 +35,18 @@ jobs:
         make html
     
     - name: Setup Pages
+      if: github.ref == 'refs/heads/main'
       uses: actions/configure-pages@v4
       
     - name: Upload to GitHub Pages
+      if: github.ref == 'refs/heads/main'
       uses: actions/upload-pages-artifact@v3
       with:
         path: ./docs/build/html
         
   deploy:
     name: Deploy to GitHub Pages
+    if: github.ref == 'refs/heads/main'
     needs: build_docs
     runs-on: ubuntu-latest
     environment:
