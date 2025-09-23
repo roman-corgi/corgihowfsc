@@ -272,6 +272,51 @@ def load_files(args, howfscpath):
         ]
         pass
 
+    elif mode == 'nfov_band1_flat':
+        modelpath = os.path.join(howfscpath, 'model', 'testdata', 'nfov_band1_flat')
+        cfgfile = os.path.join(modelpath, 'howfsc_optical_model.yaml')
+        jacfile = os.path.join(jacpath, 'nfov_flat_jac.fits')
+        cstratfile = os.path.join(modelpath, 'cstrat_nfov_flat.yaml')
+        probe0file = os.path.join(modelpath,
+                                  'nfov_dm_dmrel_4_1.0e-05_cos.fits')
+        probe1file = os.path.join(modelpath,
+                                  'nfov_dm_dmrel_4_1.0e-05_sinlr.fits')
+        probe2file = os.path.join(modelpath,
+                                  'nfov_dm_dmrel_4_1.0e-05_sinud.fits')
+        probefiles = {}
+        probefiles[0] = probe0file
+        probefiles[2] = probe1file
+        probefiles[1] = probe2file
+        hconffile = os.path.join(modelpath, 'hconf_nfov_flat.yaml')
+        n2clistfiles = [
+            os.path.join(modelpath, 'ones_like_fs.fits'),
+            os.path.join(modelpath, 'ones_like_fs.fits'),
+            os.path.join(modelpath, 'ones_like_fs.fits'),
+        ]
+
+    elif mode == 'wfov_band4_flat':
+        modelpath = os.path.join(howfscpath, 'model', 'testdata', 'wfov_band4_flat')
+        cfgfile = os.path.join(modelpath, 'howfsc_optical_model.yaml')
+        jacfile = os.path.join(jacpath, 'wfov_flat_jac.fits')
+        cstratfile = os.path.join(modelpath, 'cstrat_wfov_flat.yaml')
+        probe0file = os.path.join(modelpath,
+                                  'wfov_dmrel_1e-5_cos_constrained.fits')
+        probe1file = os.path.join(modelpath,
+                                  'wfov_dmrel_1e-5_sinlr_constrained.fits')
+        probe2file = os.path.join(modelpath,
+                                  'wfov_dmrel_1e-5_sinud_constrained.fits')
+        probefiles = {}
+        probefiles[0] = probe0file
+        probefiles[2] = probe1file
+        probefiles[1] = probe2file
+        hconffile = os.path.join(modelpath, 'hconf_wfov_flat.yaml')
+        n2clistfiles = [
+            os.path.join(modelpath, 'ones_like_fs.fits'),
+            os.path.join(modelpath, 'ones_like_fs.fits'),
+            os.path.join(modelpath, 'ones_like_fs.fits'),
+        ]
+
+
     else:
         # should not reach here; argparse should catch this
         raise ValueError('Invalid coronagraph mode type')
