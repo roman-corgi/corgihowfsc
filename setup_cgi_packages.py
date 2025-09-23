@@ -35,7 +35,7 @@ def run_pip_install(package_dir):
     """Install a package using pip in the current environment"""
     print(f"   Installing from {package_dir}...")
     try:
-        result = subprocess.run([sys.executable, "-m", "pip", "install", "-e", "."],
+        result = subprocess.run([sys.executable, "-m", "pip", "install", "."],
                                 cwd=package_dir,
                                 check=True,
                                 capture_output=True,

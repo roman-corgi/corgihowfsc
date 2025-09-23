@@ -13,11 +13,11 @@
 
 Download these files manually by clicking on the following links and save them to any **directory of your choice**, e.g.: `/path/to/your/downloads/`:
 
-| File | Download Link                                                                                             |
-|------|-----------------------------------------------------------------------------------------------------------|
-| `proper_v3.3.3_python.zip` | [Proper Library](https://sourceforge.net/projects/proper-library/files/proper_v3.3.3_python.zip/download) |
-| `roman_preflight_proper_public_v2.0.1_python.zip` | [CGISim](https://sourceforge.net/projects/cgisim/files/roman_preflight_proper_public_v2.0.1_python.zip/download)                                                        |
-| `cgisim_v4.0.zip` | [CGISim](https://sourceforge.net/projects/cgisim/files/cgisim_v4.0.zip/download)                                                        |
+| File | Download Link                                                                                                                          |
+|------|----------------------------------------------------------------------------------------------------------------------------------------|
+| `proper_v3.3.3_python.zip` | [Proper Library](https://sourceforge.net/projects/proper-library/files/proper_v3.3.3_python.zip/download)                              |
+| `roman_preflight_proper_public_v2.0.1_python.zip` | [Roman preflight Proper model](https://sourceforge.net/projects/cgisim/files/roman_preflight_proper_public_v2.0.1_python.zip/download) |
+| `cgisim_v4.0.zip` | [CGISim](https://sourceforge.net/projects/cgisim/files/cgisim_v4.0.zip/download)                                                       |
 
 ### 2. Clone required repositories
 
