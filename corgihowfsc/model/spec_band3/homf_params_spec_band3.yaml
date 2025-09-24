@@ -1,0 +1,61 @@
+# SUBBANDS and WAVELENGTHS
+coro_mode: 'spec_band3'
+cal_bandpass: '3c'
+lam_central: 727.0E-9
+ppl_meas_ref: 2.879272952383781
+noprobe: false
+subband_list: ['3A', '3B', '3C', '3G', '3E']
+n_subband: 5
+bw: 0.167  # Used only in sim when using different number of subbands from actual instrument
+fn_ref_howfsc_yaml: '../models/homf_dmreg/howfsc_optical_model_dmreg_only_band_3c.yaml'
+
+# STAR
+spectral_type: 'f5v'
+
+# MASKS
+is_hlc: false
+mask_folder: 'SPC_20200617_Spec'
+fn_fpm: 'FPM_SPC_20200617_Spec_25pixPerLamD.fits'
+fn_lyot: 'LS_SPC_20200617_Spec_1000_XCS.fits'
+fn_spm: 'SPM_SPC-20200617_1000_rounded9_rotated_XCS.fits'
+mag_pupil_vs_ref: 0.30038323884185354  # !eval 300.38323884185354/1000  # See beam diameter in scripts/data/spam/calib_spam_results.csv
+use_spm: true
+is_fpm_open: false
+n_fpm: 97  # >= 2*9.4*5+1
+ppl_fpm_ref: 25
+ppl_fpm_central: 5
+
+# FIELD STOP 
+fn_fs: null
+# ppl_fs_ref: 25
+# fs_rot_deg: 0  # degrees
+# fs_x_offset: 0  # in EXCAM pixels
+# fs_y_offset: 0  # in EXCAM pixels
+
+# DARK HOLE PIXELS
+dh_match_fs: false  # Whether to set the dark hole to be a thresholded version of the field stop
+fs_thresh_for_dh:  0.1  # only used if dh_match_fs==true. Not know what best value is.
+dh_dict:  # if dh_match_fs==true, these inputs are used for 'build_sls.add_dh'
+    shape: 'bowtie'
+    radiusInnerLamD: 2.6
+    radiusOuterLamD: 9.4
+    openingAngle: 65.0
+    clocking: 90.0
+    xOffset: 0  # from star center. Star center added separately
+    yOffset: 0  # from star center. Star center added separately
+
+# PUPIL E-FIELD AND ASSOCIATED DM SETTINGS
+fn_dm1v_epup: './data/pupil/3c/v_flat_phase_band3_dm1.fits'
+fn_dm2v_epup: './data/pupil/3c/v_flat_phase_band3_dm2.fits'
+fn_amp_end2end: './data/pupil/3c/poked_none/amp_end2end.fits'
+fn_ph_end2end: './data/pupil/3c/poked_none/phase_end2end.fits'
+fn_ph_backend: './data/pupil/3c/poked_none/phase_backend.fits'
+
+# Only change for faster efc_computation()
+n_excam: 153  # Has to match FSW for real usage.
+# n_excam: 79  # >= ceil_odd(2*4*9.4+1)
+
+# DO NOT CHANGE 
+fn_howfsc_yaml: 'howfsc_optical_model.yaml' 
+tip_list: [0, 0, 0, 0, 0]  # x_excam
+tilt_list: [0, 0, 0, 0, 0]  # y_excam
