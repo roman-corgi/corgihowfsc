@@ -13,12 +13,13 @@ import howfsc
 import eetc
 from howfsc.control.cs import ControlStrategy
 from howfsc.model.mode import CoronagraphMode
+from howfsc.util.loadyaml import loadyaml
+
 
 from corgihowfsc.utils.howfsc_initialization import get_args, load_files
 from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
 from corgihowfsc.sensing.DefaultProbes import DefaultProbes
 from corgihowfsc.utils.contrast_nomalization import EETCNormalization
-# from corgihowfsc.utils.Imager import Imager
 from corgihowfsc.gitl.nulling_gitl import nulling_gitl
 from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 
@@ -58,6 +59,9 @@ modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles = l
 # cfg
 cfg = CoronagraphMode(cfgfile)
 
+# hconffile
+hconf = loadyaml(hconffile, custom_exception=TypeError)
+
 # Define control and estimator strategy
 cstrat = ControlStrategy(cstratfile)
 estimator = DefaultEstimator()
@@ -66,8 +70,14 @@ estimator = DefaultEstimator()
 probes = DefaultProbes('default')
 
 # Define imager and normalization (counts->contrast) strategy
-imager = GitlImage("cgi-howfsc", cfg=cfg)
+imager = GitlImage(
+    cfg=cfg,         # Your CoronagraphMode object
+    cstrat=cstrat,   # Your ControlStrategy object
+    hconf=hconf,      # Your host config with stellar properties
+    backend='cgi-howfsc',
+    cor=mode
+)
 normalization_strategy = EETCNormalization()
 
-nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, modelpath, jacfile, probefiles, hconffile, n2clistfiles)
+nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles)
 

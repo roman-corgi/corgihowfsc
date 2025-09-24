@@ -40,7 +40,7 @@ howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
 
 
-def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, modelpath, jacfile, probefiles, hconffile, n2clistfiles):
+def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles):
     """Run a nulling sequence, using the compact optical model as the data source.
 
     Parameters:
@@ -192,9 +192,6 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             pass
         pass
 
-    # hconffile
-    hconf = loadyaml(hconffile, custom_exception=TypeError)
-
     if stellar_vmag is not None:
         hconf['star']['stellar_vmag'] = stellar_vmag
     if stellar_type is not None:
@@ -231,16 +228,17 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             dmlist = [dm1_list[indj*ndm + indk],
                       dm2_list[indj*ndm + indk]]
 
-            f = imager.get_image(exptime, gain,
-                                dm1_list[indj*ndm + indk], dm2_list[indj*ndm + indk],
-                                args.mode, cstrat.fixedbp,
-                                lind=indj,
-                                peakflux=peakflux,
-                                crop=crop,
-                                polaxis=10,
-                                cleanrow=1024, cleancol=1024,
-                                fixedbp=cstrat.fixedbp,
-                                wfe=None)
+            f = imager.get_image(dm1_list[indj*ndm + indk],
+                             dm2_list[indj*ndm + indk],
+                             exptime,
+                             gain=gain,
+                             crop=crop,
+                             lind=indj,
+                             peakflux=peakflux,
+                             cleanrow=1024,
+                             cleancol=1024,
+                             fixedbp=cstrat.fixedbp,
+                             wfe=None)
 
             bpmeas = rng.random(f.shape) > (1 - fracbadpix)
             f[bpmeas] = np.nan
@@ -348,16 +346,17 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             for indk in range(ndm):
                 dmlist = [dm1_list[indj*ndm + indk],
                           dm2_list[indj*ndm + indk]]
-                f = imager.get_image(prev_exptime_list[indj*ndm + indk], prev_gain_list[indj*ndm + indk],
-                                     dm1_list[indj * ndm + indk], dm2_list[indj * ndm + indk],
-                                     args.mode, cstrat.fixedbp,
-                                     lind=indj,
-                                     peakflux=peakflux,
-                                     crop=crop,
-                                     polaxis=10,
-                                     cleanrow=1024, cleancol=1024,
-                                     fixedbp=cstrat.fixedbp,
-                                     wfe=None)
+                f = imager.get_image(dm1_list[indj * ndm + indk],
+                                 dm2_list[indj * ndm + indk],
+                                 prev_exptime_list[indj*ndm + indk],
+                                 gain=prev_gain_list[indj*ndm + indk],
+                                 crop=crop,
+                                 lind=indj,
+                                 peakflux=peakflux,
+                                 cleanrow=1024,
+                                 cleancol=1024,
+                                 fixedbp=cstrat.fixedbp,
+                                 wfe=None)
                 framelist.append(f)
                 pass
             pass
