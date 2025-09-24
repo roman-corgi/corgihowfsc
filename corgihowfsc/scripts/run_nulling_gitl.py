@@ -26,7 +26,7 @@ from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
-defjacpath = r'C:\Users\sredmond\Documents\github_repos\roman-corgi-repos\cgi-howfsc'
+# defjacpath = r'C:\Users\sredmond\Documents\github_repos\roman-corgi-repos\cgi-howfsc'
 args = get_args(jacpath=defjacpath)
 
 # Initialize variables etc
