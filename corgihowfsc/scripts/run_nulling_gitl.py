@@ -5,7 +5,7 @@ import argparse
 import cProfile
 import pstats
 import logging
-
+from datetime import datetime
 import numpy as np
 import astropy.io.fits as pyfits
 
@@ -16,6 +16,7 @@ from howfsc.model.mode import CoronagraphMode
 from howfsc.util.loadyaml import loadyaml
 
 
+import corgihowfsc
 from corgihowfsc.utils.howfsc_initialization import get_args, load_files
 from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
 from corgihowfsc.sensing.DefaultProbes import DefaultProbes
@@ -26,17 +27,24 @@ from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
-# defjacpath = r'C:\Users\sredmond\Documents\github_repos\roman-corgi-repos\cgi-howfsc'
-args = get_args(jacpath=defjacpath)
+defjacpath = r'C:\Users\sredmond\Documents\github_repos\roman-corgi-repos\cgi-howfsc'
+
+current_datetime = datetime.now()
+folder_name = 'gitl_simulation_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
+fits_name = 'final_frames.fits'
+fileout_path = os.path.join(os.path.dirname(os.path.dirname(corgihowfsc.__file__)), 'data', folder_name, fits_name)
+
+args = get_args(fileout=fileout_path,jacpath=defjacpath)
+
 
 # Initialize variables etc
 
-otherlist = []
-abs_dm1list = []
-abs_dm2list = []
-framelistlist = []
-scalelistout = []
-camlist = []
+# otherlist = []
+# abs_dm1list = []
+# abs_dm2list = []
+# framelistlist = []
+# scalelistout = []
+# camlist = []
 
 # User params
 niter = args.niter
