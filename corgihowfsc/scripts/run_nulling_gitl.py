@@ -9,7 +9,7 @@ from datetime import datetime
 import numpy as np
 import astropy.io.fits as pyfits
 
-import howfsc
+import corgihowfsc
 import eetc
 from howfsc.control.cs import ControlStrategy
 from howfsc.model.mode import CoronagraphMode
@@ -25,7 +25,7 @@ from corgihowfsc.gitl.nulling_gitl import nulling_gitl
 from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
-howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
+howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
 defjacpath = r'C:\Users\sredmond\Documents\github_repos\roman-corgi-repos\cgi-howfsc'
 
