@@ -32,8 +32,8 @@ from howfsc.util.gitl_tools import param_order_to_list
 
 from corgihowfsc.gitl.modular_gitl import howfsc_computation
 from howfsc.precomp import howfsc_precomputation
+from howfsc.util.corgitools import save_outputs
 
-# from howfsc.scripts.gitlframes import sim_gitlframe
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
@@ -98,12 +98,20 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     jacpath = args.jacpath
     precomp = args.precomp
 
+    # Make filout dir
+    if fileout is not None:
+        print('Making output directory ', fileout)
+        os.makedirs(os.path.dirname(fileout), exist_ok=True)
+
     otherlist = []
     abs_dm1list = []
     abs_dm2list = []
     framelistlist = []
     scalelistout = []
     camlist = []
+
+    # New lists compared to original
+    measured_c = []
 
     if nbadpacket < 0:
         raise ValueError('Number of bad packets cannot be less than 0.')
@@ -292,6 +300,9 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         scalelistout.append(scale_factor_list)
         camlist.append([gain_list, exptime_list, nframes_list])
 
+        # New lists compared to original version
+        measured_c.append(prev_c)
+
         print('-----------------------------------')
         print('Iteration: ' + str(iteration))
         print('HOWFSC computation time: ' + str(t1-t0))
@@ -403,6 +414,8 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         prev = pyfits.ImageHDU(prev_exptime_list)
         hdul = pyfits.HDUList([prim, img, prev])
         hdul.writeto(fileout, overwrite=True)
+
+        save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c)
 
 
 if __name__ == "__main__":
