@@ -1,0 +1,13 @@
+nRows: 153
+nCols: 153
+shapes:
+  shape0:
+    shape: bowtie
+    radiusInnerLamD: 2.6
+    radiusOuterLamD: 9.4
+    openingAngle: 65.0
+    clocking: 90.0
+    xOffset: 0.0
+    yOffset: 0.0
+    radiusInner: 6.751327222920631
+    radiusOuter: 24.40864457517459
