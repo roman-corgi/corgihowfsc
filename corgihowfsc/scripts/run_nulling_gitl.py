@@ -34,17 +34,7 @@ folder_name = 'gitl_simulation_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
 fits_name = 'final_frames.fits'
 fileout_path = os.path.join(os.path.dirname(os.path.dirname(corgihowfsc.__file__)), 'data', folder_name, fits_name)
 
-args = get_args(fileout=fileout_path,jacpath=defjacpath)
-
-
-# Initialize variables etc
-
-# otherlist = []
-# abs_dm1list = []
-# abs_dm2list = []
-# framelistlist = []
-# scalelistout = []
-# camlist = []
+args = get_args(mode='nfov_band1', precomp='precomp_all_once', num_process=0, num_threads=1, fileout=fileout_path,jacpath=defjacpath)
 
 # User params
 niter = args.niter
