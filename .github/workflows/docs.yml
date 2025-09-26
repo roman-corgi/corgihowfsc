@@ -43,16 +43,15 @@ jobs:
       uses: actions/upload-pages-artifact@v3
       with:
         path: ./docs/build/html
-        
-  deploy:
-    name: Deploy to GitHub Pages
-    if: github.ref == 'refs/heads/main'
-    needs: build_docs
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+
+    - name: Deploy to GitHub Pages
+      if: github.ref == 'refs/heads/main'
+      needs: build_docs
+      runs-on: ubuntu-latest
+      environment:
+        name: github-pages
+        url: ${{ steps.deployment.outputs.page_url }}
+      steps:
+        - name: Deploy to GitHub Pages
+          id: deployment
+          uses: actions/deploy-pages@v4
