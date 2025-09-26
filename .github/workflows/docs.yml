@@ -17,7 +17,7 @@ jobs:
   build_docs:
     name: Build
     runs-on: ubuntu-latest
-    
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -50,5 +50,4 @@ jobs:
         path: ./docs/build/html
 
     - name: Deploy to GitHub Pages
-      if: github.ref == 'refs/heads/main'
       uses: actions/deploy-pages@v4
