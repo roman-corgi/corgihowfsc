@@ -27,7 +27,6 @@ from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
-defjacpath = r'C:\Users\sredmond\Documents\github_repos\roman-corgi-repos\corgihowfsc\data'
 
 current_datetime = datetime.now()
 folder_name = 'gitl_simulation_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
