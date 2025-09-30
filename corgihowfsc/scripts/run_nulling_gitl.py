@@ -27,14 +27,14 @@ from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
-defjacpath = r'C:\Users\sredmond\Documents\github_repos\roman-corgi-repos\cgi-howfsc'
+defjacpath = r'C:\Users\sredmond\Documents\github_repos\roman-corgi-repos\corgihowfsc\data'
 
 current_datetime = datetime.now()
 folder_name = 'gitl_simulation_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
 fits_name = 'final_frames.fits'
 fileout_path = os.path.join(os.path.dirname(os.path.dirname(corgihowfsc.__file__)), 'data', folder_name, fits_name)
 
-args = get_args(mode='nfov_band1', precomp='precomp_all_once', num_process=0, num_threads=1, fileout=fileout_path,jacpath=defjacpath)
+args = get_args(mode='nfov_band1', num_process=0, num_threads=1, fileout=fileout_path,jacpath=defjacpath)
 
 # User params
 niter = args.niter
