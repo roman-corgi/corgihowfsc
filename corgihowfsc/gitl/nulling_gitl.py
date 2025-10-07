@@ -97,6 +97,8 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     stellar_type_target = args.stellartypetarget
     jacpath = args.jacpath
     precomp = args.precomp
+    num_process = args.num_process
+    num_threads = args.num_threads
 
     # Make filout dir
     if fileout is not None:
