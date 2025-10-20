@@ -205,76 +205,107 @@ def load_files(args, howfscpath):
         pass
     log = logging.getLogger(__name__)
 
-    if mode == 'nfov_dm':
-        modelpath = os.path.join(howfscpath, 'model', 'testdata', 'narrowfov')
-        cfgfile = os.path.join(modelpath, 'narrowfov_dm.yaml')
-        jacfile = os.path.join(jacpath, 'nfov_dm_jac_full.fits')
-        cstratfile = os.path.join(modelpath, 'cstrat_nfov_dm.yaml')
-        probe0file = os.path.join(modelpath,
-                                  'nfov_dm_dmrel_1.0e-05_cos.fits')
-        probe1file = os.path.join(modelpath,
-                                  'nfov_dm_dmrel_1.0e-05_sinlr.fits')
-        probe2file = os.path.join(modelpath,
-                                  'nfov_dm_dmrel_1.0e-05_sinud.fits')
-        probefiles = {}
-        probefiles[0] = probe0file
-        probefiles[2] = probe1file
-        probefiles[1] = probe2file
-        hconffile = os.path.join(modelpath, 'hconf_nfov_dm.yaml')
-        n2clistfiles = [
-            os.path.join(modelpath, 'nfov_dm_n2c_idx0.fits'),
-            os.path.join(modelpath, 'nfov_dm_n2c_idx1.fits'),
-            os.path.join(modelpath, 'nfov_dm_n2c_idx2.fits'),
-        ]
-        pass
-    elif mode == 'nfov_flat':
-        modelpath = os.path.join(howfscpath, 'model', 'testdata', 'narrowfov')
-        cfgfile = os.path.join(modelpath, 'narrowfov_flat.yaml')
-        jacfile = os.path.join(jacpath, 'nfov_flat_jac_full.fits')
-        cstratfile = os.path.join(modelpath, 'cstrat_nfov_flat.yaml')
-        probe0file = os.path.join(modelpath,
-                                  'nfov_flat_dmrel_1.0e-05_cos.fits')
-        probe1file = os.path.join(modelpath,
-                                  'nfov_flat_dmrel_1.0e-05_sinlr.fits')
-        probe2file = os.path.join(modelpath,
-                                  'nfov_flat_dmrel_1.0e-05_sinud.fits')
+    if mode == 'nfov_band1':
+        modelpath = os.path.join(howfscpath, 'model', 'nfov_band1')
+        cfgfile = os.path.join(modelpath, 'howfsc_optical_model_seeded.yaml')
+        jacfile = os.path.join(jacpath, 'nfov_jac.fits')
+        cstratfile = os.path.join(modelpath, 'cstrat_nfov_band1.yaml')
+        probe0file = os.path.join(modelpath, 'nfov_dm_dmrel_4_1.0e-05_cos.fits')
+        probe1file = os.path.join(modelpath, 'nfov_dm_dmrel_4_1.0e-05_sinlr.fits')
+        probe2file = os.path.join(modelpath, 'nfov_dm_dmrel_4_1.0e-05_sinud.fits')
         probefiles = {}
         probefiles[0] = probe0file
         probefiles[2] = probe1file
         probefiles[1] = probe2file
         hconffile = os.path.join(modelpath, 'hconf_nfov_flat.yaml')
         n2clistfiles = [
-            os.path.join(modelpath, 'nfov_flat_n2c_idx0.fits'),
-            os.path.join(modelpath, 'nfov_flat_n2c_idx1.fits'),
-            os.path.join(modelpath, 'nfov_flat_n2c_idx2.fits'),
+            os.path.join(modelpath, 'ones_like_fs.fits'),
+            os.path.join(modelpath, 'ones_like_fs.fits'),
+            os.path.join(modelpath, 'ones_like_fs.fits'),
         ]
-        pass
-    elif mode == 'narrowfov':
-        modelpath = os.path.join(howfscpath, 'model', 'testdata', 'narrowfov')
-        cfgfile = os.path.join(modelpath, 'narrowfov.yaml')
-        jacfile = os.path.join(jacpath, 'narrowfov_jac_full.fits')
-        cstratfile = os.path.join(modelpath, 'cstrat_narrowfov.yaml')
-        probe0file = os.path.join(modelpath,
-                                  'narrowfov_dmrel_1.0e-05_cos.fits')
-        probe1file = os.path.join(modelpath,
-                                  'narrowfov_dmrel_1.0e-05_sinlr.fits')
-        probe2file = os.path.join(modelpath,
-                                  'narrowfov_dmrel_1.0e-05_sinud.fits')
+
+    elif mode == 'nfov_band1_half':
+        modelpath = os.path.join(howfscpath, 'model', 'nfov_band1_half')
+        cfgfile = os.path.join(modelpath, 'howfsc_optical_model_seeded.yaml')
+        jacfile = os.path.join(jacpath, 'nfov_half_jac.fits')
+        cstratfile = os.path.join(modelpath, 'cstrat_nfov_band1_half.yaml')
+        probe0file = os.path.join(modelpath, 'nfov_dm_dmrel_4_1.0e-05_cos.fits')
+        probe1file = os.path.join(modelpath, 'nfov_dm_dmrel_4_1.0e-05_sinlr.fits')
+        probe2file = os.path.join(modelpath, 'nfov_dm_dmrel_4_1.0e-05_sinud.fits')
         probefiles = {}
         probefiles[0] = probe0file
         probefiles[2] = probe1file
         probefiles[1] = probe2file
-        hconffile = os.path.join(modelpath, 'hconf_narrowfov.yaml')
+        hconffile = os.path.join(modelpath, 'hconf_nfov_band1_half.yaml')
         n2clistfiles = [
-            os.path.join(modelpath, 'narrowfov_n2c_idx0.fits'),
-            os.path.join(modelpath, 'narrowfov_n2c_idx1.fits'),
-            os.path.join(modelpath, 'narrowfov_n2c_idx2.fits'),
+            os.path.join(modelpath, 'ones_like_fs.fits'),
+            os.path.join(modelpath, 'ones_like_fs.fits'),
+            os.path.join(modelpath, 'ones_like_fs.fits'),
         ]
-        pass
+
+    elif mode == 'spec_band2':
+        modelpath = os.path.join(howfscpath, 'model', 'spec_band2')
+        cfgfile = os.path.join(modelpath, 'howfsc_optical_model_seeded.yaml')
+        jacfile = os.path.join(jacpath, 'spec_band2_jac.fits')
+        cstratfile = os.path.join(modelpath, 'cstrat_spec_band2.yaml')
+        probe0file = os.path.join(modelpath, 'spectroscopy_dmrel_1.0e-05_cos.fits')
+        probe1file = os.path.join(modelpath, 'spectroscopy_dmrel_1.0e-05_sinlr.fits')
+        probe2file = os.path.join(modelpath, 'spectroscopy_dmrel_1.0e-05_sinud.fits')
+        probefiles = {}
+        probefiles[0] = probe0file
+        probefiles[2] = probe1file
+        probefiles[1] = probe2file
+        hconffile = os.path.join(modelpath, 'hconf_spec_band2_temp.yaml')
+        n2clistfiles = [
+            os.path.join(modelpath, 'ones_like_fs.fits'),
+            os.path.join(modelpath, 'ones_like_fs.fits'),
+            os.path.join(modelpath, 'ones_like_fs.fits'),
+            os.path.join(modelpath, 'ones_like_fs.fits'),
+            os.path.join(modelpath, 'ones_like_fs.fits'),
+        ]
+
+    elif mode == 'spec_band3':
+        modelpath = os.path.join(howfscpath, 'model', 'spec_band3')
+        cfgfile = os.path.join(modelpath, 'howfsc_optical_model_seeded.yaml')
+        jacfile = os.path.join(jacpath, 'cstrat_spec_band3.fits')
+        cstratfile = os.path.join(modelpath, 'cstrat_spec_band3.yaml')
+        probe0file = os.path.join(modelpath, 'spectroscopy_dmrel_1.0e-05_cos.fits')
+        probe1file = os.path.join(modelpath, 'spectroscopy_dmrel_1.0e-05_sinlr.fits')
+        probe2file = os.path.join(modelpath, 'spectroscopy_dmrel_1.0e-05_sinud.fits')
+        probefiles = {}
+        probefiles[0] = probe0file
+        probefiles[2] = probe1file
+        probefiles[1] = probe2file
+        hconffile = os.path.join(modelpath, 'hconf_spec_band3.yaml')
+        n2clistfiles = [
+            os.path.join(modelpath, 'ones_like_fs.fits'),
+            os.path.join(modelpath, 'ones_like_fs.fits'),
+            os.path.join(modelpath, 'ones_like_fs.fits'),
+            os.path.join(modelpath, 'ones_like_fs.fits'),
+            os.path.join(modelpath, 'ones_like_fs.fits'),
+        ]
+
+    elif mode == 'wfov_band4':
+        modelpath = os.path.join(howfscpath, 'model', 'wfov_band4')
+        cfgfile = os.path.join(modelpath, 'howfsc_optical_model_seeded.yaml')
+        jacfile = os.path.join(jacpath, 'wfov_band4_jac.fits')
+        cstratfile = os.path.join(modelpath, 'cstrat_wfov_band4.yaml')
+        probe0file = os.path.join(modelpath, 'wfov_dmrel_1e-5_cos_constrained.fits')
+        probe1file = os.path.join(modelpath, 'wfov_dmrel_1e-5_sinlr_constrained.fits')
+        probe2file = os.path.join(modelpath, 'wfov_dmrel_1e-5_sinud_constrained.fits')
+        probefiles = {}
+        probefiles[0] = probe0file
+        probefiles[2] = probe1file
+        probefiles[1] = probe2file
+        hconffile = os.path.join(modelpath, 'hconf_wfov_band4.yaml')
+        n2clistfiles = [
+            os.path.join(modelpath, 'ones_like_fs.fits'),
+            os.path.join(modelpath, 'ones_like_fs.fits'),
+            os.path.join(modelpath, 'ones_like_fs.fits'),
+        ]
 
     else:
         # should not reach here; argparse should catch this
         raise ValueError('Invalid coronagraph mode type')
-
 
     return modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles

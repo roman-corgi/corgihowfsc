@@ -9,7 +9,7 @@ from datetime import datetime
 import numpy as np
 import astropy.io.fits as pyfits
 
-import howfsc
+import corgihowfsc
 import eetc
 from howfsc.control.cs import ControlStrategy
 from howfsc.model.mode import CoronagraphMode
@@ -25,26 +25,17 @@ from corgihowfsc.gitl.nulling_gitl import nulling_gitl
 from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
-howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
+howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
-defjacpath = r'C:\Users\sredmond\Documents\github_repos\roman-corgi-repos\cgi-howfsc'
+
+precomp= 'load_all' if defjacpath is not None else 'precomp_all_once'
 
 current_datetime = datetime.now()
 folder_name = 'gitl_simulation_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
 fits_name = 'final_frames.fits'
 fileout_path = os.path.join(os.path.dirname(os.path.dirname(corgihowfsc.__file__)), 'data', folder_name, fits_name)
 
-args = get_args(fileout=fileout_path,jacpath=defjacpath)
-
-
-# Initialize variables etc
-
-# otherlist = []
-# abs_dm1list = []
-# abs_dm2list = []
-# framelistlist = []
-# scalelistout = []
-# camlist = []
+args = get_args(mode='nfov_band1', precomp=precomp, num_process=0, num_threads=1, fileout=fileout_path,jacpath=defjacpath)
 
 # User params
 niter = args.niter
