@@ -136,3 +136,28 @@ class CorgisimManager:
             sim_scene = detector.generate_detector_image(sim_scene, exptime)
             return sim_scene.image_on_detector.data
     
+    def generate_off_axis_psf(self, dm1v, dm2v, dx, dy, companion_vmag=None, lind=0, exptime=1.0, gain=1):
+
+        if companion_vmag is None:
+            companion_vmag = self.Vmag
+        
+        # Create scene with off-axis point source 
+        point_source_info = [
+            {
+                'Vmag': companion_vmag,
+                'magtype': 'vegamag',
+                'position_x': dx,
+                'position_y': dy
+            }
+        ]
+
+        optics = self.create_optics(dm1v, dm2v, lind)
+        scene_with_offaxis_source = scene.Scene(self.host_star_properties, point_source_info)
+
+        sim_scene = optics.get_host_star_psf(self.base_scene)
+        sim_scene = optics.inject_point_sources(scene_with_offaxis_source, sim_scene)
+
+        if self.is_noise_free:
+            return sim_scene.point_source_image.data
+        else:
+            NotImplementedError("Off-axis PSF with noise not yet implemented")
