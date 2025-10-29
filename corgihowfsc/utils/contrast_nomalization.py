@@ -40,9 +40,26 @@ class CorgiNormalization(Normalization):
         self.corgisim_manager = CorgisimManager(cfg, cstrat, hconf, cor, corgi_overrides=corgi_overrides)
 
     def calc_flux_rate(self, dm1v, dm2v, lind, exptime, gain=1.):
+        """
+        Calculate peak flux rate for normalization using an off-axis point source (with the stellar PSF input), placed at specified separation in lambda/D. 
+
+        Args:
+            dm1v: 2D array of DM1 voltages
+            dm2v: 2D array of DM2 voltages
+            lind: integer, index of the wavelength slice to use
+            exptime: float, exposure time
+            gain: float, gain factor (default 1.0)
+
+        Returns:
+            peakflux: float, peak flux value from the off-axis PSF
+
+        Note: the off-axis source is placed at (dx=0, dy=separation_lamD) in mas. lambda/D is calculated at the central wavelength of the bandpass.
+        
+        """
         # TODO - image on the detector - noise case 
         
         # Inject off-axis source at specified separation at central wavelength
+        # TODO - make sure this is the central wavelength
         mas_per_lamD = calculate_mas_per_lamD(self.corgisim_manager.cfg.sl_list[1].lam)
         
         dy = self.separation_lamD * mas_per_lamD
