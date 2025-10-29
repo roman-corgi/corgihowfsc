@@ -18,12 +18,24 @@ class CorgisimManager:
     - Scene and Optics config 
     - PSF and detecor image
 
-    Example: 
-        manager = CorgiSimManager(cfg, hconf, cor='narrowfov')
-        image = manager.generate_image(dm1v, dm2v, lind=0)
     """
 
     def __init__(self, cfg, cstrat, hconf, cor=None, corgi_overrides=None):
+        """
+        
+        Args:
+         cfg: CoronagraphMode object with bandpass information (cfg.sl_list)
+         hconf: Host configuration dict/object with star properties
+         cor: CGI coronagraph mode (e.g., 'narrowfov', 'nfov_flat', 'nfov_dm')
+         corgi_overrides: Optional dict of CorgiSim-specific overrides:
+            - bandpass: str, bandpass number ('1', '2', '3', '4')
+            - is_noise_free: bool, generate noise-free images (default: True)
+            - output_dim: int, output image dimension (default: 51)
+            - polaxis: int, polarization axis (default: 10)
+            - Vmag: float, override host star V magnitude
+            - sptype: str, override spectral type
+            - ref_flag: bool, use reference spectrum (default: False)
+        """
 
         if corgi_overrides is None: 
             corgi_overrides = {}
@@ -41,7 +53,7 @@ class CorgisimManager:
         self._initialize_base_scene()
 
     def _validate_inputs(self):
-        # validate required inputs 
+        """Validate required inputs"""
         if self.cor not in SUPPORTED_CGI_MODES:
             raise ValueError(
                 f"corgihowfsc backend does not support cor mode '{self.cor}'. "
@@ -51,6 +63,7 @@ class CorgisimManager:
             raise ValueError("cfg.sl_list must contain bandpass information")
 
     def _initialize_config(self):
+        """Initialise the setup for corgisim"""
         if 'bandpass' not in self.corgi_overrides:
             wavelength = self.cfg.sl_list[1].lam
             self.bandpass = map_wavelength_to_corgisim_bandpass(wavelength)
@@ -131,6 +144,7 @@ class CorgisimManager:
         if self.is_noise_free:
             return sim_scene.host_star_image.data
         else:
+            # generate detector image
             emccd_dict = {'em_gain': gain, 'cr_rate': 0}
             detector = instrument.CorgiDetector(emccd_dict)
             sim_scene = detector.generate_detector_image(sim_scene, exptime)
@@ -160,4 +174,8 @@ class CorgisimManager:
         if self.is_noise_free:
             return sim_scene.point_source_image.data
         else:
-            NotImplementedError("Off-axis PSF with noise not yet implemented")
+            # generate detector image
+            emccd_dict = {'em_gain': gain, 'cr_rate': 0}
+            detector = instrument.CorgiDetector(emccd_dict)
+            sim_scene = detector.generate_detector_image(sim_scene, exptime)
+            return sim_scene.image_on_detector.data
