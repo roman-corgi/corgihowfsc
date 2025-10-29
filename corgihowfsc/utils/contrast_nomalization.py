@@ -39,7 +39,7 @@ class CorgiNormalization(Normalization):
         # Initialize corgisime manager
         self.corgisim_manager = CorgisimManager(cfg, cstrat, hconf, cor, corgi_overrides=corgi_overrides)
 
-    def calc_flux_rate(self, dm1v, dm2v, lind, exptime, gain=1.):
+    def calc_flux_rate(self, dm1v, dm2v, lind, exptime, gain=1):
         """
         Calculate peak flux rate for normalization using an off-axis point source (with the stellar PSF input), placed at specified separation in lambda/D. 
 
@@ -56,8 +56,6 @@ class CorgiNormalization(Normalization):
         Note: the off-axis source is placed at (dx=0, dy=separation_lamD) in mas. lambda/D is calculated at the central wavelength of the bandpass.
         
         """
-        # TODO - image on the detector - noise case 
-        
         # Inject off-axis source at specified separation at central wavelength
         # TODO - make sure this is the central wavelength
         mas_per_lamD = calculate_mas_per_lamD(self.corgisim_manager.cfg.sl_list[1].lam)
@@ -70,9 +68,8 @@ class CorgiNormalization(Normalization):
         return np.max(image_comp_corgi)
 
     def normalize(self, im, peakflux, exptime):
-        # TODO - image on the detector - noise case 
         if exptime is None or self.corgisim_manager.is_noise_free:
             exptime = 1.  # unit
-            return im / peakflux / exptime
-        else:
-            raise NotImplementedError("Normalization with noise case is not yet implemented.")
+
+        # TODO - check the normalisation for the noise case
+        return im / peakflux / exptime
