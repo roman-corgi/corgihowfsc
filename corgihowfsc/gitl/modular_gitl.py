@@ -299,6 +299,8 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
      imager: a Imaging object;
         Defines the imaging behaviour, can use corgisim or compact model.
 
+    use_true_field: bool;
+        Defines whether to use the true field or using the field estimate by PWP.
 
     Returns:
      - An absolute DM setting for DM1
@@ -453,13 +455,18 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
 
         # Measured e-field at this setting
         log.info('Measured e-field at this setting')
-        efield = estimator.estimate_efield(
-            intlist[j],
-            plist[j],
-            min_good_probes=hconf['howfsc']['min_good_probes'],
-            eestclip=hconf['howfsc']['eestclip'],
-            eestcondlim=hconf['howfsc']['eestcondlim'],
-        )
+        if use_true_field: # Retrieve the perfect field once or cache it locally if possible
+            if not hasattr(imager, '_true_field_cache'):
+                edm0 = cfg.sl_list[j].eprop(dmlistmeas)
+                ely = cfg.sl_list[j].proptolyot(edm0)
+                edh0 = cfg.sl_list[j].proptodh(ely)
+                imager._true_field_cache = insertinto(edh0, (nrow, ncol))
+            efield = imager._true_field_cache.copy()
+        else: # Estimate the field
+            efield = estimator.estimate_efield(
+                intlist[j], plist[j], min_good_probes=hconf['howfsc']['min_good_probes'],
+                eestclip=hconf['howfsc']['eestclip'], eestcondlim=hconf['howfsc']['eestcondlim'],
+            )
         badefield = np.isnan(efield)
         efield[badefield] = 0 # nan is the one value that EFC can't fix
         emeas[ndhpix[j]:ndhpix[j+1]] = efield[dhlist[j]]
