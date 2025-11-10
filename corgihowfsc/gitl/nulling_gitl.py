@@ -321,20 +321,26 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         # new dm1_list, dm2_list
         dm1_list = []
         dm2_list = []
-        for index in range(nlam):
-            # DM1 same per wavelength
-            dm1_list.append(abs_dm1)
-            dm1_list.append(abs_dm1 + scale_factor_list[0]*dmrel_list[0])
-            dm1_list.append(abs_dm1 + scale_factor_list[3]*dmrel_list[0])
-            dm1_list.append(abs_dm1 + scale_factor_list[1]*dmrel_list[1])
-            dm1_list.append(abs_dm1 + scale_factor_list[4]*dmrel_list[1])
-            dm1_list.append(abs_dm1 + scale_factor_list[2]*dmrel_list[2])
-            dm1_list.append(abs_dm1 + scale_factor_list[5]*dmrel_list[2])
-            for j in range(ndm):
-                # DM2 always same
-                dm2_list.append(abs_dm2)
+
+        if use_true_field: # If we don't want to estimate the efield with PWP
+            for ind in range(nlam):
+                dm1_list.append(dm10)
+                dm2_list.append(dm20)
+        else: # If we estimate efield with PWP
+            for index in range(nlam):
+                # DM1 same per wavelength
+                dm1_list.append(abs_dm1)
+                dm1_list.append(abs_dm1 + scale_factor_list[0]*dmrel_list[0])
+                dm1_list.append(abs_dm1 + scale_factor_list[3]*dmrel_list[0])
+                dm1_list.append(abs_dm1 + scale_factor_list[1]*dmrel_list[1])
+                dm1_list.append(abs_dm1 + scale_factor_list[4]*dmrel_list[1])
+                dm1_list.append(abs_dm1 + scale_factor_list[2]*dmrel_list[2])
+                dm1_list.append(abs_dm1 + scale_factor_list[5]*dmrel_list[2])
+                for j in range(ndm):
+                    # DM2 always same
+                    dm2_list.append(abs_dm2)
+                    pass
                 pass
-            pass
 
         # Skip the very last Jacobian that never gets used
         if precomp in ['precomp_jacs_always'] and iteration < niter:
