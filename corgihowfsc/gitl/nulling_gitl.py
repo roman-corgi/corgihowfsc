@@ -40,7 +40,7 @@ howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
 
 
-def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles):
+def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, use_true_field=False, probefiles, n2clistfiles):
     """Run a nulling sequence, using the compact optical model as the data source.
 
     Parameters:
@@ -77,7 +77,12 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
 
     jacfile: string;
         Path to jacobian.
+
+    use_true_field: bool;
+    Defines whether to use the true field or using the field estimate by PWP.
+
     modelpath, jacfile, probefiles, hconffile, n2clistfiles:
+
 
 
     """
@@ -289,7 +294,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
                            croplist, prev_exptime_list,
                            cstrat, n2clist, hconf, iteration,
-                           estimator, imager, normalization_strategy, probes)
+                           estimator, imager, normalization_strategy, probes, use_true_field)
         if isprof:
             pr.disable()
             pass
