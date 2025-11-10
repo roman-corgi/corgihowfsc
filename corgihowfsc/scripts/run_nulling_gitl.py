@@ -78,5 +78,16 @@ imager = GitlImage(
 )
 normalization_strategy = EETCNormalization()
 
-nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles)
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser(description="Run nulling sequence with option to use perfect e-field")
+
+    ap.add_argument('--use_true_field', action='store_true',
+                    help='Use the perfect electric field from the simulation instead of PWP estimation')
+
+    args = ap.parse_args()
+
+    nulling_gitl(cstrat, estimator, probes, normalization_strategy,
+                 imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles,
+                 use_true_field=args.use_true_field)
 

@@ -40,7 +40,7 @@ howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
 
 
-def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, use_true_field=False, probefiles, n2clistfiles):
+def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, use_true_field=False):
     """Run a nulling sequence, using the compact optical model as the data source.
 
     Parameters:
@@ -215,7 +215,8 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         hconf['star']['stellar_vmag_target'] = stellar_vmag_target
     if stellar_type_target is not None:
         hconf['star']['stellar_type_target'] = stellar_type_target
-
+    if use_true_field: # In case we don't estimate efield with PWP
+        hconf['probe']['dmrel_ph_list'] = []
     # TODO: update this to allow other stars? Not sure why its always v
     cgi_eetc = CGIEETC(mag=hconf['star']['stellar_vmag'],
                        phot='v', # only using V-band magnitudes as a standard
