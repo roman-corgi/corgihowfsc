@@ -64,7 +64,7 @@ eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 def howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
                        croplist, prev_exptime_list,
                        cstrat, n2clist, hconf, iteration,
-                       estimator, imager, normalization_strategy, probes):
+                       estimator, imager, normalization_strategy, probes, use_true_field = False,):
     """
     Wrapper for the main HOWFSC computation loop, to handle exceptions in a
     way consistent with the interface specifications (outputs indicated by a
@@ -79,7 +79,7 @@ def howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
                                        cfg, jac, jtwj_map,
                                        croplist, prev_exptime_list,
                                        cstrat, n2clist, hconf, iteration,
-                                       estimator, imager, normalization_strategy, probes)
+                                       estimator, imager, normalization_strategy, probes, use_true_field = use_true_field)
         log.info('howfsc_computation main loop complete')
         return out
     # Note: while in principle _main_howfsc_computation() could output a result
@@ -174,7 +174,7 @@ def howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
 def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
                              croplist, prev_exptime_list,
                              cstrat, n2clist, hconf, iteration,
-                             estimator, imager, normalization_strategy, probes):
+                             estimator, imager, normalization_strategy, probes, use_true_field = False):
     """
     Execute the HOWFSC GITL computation as defined in the HOWFSC FDD
 
