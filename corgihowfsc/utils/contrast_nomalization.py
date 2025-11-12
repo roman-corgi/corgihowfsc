@@ -15,8 +15,8 @@ class EETCNormalization(Normalization):
     def __init__(self):
         super().__init__()
 
-    def calc_flux_rate(self, cgi_eetc, hconf, sl_ind):
-        a, peakflux = cgi_eetc.calc_flux_rate(
+    def calc_flux_rate(self, get_cgi_eetc, hconf, sl_ind, dm1v, dm2v, exptime, gain=1):
+        a, peakflux = get_cgi_eetc.calc_flux_rate(
             sequence_name=hconf['hardware']['sequence_list'][sl_ind],
         )
         return a, peakflux
@@ -39,7 +39,7 @@ class CorgiNormalization(Normalization):
         # Initialize corgisime manager
         self.corgisim_manager = CorgisimManager(cfg, cstrat, hconf, cor, corgi_overrides=corgi_overrides)
 
-    def calc_flux_rate(self, cgi_eetc, hconf, sl_ind, dm1v, dm2v, exptime, gain=1):
+    def calc_flux_rate(self, get_cgi_eetc, hconf, sl_ind, dm1v, dm2v, exptime, gain=1):
         """
         Calculate peak flux rate for normalization using an off-axis point source (with the stellar PSF input), placed at specified separation in lambda/D. 
 
@@ -63,7 +63,7 @@ class CorgiNormalization(Normalization):
         dy = self.separation_lamD * mas_per_lamD
         dx = 0.
 
-        image_comp_corgi = self.corgisim_manager.generate_off_axis_psf(dm1v, dm2v, dx, dy, lind=sl_lind, exptime=exptime, gain=gain)
+        image_comp_corgi = self.corgisim_manager.generate_off_axis_psf(dm1v, dm2v, dx, dy, lind=sl_ind, exptime=exptime, gain=gain)
     
         return np.nan, np.max(image_comp_corgi)
 
