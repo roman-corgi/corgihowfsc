@@ -352,7 +352,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
     other = dict()
 
     log.info('Building exposure-time calculator class')
-    cgi_eetc = CGIEETC(mag=hconf['star']['stellar_vmag'],
+    get_cgi_eetc = CGIEETC(mag=hconf['star']['stellar_vmag'],
                        phot='v', # only using V-band magnitudes as a standard
                        spt=hconf['star']['stellar_type'],
                        pointer_path=os.path.join(eetc_path,
@@ -380,7 +380,9 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         # _, peakflux = normalization.calc_flux_rate(
         #     sequence_name=hconf['hardware']['sequence_list'][j],
         # )
-        _, peakflux = normalization_strategy.calc_flux_rate(cgi_eetc, hconf, j)
+        # TODO: what are correct camera settings here?
+        # Get peakflux for DMs using current DZ setting
+        _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, j, dm1_list[0], dm2_list[0], prev_exptime_list[0], gain=1)
 
         log.info('Expect %g photons/sec', peakflux)
         for k in range(ndm):
@@ -397,7 +399,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
             log.info('2. Normalize each intensity frame')
             log.info('Use peakflux = %g, exptime = %g', peakflux,
                      prev_exptime_list[ind])
-            nim = normalize(im, peakflux, prev_exptime_list[ind])
+            nim = normalization_strategy.normalize(im, peakflux, prev_exptime_list[ind])
 
             # Prep material for eval_c only on unprobed frames
             if k == 0:
@@ -599,7 +601,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         log.info('scale = %g, scale_bright = %g', scale, scale_bright)
         log.info('snr = %g', unprobed_snr)
         nframes, exptime, gain, snr_out, optflag = \
-          cgi_eetc.calc_exp_time(
+          get_cgi_eetc.calc_exp_time(
               sequence_name=sequence,
               snr=unprobed_snr,
               scale=scale,
@@ -624,7 +626,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         log.info('scale = %g, scale_bright = %g', pscale, pscale_bright)
         log.info('snr = %g', probed_snr)
         nframes, exptime, gain, snr_out, optflag = \
-          cgi_eetc.calc_exp_time(
+          get_cgi_eetc.calc_exp_time(
               sequence_name=sequence,
               snr=probed_snr,
               scale=pscale,
