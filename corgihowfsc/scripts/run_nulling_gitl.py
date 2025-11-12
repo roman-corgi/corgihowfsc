@@ -88,6 +88,7 @@ if __name__ == "__main__":
     args = ap.parse_args()
 
     nulling_gitl(cstrat, estimator, probes, normalization_strategy,
-                 imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles,
+                 imager, cfg, args, hconf, modelpath, jacfile,
+                 probefiles, n2clistfiles,
                  use_true_field=args.use_true_field)
 
