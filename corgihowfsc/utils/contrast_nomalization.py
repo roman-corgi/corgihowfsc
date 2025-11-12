@@ -47,11 +47,11 @@ class CorgiNormalization(Normalization):
             dm1v: 2D array of DM1 voltages
             dm2v: 2D array of DM2 voltages
             lind: integer, index of the wavelength slice to use
-            exptime: float, exposure time
+            exptime: float, exposure time [s]
             gain: float, gain factor (default 1.0)
 
         Returns:
-            peakflux: float, peak flux value from the off-axis PSF
+            peakflux: float, peak flux value from the off-axis PSF in [counts/s] or [photons/s]
 
         Note: the off-axis source is placed at (dx=0, dy=separation_lamD) in mas. lambda/D is calculated at the central wavelength of the bandpass.
         
@@ -64,12 +64,22 @@ class CorgiNormalization(Normalization):
         dx = 0.
 
         image_comp_corgi = self.corgisim_manager.generate_off_axis_psf(dm1v, dm2v, dx, dy, lind=sl_ind, exptime=exptime, gain=gain)
-    
-        return np.nan, np.max(image_comp_corgi)
+        peakflux = np.max(image_comp_corgi) / exptime
+
+        return np.nan, peakflux
 
     def normalize(self, im, peakflux, exptime):
+        """
+        Args:
+            im: 2D array image in counts
+            peakflux: peakflux for image in ph/s or counts/s
+            exptime: exposure time of im in [s]
+
+        Returns:
+
+        """
         if exptime is None or self.corgisim_manager.is_noise_free:
             exptime = 1.  # unit
 
         # TODO - check the normalisation for the noise case
-        return im / peakflux / exptime
+        return im / exptime / peakflux

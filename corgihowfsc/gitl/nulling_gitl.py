@@ -212,7 +212,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         hconf['star']['stellar_type_target'] = stellar_type_target
 
     # TODO: update this to allow other stars? Not sure why its always v
-    cgi_eetc = CGIEETC(mag=hconf['star']['stellar_vmag'],
+    get_cgi_eetc = CGIEETC(mag=hconf['star']['stellar_vmag'],
                        phot='v', # only using V-band magnitudes as a standard
                        spt=hconf['star']['stellar_type'],
                        pointer_path=os.path.join(eetc_path,
@@ -220,7 +220,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     )
 
     nframes, exptime, gain, snr_out, optflag = \
-        cgi_eetc.calc_exp_time(
+        get_cgi_eetc.calc_exp_time(
             sequence_name=hconf['hardware']['sequence_list'][0],
             snr=1,
             scale=contrast,
@@ -233,7 +233,8 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     framelist = []
     for indj, sl in enumerate(cfg.sl_list):
         crop = croplist[indj]
-        _, peakflux = normalization_strategy.calc_flux_rate(cgi_eetc, hconf, indj)
+        # TODO: what are correct camera settings here?
+        _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, indj, dm1_list[0], dm2_list[0], exptime, gain=1)
         for indk in range(ndm):
             dmlist = [dm1_list[indj*ndm + indk],
                       dm2_list[indj*ndm + indk]]
@@ -355,7 +356,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         framelist = []
         for indj, sl in enumerate(cfg.sl_list):
             crop = croplist[indj]
-            _, peakflux = normalization_strategy.calc_flux_rate(cgi_eetc, hconf, indj)
+            _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, indj, dm1_list[0], dm2_list[0], prev_exptime_list[0], gain=1)
             for indk in range(ndm):
                 dmlist = [dm1_list[indj*ndm + indk],
                           dm2_list[indj*ndm + indk]]
