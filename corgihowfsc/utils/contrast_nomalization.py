@@ -2,6 +2,7 @@ from eetc import cgi_eetc
 from corgihowfsc.utils.corgisim_utils import _extract_host_properties_from_hconf, calculate_mas_per_lamD
 import numpy as np
 from corgihowfsc.utils.corgisim_manager import CorgisimManager
+from howfsc.util import check
 
 
 class Normalization():
