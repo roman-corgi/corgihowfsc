@@ -3,8 +3,6 @@ import sys
 from io import open
 from os import path
 
-import corgihowfsc
-
 try:
     from setuptools import setup, find_packages
 except ImportError:
@@ -29,7 +27,7 @@ setup(
     author='Roman Corongraph CPP Team',
     # author_email='',
     classifiers=[
-        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.12',
     ],
     packages=find_packages(),
     package_data={
@@ -40,6 +38,6 @@ setup(
         ]
     },
     include_package_data=True,
-    python_requires='>=3.7',
+    python_requires='>=3.12',
     # install_requires=requirements
 )
