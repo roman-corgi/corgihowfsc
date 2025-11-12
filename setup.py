@@ -3,8 +3,6 @@ import sys
 from io import open
 from os import path
 
-import corgihowfsc
-
 try:
     from setuptools import setup, find_packages
 except ImportError:
