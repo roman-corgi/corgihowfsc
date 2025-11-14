@@ -18,7 +18,8 @@ from howfsc.util.loadyaml import loadyaml
 
 import corgihowfsc
 from corgihowfsc.utils.howfsc_initialization import get_args, load_files
-from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
+from corgihowfsc.sensing.Estimator_choice import DefaultEstimator
+from corgihowfsc.sensing.Estimator_choice import PerfectEstimator
 from corgihowfsc.sensing.DefaultProbes import DefaultProbes
 from corgihowfsc.utils.contrast_nomalization import EETCNormalization
 from corgihowfsc.gitl.nulling_gitl import nulling_gitl
@@ -28,7 +29,7 @@ eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
 
-precomp= 'load_all' if defjacpath is not None else 'precomp_all_once'
+precomp = 'load_all' if (defjacpath is not None and os.path.isdir(defjacpath)) else 'precomp_all_once'
 
 current_datetime = datetime.now()
 folder_name = 'gitl_simulation_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
@@ -63,7 +64,7 @@ hconf = loadyaml(hconffile, custom_exception=TypeError)
 
 # Define control and estimator strategy
 cstrat = ControlStrategy(cstratfile)
-estimator = DefaultEstimator()
+estimator = PerfectEstimator() # By default, we're doing PWP. To take perfect electric_field, ask for PerfectEstimator
 
 # Initialize default probes class
 probes = DefaultProbes('default')
