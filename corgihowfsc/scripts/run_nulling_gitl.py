@@ -51,7 +51,7 @@ stellar_type = args.stellartype
 stellar_vmag_target = args.stellarvmagtarget
 stellar_type_target = args.stellartypetarget
 jacpath = args.jacpath
-use_true_field = args.use_true_field
+
 modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles = load_files(args, howfscpath)
 
 
@@ -81,5 +81,5 @@ normalization_strategy = EETCNormalization()
 nulling_gitl(cstrat, estimator, probes, normalization_strategy,
                  imager, cfg, args, hconf, modelpath, jacfile,
                  probefiles, n2clistfiles,
-                 use_true_field)
+                 use_true_field=args.use_true_field)
 

@@ -24,8 +24,7 @@ def get_args(niter=5,
                     stellartype=None,
                     stellarvmagtarget=None,
                     stellartypetarget=None,
-                    jacpath=None,
-                    use_true_field = False):
+                    jacpath=None):
         """
         Initialize HOWFSC simulation with all required variables and configurations.
         Returns all variables needed for the main simulation loop.
@@ -121,7 +120,6 @@ def get_args(niter=5,
         args.stellarvmagtarget = stellarvmagtarget
         args.stellartypetarget = stellartypetarget
         args.jacpath = jacpath
-        args.use_true_field = use_true_field
 
         return args
 def get_args_cmd(defjacpath):
@@ -174,8 +172,6 @@ def get_args_cmd(defjacpath):
                     help='If present, type of the target star desired will be updated in the hconf file (for parameter stellar_type_target in hconf file).')
 
     ap.add_argument('-j', '--jacpath', default=defjacpath, help="absolute path to read Jacobian files from", type=str)
-    ap.add_argument('--use_true_field', action='store_true',
-                    help='Use the perfect e-field from simulation instead of PWP')
     args = ap.parse_args()
 
     return args
