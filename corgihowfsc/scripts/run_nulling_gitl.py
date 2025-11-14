@@ -18,7 +18,8 @@ from howfsc.util.loadyaml import loadyaml
 
 import corgihowfsc
 from corgihowfsc.utils.howfsc_initialization import get_args, load_files
-from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
+from corgihowfsc.sensing.Estimator_choice import DefaultEstimator
+from corgihowfsc.sensing.Estimator_choice import PerfectEstimator
 from corgihowfsc.sensing.DefaultProbes import DefaultProbes
 from corgihowfsc.utils.contrast_nomalization import EETCNormalization
 from corgihowfsc.gitl.nulling_gitl import nulling_gitl
@@ -63,7 +64,7 @@ hconf = loadyaml(hconffile, custom_exception=TypeError)
 
 # Define control and estimator strategy
 cstrat = ControlStrategy(cstratfile)
-estimator = DefaultEstimator()
+estimator = PerfectEstimator() # By default, we're doing PWP
 
 # Initialize default probes class
 probes = DefaultProbes('default')
