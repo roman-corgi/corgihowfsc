@@ -68,8 +68,6 @@ if __name__ == "__main__":
     ap.add_argument('--stellartypetarget', default=None, help='If present, type of the target star desired will be updated in the hconf file (for parameter stellar_type_target in hconf file).')
 
     ap.add_argument('-j', '--jacpath', default=defjacpath, help="absolute path to read Jacobian files from", type=str)
-    ap.add_argument('--use_true_field', action='store_true',
-                    help='Use the perfect electric field from the simulation instead of PWP estimation')
     args = ap.parse_args()
 
     otherlist = []
