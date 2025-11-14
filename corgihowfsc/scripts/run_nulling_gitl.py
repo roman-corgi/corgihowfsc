@@ -64,7 +64,7 @@ hconf = loadyaml(hconffile, custom_exception=TypeError)
 
 # Define control and estimator strategy
 cstrat = ControlStrategy(cstratfile)
-estimator = PerfectEstimator() # By default, we're doing PWP
+estimator = PerfectEstimator() # By default, we're doing PWP. To take perfect electric_field, ask for PerfectEstimator
 
 # Initialize default probes class
 probes = DefaultProbes('default')
