@@ -60,7 +60,10 @@ class CorgiNormalization(Normalization):
         # Inject off-axis source at specified separation at central wavelength
         # TODO - make sure this is the central wavelength
         mas_per_lamD = calculate_mas_per_lamD(self.corgisim_manager.cfg.sl_list[1].lam)
-        
+
+        if exptime is None or self.corgisim_manager.is_noise_free:
+            exptime = 1.  # unit
+
         dy = self.separation_lamD * mas_per_lamD
         dx = 0.
 
