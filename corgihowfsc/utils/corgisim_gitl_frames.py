@@ -161,7 +161,7 @@ class GitlImage:
         except (AttributeError, KeyError) as e:
             raise ValueError(f"hconf missing required star configuration: {e}")
 
-    def check_gitlframeinputs(self, dm1v, dm2v, fixedbp, exptime, crop, cleanrow, cleancol):
+    def check_gitlframeinputs(self, dm1v, dm2v, fixedbp, exptime, crop, cleanrow, cleancol, wfe):
         """Input validation for both simulators."""
         # DM array validation
         for dm in [dm1v, dm2v]:
@@ -189,6 +189,12 @@ class GitlImage:
                     check.positive_scalar_integer(val, f'crop[{i}]', TypeError)
         check.positive_scalar_integer(cleanrow, 'cleanrow', TypeError)
         check.positive_scalar_integer(cleancol, 'cleancol', TypeError)
+        if wfe is not None:
+            if not isinstance(wfe, np.ndarray):
+                raise TypeError("Input must be a numpy ndarray.")
+
+            if wfe.ndim != 2 or wfe.shape[0] != 2:
+                raise TypeError("Input array must have exactly 2 rows (shape = (2, n_zernike_index)).")
         
     def gitlframe_corgisim(self, dm1v, dm2v, fixedbp, exptime, crop, lind=0, gain=1, cleanrow=1024, cleancol=1024, wfe=None):
         """
@@ -203,17 +209,19 @@ class GitlImage:
           real scalar > 0. If is_noise_free = True, this can be any positive value.
          crop: 4-tuple of (lower row, lower col, number of rows, number of cols). Currently not in used
          lind = 0: integer >= 0 indicating which wavelength channel in use. 
-
-        wfe is a placeholder argument for now to keep the option of passing additional wavefront error (e.g. zernike coefficients) to modify the frame generation
+         wfe (numpy.array, optional): zernike noll index and coefficients (in meters) to propagate wavefront error to the simulation (works only with corgisim so far) (2, n_zernike_index)
         """
         subband_option = ['a', 'b', 'c'] 
         bandpass_recipe = self.bandpass + subband_option[lind] 
         
-        self.check_gitlframeinputs(dm1v, dm2v, fixedbp, exptime=exptime, crop=crop, cleanrow=cleanrow, cleancol=cleancol)
+        self.check_gitlframeinputs(dm1v, dm2v, fixedbp, exptime=exptime, crop=crop, cleanrow=cleanrow, cleancol=cleancol, wfe=wfe)
 
         optics_keywords = {'cor_type': self.cor_mapped, 'use_errors': 2, 'polaxis': self.polaxis, 'output_dim': self.output_dim, \
                            'use_dm1': 1, 'dm1_v': dm1v, 'use_dm2': 1, 'dm2_v': dm2v, 'use_fpm': 1, 'use_lyot_stop': 1,
                            'use_field_stop': 1}
+
+        if wfe is not None:
+            optics_keywords.update({"zindex": wfe[0, :], "zval_m": wfe[1, :]})
 
         optics = instrument.CorgiOptics(self._mode, bandpass_recipe, optics_keywords=optics_keywords, if_quiet=True)
 
@@ -256,7 +264,7 @@ class GitlImage:
          exptime: Exposure time used when collecting the data in in. Should be a real scalar > 0 when noise is included. If is_noise_free = True, this can be any positive value.
          gain: EM gain setting for the EMCCD.  Real scalar >= 1.
 
-        wfe is a placeholder argument for now to keep the option of passing additional wavefront error (e.g. zernike coefficients) to modify the frame generation
+         wfe (numpy.array, optional): zernike noll index and coefficients (in meters) to propagate wavefront error to the simulation (works only with corgisim so far) (2, n_zernike_index)
         """
         if fixedbp is None:
             fixedbp = np.zeros((cleanrow, cleancol), dtype=bool)
@@ -265,7 +273,7 @@ class GitlImage:
         self.check_gitlframeinputs(dm1v, dm2v, fixedbp, exptime, crop, cleanrow, cleancol)
 
         if self.backend == 'corgihowfsc':
-            return self.gitlframe_corgisim(dm1v, dm2v, fixedbp, exptime, gain, lind, cleanrow, cleancol)
+            return self.gitlframe_corgisim(dm1v, dm2v, fixedbp, exptime, gain, lind, cleanrow, cleancol, wfe=wfe)
         else:  # cgi-howfsc
             if crop is None:
                 raise ValueError("crop parameter is required for cgi-howfsc")
