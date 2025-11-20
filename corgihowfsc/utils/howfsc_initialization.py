@@ -208,7 +208,10 @@ def load_files(args, howfscpath):
     if mode == 'nfov_band1':
         modelpath = os.path.join(howfscpath, 'model', 'nfov_band1')
         cfgfile = os.path.join(modelpath, 'howfsc_optical_model_seeded.yaml')
-        jacfile = os.path.join(jacpath, 'nfov_jac.fits')
+        if jacpath is not None:
+            jacfile = os.path.join(jacpath, 'nfov_jac.fits')
+        else:
+            jacfile = []
         cstratfile = os.path.join(modelpath, 'cstrat_nfov_band1.yaml')
         probe0file = os.path.join(modelpath, 'nfov_dm_dmrel_4_1.0e-05_cos.fits')
         probe1file = os.path.join(modelpath, 'nfov_dm_dmrel_4_1.0e-05_sinlr.fits')
