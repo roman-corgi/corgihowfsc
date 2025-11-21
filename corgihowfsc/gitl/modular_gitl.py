@@ -461,6 +461,11 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
             min_good_probes=hconf['howfsc']['min_good_probes'],
             eestclip=hconf['howfsc']['eestclip'],
             eestcondlim=hconf['howfsc']['eestcondlim'],
+            # Arguments for perfect estimator
+            imager=imager,
+            dmlist=dmlistmeas,
+            lam_idx=j,
+            crop=croplist[j * ndm]
         )
         badefield = np.isnan(efield)
         efield[badefield] = 0 # nan is the one value that EFC can't fix
