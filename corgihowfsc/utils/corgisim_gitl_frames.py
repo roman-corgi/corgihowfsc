@@ -10,7 +10,7 @@ from howfsc.model.mode import CoronagraphMode
 import howfsc.util.check as check
 from howfsc.util.insertinto import insertinto as pad_crop
 from howfsc.util.loadyaml import loadyaml
-from howfsc.scripts.gitlframes import sim_gitlframe
+from howfsc.scripts.gitlframes import sim_gitlframe, get_efield_cgihowfsc
 
 ## import packages
 from corgisim import scene
@@ -134,6 +134,26 @@ class GitlImage:
 
         return sim_gitlframe(self.cfg, dmlist, fixedbp, peakflux, exptime, crop, lind, cleanrow=1024, cleancol=1024)
 
+    def gitlefield_cgihowfsc(self, dmlist, crop, lind, cleanrow, cleancol):
+        """
+        Generate a GITL efield using the cgi-howfsc optical model.
+        """
+
+        # Creation of dummy variables to satisfy the strict signature of sim_gitlframe
+
+        dummy_bp = np.zeros((cleanrow, cleancol), dtype=bool)
+
+        return get_efield_cgihowfsc(
+            cfg=self.cfg,
+            dmlist=dmlist,
+            fixedbp=dummy_bp,  # For checking
+            peakflux=1.0,
+            exptime=1.0,
+            crop=crop,
+            lind=lind,
+            cleanrow=cleanrow,
+            cleancol=cleancol
+        )
     def get_image(self, dm1v, dm2v, exptime, gain=1, crop=None, lind=0, peakflux=1, cleanrow=1024, cleancol=1024, fixedbp=np.zeros((1024, 1024), dtype=bool), wfe=None):
 
         """
@@ -170,3 +190,58 @@ class GitlImage:
                 raise ValueError("crop parameter is required for cgi-howfsc")
             dmlist = [dm1v, dm2v]
             return self.gitlframe_cgihowfsc(dmlist, peakflux, self.cstrat.fixedbp, exptime, crop, lind, cleanrow, cleancol)
+
+    def get_efield(self, dm1v, dm2v, lind=0, crop=None, output_shape=(153, 153),  cleanrow = 1024, cleancol = 1024):
+        """
+        Get a simulated GITL efield using either corgisim or cgi-howfsc repo's optical model. This get_efield method should be compatible with both cgi-howfsc and corgisim.
+        Arguments:
+         dm1v: ndarray, absolute voltage map for DM1.
+         dm2v: ndarray, absolute voltage map for DM2.
+         crop: 4-tuple of (lower row, lower col, number of rows,
+          number of columns), indicating where in a clean frame a PSF is taken.
+          All are integers; the first two must be >= 0 and the second two must be > 0. Only used if name = 'cgi-howfsc'.
+        """
+
+        if crop is None:
+            raise ValueError("crop parameter is required for cgi-howfsc")
+
+        if self.backend == 'corgihowfsc':
+            # Futur work
+            raise NotImplementedError("CorgiSim efield not implemented yet.")
+
+        else:  # cgi-howfsc
+            dmlist = [dm1v, dm2v]
+            return self.gitlefield_cgihowfsc(
+                dmlist=dmlist,
+                crop=crop,
+                lind=lind,
+                cleanrow=cleanrow,
+                cleancol=cleancol
+            )
+
+# Helper function to map wavelength to corgisim bandpass
+def map_wavelength_to_corgisim_bandpass(wavelength_m, tolerance=3e-9):
+    """
+    Map wavelength to CorgiSim bandpass label.
+    
+    Args:
+        wavelength_m: Wavelength in meters
+        tolerance: Matching tolerance in meters (default ±3nm)
+        
+    Returns:
+        CorgiSim bandpass label ('1', '2', '3', or '4')
+    """
+    corgisim_wavelengths = {
+        '1': 575e-9, '2': 660e-9, '3': 730e-9, '4': 825e-9}
+    
+    for bandpass, wl in corgisim_wavelengths.items():
+        if abs(wavelength_m - wl) <= tolerance:
+            return bandpass
+    
+    available_nm = [wl * 1e9 for wl in corgisim_wavelengths.values()]
+    raise ValueError(f"Wavelength {wavelength_m*1e9:.1f} nm does not match any "
+                    f"CorgiSim options {available_nm} nm within ±{tolerance*1e9:.0f} nm")
+
+
+
+
