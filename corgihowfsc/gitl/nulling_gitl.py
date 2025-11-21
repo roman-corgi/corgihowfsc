@@ -24,6 +24,7 @@ from eetc.cgi_eetc import CGIEETC
 import howfsc
 from howfsc.control.cs import ControlStrategy
 from howfsc.control.calcjtwj import JTWJMap
+from corgihowfsc.sensing.Estimator_choice import DefaultEstimator, PerfectEstimator
 
 from howfsc.model.mode import CoronagraphMode
 
@@ -32,7 +33,7 @@ from howfsc.util.gitl_tools import param_order_to_list
 
 from corgihowfsc.gitl.modular_gitl import howfsc_computation
 from howfsc.precomp import howfsc_precomputation
-from howfsc.util.corgitools import save_outputs
+from corgihowfsc.utils.saving_output import save_outputs
 
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
