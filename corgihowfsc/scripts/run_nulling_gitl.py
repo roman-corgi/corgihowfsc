@@ -54,7 +54,6 @@ jacpath = args.jacpath
 
 modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles = load_files(args, howfscpath)
 
-
 # cfg
 cfg = CoronagraphMode(cfgfile)
 
@@ -63,7 +62,7 @@ hconf = loadyaml(hconffile, custom_exception=TypeError)
 
 # Define control and estimator strategy
 cstrat = ControlStrategy(cstratfile)
-estimator = DefaultEstimator()
+estimator = PerfectEstimator()
 
 # Initialize default probes class
 probes = DefaultProbes('default')
