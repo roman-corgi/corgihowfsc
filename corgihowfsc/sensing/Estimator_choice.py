@@ -1,7 +1,7 @@
 import numpy as np
 
 from corgihowfsc.sensing.Estimator import Estimator
-from howfsc.sensing.pairwise_sensing import estimate_efield
+from howfsc.sensing.pairwise_sensing import estimate_efield as pairwise_estimate_efield
 
 class DefaultEstimator(Estimator): # Returns the estimation of the electric field directly from PWP
 
@@ -9,7 +9,7 @@ class DefaultEstimator(Estimator): # Returns the estimation of the electric fiel
     def estimate_efield(self, intensities, phases,
                     min_good_probes=2, eestclip=np.inf, eestcondlim=0, **kwargs):
 
-        efield = estimate_efield(intensities, phases,
+        efield = pairwise_estimate_efield(intensities, phases,
         min_good_probes = min_good_probes, eestclip = eestclip, eestcondlim = eestclip)
 
         return efield
