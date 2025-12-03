@@ -62,7 +62,7 @@ hconf = loadyaml(hconffile, custom_exception=TypeError)
 
 # Define control and estimator strategy
 cstrat = ControlStrategy(cstratfile)
-estimator = PerfectEstimator()
+estimator = DefaultEstimator()
 
 # Initialize default probes class
 probes = DefaultProbes('default')
