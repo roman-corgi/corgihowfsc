@@ -21,11 +21,6 @@ class PerfectEstimator(Estimator):
 
     def estimate_efield(self, intensities, phases, imager, dmlist, lam_idx, crop,
                         min_good_probes=2, eestclip=np.inf, eestcondlim=0):
-        # Arguments
-        imager = kwargs.get('imager')
-        dmlist = kwargs.get('dmlist')
-        lam_idx = kwargs.get('lam_idx')
-        crop_info = kwargs.get('crop')
 
         if imager is None or dmlist is None or lam_idx is None:
             raise ValueError("PerfectEstimator needs 'imager', 'dmlist' and 'lam_idx'.")
@@ -35,7 +30,7 @@ class PerfectEstimator(Estimator):
             dm1v=dmlist[0],
             dm2v=dmlist[1],
             lind=lam_idx,
-            crop=crop_info
+            crop=crop
         )
 
         return model_efield
