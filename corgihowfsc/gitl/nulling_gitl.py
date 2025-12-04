@@ -24,6 +24,7 @@ from eetc.cgi_eetc import CGIEETC
 import howfsc
 from howfsc.control.cs import ControlStrategy
 from howfsc.control.calcjtwj import JTWJMap
+from corgihowfsc.sensing.Estimator_choice import DefaultEstimator, PerfectEstimator
 
 from howfsc.model.mode import CoronagraphMode
 
@@ -32,7 +33,7 @@ from howfsc.util.gitl_tools import param_order_to_list
 
 from corgihowfsc.gitl.modular_gitl import howfsc_computation
 from howfsc.precomp import howfsc_precomputation
-from howfsc.util.corgitools import save_outputs
+from corgihowfsc.utils.saving_output import save_outputs
 
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
@@ -134,7 +135,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     log = logging.getLogger(__name__)
 
 
-    exptime = 10 # FIXME this should be derived from contrast eventually
+    # exptime = 10 # FIXME this should be derived from contrast eventually
     contrast = 1e-5 # "starting" value to bootstrap getting we0
 
     # dm1_list, dm2
@@ -154,9 +155,6 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     croplist = [(lrow, lcol, nrow, ncol)]*(nlam*ndm)
     subcroplist = [(lrow, lcol, nrow, ncol)]*(nlam)
     nrowperpacket = 3 # only used by packet-drop testing
-
-    # prev_exptime_list
-    prev_exptime_list = [exptime]*(nlam*ndm)
 
     # jac, jtwj_map, n2clist
     if precomp in ['precomp_all_once']:
@@ -212,7 +210,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         hconf['star']['stellar_type_target'] = stellar_type_target
 
     # TODO: update this to allow other stars? Not sure why its always v
-    cgi_eetc = CGIEETC(mag=hconf['star']['stellar_vmag'],
+    get_cgi_eetc = CGIEETC(mag=hconf['star']['stellar_vmag'],
                        phot='v', # only using V-band magnitudes as a standard
                        spt=hconf['star']['stellar_type'],
                        pointer_path=os.path.join(eetc_path,
@@ -220,12 +218,15 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     )
 
     nframes, exptime, gain, snr_out, optflag = \
-        cgi_eetc.calc_exp_time(
+        get_cgi_eetc.calc_exp_time(
             sequence_name=hconf['hardware']['sequence_list'][0],
             snr=1,
             scale=contrast,
             scale_bright=contrast,
         )
+
+    # prev_exptime_list
+    prev_exptime_list = [exptime] * (nlam * ndm)
 
     # framelist
     # do last, needs peak flux
@@ -233,7 +234,8 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     framelist = []
     for indj, sl in enumerate(cfg.sl_list):
         crop = croplist[indj]
-        _, peakflux = normalization_strategy.calc_flux_rate(cgi_eetc, hconf, indj)
+        # TODO: what are correct camera settings here?
+        _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, indj, dm1_list[0], dm2_list[0], exptime, gain=1)
         for indk in range(ndm):
             dmlist = [dm1_list[indj*ndm + indk],
                       dm2_list[indj*ndm + indk]]
@@ -355,7 +357,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         framelist = []
         for indj, sl in enumerate(cfg.sl_list):
             crop = croplist[indj]
-            _, peakflux = normalization_strategy.calc_flux_rate(cgi_eetc, hconf, indj)
+            _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, indj, dm1_list[0], dm2_list[0], prev_exptime_list[0], gain=1)
             for indk in range(ndm):
                 dmlist = [dm1_list[indj*ndm + indk],
                           dm2_list[indj*ndm + indk]]

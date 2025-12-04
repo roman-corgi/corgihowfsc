@@ -10,7 +10,7 @@ from howfsc.model.mode import CoronagraphMode
 import howfsc.util.check as check
 from howfsc.util.insertinto import insertinto as pad_crop
 from howfsc.util.loadyaml import loadyaml
-from howfsc.scripts.gitlframes import sim_gitlframe
+from howfsc.scripts.gitlframes import sim_gitlframe, get_efield_cgihowfsc
 
 ## import packages
 from corgisim import scene
@@ -21,24 +21,16 @@ import proper
 from corgisim import outputs
 import time
 
+# import helper functions 
+from corgihowfsc.utils.corgisim_utils import _extract_host_properties_from_hconf, CGI_TO_CORGI_MAPPING, SUPPORTED_CORGI_MODES, SUPPORTED_CGI_MODES, map_wavelength_to_corgisim_bandpass
+
+from corgihowfsc.utils.corgisim_manager import CorgisimManager
+
+
 class GitlImage:
     """
     GITL image generator that takes required inputs for cgi-howfsc and can generate images using either cgi-howfsc (compact) or corgisim optical model.
     """
-    # Mapping configuration - easy to update for new modes
-    CGI_TO_CORGI_MAPPING = {
-        'narrowfov': 'hlc',
-        'nfov_flat': 'hlc', 
-        'nfov_dm': 'hlc',
-        'nfov_band1': 'hlc',
-        'nfov_band1_half': 'hlc'
-        # NOTE - Add new mappings here as support is added
-        # 'widefov': 'widefov',  # Future support
-        # 'spec': 'spec',    # Future spectroscopy mode
-    }
-    
-    SUPPORTED_CGI_MODES = list(CGI_TO_CORGI_MAPPING.keys())
-    SUPPORTED_CORGI_MODES = list(set(CGI_TO_CORGI_MAPPING.values()))
 
     def __init__(self, cfg, cstrat, hconf, backend='cgi-howfsc', cor=None, corgi_overrides=None):
 
@@ -83,83 +75,7 @@ class GitlImage:
     def _init_corgihowfsc (self, corgi_overrides):
         """Initialise for corgihowfsc mode. Mapped the input from exisiting cgihowfsc files"""
 
-        # Set default for corgi overrides
-        if corgi_overrides is None:
-            corgi_overrides = {}
-
-        # map wavelength to corgisim bandpass if not provided
-        if 'bandpass' not in corgi_overrides:
-            wavelength = self.cfg.sl_list[1].lam
-            bandpass = map_wavelength_to_corgisim_bandpass(wavelength)
-        else:
-            bandpass = corgi_overrides['bandpass']
-
-        # Validate that we support this mode for corgihowfsc mapping
-        if self.cor not in self.SUPPORTED_CGI_MODES:
-            raise ValueError(
-                f"corgihowfsc backend does not support cor mode '{self.cor}'. "
-                f"Supported modes: {self.SUPPORTED_CGI_MODES}"
-            )
-        
-        # Map cgihowfsc mode to corgihowfsc 
-        corgi_base_mode = self.CGI_TO_CORGI_MAPPING[self.cor]
-
-        # Validate bandpass 
-        if bandpass not in ['1', '2', '3', '4']:
-            raise ValueError("bandpass must be one of ['1', '2', '3', '4']")
-        
-        self.bandpass = bandpass
-
-        # Set corongraph mode for corgisim - combine mode with bandpass
-        self.cor_mapped = f'{corgi_base_mode}_band{bandpass}'
-
-        # Handle host star properties required by corgisim scene object
-        if self.hconf is not None:
-            host_star_properties = self._extract_host_properties_from_hconf(self.hconf)
-        else:
-            host_star_properties = {
-                'Vmag': 2.56,  # default to del Leo
-                'spectral_type': 'A5V',  # default to del Leo
-                'magtype': 'vegamag',  # standard default
-                'ref_flag': False  # standard default
-            }
-        
-        # Set other corgihowfsc specific parameters 
-        self.is_noise_free = corgi_overrides.get('is_noise_free', True)
-        self.output_dim = corgi_overrides.get('output_dim', 51)
-        self.polaxis = corgi_overrides.get('polaxis', 10)
-        self.Vmag = corgi_overrides.get('Vmag', host_star_properties['Vmag'])
-        self.sptype = corgi_overrides.get('sptype', host_star_properties['spectral_type'])
-        self.ref_flag = corgi_overrides.get('ref_flag', host_star_properties['ref_flag'])
-        self._mode = 'excam'  # default camera mode
-        
-        # Initialise scene object 
-        point_source_info = [] # default is just none, tbc whether there should be point source or not
-        self.base_scene = scene.Scene(host_star_properties, point_source_info)
-    
-    @staticmethod
-    def _extract_host_properties_from_hconf(hconf):
-        """Extract host star properties from hconf object"""
-        try:
-            star_config = hconf.get('star', {}) if isinstance(hconf, dict) else getattr(hconf, 'star', {})
-            
-            # Extract stellar properties, preferring target values if available
-            Vmag = (star_config.get('stellar_vmag_target') or 
-                star_config.get('stellar_vmag') or 
-                2.56)  # default fallback
-            
-            sptype = (star_config.get('stellar_type_target') or 
-                    star_config.get('stellar_type') or 
-                    'A5V')  # default fallback
-            
-            return {
-                'Vmag': Vmag,
-                'spectral_type': sptype,
-                'magtype': 'vegamag',  # standard default
-                'ref_flag': False  # standard default
-            }
-        except (AttributeError, KeyError) as e:
-            raise ValueError(f"hconf missing required star configuration: {e}")
+        self.corgisim_manager = CorgisimManager(self.cfg, self.cstrat, self.hconf, self.cor, corgi_overrides=corgi_overrides)
 
     def check_gitlframeinputs(self, dm1v, dm2v, fixedbp, exptime, crop, cleanrow, cleancol):
         """Input validation for both simulators."""
@@ -205,27 +121,10 @@ class GitlImage:
          lind = 0: integer >= 0 indicating which wavelength channel in use. 
 
         wfe is a placeholder argument for now to keep the option of passing additional wavefront error (e.g. zernike coefficients) to modify the frame generation
-        """
-        subband_option = ['a', 'b', 'c'] 
-        bandpass_recipe = self.bandpass + subband_option[lind] 
-        
+        """        
         self.check_gitlframeinputs(dm1v, dm2v, fixedbp, exptime=exptime, crop=crop, cleanrow=cleanrow, cleancol=cleancol)
 
-        optics_keywords = {'cor_type': self.cor_mapped, 'use_errors': 2, 'polaxis': self.polaxis, 'output_dim': self.output_dim, \
-                           'use_dm1': 1, 'dm1_v': dm1v, 'use_dm2': 1, 'dm2_v': dm2v, 'use_fpm': 1, 'use_lyot_stop': 1,
-                           'use_field_stop': 1}
-
-        optics = instrument.CorgiOptics(self._mode, bandpass_recipe, optics_keywords=optics_keywords, if_quiet=True)
-
-        sim_scene = optics.get_host_star_psf(self.base_scene) 
-
-        if self.is_noise_free:
-            return sim_scene.host_star_image.data
-        else:
-            emccd_dict = {'em_gain': gain, 'cr_rate': 0}
-            detector = instrument.CorgiDetector(emccd_dict)
-            sim_scene = detector.generate_detector_image(sim_scene, exptime)
-            return sim_scene.image_on_detector.data
+        return self.corgisim_manager.generate_host_star_psf(dm1v, dm2v, lind=lind, exptime=exptime, gain=gain)
 
     def gitlframe_cgihowfsc(self, dmlist, peakflux, fixedbp, exptime, crop, lind, cleanrow=1024, cleancol=1024):
         """ 
@@ -235,6 +134,26 @@ class GitlImage:
 
         return sim_gitlframe(self.cfg, dmlist, fixedbp, peakflux, exptime, crop, lind, cleanrow=1024, cleancol=1024)
 
+    def gitlefield_cgihowfsc(self, dmlist, crop, lind, cleanrow, cleancol):
+        """
+        Generate a GITL efield using the cgi-howfsc optical model.
+        """
+
+        # Creation of dummy variables to satisfy the strict signature of sim_gitlframe
+
+        dummy_bp = np.zeros((cleanrow, cleancol), dtype=bool)
+
+        return get_efield_cgihowfsc(
+            cfg=self.cfg,
+            dmlist=dmlist,
+            fixedbp=dummy_bp,  # For checking
+            peakflux=1.0,
+            exptime=1.0,
+            crop=crop,
+            lind=lind,
+            cleanrow=cleanrow,
+            cleancol=cleancol
+        )
     def get_image(self, dm1v, dm2v, exptime, gain=1, crop=None, lind=0, peakflux=1, cleanrow=1024, cleancol=1024, fixedbp=np.zeros((1024, 1024), dtype=bool), wfe=None):
 
         """
@@ -271,6 +190,34 @@ class GitlImage:
                 raise ValueError("crop parameter is required for cgi-howfsc")
             dmlist = [dm1v, dm2v]
             return self.gitlframe_cgihowfsc(dmlist, peakflux, self.cstrat.fixedbp, exptime, crop, lind, cleanrow, cleancol)
+
+    def get_efield(self, dm1v, dm2v, lind=0, crop=None, output_shape=(153, 153),  cleanrow = 1024, cleancol = 1024):
+        """
+        Get a simulated GITL efield using either corgisim or cgi-howfsc repo's optical model. This get_efield method should be compatible with both cgi-howfsc and corgisim.
+        Arguments:
+         dm1v: ndarray, absolute voltage map for DM1.
+         dm2v: ndarray, absolute voltage map for DM2.
+         crop: 4-tuple of (lower row, lower col, number of rows,
+          number of columns), indicating where in a clean frame a PSF is taken.
+          All are integers; the first two must be >= 0 and the second two must be > 0. Only used if name = 'cgi-howfsc'.
+        """
+
+        if crop is None:
+            raise ValueError("crop parameter is required for cgi-howfsc")
+
+        if self.backend == 'corgihowfsc':
+            # Futur work
+            raise NotImplementedError("CorgiSim efield not implemented yet.")
+
+        else:  # cgi-howfsc
+            dmlist = [dm1v, dm2v]
+            return self.gitlefield_cgihowfsc(
+                dmlist=dmlist,
+                crop=crop,
+                lind=lind,
+                cleanrow=cleanrow,
+                cleancol=cleancol
+            )
 
 # Helper function to map wavelength to corgisim bandpass
 def map_wavelength_to_corgisim_bandpass(wavelength_m, tolerance=3e-9):
