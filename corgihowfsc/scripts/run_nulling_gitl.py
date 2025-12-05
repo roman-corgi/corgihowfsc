@@ -20,9 +20,7 @@ from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
-# defjacpath = r'C:\Users\sredmond\Documents\github_repos\roman-corgi-repos\corgihowfsc\data'
-#None #os.path.join(os.path.dirname(howfscpath), 'jacdata')
-defjacpath = None
+defjacpath = None # To be changed
 precomp= 'load_all' if defjacpath is not None else 'precomp_all_once'
 
 current_datetime = datetime.now()
@@ -57,7 +55,7 @@ hconf = loadyaml(hconffile, custom_exception=TypeError)
 
 # Define control and estimator strategy
 cstrat = ControlStrategy(cstratfile)
-estimator = DefaultEstimator()
+estimator = PerfectEstimator()
 
 # Initialize default probes class
 probes = DefaultProbes('default')

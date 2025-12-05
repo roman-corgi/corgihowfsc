@@ -156,6 +156,9 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     subcroplist = [(lrow, lcol, nrow, ncol)]*(nlam)
     nrowperpacket = 3 # only used by packet-drop testing
 
+    abs_dm1list.append(dm10)
+    abs_dm2list.append(dm20)
+
     # jac, jtwj_map, n2clist
     if precomp in ['precomp_all_once']:
         t0 = time.time()
@@ -419,7 +422,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         hdul = pyfits.HDUList([prim, img, prev])
         hdul.writeto(fileout, overwrite=True)
 
-        save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c)
+        save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list)
 
 
 if __name__ == "__main__":
