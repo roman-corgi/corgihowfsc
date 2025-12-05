@@ -5,7 +5,7 @@ import numpy as np
 
 from howfsc.util.gitl_tools import param_order_to_list
 
-def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c):
+def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list):
 
     outpath = os.path.dirname(fileout)
 
@@ -99,3 +99,28 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c):
         hdul = pyfits.HDUList([prim, img])
         fnout = os.path.join(outpath, f"iteration_{i + 1:04d}", "efield_estimations.fits")
         hdul.writeto(fnout, overwrite=True)
+
+        # Saving DM cube
+        if dm1_list is not None and len(dm1_list) > 0:
+
+            dm1_cube = np.array(dm1_list)
+
+            hdr_dm = pyfits.Header()
+            hdr_dm['CONTENT'] = 'DM1 VOLTAGE HISTORY'
+            hdr_dm['UNIT'] = 'Volts'
+
+            pyfits.writeto(os.path.join(outpath, "dm1_command_history.fits"),
+                           dm1_cube, header=hdr_dm, overwrite=True)
+
+        if dm2_list is not None and len(dm2_list) > 0:
+
+            dm2_cube = np.array(dm2_list)
+
+            hdr_dm = pyfits.Header()
+            hdr_dm['CONTENT'] = 'DM2 VOLTAGE HISTORY'
+            hdr_dm['UNIT'] = 'Volts'
+
+            pyfits.writeto(os.path.join(outpath, "dm2_command_history.fits"),
+                           dm2_cube, header=hdr_dm, overwrite=True)
+
+        print("DM Cubes saved.")
