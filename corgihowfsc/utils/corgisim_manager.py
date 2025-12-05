@@ -90,7 +90,7 @@ class CorgisimManager:
         
         # Set other corgihowfsc specific parameters; if not provided, use defaults
         self.is_noise_free = self.corgi_overrides.get('is_noise_free', True)
-        self.output_dim = self.corgi_overrides.get('output_dim', 151) # default to match gitl image
+        self.output_dim = self.corgi_overrides.get('output_dim', 153) # default to match gitl image
         self.polaxis = self.corgi_overrides.get('polaxis', 10)
         self.Vmag = self.corgi_overrides.get('Vmag', self.host_star_properties['Vmag'])
         self.sptype = self.corgi_overrides.get('sptype', self.host_star_properties['spectral_type'])

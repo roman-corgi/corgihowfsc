@@ -71,6 +71,12 @@ class GitlImage:
         if self.backend == 'corgihowfsc':
             self._init_corgihowfsc(corgi_overrides)
 
+        else:
+            self.nrow = 153
+            self.ncol = 153
+            self.lrow = 436
+            self.lcol = 436
+
 
     def _init_corgihowfsc (self, corgi_overrides):
         """Initialise for corgihowfsc mode. Mapped the input from exisiting cgihowfsc files"""
