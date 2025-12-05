@@ -15,19 +15,24 @@ from howfsc.control.cs import ControlStrategy
 from howfsc.model.mode import CoronagraphMode
 from howfsc.util.loadyaml import loadyaml
 
+import roman_preflight_proper
+### Then, run the following command to copy the default prescription file
+roman_preflight_proper.copy_here()
 
 import corgihowfsc
 from corgihowfsc.utils.howfsc_initialization import get_args, load_files
 from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
 from corgihowfsc.sensing.DefaultProbes import DefaultProbes
-from corgihowfsc.utils.contrast_nomalization import CorgiNormalization
+from corgihowfsc.utils.contrast_nomalization import CorgiNormalization, EETCNormalization
 from corgihowfsc.gitl.nulling_gitl import nulling_gitl
 from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
-defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
+# defjacpath = r'C:\Users\sredmond\Documents\github_repos\roman-corgi-repos\corgihowfsc\data'
 
+# Note: MUST DEFINE JACPATH FOR CORGI GITL FRAMES
+defjacpath = None
 precomp= 'load_all' if defjacpath is not None else 'precomp_all_once'
 
 current_datetime = datetime.now()
@@ -68,18 +73,29 @@ def main():
     # Initialize default probes class
     probes = DefaultProbes('default')
 
+    # Image cropping parameters:
+    crop_params = {}
+    crop_params['nrow'] = 153
+    crop_params['ncol'] = 153
+    crop_params['lrow'] = 0
+    crop_params['lcol'] = 0
+
     # Define imager and normalization (counts->contrast) strategy
+    corgi_overrides = {}
+    corgi_overrides['output_dim'] = crop_params['nrow']
     imager = GitlImage(
         cfg=cfg,         # Your CoronagraphMode object
         cstrat=cstrat,   # Your ControlStrategy object
         hconf=hconf,      # Your host config with stellar properties
         backend='corgihowfsc',
-        cor=mode
+        cor=mode,
+        corgi_overrides=corgi_overrides
     )
 
-    normalization_strategy = CorgiNormalization(cfg, cstrat, hconf, cor=args.mode, corgi_overrides=None, separation_lamD=7)
+    normalization_strategy = CorgiNormalization(cfg, cstrat, hconf, cor=args.mode, corgi_overrides=corgi_overrides, separation_lamD=7)
+    # normalization_strategy = EETCNormalization()
 
-    nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles)
+    nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params)
 
 if __name__ == '__main__':    
     main()

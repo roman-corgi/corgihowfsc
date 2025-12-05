@@ -1,15 +1,9 @@
 
-import time
 import os
-import argparse
-import cProfile
-import pstats
-import logging
 from datetime import datetime
-import numpy as np
-import astropy.io.fits as pyfits
+import matplotlib
+matplotlib.use('TkAgg')
 
-import corgihowfsc
 import eetc
 from howfsc.control.cs import ControlStrategy
 from howfsc.model.mode import CoronagraphMode
@@ -26,9 +20,10 @@ from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
-defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
-
-precomp = 'load_all' if (defjacpath is not None and os.path.isdir(defjacpath)) else 'precomp_all_once'
+# defjacpath = r'C:\Users\sredmond\Documents\github_repos\roman-corgi-repos\corgihowfsc\data'
+#None #os.path.join(os.path.dirname(howfscpath), 'jacdata')
+defjacpath = None
+precomp= 'load_all' if defjacpath is not None else 'precomp_all_once'
 
 current_datetime = datetime.now()
 folder_name = 'gitl_simulation_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
@@ -67,6 +62,13 @@ estimator = DefaultEstimator()
 # Initialize default probes class
 probes = DefaultProbes('default')
 
+# Image cropping parameters:
+crop_params = {}
+crop_params['nrow'] = 153
+crop_params['ncol'] = 153
+crop_params['lrow'] = 436
+crop_params['lcol'] = 436
+
 # Define imager and normalization (counts->contrast) strategy
 imager = GitlImage(
     cfg=cfg,         # Your CoronagraphMode object
@@ -77,5 +79,5 @@ imager = GitlImage(
 )
 normalization_strategy = EETCNormalization()
 
-nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles)
+nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params)
 

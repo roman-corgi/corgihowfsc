@@ -41,7 +41,7 @@ howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
 
 
-def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles):
+def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params):
     """Run a nulling sequence, using the compact optical model as the data source.
 
     Parameters:
@@ -148,10 +148,10 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     # cstrat = ControlStrategy(cstratfile)
 
     # nrow, ncol, croplist
-    nrow = 153
-    ncol = 153
-    lrow = 436
-    lcol = 436
+    nrow = crop_params['nrow']
+    ncol = crop_params['ncol']
+    lrow = crop_params['lrow']
+    lcol = crop_params['lcol']
     croplist = [(lrow, lcol, nrow, ncol)]*(nlam*ndm)
     subcroplist = [(lrow, lcol, nrow, ncol)]*(nlam)
     nrowperpacket = 3 # only used by packet-drop testing
