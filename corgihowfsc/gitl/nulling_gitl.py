@@ -24,6 +24,7 @@ from eetc.cgi_eetc import CGIEETC
 import howfsc
 from howfsc.control.cs import ControlStrategy
 from howfsc.control.calcjtwj import JTWJMap
+from corgihowfsc.sensing.Estimator_choice import DefaultEstimator, PerfectEstimator
 
 from howfsc.model.mode import CoronagraphMode
 
@@ -32,7 +33,7 @@ from howfsc.util.gitl_tools import param_order_to_list
 
 from corgihowfsc.gitl.modular_gitl import howfsc_computation
 from howfsc.precomp import howfsc_precomputation
-from howfsc.util.corgitools import save_outputs
+from corgihowfsc.utils.saving_output import save_outputs
 
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
@@ -134,7 +135,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     log = logging.getLogger(__name__)
 
 
-    exptime = 10 # FIXME this should be derived from contrast eventually
+    # exptime = 10 # FIXME this should be derived from contrast eventually
     contrast = 1e-5 # "starting" value to bootstrap getting we0
 
     # dm1_list, dm2
@@ -154,9 +155,6 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     croplist = [(lrow, lcol, nrow, ncol)]*(nlam*ndm)
     subcroplist = [(lrow, lcol, nrow, ncol)]*(nlam)
     nrowperpacket = 3 # only used by packet-drop testing
-
-    # prev_exptime_list
-    prev_exptime_list = [exptime]*(nlam*ndm)
 
     # jac, jtwj_map, n2clist
     if precomp in ['precomp_all_once']:
@@ -226,6 +224,9 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             scale=contrast,
             scale_bright=contrast,
         )
+
+    # prev_exptime_list
+    prev_exptime_list = [exptime] * (nlam * ndm)
 
     # framelist
     # do last, needs peak flux
