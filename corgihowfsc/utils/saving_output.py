@@ -84,42 +84,41 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
         hdul_incoh = pyfits.HDUList([prim_incoh, img_incoh])
         hdul_incoh.writeto(os.path.join(outpath, f"iteration_{i + 1:04d}", "intensity_incoherent.fits"), overwrite=True)
 
-        print(f"Saved separate intensity files for iteration {i + 1}")
-
-    # Estimated E-fields at each wavelength
-    for i, oitem in enumerate(otherlist):
+        # --- E-FIELD ESTIMATIONS ---
         efields = []
         for n in range(len(cfg.sl_list)):
             efields.append(np.real(oitem[n]['meas_efield']))
             efields.append(np.imag(oitem[n]['meas_efield']))
-        hdr = pyfits.Header()
-        hdr['NLAM'] = len(cfg.sl_list)
-        prim = pyfits.PrimaryHDU(header=hdr)
-        img = pyfits.ImageHDU(efields)
-        hdul = pyfits.HDUList([prim, img])
-        fnout = os.path.join(outpath, f"iteration_{i + 1:04d}", "efield_estimations.fits")
-        hdul.writeto(fnout, overwrite=True)
 
-        # Saving DM cube
+        hdr_ef = pyfits.Header()
+        hdr_ef['NLAM'] = len(cfg.sl_list)
+        prim_ef = pyfits.PrimaryHDU(header=hdr_ef)
+        img_ef = pyfits.ImageHDU(efields)
+        hdul_ef = pyfits.HDUList([prim_ef, img_ef])
+        fnout_ef = os.path.join(outpath, f"iteration_{i + 1:04d}", "efield_estimations.fits")
+        hdul_ef.writeto(fnout_ef, overwrite=True)
 
-        if abs_dm1list is not None and len(abs_dm1list) > 0:
-            dm1_cube = np.array(abs_dm1list)
+        print(f"Saved outputs for iteration {i + 1}")
 
-            hdr_dm = pyfits.Header()
-            hdr_dm['CONTENT'] = 'DM1 VOLTAGE HISTORY'
-            hdr_dm['UNIT'] = 'Volts'
+    # --- SAVING DM CUBES ---
+    if dm1_list is not None and len(dm1_list) > 0:
+        dm1_cube = np.array(dm1_list)
 
-            pyfits.writeto(os.path.join(outpath, "dm1_command_history.fits"),
-                           dm1_cube, header=hdr_dm, overwrite=True)
+        hdr_dm = pyfits.Header()
+        hdr_dm['CONTENT'] = 'DM1 VOLTAGE HISTORY'
+        hdr_dm['UNIT'] = 'Volts'
 
-        if abs_dm2list is not None and len(abs_dm2list) > 0:
-            dm2_cube = np.array(abs_dm2list)
+        pyfits.writeto(os.path.join(outpath, "dm1_command_history.fits"),
+                       dm1_cube, header=hdr_dm, overwrite=True)
 
-            hdr_dm = pyfits.Header()
-            hdr_dm['CONTENT'] = 'DM2 VOLTAGE HISTORY'
-            hdr_dm['UNIT'] = 'Volts'
+    if dm2_list is not None and len(dm2_list) > 0:
+        dm2_cube = np.array(dm2_list)
 
-            pyfits.writeto(os.path.join(outpath, "dm2_command_history.fits"),
-                           dm2_cube, header=hdr_dm, overwrite=True)
+        hdr_dm = pyfits.Header()
+        hdr_dm['CONTENT'] = 'DM2 VOLTAGE HISTORY'
+        hdr_dm['UNIT'] = 'Volts'
 
-        print("DM Cubes saved.")
+        pyfits.writeto(os.path.join(outpath, "dm2_command_history.fits"),
+                       dm2_cube, header=hdr_dm, overwrite=True)
+
+    print("DM Cubes saved.")
