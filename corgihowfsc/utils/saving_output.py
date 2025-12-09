@@ -120,15 +120,15 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     hdr_hist['AXIS4'] = 'ITERATION'
 
     # 1. Total
-    pyfits.writeto(os.path.join(outpath, "history_intensity_total.fits"),
+    pyfits.writeto(os.path.join(outpath, "history_intensity_total_cube.fits"),
                    np.array(cube_total), header=hdr_hist, overwrite=True)
 
     # 2. Coherent
-    pyfits.writeto(os.path.join(outpath, "history_intensity_coherent.fits"),
+    pyfits.writeto(os.path.join(outpath, "history_intensity_coherent_cube.fits"),
                    np.array(cube_coh), header=hdr_hist, overwrite=True)
 
     # 3. Incoherent
-    pyfits.writeto(os.path.join(outpath, "history_intensity_incoherent.fits"),
+    pyfits.writeto(os.path.join(outpath, "intensity_incoherent_cube.fits"),
                    np.array(cube_inco), header=hdr_hist, overwrite=True)
 
     if dm1_list is not None and len(dm1_list) > 0:
