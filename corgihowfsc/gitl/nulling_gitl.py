@@ -239,9 +239,6 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         # TODO: what are correct camera settings here?
         _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, indj, dm1_list[0], dm2_list[0], gain=1)
         for indk in range(ndm):
-            dmlist = [dm1_list[indj*ndm + indk],
-                      dm2_list[indj*ndm + indk]]
-
             f = imager.get_image(dm1_list[indj*ndm + indk],
                              dm2_list[indj*ndm + indk],
                              exptime,
@@ -361,8 +358,6 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             crop = croplist[indj]
             _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, indj, dm1_list[0], dm2_list[0], gain=1)
             for indk in range(ndm):
-                dmlist = [dm1_list[indj*ndm + indk],
-                          dm2_list[indj*ndm + indk]]
                 f = imager.get_image(dm1_list[indj * ndm + indk],
                                  dm2_list[indj * ndm + indk],
                                  prev_exptime_list[indj*ndm + indk],
