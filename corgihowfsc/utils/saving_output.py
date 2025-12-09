@@ -5,7 +5,7 @@ import numpy as np
 
 from howfsc.util.gitl_tools import param_order_to_list
 
-def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list):
+def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list):
 
     outpath = os.path.dirname(fileout)
 
@@ -45,7 +45,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, ab
             coh_int = oitem[n].get('modul_intensity', np.zeros_like(total_int))
 
             # Incoherent intensity
-            incoh_int = total_int - coh_int
+            incoh_int = oitem[n].get('unmodul_intensity', np.zeros_like(total_int))
 
             # Stacking list
             stack_total.append(total_int)
@@ -101,9 +101,9 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, ab
         hdul.writeto(fnout, overwrite=True)
 
         # Saving DM cube
-        if dm1_list is not None and len(dm1_list) > 0:
 
-            dm1_cube = np.array(dm1_list)
+        if abs_dm1list is not None and len(abs_dm1list) > 0:
+            dm1_cube = np.array(abs_dm1list)
 
             hdr_dm = pyfits.Header()
             hdr_dm['CONTENT'] = 'DM1 VOLTAGE HISTORY'
@@ -112,9 +112,8 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, ab
             pyfits.writeto(os.path.join(outpath, "dm1_command_history.fits"),
                            dm1_cube, header=hdr_dm, overwrite=True)
 
-        if dm2_list is not None and len(dm2_list) > 0:
-
-            dm2_cube = np.array(dm2_list)
+        if abs_dm2list is not None and len(abs_dm2list) > 0:
+            dm2_cube = np.array(abs_dm2list)
 
             hdr_dm = pyfits.Header()
             hdr_dm['CONTENT'] = 'DM2 VOLTAGE HISTORY'
