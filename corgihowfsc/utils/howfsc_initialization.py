@@ -11,6 +11,8 @@ import astropy.io.fits as pyfits
 
 def get_args(niter=5,
                     mode='narrowfov',
+                    dark_hole='360deg',
+                    probe_shape='default',
                     profile=False,
                     fracbadpix=0,
                     nbadpacket=0,
@@ -106,6 +108,8 @@ def get_args(niter=5,
         args = Args()
         args.niter = niter
         args.mode = mode
+        args.dark_hole = dark_hole
+        args.probe_shape = probe_shape
         args.profile = profile
         args.fracbadpix = fracbadpix
         args.nbadpacket = nbadpacket
@@ -205,24 +209,34 @@ def load_files(args, howfscpath):
         pass
     log = logging.getLogger(__name__)
 
+    model_path_all = os.path.join(howfscpath, 'model', 'every_mask_config')
+    n2clistfiles = [
+        os.path.join(model_path_all, 'ones_like_fs.fits'),
+        os.path.join(model_path_all, 'ones_like_fs.fits'),
+        os.path.join(model_path_all, 'ones_like_fs.fits'),
+    ]
     if mode == 'nfov_band1':
-        modelpath = os.path.join(howfscpath, 'model', 'nfov_band1')
-        cfgfile = os.path.join(modelpath, 'howfsc_optical_model_seeded.yaml')
-        jacfile = os.path.join(jacpath, 'nfov_jac.fits')
+
+        modelpath_band = os.path.join(howfscpath, 'model', 'nfov_band1')
+        modelpath = os.path.join(modelpath_band, mode+'_'+args.dark_hole)
+        probepath = os.path.join(howfscpath, 'model', 'probes')
+
+
+        hconffile = os.path.join(modelpath_band, 'hconf_nfov_flat.yaml')
+        cfgfile = os.path.join(modelpath, 'howfsc_optical_model.yaml')
         cstratfile = os.path.join(modelpath, 'cstrat_nfov_band1.yaml')
-        probe0file = os.path.join(modelpath, 'nfov_dm_dmrel_4_1.0e-05_cos.fits')
-        probe1file = os.path.join(modelpath, 'nfov_dm_dmrel_4_1.0e-05_sinlr.fits')
-        probe2file = os.path.join(modelpath, 'nfov_dm_dmrel_4_1.0e-05_sinud.fits')
+
+        jacfile = os.path.join(jacpath, 'nfov_jac.fits')
+
+        probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_cos.fits')
+        probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinlr.fits')
+        probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinud.fits')
         probefiles = {}
         probefiles[0] = probe0file
         probefiles[2] = probe1file
         probefiles[1] = probe2file
-        hconffile = os.path.join(modelpath, 'hconf_nfov_flat.yaml')
-        n2clistfiles = [
-            os.path.join(modelpath, 'ones_like_fs.fits'),
-            os.path.join(modelpath, 'ones_like_fs.fits'),
-            os.path.join(modelpath, 'ones_like_fs.fits'),
-        ]
+
+
 
     elif mode == 'nfov_band1_half':
         modelpath = os.path.join(howfscpath, 'model', 'nfov_band1_half')
