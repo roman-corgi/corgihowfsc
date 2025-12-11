@@ -90,7 +90,7 @@ pixelweights:
     last: None
     low: 0
     high: None
-    value: 'pixelweights_ones_nlam3_nrow153.fits'
+    value: '../../every_mask_config/pixelweights_ones_nlam3_nrow153.fits'
 
 dmmultgain:
   -
@@ -137,4 +137,4 @@ probeheight:
     value: 1.0e-5
 
 
-fixedbp: 'fixedbp_zeros.fits'
+fixedbp: '../../every_mask_config/fixedbp_zeros.fits'
