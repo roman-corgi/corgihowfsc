@@ -1,15 +1,9 @@
 
-import time
 import os
-import argparse
-import cProfile
-import pstats
-import logging
 from datetime import datetime
-import numpy as np
-import astropy.io.fits as pyfits
+import matplotlib
+matplotlib.use('TkAgg')
 
-import corgihowfsc
 import eetc
 from howfsc.control.cs import ControlStrategy
 from howfsc.model.mode import CoronagraphMode
@@ -18,7 +12,7 @@ from howfsc.util.loadyaml import loadyaml
 
 import corgihowfsc
 from corgihowfsc.utils.howfsc_initialization import get_args, load_files
-from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
+from corgihowfsc.sensing.Estimator_choice import DefaultEstimator, PerfectEstimator
 from corgihowfsc.sensing.DefaultProbes import DefaultProbes
 from corgihowfsc.utils.contrast_nomalization import EETCNormalization
 from corgihowfsc.gitl.nulling_gitl import nulling_gitl
@@ -26,8 +20,9 @@ from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
-defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
-
+# defjacpath = r'C:\Users\sredmond\Documents\github_repos\roman-corgi-repos\corgihowfsc\data'
+#None #os.path.join(os.path.dirname(howfscpath), 'jacdata')
+defjacpath = None
 precomp= 'load_all' if defjacpath is not None else 'precomp_all_once'
 
 current_datetime = datetime.now()
@@ -74,6 +69,13 @@ estimator = DefaultEstimator()
 # Initialize default probes class
 probes = DefaultProbes(args.probe_shape)
 
+# Image cropping parameters:
+crop_params = {}
+crop_params['nrow'] = 153
+crop_params['ncol'] = 153
+crop_params['lrow'] = 436
+crop_params['lcol'] = 436
+
 # Define imager and normalization (counts->contrast) strategy
 imager = GitlImage(
     cfg=cfg,         # Your CoronagraphMode object
@@ -84,5 +86,5 @@ imager = GitlImage(
 )
 normalization_strategy = EETCNormalization()
 
-nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles)
+nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params)
 

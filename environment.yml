@@ -3,7 +3,7 @@ channels:
   - conda-forge
   # - defaults
 dependencies:
-  - python=3.9
+  - python=3.12
   - pip
   - astropy
   - matplotlib
@@ -11,9 +11,11 @@ dependencies:
   - jupyter
   - sphinx>=4.0
   - sphinx_rtd_theme
+  - synphot
   - pip:
     - sphinx-autodoc-typehints  # Better type hint support
     - myst-parser               # Markdown support in Sphinx
     - linkify-it-py
     - git+https://github.com/roman-corgi/cgi-howfsc.git
     - git+https://github.com/roman-corgi/corgisim.git@main
+    - git+https://github.com/roman-corgi/corgidrp.git@develop
