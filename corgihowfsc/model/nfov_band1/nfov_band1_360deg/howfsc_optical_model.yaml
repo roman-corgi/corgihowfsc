@@ -12,7 +12,7 @@ dms:
       thact: 90.02875243700015
       flipx: true
     voltages:
-      gainfn: ../any/gain_map_dm1.fits
+      gainfn: ../any/gain_map_flat_dm1.fits
       vmax: 100
       vmin: 0
       vneighbor: 50.0
@@ -35,7 +35,7 @@ dms:
       thact: 90.00377291980786
       flipx: false
     voltages:
-      gainfn: ../any/gain_map_dm2.fits
+      gainfn: ../any/gain_map_flat_dm2.fits
       vmax: 100
       vmin: 0
       vneighbor: 50.0
