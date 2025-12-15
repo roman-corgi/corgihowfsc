@@ -1,7 +1,7 @@
 import numpy as np
 import astropy.io.fits as pyfits
 
-
+from howfsc.util.gitl_tools import remove_subnormals
 from corgihowfsc.sensing.Probes import Probes
 from howfsc.sensing.probephase import probe_ap
 from howfsc.util.insertinto import insertinto
