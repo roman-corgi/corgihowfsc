@@ -1,7 +1,7 @@
 import numpy as np
 import astropy.io.fits as pyfits
 
-
+from howfsc.util.gitl_tools import remove_subnormals
 from corgihowfsc.sensing.Probes import Probes
 from howfsc.sensing.probephase import probe_ap
 from howfsc.util.insertinto import insertinto
@@ -38,9 +38,13 @@ class DefaultProbes(Probes):
         self.ndm = 2 * len(dmrel_list) + 1
         self.croplist = [(self.lrow, self.lcol, self.nrow, self.ncol)] * (nlam * self.ndm)
 
+        dm10_init = cfg.initmaps[0]
+        dm20_init = cfg.initmaps[1]
+        dm10_cons  = cfg.dmlist[0].dmvobj.constrain_dm(dm10_init)
+        dm10  = remove_subnormals(dm10_cons)
+        dm20_cons = cfg.dmlist[1].dmvobj.constrain_dm(dm20_init)
+        dm20 = remove_subnormals(dm20_cons)
 
-        dm10 = cfg.initmaps[0]
-        dm20 = cfg.initmaps[1]
         dm1_list = []
         dm2_list = []
         for index in range(nlam):

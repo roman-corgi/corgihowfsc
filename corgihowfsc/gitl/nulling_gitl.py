@@ -298,8 +298,8 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         t1 = time.time()
 
         otherlist.append(other)
-        abs_dm1list.append(abs_dm1.copy())
-        abs_dm2list.append(abs_dm2.copy())
+        abs_dm1list.append(abs_dm1)
+        abs_dm2list.append(abs_dm2)
         framelistlist.append(framelist)
         scalelistout.append(scale_factor_list)
         camlist.append([gain_list, exptime_list, nframes_list])
