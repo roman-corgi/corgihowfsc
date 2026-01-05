@@ -182,6 +182,8 @@ def get_args_cmd(defjacpath):
                     help='If present, type of the target star desired will be updated in the hconf file (for parameter stellar_type_target in hconf file).')
 
     ap.add_argument('-j', '--jacpath', default=defjacpath, help="absolute path to read Jacobian files from", type=str)
+    ap.add_argument('--probe_shape', default='default', choices=['default', 'single'],
+                    help="Shape of the probes: 'default' (Sinc) or 'single' (Single Actuator).")
     args = ap.parse_args()
 
     return args
@@ -235,7 +237,16 @@ def load_files(args, howfscpath):
         if '360deg' in args.dark_hole:
             hconffile = os.path.join(modelpath_band, 'hconf_nfov_flat.yaml')
             cstratfile = os.path.join(modelpath, 'cstrat_nfov_band1.yaml')
-
+            if args.probe_shape == 'single':
+                # Single actuator probes
+                probe0file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act0.fits')
+                probe1file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act1.fits')
+                probe2file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act2.fits')
+            else:
+                # Sinc probes
+                probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_cos.fits')
+                probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinlr.fits')
+                probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinud.fits')
             # if args.dm_start_shape is not None:
             #     dm_start_file = os.path.join(modelpath, args.dm_start_shape)
             # else:
@@ -244,10 +255,6 @@ def load_files(args, howfscpath):
             #     start_parts = start_options[0].split('\\')[-1].split('_')
             #     dm_start_file = os.path.join(modelpath, start_parts[0] + '_' + start_parts[1] + '_')
             #     print('Using ' + start_parts[0] + '_' + start_parts[1] + '_' + ' as starting DM shape')
-
-            probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_cos.fits')
-            probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinlr.fits')
-            probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinud.fits')
 
             if dmstartmap_filenames is None:
                 dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
