@@ -155,8 +155,8 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     subcroplist = [(lrow, lcol, nrow, ncol)]*(nlam)
     nrowperpacket = 3 # only used by packet-drop testing
 
-    abs_dm1list.append(dm10.copy())
-    abs_dm2list.append(dm20.copy())
+    abs_dm1list.append(dm10)
+    abs_dm2list.append(dm20)
 
     # jac, jtwj_map, n2clist
     if precomp in ['precomp_all_once']:

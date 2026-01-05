@@ -14,6 +14,7 @@ from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
 from corgihowfsc.sensing.PerfectEstimator import PerfectEstimator
 from corgihowfsc.sensing.DefaultProbes import DefaultProbes
 from corgihowfsc.utils.contrast_nomalization import CorgiNormalization, EETCNormalization
+from corgihowfsc.sensing.SingleProbes import SingleProbes
 from corgihowfsc.gitl.nulling_gitl import nulling_gitl
 from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 
@@ -70,8 +71,16 @@ def main():
     cstrat = ControlStrategy(cstratfile)
     estimator = DefaultEstimator()
 
-    # Initialize default probes class
-    probes = DefaultProbes(args.probe_shape)
+    #cstrat.get_dmmultgain = lambda iteration, contrast: 0.0 # To setup dmgain = 0
+    estimator = DefaultEstimator()
+
+    # Initialize the correct probes class based on args.probe_shape
+    if args.probe_shape == 'single':
+        # SingleProbes
+        probes = SingleProbes(args.probe_shape)
+    else:
+        # Sinc probes
+        probes = DefaultProbes(args.probe_shape)
 
     # Image cropping parameters:
     crop_params = {}
