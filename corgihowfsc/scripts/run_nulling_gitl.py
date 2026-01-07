@@ -30,7 +30,14 @@ folder_name = 'gitl_simulation_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
 fits_name = 'final_frames.fits'
 fileout_path = os.path.join(os.path.dirname(os.path.dirname(corgihowfsc.__file__)), 'data', folder_name, fits_name)
 
-args = get_args(mode='nfov_band1', precomp=precomp, num_process=0, num_threads=1, fileout=fileout_path,jacpath=defjacpath)
+args = get_args(mode='nfov_band1',
+                dark_hole='360deg',
+                probe_shape='default',
+                precomp=precomp,
+                num_process=0,
+                num_threads=1,
+                fileout=fileout_path,
+                jacpath=defjacpath)
 
 # User params
 niter = args.niter
@@ -60,7 +67,7 @@ cstrat = ControlStrategy(cstratfile)
 estimator = DefaultEstimator()
 
 # Initialize default probes class
-probes = DefaultProbes('default')
+probes = DefaultProbes(args.probe_shape)
 
 # Image cropping parameters:
 crop_params = {}
