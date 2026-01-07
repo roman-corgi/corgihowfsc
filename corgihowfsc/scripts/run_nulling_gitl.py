@@ -67,9 +67,8 @@ def main():
     # hconffile
     hconf = loadyaml(hconffile, custom_exception=TypeError)
 
-    # Define control and estimator strategy
-    cstrat = ControlStrategy(cstratfile)
-    estimator = DefaultEstimator()
+    #cstrat.get_dmmultgain = lambda iteration, contrast: 0.0 # To setup dmgain = 0
+    estimator = DefaultEstimator() # PerfectEstimator() will use the exact efield to make EFC, DefaultEstimator will use PWP.
 
     #cstrat.get_dmmultgain = lambda iteration, contrast: 0.0 # To setup dmgain = 0
     estimator = DefaultEstimator()
