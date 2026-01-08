@@ -8,6 +8,7 @@ import logging
 import numpy as np
 import astropy.io.fits as pyfits
 
+from howfsc.util.load import load
 
 def get_args(niter=5,
                     mode='narrowfov',
@@ -26,7 +27,8 @@ def get_args(niter=5,
                     stellartype=None,
                     stellarvmagtarget=None,
                     stellartypetarget=None,
-                    jacpath=None):
+                    jacpath=None,
+                    dm_init_shape=None):
         """
         Initialize HOWFSC simulation with all required variables and configurations.
         Returns all variables needed for the main simulation loop.
@@ -124,6 +126,7 @@ def get_args(niter=5,
         args.stellarvmagtarget = stellarvmagtarget
         args.stellartypetarget = stellartypetarget
         args.jacpath = jacpath
+        args.dm_init_shape = dm_init_shape
 
         return args
 def get_args_cmd(defjacpath):
@@ -231,6 +234,11 @@ def load_files(args, howfscpath):
         else:
             jacfile = []
 
+        if args.dm_init_shape is not None:
+            dm_init_file = os.path.join(modelpath_band, 'any', args.dm_init_shape)
+        else:
+            dm_init_file = None
+
         probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_cos.fits')
         probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinlr.fits')
         probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinud.fits')
@@ -259,6 +267,7 @@ def load_files(args, howfscpath):
             os.path.join(modelpath, 'ones_like_fs.fits'),
             os.path.join(modelpath, 'ones_like_fs.fits'),
         ]
+
 
     elif mode == 'spec_band2':
         modelpath = os.path.join(howfscpath, 'model', 'spec_band2')
@@ -325,4 +334,23 @@ def load_files(args, howfscpath):
         # should not reach here; argparse should catch this
         raise ValueError('Invalid coronagraph mode type')
 
-    return modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles
+    return modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dm_init_file
+
+def update_dm_init_maps(cfg, args, dm_init_file):
+    dmkeylist = ['DM1', 'DM2']
+    if args.dm_init_shape is not None:
+        # Load DM settings used to collect channel data
+        initmaps = []
+        for dmkey in dmkeylist:
+            ipath = dm_init_file + dmkey.lower() + '.fits'
+            initmap = load(ipath)
+            initmaps.append(initmap)
+            pass
+        cfg.initmaps = initmaps
+
+
+    return cfg
+
+
+
+

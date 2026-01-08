@@ -20,7 +20,7 @@ import roman_preflight_proper
 roman_preflight_proper.copy_here()
 
 import corgihowfsc
-from corgihowfsc.utils.howfsc_initialization import get_args, load_files
+from corgihowfsc.utils.howfsc_initialization import get_args, load_files, update_dm_init_maps
 from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
 from corgihowfsc.sensing.DefaultProbes import DefaultProbes
 from corgihowfsc.utils.contrast_nomalization import CorgiNormalization, EETCNormalization
@@ -39,9 +39,16 @@ current_datetime = datetime.now()
 folder_name = 'gitl_simulation_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
 fits_name = 'final_frames.fits'
 fileout_path = os.path.join(os.path.dirname(os.path.dirname(corgihowfsc.__file__)), 'data', folder_name, fits_name)
+dm_init_shape = None # Set this to the string before dmX.fits if a different starting DM shape is desired, otherwise the file specficied in howfsc_optical_model.yaml is used
 
 def main(): 
-    args = get_args(mode='nfov_band1', precomp=precomp, num_process=2, num_threads=1, fileout=fileout_path,jacpath=defjacpath)
+    args = get_args(mode='nfov_band1',
+                    precomp=precomp,
+                    num_process=2,
+                    num_threads=1,
+                    fileout=fileout_path,
+                    jacpath=defjacpath,
+                    dm_init_shape=dm_init_shape)
 
     # User params
     niter = args.niter
@@ -58,10 +65,11 @@ def main():
     stellar_type_target = args.stellartypetarget
     jacpath = args.jacpath
 
-    modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles = load_files(args, howfscpath)
+    modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dm_init_file = load_files(args, howfscpath)
 
     # cfg
     cfg = CoronagraphMode(cfgfile)
+    cfg = update_dm_init_maps(cfg, args, dm_init_file)
 
     # hconffile
     hconf = loadyaml(hconffile, custom_exception=TypeError)
