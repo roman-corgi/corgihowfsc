@@ -1,3 +1,5 @@
+# Only used for creating the HOWFSC optical model files, not for running HOWFSC
+
 # SUBBANDS and WAVELENGTHS
 coro_mode: 'spec_band2'
 cal_bandpass: '2c'
