@@ -39,8 +39,8 @@ class DefaultProbes(Probes):
         self.croplist = [(self.lrow, self.lcol, self.nrow, self.ncol)] * (nlam * self.ndm)
 
 
-        dm10 = cfg.initmaps[0]
-        dm20 = cfg.initmaps[1]
+        dm10 = cfg.startmaps[0]
+        dm20 = cfg.startmaps[1]
         dm1_list = []
         dm2_list = []
         for index in range(nlam):
