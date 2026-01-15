@@ -7,7 +7,7 @@ import logging
 import glob
 
 import numpy as np
-import astropy.io.fits as pyfits
+from astropy.io import fits
 
 from howfsc.util.load import load
 
@@ -29,7 +29,7 @@ def get_args(niter=5,
                     stellarvmagtarget=None,
                     stellartypetarget=None,
                     jacpath=None,
-                    dm_start_shape=None):
+                    dmstartmap_filenames=None):
         """
         Initialize HOWFSC simulation with all required variables and configurations.
         Returns all variables needed for the main simulation loop.
@@ -127,7 +127,8 @@ def get_args(niter=5,
         args.stellarvmagtarget = stellarvmagtarget
         args.stellartypetarget = stellartypetarget
         args.jacpath = jacpath
-        args.dm_start_shape = dm_start_shape
+        args.dmstartmap_filenames = dmstartmap_filenames
+        # args.dm_start_shape = dm_start_shape
 
         return args
 def get_args_cmd(defjacpath):
@@ -234,14 +235,14 @@ def load_files(args, howfscpath):
         else:
             jacfile = []
 
-        if args.dm_start_shape is not None:
-            dm_start_file = os.path.join(modelpath, args.dm_start_shape)
-        else:
-            # If no starting point is given, we will load the last file globbed
-            start_options = glob.glob(os.path.join(modelpath, 'iter_*_dm*'))
-            start_parts = start_options[0].split('\\')[-1].split('_')
-            dm_start_file = os.path.join(modelpath, start_parts[0] + '_' + start_parts[1] + '_')
-            print('Using ' + start_parts[0] + '_' + start_parts[1] + '_' + ' as starting DM shape')
+        # if args.dm_start_shape is not None:
+        #     dm_start_file = os.path.join(modelpath, args.dm_start_shape)
+        # else:
+        #     # If no starting point is given, we will load the last file globbed
+        #     start_options = glob.glob(os.path.join(modelpath, 'iter_*_dm*'))
+        #     start_parts = start_options[0].split('\\')[-1].split('_')
+        #     dm_start_file = os.path.join(modelpath, start_parts[0] + '_' + start_parts[1] + '_')
+        #     print('Using ' + start_parts[0] + '_' + start_parts[1] + '_' + ' as starting DM shape')
 
         probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_cos.fits')
         probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinlr.fits')
@@ -250,6 +251,9 @@ def load_files(args, howfscpath):
         probefiles[0] = probe0file
         probefiles[2] = probe1file
         probefiles[1] = probe2file
+
+        if args.dmstartmap_filenames is None:
+            dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
 
     elif mode == 'nfov_band1_half':
         modelpath_band = os.path.join(howfscpath, 'model', 'nfov_band1')
@@ -274,8 +278,8 @@ def load_files(args, howfscpath):
         probefiles[2] = probe1file
         probefiles[1] = probe2file
 
-
-
+        if args.dmstartmap_filenames is None:
+            dmstartmap_filenames = ['iter_061_dm1.fits', 'iter_061_dm2.fits']
 
     elif mode == 'spec_band2':
         modelpath_band = os.path.join(howfscpath, 'model', 'spec_band2')
@@ -340,6 +344,9 @@ def load_files(args, howfscpath):
             os.path.join(model_path_all, 'ones_like_fs.fits'),
         ]
 
+        if args.dmstartmap_filenames is None:
+            dmstartmap_filenames = ['iter_061_dm1.fits', 'iter_061_dm2.fits']
+
     elif mode == 'wfov_band4':
         modelpath_band = os.path.join(howfscpath, 'model', 'wfov_band4')
         modelpath = os.path.join(modelpath_band, mode + '_' + args.dark_hole)
@@ -369,25 +376,33 @@ def load_files(args, howfscpath):
             os.path.join(model_path_all, 'ones_like_fs.fits'),
         ]
 
+        if args.dmstartmap_filenames is None:
+            dmstartmap_filenames = ['iter_061_dm1.fits', 'iter_061_dm2.fits']
+
     else:
         # should not reach here; argparse should catch this
         raise ValueError('Invalid coronagraph mode type')
 
-    dmstartmaps = load_dm_start_maps(dm_start_file)
+    dmstartmaps = [
+        fits.getdata(os.path.join(modelpath, args.dmstartmap_filenames[0])),
+        fits.getdata(os.path.join(modelpath, args.dmstartmap_filenames[1])),
+    ]
+    # dmstartmaps = load_dm_start_maps(dm_start_file)
+
 
     return modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps
 
 
-def load_dm_start_maps(dm_start_file):
-    dmkeylist = ['DM1', 'DM2']
-    # Load DM settings used to collect channel data
-    dmstartmaps = []
-    for dmkey in dmkeylist:
-        ipath = dm_start_file + dmkey.lower() + '.fits'
-        dmstartmap = load(ipath)
-        dmstartmaps.append(dmstartmap)
+# def load_dm_start_maps(dm_start_file):
+#     dmkeylist = ['DM1', 'DM2']
+#     # Load DM settings used to collect channel data
+#     dmstartmaps = []
+#     for dmkey in dmkeylist:
+#         ipath = dm_start_file + dmkey.lower() + '.fits'
+#         dmstartmap = load(ipath)
+#         dmstartmaps.append(dmstartmap)
 
-    return dmstartmaps
+#     return dmstartmaps
 
 
 

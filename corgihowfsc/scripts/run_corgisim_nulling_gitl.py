@@ -38,7 +38,7 @@ current_datetime = datetime.now()
 folder_name = 'gitl_simulation_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
 fits_name = 'final_frames.fits'
 fileout_path = os.path.join(os.path.dirname(os.path.dirname(corgihowfsc.__file__)), 'data', folder_name, fits_name)
-dm_start_shape = r'iter_080_' # Set this to the string before dmX.fits if a different starting DM shape is desired, otherwise the last option in the modelpath is used
+dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
 
 def main(): 
     args = get_args(mode='nfov_band1',
