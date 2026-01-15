@@ -33,7 +33,7 @@ howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
 
 # Note: MUST DEFINE JACPATH FOR CORGI GITL FRAMES
 defjacpath = None
-precomp= 'load_all' if defjacpath is not None else 'precomp_all_once'
+precomp = 'precomp_jacs_always' #'load_all' if defjacpath is not None else 'precomp_all_once'
 
 current_datetime = datetime.now()
 folder_name = 'gitl_simulation_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
@@ -65,11 +65,10 @@ def main():
     stellar_type_target = args.stellartypetarget
     jacpath = args.jacpath
 
-    modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dm_start_file = load_files(args, howfscpath)
+    modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps = load_files(args, howfscpath)
 
     # cfg
     cfg = CoronagraphMode(cfgfile)
-    cfg = load_dm_start_maps(cfg, args, dm_start_file)
 
     # hconffile
     hconf = loadyaml(hconffile, custom_exception=TypeError)
@@ -103,7 +102,7 @@ def main():
     normalization_strategy = CorgiNormalization(cfg, cstrat, hconf, cor=args.mode, corgi_overrides=corgi_overrides, separation_lamD=7)
     # normalization_strategy = EETCNormalization()
 
-    nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params)
+    nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps)
 
 if __name__ == '__main__':    
     main()

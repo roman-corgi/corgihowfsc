@@ -20,7 +20,7 @@ class DefaultProbes(Probes):
         self.lrow = lrow
         self.lcol = lcol
 
-    def get_dm_probes(self, cfg, probefiles,
+    def get_dm_probes(self, cfg, probefiles, dmstartmaps,
                       scalelist=[0.3, 0.3, 0.3, -0.3, -0.3, -0.3]):
 
         # Get probe commands
@@ -38,9 +38,8 @@ class DefaultProbes(Probes):
         self.ndm = 2 * len(dmrel_list) + 1
         self.croplist = [(self.lrow, self.lcol, self.nrow, self.ncol)] * (nlam * self.ndm)
 
-
-        dm10 = cfg.startmaps[0]
-        dm20 = cfg.startmaps[1]
+        dm10 = dmstartmaps[0]
+        dm20 = dmstartmaps[1]
         dm1_list = []
         dm2_list = []
         for index in range(nlam):
