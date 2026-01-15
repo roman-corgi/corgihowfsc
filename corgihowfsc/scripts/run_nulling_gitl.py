@@ -11,7 +11,7 @@ from howfsc.util.loadyaml import loadyaml
 
 
 import corgihowfsc
-from corgihowfsc.utils.howfsc_initialization import get_args, load_files, load_dm_start_maps
+from corgihowfsc.utils.howfsc_initialization import get_args, load_files
 from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
 from corgihowfsc.sensing.PerfectEstimator import PerfectEstimator
 from corgihowfsc.sensing.DefaultProbes import DefaultProbes
