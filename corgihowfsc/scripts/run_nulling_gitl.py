@@ -20,11 +20,9 @@ from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
-# defjacpath = r'C:\Users\sredmond\Documents\github_repos\roman-corgi-repos\corgihowfsc\data'
-#None #os.path.join(os.path.dirname(howfscpath), 'jacdata')
-defjacpath = None
-precomp= 'load_all' if defjacpath is not None else 'precomp_all_once'
+defjacpath = os.path.join(os.path.dirname(howfscpath), 'temp')  # User should set to somewhere outside the repo
 
+precomp = 'precomp_jacs_always' #'load_all' if defjacpath is not None else 'precomp_all_once'
 current_datetime = datetime.now()
 folder_name = 'gitl_simulation_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
 fits_name = 'final_frames.fits'
@@ -57,11 +55,10 @@ stellar_vmag_target = args.stellarvmagtarget
 stellar_type_target = args.stellartypetarget
 jacpath = args.jacpath
 
-modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dm_start_file = load_files(args, howfscpath)
+modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps = load_files(args, howfscpath)
 
 # cfg
 cfg = CoronagraphMode(cfgfile)
-cfg = load_dm_start_maps(cfg, args, dm_start_file)
 
 # hconffile
 hconf = loadyaml(hconffile, custom_exception=TypeError)
@@ -90,5 +87,5 @@ imager = GitlImage(
 )
 normalization_strategy = EETCNormalization()
 
-nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params)
+nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps)
 

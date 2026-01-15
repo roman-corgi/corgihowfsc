@@ -373,22 +373,21 @@ def load_files(args, howfscpath):
         # should not reach here; argparse should catch this
         raise ValueError('Invalid coronagraph mode type')
 
-    return modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dm_start_file
+    dmstartmaps = load_dm_start_maps(dm_start_file)
 
-def load_dm_start_maps(cfg, args, dm_start_file):
+    return modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps
+
+
+def load_dm_start_maps(dm_start_file):
     dmkeylist = ['DM1', 'DM2']
-    # if args.dm_start_shape is not None:
     # Load DM settings used to collect channel data
-    startmaps = []
+    dmstartmaps = []
     for dmkey in dmkeylist:
         ipath = dm_start_file + dmkey.lower() + '.fits'
-        startmap = load(ipath)
-        startmaps.append(startmap)
-        pass
-    cfg.startmaps = startmaps
+        dmstartmap = load(ipath)
+        dmstartmaps.append(dmstartmap)
 
-
-    return cfg
+    return dmstartmaps
 
 
 
