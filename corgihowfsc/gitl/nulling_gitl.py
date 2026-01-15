@@ -24,7 +24,6 @@ from eetc.cgi_eetc import CGIEETC
 import howfsc
 from howfsc.control.cs import ControlStrategy
 from howfsc.control.calcjtwj import JTWJMap
-from corgihowfsc.sensing.Estimator_choice import DefaultEstimator, PerfectEstimator
 
 from howfsc.model.mode import CoronagraphMode
 
