@@ -4,10 +4,12 @@ import argparse
 import cProfile
 import pstats
 import logging
+import glob
 
 import numpy as np
 import astropy.io.fits as pyfits
 
+from howfsc.util.load import load
 
 def get_args(niter=5,
                     mode='narrowfov',
@@ -26,7 +28,8 @@ def get_args(niter=5,
                     stellartype=None,
                     stellarvmagtarget=None,
                     stellartypetarget=None,
-                    jacpath=None):
+                    jacpath=None,
+                    dm_start_shape=None):
         """
         Initialize HOWFSC simulation with all required variables and configurations.
         Returns all variables needed for the main simulation loop.
@@ -124,6 +127,7 @@ def get_args(niter=5,
         args.stellarvmagtarget = stellarvmagtarget
         args.stellartypetarget = stellartypetarget
         args.jacpath = jacpath
+        args.dm_start_shape = dm_start_shape
 
         return args
 def get_args_cmd(defjacpath):
@@ -230,6 +234,15 @@ def load_files(args, howfscpath):
         else:
             jacfile = []
 
+        if args.dm_start_shape is not None:
+            dm_start_file = os.path.join(modelpath, args.dm_start_shape)
+        else:
+            # If no starting point is given, we will load the last file globbed
+            start_options = glob.glob(os.path.join(modelpath, 'iter_*_dm*'))
+            start_parts = start_options[0].split('\\')[-1].split('_')
+            dm_start_file = os.path.join(modelpath, start_parts[0] + '_' + start_parts[1] + '_')
+            print('Using ' + start_parts[0] + '_' + start_parts[1] + '_' + ' as starting DM shape')
+
         probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_cos.fits')
         probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinlr.fits')
         probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinud.fits')
@@ -260,6 +273,7 @@ def load_files(args, howfscpath):
         probefiles[0] = probe0file
         probefiles[2] = probe1file
         probefiles[1] = probe2file
+
 
 
 
@@ -359,4 +373,22 @@ def load_files(args, howfscpath):
         # should not reach here; argparse should catch this
         raise ValueError('Invalid coronagraph mode type')
 
-    return modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles
+    dmstartmaps = load_dm_start_maps(dm_start_file)
+
+    return modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps
+
+
+def load_dm_start_maps(dm_start_file):
+    dmkeylist = ['DM1', 'DM2']
+    # Load DM settings used to collect channel data
+    dmstartmaps = []
+    for dmkey in dmkeylist:
+        ipath = dm_start_file + dmkey.lower() + '.fits'
+        dmstartmap = load(ipath)
+        dmstartmaps.append(dmstartmap)
+
+    return dmstartmaps
+
+
+
+

@@ -20,7 +20,7 @@ import roman_preflight_proper
 roman_preflight_proper.copy_here()
 
 import corgihowfsc
-from corgihowfsc.utils.howfsc_initialization import get_args, load_files
+from corgihowfsc.utils.howfsc_initialization import get_args, load_files, load_dm_start_maps
 from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
 from corgihowfsc.sensing.PerfectEstimator import PerfectEstimator
 from corgihowfsc.sensing.DefaultProbes import DefaultProbes
@@ -30,19 +30,24 @@ from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
-# defjacpath = r'C:\Users\sredmond\Documents\github_repos\roman-corgi-repos\corgihowfsc\data'
+defjacpath = os.path.join(os.path.dirname(howfscpath), 'temp')  # User should set to somewhere outside the repo
 
 # Note: MUST DEFINE JACPATH FOR CORGI GITL FRAMES
-defjacpath = None
-precomp= 'load_all' if defjacpath is not None else 'precomp_all_once'
-
+precomp = 'precomp_jacs_always' #'load_all' if defjacpath is not None else 'precomp_all_once'
 current_datetime = datetime.now()
 folder_name = 'gitl_simulation_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
 fits_name = 'final_frames.fits'
 fileout_path = os.path.join(os.path.dirname(os.path.dirname(corgihowfsc.__file__)), 'data', folder_name, fits_name)
+dm_start_shape = r'iter_080_' # Set this to the string before dmX.fits if a different starting DM shape is desired, otherwise the last option in the modelpath is used
 
 def main(): 
-    args = get_args(mode='nfov_band1', precomp=precomp, num_process=2, num_threads=1, fileout=fileout_path,jacpath=defjacpath)
+    args = get_args(mode='nfov_band1',
+                    precomp=precomp,
+                    num_process=2,
+                    num_threads=1,
+                    fileout=fileout_path,
+                    jacpath=defjacpath,
+                    dm_start_shape=dm_start_shape)
 
     # User params
     niter = args.niter
@@ -59,7 +64,7 @@ def main():
     stellar_type_target = args.stellartypetarget
     jacpath = args.jacpath
 
-    modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles = load_files(args, howfscpath)
+    modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps = load_files(args, howfscpath)
 
     # cfg
     cfg = CoronagraphMode(cfgfile)
@@ -96,7 +101,7 @@ def main():
     normalization_strategy = CorgiNormalization(cfg, cstrat, hconf, cor=args.mode, corgi_overrides=corgi_overrides, separation_lamD=7)
     # normalization_strategy = EETCNormalization()
 
-    nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params)
+    nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps)
 
 if __name__ == '__main__':    
     main()

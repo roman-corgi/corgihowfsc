@@ -40,7 +40,7 @@ howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
 
 
-def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params):
+def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps):
     """Run a nulling sequence, using the compact optical model as the data source.
 
     Parameters:
@@ -139,7 +139,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
 
     # dm1_list, dm2
     # Get DM lists
-    dm1_list, dm2_list, dmrel_list, dm10, dm20 = probes.get_dm_probes(cfg, probefiles)
+    dm1_list, dm2_list, dmrel_list, dm10, dm20 = probes.get_dm_probes(cfg, probefiles, dmstartmaps)
     nlam = len(cfg.sl_list)
     ndm = 2 * len(dmrel_list) + 1
 
