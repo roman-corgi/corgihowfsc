@@ -28,8 +28,8 @@ current_datetime = datetime.now()
 folder_name = 'gitl_simulation_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
 fits_name = 'final_frames.fits'
 fileout_path = os.path.join(os.path.dirname(os.path.dirname(corgihowfsc.__file__)), 'data', folder_name, fits_name)
+dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
 
-dm_start_shape = r'iter_080_' # Set this to the string before dmX.fits if a different starting DM shape is desired, otherwise the file specficied in howfsc_optical_model.yaml is used
 
 args = get_args(mode='nfov_band1',
                 dark_hole='360deg',
@@ -39,7 +39,7 @@ args = get_args(mode='nfov_band1',
                 num_threads=1,
                 fileout=fileout_path,
                 jacpath=defjacpath,
-                dm_start_shape=dm_start_shape)
+                dmstartmap_filenames=dmstartmap_filenames)
 
 # User params
 niter = args.niter
