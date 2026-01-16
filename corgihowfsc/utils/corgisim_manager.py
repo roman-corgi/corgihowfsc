@@ -149,9 +149,11 @@ class CorgisimManager:
             detector = instrument.CorgiDetector(emccd_dict)
             master_dark = self.generate_master_dark(detector, exptime, gain, bias)
             sim_scene = detector.generate_detector_image(sim_scene, exptime)
-            return sim_scene.image_on_detector.data - master_dark
+            # sim_scene.image_on_detector.data is not gain corrected or bias subtracted
+            B = bias * np.ones((self.output_dim, self.output_dim))
+            return (sim_scene.image_on_detector.data - B)/gain - master_dark
 
-    def generate_master_dark(self, detector, exptime, gain, bias):
+    def generate_master_dark(self, detector, exptime, gain):
         """
         dark:  master dark
         FPM: fixed pattern noise map
@@ -162,14 +164,14 @@ class CorgisimManager:
         """
         D = detector.emccd.dark_current * np.ones((self.output_dim,self.output_dim))
         C = detector.emccd.cic * np.ones((self.output_dim,self.output_dim))
-
+        FPN = np.zeros((self.output_dim,self.output_dim)) # Not included in emccd_detect
         dark = FPN / gain + exptime * D + C
 
 
         return dark
     
-    def generate_off_axis_psf(self, dm1v, dm2v, dx, dy, companion_vmag=None, lind=0, exptime=1.0, gain=1):
-
+    def generate_off_axis_psf(self, dm1v, dm2v, dx, dy, companion_vmag=None, lind=0, exptime=1.0, gain=1, bias=0):
+        # TODO: move bias to be a class attribute
         if companion_vmag is None:
             companion_vmag = self.Vmag
         
@@ -195,5 +197,8 @@ class CorgisimManager:
             # generate detector image
             emccd_dict = {'em_gain': gain, 'cr_rate': 0}
             detector = instrument.CorgiDetector(emccd_dict)
+            master_dark = self.generate_master_dark(detector, exptime, gain, bias)
             sim_scene = detector.generate_detector_image(sim_scene, exptime)
-            return sim_scene.image_on_detector.data
+            # sim_scene.image_on_detector.data is not gain corrected or bias subtracted
+            B = bias * np.ones((self.output_dim, self.output_dim))
+            return (sim_scene.image_on_detector.data - B)/gain - master_dark
