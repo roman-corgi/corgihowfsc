@@ -136,7 +136,7 @@ class CorgisimManager:
 
         return optics
     
-    def generate_host_star_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1):
+    def generate_host_star_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, bias=0):
         optics = self.create_optics(dm1v, dm2v, lind)
 
         sim_scene = optics.get_host_star_psf(self.base_scene)
@@ -145,10 +145,28 @@ class CorgisimManager:
             return sim_scene.host_star_image.data
         else:
             # generate detector image
-            emccd_dict = {'em_gain': gain, 'cr_rate': 0}
+            emccd_dict = {'em_gain': gain, 'bias':bias, 'cr_rate': 0}
             detector = instrument.CorgiDetector(emccd_dict)
+            master_dark = self.generate_master_dark(detector, exptime, gain, bias)
             sim_scene = detector.generate_detector_image(sim_scene, exptime)
-            return sim_scene.image_on_detector.data
+            return sim_scene.image_on_detector.data - master_dark
+
+    def generate_master_dark(self, detector, exptime, gain, bias):
+        """
+        dark:  master dark
+        FPM: fixed pattern noise map
+        gain: EM gain
+        exptime: exposure time
+        D: dark current rate map
+        C: CIC map
+        """
+        D = detector.emccd.dark_current * np.ones((self.output_dim,self.output_dim))
+        C = detector.emccd.cic * np.ones((self.output_dim,self.output_dim))
+
+        dark = FPN / gain + exptime * D + C
+
+
+        return dark
     
     def generate_off_axis_psf(self, dm1v, dm2v, dx, dy, companion_vmag=None, lind=0, exptime=1.0, gain=1):
 
