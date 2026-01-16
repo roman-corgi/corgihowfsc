@@ -8,6 +8,10 @@ from howfsc.control.cs import ControlStrategy
 from howfsc.model.mode import CoronagraphMode
 from howfsc.util.loadyaml import loadyaml
 
+import roman_preflight_proper
+### Then, run the following command to copy the default prescription file
+roman_preflight_proper.copy_here()
+
 import corgihowfsc
 from corgihowfsc.utils.howfsc_initialization import get_args, load_files
 from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
@@ -16,10 +20,6 @@ from corgihowfsc.sensing.DefaultProbes import DefaultProbes
 from corgihowfsc.utils.contrast_nomalization import CorgiNormalization, EETCNormalization
 from corgihowfsc.gitl.nulling_gitl import nulling_gitl
 from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
-
-import roman_preflight_proper
-### Then, run the following command to copy the default prescription file
-roman_preflight_proper.copy_here()
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
