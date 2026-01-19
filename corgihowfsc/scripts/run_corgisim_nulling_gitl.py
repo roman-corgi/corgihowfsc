@@ -1,15 +1,8 @@
-
-import time
 import os
-import argparse
-import cProfile
-import pstats
-import logging
 from datetime import datetime
-import numpy as np
-import astropy.io.fits as pyfits
+import matplotlib
+matplotlib.use('TkAgg')
 
-import corgihowfsc
 import eetc
 from howfsc.control.cs import ControlStrategy
 from howfsc.model.mode import CoronagraphMode
@@ -32,7 +25,6 @@ eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'temp')  # User should set to somewhere outside the repo
 
-# Note: MUST DEFINE JACPATH FOR CORGI GITL FRAMES
 precomp = 'precomp_jacs_always' #'load_all' if defjacpath is not None else 'precomp_all_once'
 current_datetime = datetime.now()
 folder_name = 'gitl_simulation_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
@@ -40,14 +32,20 @@ fits_name = 'final_frames.fits'
 fileout_path = os.path.join(os.path.dirname(os.path.dirname(corgihowfsc.__file__)), 'data', folder_name, fits_name)
 dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
 
+
 def main(): 
-    args = get_args(mode='nfov_band1',
-                    precomp=precomp,
-                    num_process=2,
-                    num_threads=1,
-                    fileout=fileout_path,
-                    jacpath=defjacpath,
-                    dmstartmap_filenames=dmstartmap_filenames)
+
+    args = get_args(
+        mode='nfov_band1',
+        dark_hole='360deg',
+        probe_shape='default',
+        precomp=precomp,
+        num_process=2,
+        num_threads=1,
+        fileout=fileout_path,
+        jacpath=defjacpath,
+        dmstartmap_filenames=dmstartmap_filenames,
+    )
 
     # User params
     niter = args.niter
