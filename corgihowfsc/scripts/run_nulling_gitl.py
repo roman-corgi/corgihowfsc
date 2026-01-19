@@ -1,4 +1,3 @@
-
 import os
 from datetime import datetime
 import matplotlib
@@ -9,13 +8,12 @@ from howfsc.control.cs import ControlStrategy
 from howfsc.model.mode import CoronagraphMode
 from howfsc.util.loadyaml import loadyaml
 
-
 import corgihowfsc
 from corgihowfsc.utils.howfsc_initialization import get_args, load_files
 from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
 from corgihowfsc.sensing.PerfectEstimator import PerfectEstimator
 from corgihowfsc.sensing.DefaultProbes import DefaultProbes
-from corgihowfsc.utils.contrast_nomalization import EETCNormalization
+from corgihowfsc.utils.contrast_nomalization import CorgiNormalization, EETCNormalization
 from corgihowfsc.gitl.nulling_gitl import nulling_gitl
 from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 
@@ -31,62 +29,68 @@ fileout_path = os.path.join(os.path.dirname(os.path.dirname(corgihowfsc.__file__
 dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
 
 
-args = get_args(mode='nfov_band1',
-                dark_hole='360deg',
-                probe_shape='default',
-                precomp=precomp,
-                num_process=0,
-                num_threads=1,
-                fileout=fileout_path,
-                jacpath=defjacpath,
-                dmstartmap_filenames=dmstartmap_filenames)
+def main(): 
 
-# User params
-niter = args.niter
-mode = args.mode
-isprof = args.profile
-logfile = args.logfile
-fracbadpix = args.fracbadpix
-nbadpacket = args.nbadpacket
-nbadframe = args.nbadframe
-fileout = args.fileout
-stellar_vmag = args.stellarvmag
-stellar_type = args.stellartype
-stellar_vmag_target = args.stellarvmagtarget
-stellar_type_target = args.stellartypetarget
-jacpath = args.jacpath
+    args = get_args(
+        mode='nfov_band1',
+        dark_hole='360deg',
+        probe_shape='default',
+        precomp=precomp,
+        num_process=0,
+        num_threads=1,
+        fileout=fileout_path,
+        jacpath=defjacpath,
+        dmstartmap_filenames=dmstartmap_filenames,
+    )
 
-modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps = load_files(args, howfscpath)
+    # User params
+    niter = args.niter
+    mode = args.mode
+    isprof = args.profile
+    logfile = args.logfile
+    fracbadpix = args.fracbadpix
+    nbadpacket = args.nbadpacket
+    nbadframe = args.nbadframe
+    fileout = args.fileout
+    stellar_vmag = args.stellarvmag
+    stellar_type = args.stellartype
+    stellar_vmag_target = args.stellarvmagtarget
+    stellar_type_target = args.stellartypetarget
+    jacpath = args.jacpath
 
-# cfg
-cfg = CoronagraphMode(cfgfile)
+    modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps = load_files(args, howfscpath)
 
-# hconffile
-hconf = loadyaml(hconffile, custom_exception=TypeError)
+    # cfg
+    cfg = CoronagraphMode(cfgfile)
 
-# Define control and estimator strategy
-cstrat = ControlStrategy(cstratfile)
-estimator = DefaultEstimator()
+    # hconffile
+    hconf = loadyaml(hconffile, custom_exception=TypeError)
 
-# Initialize default probes class
-probes = DefaultProbes(args.probe_shape)
+    # Define control and estimator strategy
+    cstrat = ControlStrategy(cstratfile)
+    estimator = DefaultEstimator()
 
-# Image cropping parameters:
-crop_params = {}
-crop_params['nrow'] = 153
-crop_params['ncol'] = 153
-crop_params['lrow'] = 436
-crop_params['lcol'] = 436
+    # Initialize default probes class
+    probes = DefaultProbes(args.probe_shape)
 
-# Define imager and normalization (counts->contrast) strategy
-imager = GitlImage(
-    cfg=cfg,         # Your CoronagraphMode object
-    cstrat=cstrat,   # Your ControlStrategy object
-    hconf=hconf,      # Your host config with stellar properties
-    backend='cgi-howfsc',
-    cor=mode
-)
-normalization_strategy = EETCNormalization()
+    # Image cropping parameters:
+    crop_params = {}
+    crop_params['nrow'] = 153
+    crop_params['ncol'] = 153
+    crop_params['lrow'] = 436
+    crop_params['lcol'] = 436
 
-nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps)
+    # Define imager and normalization (counts->contrast) strategy
+    imager = GitlImage(
+        cfg=cfg,         # Your CoronagraphMode object
+        cstrat=cstrat,   # Your ControlStrategy object
+        hconf=hconf,      # Your host config with stellar properties
+        backend='cgi-howfsc',
+        cor=mode
+    )
+    normalization_strategy = EETCNormalization()
 
+    nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps)
+
+if __name__ == '__main__':    
+    main()
