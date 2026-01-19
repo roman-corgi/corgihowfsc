@@ -20,7 +20,7 @@ import roman_preflight_proper
 roman_preflight_proper.copy_here()
 
 import corgihowfsc
-from corgihowfsc.utils.howfsc_initialization import get_args, load_files, load_dm_start_maps
+from corgihowfsc.utils.howfsc_initialization import get_args, load_files
 from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
 from corgihowfsc.sensing.PerfectEstimator import PerfectEstimator
 from corgihowfsc.sensing.DefaultProbes import DefaultProbes
@@ -47,7 +47,7 @@ def main():
                     num_threads=1,
                     fileout=fileout_path,
                     jacpath=defjacpath,
-                    dm_start_shape=dm_start_shape)
+                    dmstartmap_filenames=dmstartmap_filenames)
 
     # User params
     niter = args.niter
@@ -98,7 +98,7 @@ def main():
         corgi_overrides=corgi_overrides
     )
 
-    normalization_strategy = CorgiNormalization(cfg, cstrat, hconf, cor=args.mode, corgi_overrides=corgi_overrides, separation_lamD=7)
+    normalization_strategy = CorgiNormalization(cfg, cstrat, hconf, cor=args.mode, corgi_overrides=corgi_overrides, separation_lamD=7, exptime_norm=0.1)
     # normalization_strategy = EETCNormalization()
 
     nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps)
