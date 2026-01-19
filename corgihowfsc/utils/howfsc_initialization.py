@@ -131,6 +131,7 @@ def get_args(niter=5,
         # args.dm_start_shape = dm_start_shape
 
         return args
+
 def get_args_cmd(defjacpath):
     '''
     Note: this cannot be run from jupyter notebook
@@ -194,6 +195,7 @@ def load_files(args, howfscpath):
     logfile = args.logfile
     nbadpacket = args.nbadpacket
     nbadframe = args.nbadframe
+    dmstartmap_filenames = args.dmstartmap_filenames
 
     jacpath = args.jacpath
     if nbadpacket < 0:
@@ -252,7 +254,7 @@ def load_files(args, howfscpath):
         probefiles[2] = probe1file
         probefiles[1] = probe2file
 
-        if args.dmstartmap_filenames is None:
+        if dmstartmap_filenames is None:
             dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
 
     elif mode == 'nfov_band1_half':
@@ -278,7 +280,7 @@ def load_files(args, howfscpath):
         probefiles[2] = probe1file
         probefiles[1] = probe2file
 
-        if args.dmstartmap_filenames is None:
+        if dmstartmap_filenames is None:
             dmstartmap_filenames = ['iter_061_dm1.fits', 'iter_061_dm2.fits']
 
     elif mode == 'spec_band2':
@@ -344,7 +346,7 @@ def load_files(args, howfscpath):
             os.path.join(model_path_all, 'ones_like_fs.fits'),
         ]
 
-        if args.dmstartmap_filenames is None:
+        if dmstartmap_filenames is None:
             dmstartmap_filenames = ['iter_061_dm1.fits', 'iter_061_dm2.fits']
 
     elif mode == 'wfov_band4':
@@ -376,7 +378,7 @@ def load_files(args, howfscpath):
             os.path.join(model_path_all, 'ones_like_fs.fits'),
         ]
 
-        if args.dmstartmap_filenames is None:
+        if dmstartmap_filenames is None:
             dmstartmap_filenames = ['iter_061_dm1.fits', 'iter_061_dm2.fits']
 
     else:
@@ -384,8 +386,8 @@ def load_files(args, howfscpath):
         raise ValueError('Invalid coronagraph mode type')
 
     dmstartmaps = [
-        fits.getdata(os.path.join(modelpath, args.dmstartmap_filenames[0])),
-        fits.getdata(os.path.join(modelpath, args.dmstartmap_filenames[1])),
+        fits.getdata(os.path.join(modelpath, dmstartmap_filenames[0])),
+        fits.getdata(os.path.join(modelpath, dmstartmap_filenames[1])),
     ]
     # dmstartmaps = load_dm_start_maps(dm_start_file)
 
