@@ -68,7 +68,13 @@ class CorgiNormalization(Normalization):
         dy = self.separation_lamD * mas_per_lamD
         dx = 0.
 
-        image_comp_corgi = self.corgisim_manager.generate_off_axis_psf(dm1v, dm2v, dx, dy, lind=sl_ind, exptime=self.exptime_norm, gain=gain)
+        image_comp_corgi = self.corgisim_manager.generate_off_axis_psf(dm1v,
+                                                                       dm2v,
+                                                                       dx,
+                                                                       dy,
+                                                                       lind=sl_ind,
+                                                                       exptime=self.exptime_norm,
+                                                                       gain=gain)
         if np.nanmax(image_comp_corgi) > 10300:
             print("**** WARNING: off-axis PSF saturated ****")
         peakflux = np.max(image_comp_corgi) / self.exptime_norm

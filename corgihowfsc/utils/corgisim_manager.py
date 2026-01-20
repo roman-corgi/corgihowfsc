@@ -96,6 +96,7 @@ class CorgisimManager:
         self.sptype = self.corgi_overrides.get('sptype', self.host_star_properties['spectral_type'])
         self.ref_flag = self.corgi_overrides.get('ref_flag', self.host_star_properties['ref_flag'])
         self._mode = 'excam'  # default camera mode
+        self.k_gain = 8.7 # photo e-/DN, calibrated in TVAC
 
     def _initialize_base_scene(self):
         # Initialise scene object 
@@ -147,11 +148,14 @@ class CorgisimManager:
             # generate detector image
             emccd_dict = {'em_gain': gain, 'bias':bias, 'cr_rate': 0}
             detector = instrument.CorgiDetector(emccd_dict)
-            master_dark = self.generate_master_dark(detector, exptime, gain)
+
             sim_scene = detector.generate_detector_image(sim_scene, exptime)
+
             # sim_scene.image_on_detector.data is not gain corrected or bias subtracted
+            master_dark = self.generate_master_dark(detector, exptime, gain)
             B = bias * np.ones((self.output_dim, self.output_dim))
-            return (sim_scene.image_on_detector.data - B)/gain - master_dark
+
+            return (self.k_gain*sim_scene.image_on_detector.data - B)/gain - master_dark
 
     def generate_master_dark(self, detector, exptime, gain):
         """
@@ -201,5 +205,5 @@ class CorgisimManager:
             sim_scene = detector.generate_detector_image(sim_scene, exptime)
             # sim_scene.image_on_detector.data is not gain corrected or bias subtracted
             B = bias * np.ones((self.output_dim, self.output_dim))
-            return (sim_scene.image_on_detector.data - B)/gain - master_dark
+            return (self.k_gain*sim_scene.image_on_detector.data - B)/gain - master_dark
 
