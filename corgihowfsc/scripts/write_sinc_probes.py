@@ -12,7 +12,7 @@ NOTES on data types:
 
 Example Calls in a Bash Terminal:
 python write_sinc_probes.py --mode 'nfov_band1' --dark_hole '360deg'
-python write_sinc_probes.py --mode 'nfov_band1_half' --dark_hole 'top'
+python write_sinc_probes.py --mode 'nfov_band1' --dark_hole 'half_top'
 python write_sinc_probes.py --mode 'spec_band3' --dark_hole 'both_sides' --write
 python write_sinc_probes.py --mode 'wfov_band4' --dark_hole '360deg' --write
 
