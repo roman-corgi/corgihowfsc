@@ -87,7 +87,7 @@ def main():
     # Define imager and normalization (counts->contrast) strategy
     corgi_overrides = {}
     corgi_overrides['output_dim'] = crop_params['nrow']
-    corgi_overrides['is_noise_free'] = True
+    corgi_overrides['is_noise_free'] = False
     imager = GitlImage(
         cfg=cfg,         # Your CoronagraphMode object
         cstrat=cstrat,   # Your ControlStrategy object
