@@ -48,19 +48,7 @@ def main():
     )
 
     # User params
-    niter = args.niter
     mode = args.mode
-    isprof = args.profile
-    logfile = args.logfile
-    fracbadpix = args.fracbadpix
-    nbadpacket = args.nbadpacket
-    nbadframe = args.nbadframe
-    fileout = args.fileout
-    stellar_vmag = args.stellarvmag
-    stellar_type = args.stellartype
-    stellar_vmag_target = args.stellarvmagtarget
-    stellar_type_target = args.stellartypetarget
-    jacpath = args.jacpath
 
     modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps = load_files(args, howfscpath)
 
@@ -97,7 +85,13 @@ def main():
         corgi_overrides=corgi_overrides
     )
 
-    normalization_strategy = CorgiNormalization(cfg, cstrat, hconf, cor=args.mode, corgi_overrides=corgi_overrides, separation_lamD=7, exptime_norm=0.1)
+    normalization_strategy = CorgiNormalization(cfg,
+                                                cstrat,
+                                                hconf,
+                                                cor=args.mode,
+                                                corgi_overrides=corgi_overrides,
+                                                separation_lamD=7,
+                                                exptime_norm=0.01)
     # normalization_strategy = EETCNormalization()
 
     nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps)
