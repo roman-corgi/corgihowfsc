@@ -83,8 +83,8 @@ class CorgisimManager:
             self.host_star_properties = _extract_host_properties_from_hconf(self.hconf)
         else:
             self.host_star_properties = {
-                'Vmag': 2.56,  # default to del Leo
-                'spectral_type': 'F0V',
+                'Vmag': 2.25,  # default to del Leo
+                'spectral_type': '05',
                 'ref_flag': 1
             }
         
