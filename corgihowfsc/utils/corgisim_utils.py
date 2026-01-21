@@ -6,6 +6,7 @@ CGI_TO_CORGI_MAPPING = {
     'nfov_flat': 'hlc', 
     'nfov_dm': 'hlc',
     'nfov_band1': 'hlc',
+    'wfov_band4': 'spc-wide'
     # NOTE - Add new mappings here as support is added
     # 'widefov': 'widefov',  # Future support
     # 'spec': 'spec',    # Future spectroscopy mode
@@ -20,14 +21,10 @@ def _extract_host_properties_from_hconf(hconf):
         star_config = hconf.get('star', {}) if isinstance(hconf, dict) else getattr(hconf, 'star', {})
         
         # Extract stellar properties, preferring target values if available
-        Vmag = (star_config.get('stellar_vmag_target') or 
-            star_config.get('stellar_vmag') or 
-            2.56)  # default fallback
-        
-        sptype = (star_config.get('stellar_type_target') or 
-                star_config.get('stellar_type') or 
-                'A5V')  # default fallback
-        
+        Vmag = star_config.get('stellar_vmag')
+
+        sptype = star_config.get('stellar_type')
+
         return {
             'Vmag': Vmag,
             'spectral_type': sptype,

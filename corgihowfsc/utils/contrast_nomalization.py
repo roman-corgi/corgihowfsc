@@ -16,7 +16,7 @@ class EETCNormalization(Normalization):
     def __init__(self):
         super().__init__()
 
-    def calc_flux_rate(self, get_cgi_eetc, hconf, sl_ind, dm1v, dm2v, exptime, gain=1):
+    def calc_flux_rate(self, get_cgi_eetc, hconf, sl_ind, dm1v, dm2v, gain=1):
         a, peakflux = get_cgi_eetc.calc_flux_rate(
             sequence_name=hconf['hardware']['sequence_list'][sl_ind],
         )
@@ -32,15 +32,16 @@ class EETCNormalization(Normalization):
 
 
 class CorgiNormalization(Normalization):
-    def __init__(self, cfg, cstrat, hconf, cor=None, corgi_overrides=None, separation_lamD=None):
+    def __init__(self, cfg, cstrat, hconf, cor=None, corgi_overrides=None, separation_lamD=None, exptime_norm=1):
         super().__init__()
 
         self.separation_lamD = separation_lamD
+        self.exptime_norm = exptime_norm
 
         # Initialize corgisime manager
         self.corgisim_manager = CorgisimManager(cfg, cstrat, hconf, cor, corgi_overrides=corgi_overrides)
 
-    def calc_flux_rate(self, get_cgi_eetc, hconf, sl_ind, dm1v, dm2v, exptime, gain=1):
+    def calc_flux_rate(self, get_cgi_eetc, hconf, sl_ind, dm1v, dm2v, gain=1):
         """
         Calculate peak flux rate for normalization using an off-axis point source (with the stellar PSF input), placed at specified separation in lambda/D. 
 
@@ -61,16 +62,24 @@ class CorgiNormalization(Normalization):
         # TODO - make sure this is the central wavelength
         mas_per_lamD = calculate_mas_per_lamD(self.corgisim_manager.cfg.sl_list[1].lam)
 
-        if exptime is None or self.corgisim_manager.is_noise_free:
-            exptime = 1.  # unit
+        # if exptime is None or self.corgisim_manager.is_noise_free:
+        #     exptime = 1.  # unit
 
         dy = self.separation_lamD * mas_per_lamD
         dx = 0.
 
-        image_comp_corgi = self.corgisim_manager.generate_off_axis_psf(dm1v, dm2v, dx, dy, lind=sl_ind, exptime=exptime, gain=gain)
-        peakflux = np.max(image_comp_corgi) / exptime
+        image_comp_corgi = self.corgisim_manager.generate_off_axis_psf(dm1v,
+                                                                       dm2v,
+                                                                       dx,
+                                                                       dy,
+                                                                       lind=sl_ind,
+                                                                       exptime=self.exptime_norm,
+                                                                       gain=gain)
+        if np.nanmax(image_comp_corgi) > 89610: #10300:
+            print("**** WARNING: off-axis PSF saturated ****")
+        peakflux = np.nanmax(image_comp_corgi) / self.exptime_norm
 
-        return np.nan, peakflux
+        return image_comp_corgi/self.exptime_norm, peakflux
 
     def normalize(self, im, peakflux, exptime):
         """

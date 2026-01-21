@@ -382,7 +382,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         # )
         # TODO: what are correct camera settings here?
         # Get peakflux for DMs using current DZ setting
-        _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, j, dm1_list[0], dm2_list[0], prev_exptime_list[0], gain=1)
+        _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, j, dm1_list[0], dm2_list[0], gain=1)
 
         log.info('Expect %g photons/sec', peakflux)
         for k in range(ndm):
