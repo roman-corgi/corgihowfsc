@@ -20,7 +20,7 @@ class SingleProbes(Probes):
         self.lrow = lrow
         self.lcol = lcol
 
-    def get_dm_probes(self, cfg, probefiles,
+    def get_dm_probes(self, cfg, probefiles, dmstartmaps,
                       scalelist=[0.3, 0.3, 0.3, -0.3, -0.3, -0.3]):
 
         # Get probe commands
@@ -36,19 +36,8 @@ class SingleProbes(Probes):
         self.croplist = [(self.lrow, self.lcol, self.nrow, self.ncol)] * (nlam * self.ndm)
 
         # Here is a test to start from the last converged state dm.
-        path_to_last_dm1 = r"C:\Users\ldelaye\Documents\Repos\corgihowfsc\data\gitl_simulation_2026-01-06_104720\dm1_command_history.fits"
-        path_to_last_dm2 = r"C:\Users\ldelaye\Documents\Repos\corgihowfsc\data\gitl_simulation_2026-01-06_104720\dm2_command_history.fits"
-        dm1_last = pyfits.getdata(path_to_last_dm1)
-        dm2_last = pyfits.getdata(path_to_last_dm2)
-        dm10_init = dm1_last[-1]
-        dm20_init = dm2_last[-1]
-        #dm10_init = cfg.initmaps[0]
-        #dm20_init = cfg.initmaps[1]
-        dm10_cons  = cfg.dmlist[0].dmvobj.constrain_dm(dm10_init)
-        dm10  = remove_subnormals(dm10_cons)
-        dm20_cons = cfg.dmlist[1].dmvobj.constrain_dm(dm20_init)
-        dm20 = remove_subnormals(dm20_cons)
-
+        dm10 = dmstartmaps[0]
+        dm20 = dmstartmaps[1]
         dm1_list = []
         dm2_list = []
         for index in range(nlam):

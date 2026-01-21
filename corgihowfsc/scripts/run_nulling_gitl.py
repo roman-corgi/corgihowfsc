@@ -67,11 +67,9 @@ def main():
     # hconffile
     hconf = loadyaml(hconffile, custom_exception=TypeError)
 
-    #cstrat.get_dmmultgain = lambda iteration, contrast: 0.0 # To setup dmgain = 0
+    # Control strategy and estimator
+    cstrat = ControlStrategy(cstratfile)
     estimator = DefaultEstimator() # PerfectEstimator() will use the exact efield to make EFC, DefaultEstimator will use PWP.
-
-    #cstrat.get_dmmultgain = lambda iteration, contrast: 0.0 # To setup dmgain = 0
-    estimator = DefaultEstimator()
 
     # Initialize the correct probes class based on args.probe_shape
     if args.probe_shape == 'single':
