@@ -9,7 +9,7 @@ overhead:
 # Stellar properties for HOWFSC target
 star:
   stellar_vmag: 2.25
-  stellar_type: O5
+  stellar_type: G0V
   stellar_vmag_target: 5.0
   stellar_type_target: F5V  # G0V
 
