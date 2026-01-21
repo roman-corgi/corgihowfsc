@@ -4,6 +4,9 @@ data/gitl_simulation*
 corgihowfsc/temp/**
 !corgihowfsc/temp/.imhere
 
+corgihowfsc/model/probes/*.png
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
