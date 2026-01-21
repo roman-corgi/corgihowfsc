@@ -75,9 +75,9 @@ class CorgiNormalization(Normalization):
                                                                        lind=sl_ind,
                                                                        exptime=self.exptime_norm,
                                                                        gain=gain)
-        if np.nanmax(image_comp_corgi) > 10300:
+        if np.nanmax(image_comp_corgi) > 89610: #10300:
             print("**** WARNING: off-axis PSF saturated ****")
-        peakflux = np.max(image_comp_corgi) / self.exptime_norm
+        peakflux = np.nanmax(image_comp_corgi) / self.exptime_norm
 
         return image_comp_corgi/self.exptime_norm, peakflux
 
