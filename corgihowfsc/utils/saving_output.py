@@ -131,24 +131,35 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     pyfits.writeto(os.path.join(outpath, "intensity_incoherent_cube.fits"),
                    np.array(cube_inco), header=hdr_hist, overwrite=True)
 
-    if dm1_list is not None and len(dm1_list) > 0:
-        dm1_cube = np.array(dm1_list)
+    # Check that DM lists are present
+    if dm1_list is not None and dm2_list is not None:
 
-        hdr_dm = pyfits.Header()
-        hdr_dm['CONTENT'] = 'DM1 VOLTAGE HISTORY'
-        hdr_dm['UNIT'] = 'Volts'
+        # Create 'dm_data' subdirectory in the output folder
+        dm_outpath = os.path.join(outpath, "dm_data")
+        if not os.path.exists(dm_outpath):
+            os.makedirs(dm_outpath)
 
-        pyfits.writeto(os.path.join(outpath, "dm1_command_history.fits"),
-                       dm1_cube, header=hdr_dm, overwrite=True)
+        # Save final maps (for re-seeding) : take the last element of the lists
+        if len(dm1_list) > 0:
+            pyfits.writeto(os.path.join(dm_outpath, "final_dm1.fits"), dm1_list[-1], overwrite=True)
+        if len(dm2_list) > 0:
+            pyfits.writeto(os.path.join(dm_outpath, "final_dm2.fits"), dm2_list[-1], overwrite=True)
 
-    if dm2_list is not None and len(dm2_list) > 0:
-        dm2_cube = np.array(dm2_list)
+        # Save history cubes (full commands)
+        if len(dm1_list) > 0:
+            dm1_cube = np.array(dm1_list)
+            hdr_dm = pyfits.Header()
+            hdr_dm['CONTENT'] = 'DM1 VOLTAGE HISTORY'
+            hdr_dm['UNIT'] = 'Volts'
+            pyfits.writeto(os.path.join(dm_outpath, "dm1_command_history.fits"),
+                           dm1_cube, header=hdr_dm, overwrite=True)
 
-        hdr_dm = pyfits.Header()
-        hdr_dm['CONTENT'] = 'DM2 VOLTAGE HISTORY'
-        hdr_dm['UNIT'] = 'Volts'
+        if len(dm2_list) > 0:
+            dm2_cube = np.array(dm2_list)
+            hdr_dm = pyfits.Header()
+            hdr_dm['CONTENT'] = 'DM2 VOLTAGE HISTORY'
+            hdr_dm['UNIT'] = 'Volts'
+            pyfits.writeto(os.path.join(dm_outpath, "dm2_command_history.fits"),
+                           dm2_cube, header=hdr_dm, overwrite=True)
 
-        pyfits.writeto(os.path.join(outpath, "dm2_command_history.fits"),
-                       dm2_cube, header=hdr_dm, overwrite=True)
-
-    print("Global cubes and DM history saved.")
+        print(f"Global cubes and final DM maps saved to {dm_outpath}")
