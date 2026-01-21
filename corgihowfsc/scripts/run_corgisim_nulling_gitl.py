@@ -97,8 +97,8 @@ def main():
         corgi_overrides=corgi_overrides
     )
 
-    # normalization_strategy = CorgiNormalization(cfg, cstrat, hconf, cor=args.mode, corgi_overrides=corgi_overrides, separation_lamD=7, exptime_norm=0.1)
-    normalization_strategy = EETCNormalization()
+    normalization_strategy = CorgiNormalization(cfg, cstrat, hconf, cor=args.mode, corgi_overrides=corgi_overrides, separation_lamD=7, exptime_norm=0.1)
+    # normalization_strategy = EETCNormalization()
 
     nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps)
 

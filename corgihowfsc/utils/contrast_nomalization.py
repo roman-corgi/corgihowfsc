@@ -16,7 +16,7 @@ class EETCNormalization(Normalization):
     def __init__(self):
         super().__init__()
 
-    def calc_flux_rate(self, get_cgi_eetc, hconf, sl_ind, dm1v, dm2v, exptime, gain=1):
+    def calc_flux_rate(self, get_cgi_eetc, hconf, sl_ind, dm1v, dm2v, gain=1):
         a, peakflux = get_cgi_eetc.calc_flux_rate(
             sequence_name=hconf['hardware']['sequence_list'][sl_ind],
         )
@@ -41,7 +41,7 @@ class CorgiNormalization(Normalization):
         # Initialize corgisime manager
         self.corgisim_manager = CorgisimManager(cfg, cstrat, hconf, cor, corgi_overrides=corgi_overrides)
 
-    def calc_flux_rate(self, get_cgi_eetc, hconf, sl_ind, dm1v, dm2v, exptime, gain=1):
+    def calc_flux_rate(self, get_cgi_eetc, hconf, sl_ind, dm1v, dm2v, gain=1):
         """
         Calculate peak flux rate for normalization using an off-axis point source (with the stellar PSF input), placed at specified separation in lambda/D. 
 
@@ -62,8 +62,8 @@ class CorgiNormalization(Normalization):
         # TODO - make sure this is the central wavelength
         mas_per_lamD = calculate_mas_per_lamD(self.corgisim_manager.cfg.sl_list[1].lam)
 
-        if exptime is None or self.corgisim_manager.is_noise_free:
-            exptime = 1.  # unit
+        # if exptime is None or self.corgisim_manager.is_noise_free:
+        #     exptime = 1.  # unit
 
         dy = self.separation_lamD * mas_per_lamD
         dx = 0.
