@@ -35,7 +35,7 @@ def main():
     args = get_args(
         mode='nfov_band1',
         dark_hole='360deg',
-        probe_shape='single',
+        probe_shape='default',
         precomp=precomp,
         num_process=0,
         num_threads=1,
