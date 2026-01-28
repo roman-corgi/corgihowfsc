@@ -155,6 +155,9 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     subcroplist = [(lrow, lcol, nrow, ncol)]*(nlam)
     nrowperpacket = 3 # only used by packet-drop testing
 
+    abs_dm1list.append(dm10)
+    abs_dm2list.append(dm20)
+
     # jac, jtwj_map, n2clist
     if precomp in ['precomp_all_once']:
         t0 = time.time()
@@ -236,9 +239,6 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         # TODO: what are correct camera settings here?
         _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, indj, dm1_list[0], dm2_list[0], gain=1)
         for indk in range(ndm):
-            dmlist = [dm1_list[indj*ndm + indk],
-                      dm2_list[indj*ndm + indk]]
-
             f = imager.get_image(dm1_list[indj*ndm + indk],
                              dm2_list[indj*ndm + indk],
                              exptime,
@@ -358,8 +358,6 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             crop = croplist[indj]
             _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, indj, dm1_list[0], dm2_list[0], gain=1)
             for indk in range(ndm):
-                dmlist = [dm1_list[indj*ndm + indk],
-                          dm2_list[indj*ndm + indk]]
                 f = imager.get_image(dm1_list[indj * ndm + indk],
                                  dm2_list[indj * ndm + indk],
                                  prev_exptime_list[indj*ndm + indk],
@@ -418,7 +416,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         hdul = pyfits.HDUList([prim, img, prev])
         hdul.writeto(fileout, overwrite=True)
 
-        save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c)
+        save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list)
 
 
 if __name__ == "__main__":

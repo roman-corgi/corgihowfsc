@@ -6,7 +6,7 @@ from corgihowfsc.sensing.Probes import Probes
 from howfsc.sensing.probephase import probe_ap
 from howfsc.util.insertinto import insertinto
 
-class DefaultProbes(Probes):
+class SingleProbes(Probes):
     def __init__(self,
                  probe_type,
                  nrow=153,
@@ -24,11 +24,8 @@ class DefaultProbes(Probes):
                       scalelist=[0.3, 0.3, 0.3, -0.3, -0.3, -0.3]):
 
         # Get probe commands
-        # dm1_list, dm2
-        # dmrel_list = [pyfits.getdata(probe0file),
-        #               pyfits.getdata(probe1file),
-        #               pyfits.getdata(probe2file),
-        #               ]  # these are 1e-5 probe relative DM settings
+        # Load single actuator maps directly from FITS files provided in probefiles (see the notebook)
+        # Probefiles is expected to be a list or dict where indices 0, 1, 2 correspond to the Center, Neighbor, and Diagonal actuators respectively.
         dmrel_list = [pyfits.getdata(probefiles[0]),
                       pyfits.getdata(probefiles[1]),
                       pyfits.getdata(probefiles[2]),
@@ -38,6 +35,7 @@ class DefaultProbes(Probes):
         self.ndm = 2 * len(dmrel_list) + 1
         self.croplist = [(self.lrow, self.lcol, self.nrow, self.ncol)] * (nlam * self.ndm)
 
+        # Here is a test to start from the last converged state dm.
         dm10 = dmstartmaps[0]
         dm20 = dmstartmaps[1]
         dm1_list = []
@@ -45,12 +43,19 @@ class DefaultProbes(Probes):
         for index in range(nlam):
             # DM1 same per wavelength
             dm1_list.append(dm10)
+
+            # Apply probes: Center Actuator
             dm1_list.append(dm10 + scalelist[0] * dmrel_list[0])
             dm1_list.append(dm10 + scalelist[3] * dmrel_list[0])
+
+            # Apply probes: Neighbor Actuator
             dm1_list.append(dm10 + scalelist[1] * dmrel_list[1])
             dm1_list.append(dm10 + scalelist[4] * dmrel_list[1])
+
+            # Apply probes: Diagonal Actuator
             dm1_list.append(dm10 + scalelist[2] * dmrel_list[2])
             dm1_list.append(dm10 + scalelist[5] * dmrel_list[2])
+
             for j in range(self.ndm):
                 # DM2 always same
                 dm2_list.append(dm20)

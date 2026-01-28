@@ -14,6 +14,7 @@ from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
 from corgihowfsc.sensing.PerfectEstimator import PerfectEstimator
 from corgihowfsc.sensing.DefaultProbes import DefaultProbes
 from corgihowfsc.utils.contrast_nomalization import CorgiNormalization, EETCNormalization
+from corgihowfsc.sensing.SingleProbes import SingleProbes
 from corgihowfsc.gitl.nulling_gitl import nulling_gitl
 from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 
@@ -66,12 +67,21 @@ def main():
     # hconffile
     hconf = loadyaml(hconffile, custom_exception=TypeError)
 
-    # Define control and estimator strategy
+    # Control strategy and estimator
     cstrat = ControlStrategy(cstratfile)
-    estimator = DefaultEstimator()
+    estimator = DefaultEstimator() # PerfectEstimator() will use the exact efield to make EFC, DefaultEstimator will use PWP.
 
-    # Initialize default probes class
-    probes = DefaultProbes(args.probe_shape)
+    # Initialize the correct probes class based on args.probe_shape
+    if args.probe_shape == 'single':
+        # SingleProbes
+        probes = SingleProbes(args.probe_shape)
+    elif args.probe_shape == 'default':
+        # Sinc probes
+        probes = DefaultProbes(args.probe_shape)
+    else:
+        # Raise an error if the probe shape is not recognized (now single and default)
+        raise ValueError(f"Probe shape '{args.probe_shape}' is not recognized. "
+                         "Supported shapes are: 'single', 'default'.")
 
     # Image cropping parameters:
     crop_params = {}
