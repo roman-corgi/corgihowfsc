@@ -35,7 +35,7 @@ def main():
     args = get_args(
         mode='nfov_band1',
         dark_hole='360deg',
-        probe_shape='default',
+        probe_shape='single',
         precomp=precomp,
         num_process=0,
         num_threads=1,
@@ -75,9 +75,13 @@ def main():
     if args.probe_shape == 'single':
         # SingleProbes
         probes = SingleProbes(args.probe_shape)
-    else:
+    elif args.probe_shape == 'default':
         # Sinc probes
         probes = DefaultProbes(args.probe_shape)
+    else:
+        # Raise an error if the probe shape is not recognized
+        raise ValueError(f"Probe shape '{args.probe_shape}' is not recognized. "
+                         "Supported shapes are: 'single', 'default'.")
 
     # Image cropping parameters:
     crop_params = {}
