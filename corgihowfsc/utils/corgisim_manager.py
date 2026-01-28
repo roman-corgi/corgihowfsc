@@ -96,7 +96,7 @@ class CorgisimManager:
         self.sptype = self.corgi_overrides.get('sptype', self.host_star_properties['spectral_type'])
         self.ref_flag = self.corgi_overrides.get('ref_flag', self.host_star_properties['ref_flag'])
         self._mode = 'excam'  # default camera mode
-        self.k_gain = 8.7 # photo e-/DN, calibrated in TVAC
+        self.k_gain = 8.7 # photo e-/DN, calibrated in TVAC, can check using detector.emccd.eperdn
 
     def _initialize_base_scene(self):
         # Initialise scene object 
