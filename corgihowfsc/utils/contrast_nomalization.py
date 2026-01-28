@@ -36,7 +36,11 @@ class CorgiNormalization(Normalization):
         super().__init__()
 
         self.separation_lamD = separation_lamD
-        self.exptime_norm = exptime_norm
+        if exptime_norm is None or self.corgisim_manager.is_noise_free:
+            self.exptime_norm = 1.
+            print("Operating in noise-free regime. Normalization exposure time set to 1.")
+        else:
+            self.exptime_norm = exptime_norm
 
         # Initialize corgisime manager
         self.corgisim_manager = CorgisimManager(cfg, cstrat, hconf, cor, corgi_overrides=corgi_overrides)
