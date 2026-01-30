@@ -98,6 +98,6 @@ hconf['star']['stellar_type'] = 'G05'
    * This is where the probe amplitude schedule and EFC regularization schedules are defined
 6. Define the `esitmator`
 7. Define the `probes` class
-8. 
+
 
 
