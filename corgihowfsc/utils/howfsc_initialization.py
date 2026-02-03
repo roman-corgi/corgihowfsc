@@ -273,7 +273,7 @@ def load_files(args, howfscpath):
             cstratfile = os.path.join(modelpath, 'cstrat_nfov_band1_half.yaml')
 
             if args.probe_shape == 'single':
-                # Single actuator probes
+                # Single actuator alternate probes
                 probe0file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act0.fits')
                 probe1file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act1.fits')
                 probe2file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act2.fits')
@@ -283,7 +283,7 @@ def load_files(args, howfscpath):
                 probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinlr.fits')
                 probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinud.fits')
             elif args.probe_shape == 'gaussian':
-                # Gaussian probes
+                # Gaussian alternate probes
                 probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian1.fits')
                 probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian2.fits')
                 probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian2.fits')
