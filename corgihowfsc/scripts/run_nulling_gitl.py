@@ -80,6 +80,7 @@ def main():
         # Sinc probes
         probes = DefaultProbes(args.probe_shape)
     elif args.probe_shape == 'gaussian':
+        # Gaussian probes
         probes = GaussianProbes(args.probe_shape)
     else:
         # Raise an error if the probe shape is not recognized (now single and default)
