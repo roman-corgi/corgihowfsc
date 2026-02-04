@@ -15,6 +15,7 @@ from corgihowfsc.sensing.PerfectEstimator import PerfectEstimator
 from corgihowfsc.sensing.DefaultProbes import DefaultProbes
 from corgihowfsc.utils.contrast_nomalization import CorgiNormalization, EETCNormalization
 from corgihowfsc.sensing.SingleProbes import SingleProbes
+from corgihowfsc.sensing.GaussianProbes import GaussianProbes
 from corgihowfsc.gitl.nulling_gitl import nulling_gitl
 from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 
@@ -78,10 +79,12 @@ def main():
     elif args.probe_shape == 'default':
         # Sinc probes
         probes = DefaultProbes(args.probe_shape)
+    elif args.probe_shape == 'gaussian':
+        probes = GaussianProbes(args.probe_shape)
     else:
         # Raise an error if the probe shape is not recognized (now single and default)
         raise ValueError(f"Probe shape '{args.probe_shape}' is not recognized. "
-                         "Supported shapes are: 'single', 'default'.")
+                         "Supported shapes are: 'single', 'default' and 'gaussian'.")
 
     # Image cropping parameters:
     crop_params = {}
