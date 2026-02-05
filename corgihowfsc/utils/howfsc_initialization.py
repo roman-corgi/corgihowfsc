@@ -284,8 +284,8 @@ def load_files(args, howfscpath):
                 probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinud.fits')
             elif args.probe_shape == 'gaussian':
                 # Gaussian alternate probes
-                probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian1.fits')
-                probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian2.fits')
+                probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian0.fits')
+                probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian1.fits')
                 probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian2.fits')
             else:
                 # Raise an error if the probe shape is not recognized
