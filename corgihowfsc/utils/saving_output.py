@@ -28,16 +28,11 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
         if not os.path.exists(iterpath):
             os.makedirs(iterpath)
 
-    # Saving cubes too
-
-    cube_total = []
-    cube_coh = []
-    cube_inco = []
-
+    # Saving separate intensity files per iteration
     for i, flist in enumerate(framelistlist):
         oitem = otherlist[i]
 
-        # List for all intensities
+        # List for all intensities (current iteration)
         stack_total = []
         stack_coh = []
         stack_incoh = []
@@ -56,12 +51,6 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
             stack_total.append(total_int)
             stack_coh.append(coh_int)
             stack_incoh.append(incoh_int)
-
-
-        cube_total.append(stack_total)
-        cube_coh.append(stack_coh)
-        cube_inco.append(stack_incoh)
-
 
         hdr = pyfits.Header()
         hdr['NLAM'] = len(cfg.sl_list)
@@ -108,28 +97,6 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
 
         print(f"Saved outputs (individual) for iteration {i + 1}")
 
-
-    print("Saving global intensity history cubes...")
-
-
-    hdr_hist = pyfits.Header()
-    hdr_hist['CONTENT'] = 'INTENSITY HISTORY ALL ITERATIONS'
-    hdr_hist['AXIS1'] = 'PIXEL X'
-    hdr_hist['AXIS2'] = 'PIXEL Y'
-    hdr_hist['AXIS3'] = 'WAVELENGTH'
-    hdr_hist['AXIS4'] = 'ITERATION'
-
-    # 1. Total
-    pyfits.writeto(os.path.join(outpath, "history_intensity_total_cube.fits"),
-                   np.array(cube_total), header=hdr_hist, overwrite=True)
-
-    # 2. Coherent
-    pyfits.writeto(os.path.join(outpath, "history_intensity_coherent_cube.fits"),
-                   np.array(cube_coh), header=hdr_hist, overwrite=True)
-
-    # 3. Incoherent
-    pyfits.writeto(os.path.join(outpath, "intensity_incoherent_cube.fits"),
-                   np.array(cube_inco), header=hdr_hist, overwrite=True)
 
     # Check that DM lists are present
     if dm1_list is not None and dm2_list is not None:
