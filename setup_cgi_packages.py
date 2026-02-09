@@ -119,20 +119,20 @@ def main():
     packages = [
         {
             'name': 'Proper',
-            'zip': 'proper_v3.3.3_python.zip',
-            'dir': 'proper_v3.3.3_python',
+            'zip': 'proper_v3.3.4_python.zip',
+            'dir': 'proper_v3.3.4_python',
             'url': 'https://sourceforge.net/projects/proper-library/'
         },
         {
             'name': 'Roman Preflight Proper',
-            'zip': 'roman_preflight_proper_public_v2.0.1_python.zip',
-            'dir': 'roman_preflight_proper_public_v2.0.1_python',
+            'zip': 'roman_preflight_proper_public_v2.0.2_python.zip',
+            'dir': 'roman_preflight_proper_public_v2.0.2_python',
             'url': 'https://sourceforge.net/projects/cgisim/'
         },
         {
             'name': 'CGISim',
-            'zip': 'cgisim_v4.0.zip',
-            'dir': 'cgisim_v4.0',
+            'zip': 'cgisim_v4.1.zip',
+            'dir': 'cgisim_v4.1',
             'url': 'https://sourceforge.net/projects/cgisim/'
         }
     ]
