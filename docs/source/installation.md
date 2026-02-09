@@ -71,6 +71,7 @@ pip install -e .
 
 ```bash
 pip uninstall howfsc
+git clone https://github.com/roman-corgi/cgi-howfsc.git
 cd cgi-howfsc
 pip install -e .
 ```
