@@ -83,7 +83,7 @@ def main():
         # Gaussian probes
         probes = GaussianProbes(args.probe_shape)
     else:
-        # Raise an error if the probe shape is not recognized (now single and default)
+        # Raise an error if the probe shape is not recognized (now single, gaussian or default)
         raise ValueError(f"Probe shape '{args.probe_shape}' is not recognized. "
                          "Supported shapes are: 'single', 'default' and 'gaussian'.")
 
