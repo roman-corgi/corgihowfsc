@@ -76,6 +76,21 @@ cd cgi-howfsc
 pip install -e .
 ```
 
+### 7. Verify Installation
+
+Test that everything is installed correctly:
+
+```python
+# In Python, try importing the packages
+import proper
+import roman_preflight_proper
+import cgisim
+import howfsc
+import eetc
+
+print("✅ All CGI packages imported successfully!")
+```
+
 ### Help
 ```bash
 python setup_cgi_packages.py --help
