@@ -59,19 +59,20 @@ git lfs pull
 pip install -e .
 ```
 
-### 5. Verify Installation
+### 5. Get large files and install cgi-eetc
 
-Test that everything is installed correctly:
+```bash
+cd cgi-eetc
+git lfs pull
+pip install -e .
+```
 
-```python
-# In Python, try importing the packages
-import proper
-import roman_preflight_proper
-import cgisim
-import howfsc
-import eetc
+### 6. Optional: Install cgi-howfsc in editable mode for development
 
-print("✅ All CGI packages imported successfully!")
+```bash
+pip uninstall howfsc
+cd cgi-howfsc
+pip install -e .
 ```
 
 ### Help
