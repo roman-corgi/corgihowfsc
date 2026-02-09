@@ -19,3 +19,4 @@ dependencies:
     - git+https://github.com/roman-corgi/cgi-howfsc.git
     - git+https://github.com/roman-corgi/corgisim.git@main
     - git+https://github.com/roman-corgi/corgidrp.git@develop
+    - -e .  # Install corgihowfsc itself in editable mode
