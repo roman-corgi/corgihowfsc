@@ -1,7 +1,10 @@
-# GITL with corgi-howfsc using the corgisim or compact model
+# GITL with corgi-howfsc loop
 
 This example shows how to run the baseline GITL nulling test with the `corgi-howfsc` code developped by the CPP.
 All examples are set up to run on the NFOV HLC mode.
+
+.. important::
+    The corgihowfsc loop can be run with **either the corgisim model or the compact model**.
 
 The `corgi-howfsc` inherits from `cgi-howfsc` (Roman CPP fork), which contains a "compact" model of a coronagraph 
 instrument that is used to calculate a Jacobian to use on the Coronagraph Instrument. 
@@ -10,7 +13,7 @@ instrument that is used to calculate a Jacobian to use on the Coronagraph Instru
 Even in this case the Jacobian is always calculated using the compact model from `cgi-howfsc`, 
 which is the one that will be used in flight 
 
-<h2 id="calculate_jac"> Calculate a Jacobian </h2>
+## Calculate a Jacobian
 To calculate a Jacobian, you can call the function from `cgi-howfsc` that does this:
 
 ```python
@@ -22,7 +25,7 @@ calculate_jacobian_multiprocessed(output=output, proc=0)
 
 The resulting file has a size of 2.2 GB. The function docstring contains more information about the input parameters.
 
-<h2 id="compact_model"> Run a nulling test with GITL with corgi-howfsc using simulated images from the compact model </h2>
+## Run a nulling test on compact model
 
 In this situation both the Jacobian and the simulated images are generated from the compact model. 
 This is the fastest mode to run. 
@@ -57,7 +60,7 @@ dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
 From here the script can be run as-is! The result will be some iteration-specific information printed to stdout, and a `fileout.fits` file containing the
 results of the final iteration of the loop.
 
-<h2 id="full_model"> Run a nulling test with GITL with corgi-howfsc using simulated images from the corgisim model </h2>
+## Run a nulling test on corgisim model
 
 In this situation, the Jacobian is still calculated form [the compact model](#calculate_jac) but the images are generated
 using the realistic `corgisim` model.  Note that this mode is very slow to run 
