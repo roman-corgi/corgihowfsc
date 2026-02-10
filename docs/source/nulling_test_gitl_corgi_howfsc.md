@@ -99,5 +99,4 @@ hconf['star']['stellar_type'] = 'G05'
 6. Define the `esitmator`
 7. Define the `probes` class
 
-
-
+If user would like to compare the output with the compact model, please refer to [GITL(Compact)](nulling_test_gitl_cgi_howfsc.md)
