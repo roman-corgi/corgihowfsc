@@ -346,7 +346,7 @@ Relative paths in control strategy files are resolved relative to the location o
 ---
 
 ## References
-- Cady et al. (2025) - CGI HOWFSC architecture and performance
+- [Cady et al. (2025) - CGI HOWFSC architecture and performance](https://ui.adsabs.harvard.edu/abs/2025JATIS..11b1408C/abstract)
 
 ---
 

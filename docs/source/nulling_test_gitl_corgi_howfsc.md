@@ -3,19 +3,24 @@
 This example shows how to run the baseline GITL nulling test with the `corgi-howfsc` code developped by the CPP.
 All examples are set up to run on the NFOV HLC mode.
 
-```{important}
-    The corgihowfsc loop can be run with **either the corgisim model or the compact model**.
-```
+:::{important}
+The corgihowfsc loop can be run with **either the corgisim model or the compact model**.
+:::
 
 The `corgi-howfsc` inherits from `cgi-howfsc` (Roman CPP fork), which contains a "compact" model of a coronagraph 
 instrument that is used to calculate a Jacobian to use on the Coronagraph Instrument. 
 
 `corgi-howfsc` also inherits from `corgisim` which is used to generate flight-like images. 
 Even in this case the Jacobian is always calculated using the compact model from `cgi-howfsc`, 
-which is the one that will be used in flight 
+which is the one that will be used in flight.
+
+:::{important}
+All examples are set up to run on the NFOV HLC mode.  
+All code examples are runnable in the corgiloop conda env of corgihowfsc.
+:::
 
 ## Calculate a Jacobian
-To calculate a Jacobian, you can call the function from `cgi-howfsc` that does this:
+To calculate a Jacobian, you can call the following function from `cgi-howfsc` (within the corgiloop environment by corgihowfsc):
 
 ```python
 from howfsc.scripts.jactest_mp import calculate_jacobian_multiprocessed
