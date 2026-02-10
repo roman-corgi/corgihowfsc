@@ -95,6 +95,19 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
         hdul_ef = pyfits.HDUList([prim_ef, img_ef])
         hdul_ef.writeto(os.path.join(outpath, f"iteration_{i + 1:04d}", "efield_estimations.fits"), overwrite=True)
 
+        # --- PERFECT E-FIELDS ---
+        perfect_efields = []
+        for n in range(len(cfg.sl_list)):
+            perfect_efields.append(np.real(oitem[n]['model_efield']))
+            perfect_efields.append(np.imag(oitem[n]['model_efield']))
+
+        hdr_pef = pyfits.Header()
+        hdr_pef['NLAM'] = len(cfg.sl_list)
+        prim_pef = pyfits.PrimaryHDU(header=hdr_pef)
+        img_pef = pyfits.ImageHDU(perfect_efields)
+        hdul_pef = pyfits.HDUList([prim_pef, img_pef])
+        hdul_pef.writeto(os.path.join(outpath, f"iteration_{i + 1:04d}", "perfect_efields.fits"), overwrite=True)
+
         print(f"Saved outputs (individual) for iteration {i + 1}")
 
 
