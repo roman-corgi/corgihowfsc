@@ -143,3 +143,13 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
                            dm2_cube, header=hdr_dm, overwrite=True)
 
         print(f"Global cubes and final DM maps saved to {dm_outpath}")
+
+        # Plot estimation error
+        estimation_error = np.var(np.array(efields) - np.array(perfect_efields))
+        plt.figure()
+        plt.plot(np.arange(len(estimation_error)) + 1, estimation_error, marker='o')
+        plt.xlabel('Iteration')
+        plt.ylabel('Estimation error')
+        plt.semilogy()
+        plt.savefig(os.path.join(outpath, "estimation_error.pdf"))
+        plt.close()
