@@ -3,8 +3,9 @@
 This example shows how to run the baseline GITL nulling test with the `corgi-howfsc` code developped by the CPP.
 All examples are set up to run on the NFOV HLC mode.
 
-.. important::
+```{important}
     The corgihowfsc loop can be run with **either the corgisim model or the compact model**.
+```
 
 The `corgi-howfsc` inherits from `cgi-howfsc` (Roman CPP fork), which contains a "compact" model of a coronagraph 
 instrument that is used to calculate a Jacobian to use on the Coronagraph Instrument. 
