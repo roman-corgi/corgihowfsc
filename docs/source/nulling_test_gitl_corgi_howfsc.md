@@ -10,7 +10,7 @@ instrument that is used to calculate a Jacobian to use on the Coronagraph Instru
 Even in this case the Jacobian is always calculated using the compact model from `cgi-howfsc`, 
 which is the one that will be used in flight 
 
-<h2 id="calculate_jac"> Calculate a Jacobian (optional) </h2>
+<h2 id="calculate_jac"> Calculate a Jacobian </h2>
 To calculate a Jacobian, you can call the function from `cgi-howfsc` that does this:
 
 ```python
