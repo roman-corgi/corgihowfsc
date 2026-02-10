@@ -1,28 +1,33 @@
 # GITL directly with cgi-howfsc loop (dev only)
 
 :::{warning}
-We do *not* want to run cgi-howfsc code directly. This page exists purely for information purposes.
+We do *not* want to run cgi-howfsc code directly.
+This page exists purely for information purposes.
 :::
 
 This example shows how to run the baseline GITL nulling test with the `cgi-howfsc` code as published by NASA.
-This mode is superceded by the implementation of the `cgi-howfsc` compact model in `corgi_howfsc`.  
-Instructions for this mode can be found [here](nulling_test_gitl_corgi_howfsc.md)
-All examples are set up to run on the NFOV HLC mode.
+This mode is superceded by the implementation of the `cgi-howfsc` compact model in the `corgi_howfsc` repository.  
+Instructions for running loops with corgihowfsc (on either optical model, compact or corgisim) can be found [here](nulling_test_gitl_corgi_howfsc.md).
 
 :::{important}
 The cgi-howfsc loop can only be run on the **compact model**.
 :::
 
-The original code was published under [https://github.com/nasa-jpl/cgi-howfsc](https://github.com/nasa-jpl/cgi-howfsc).
+The original `cgi-howfsc` code was published under [https://github.com/nasa-jpl/cgi-howfsc](https://github.com/nasa-jpl/cgi-howfsc).
 For CPP work, it was decided to fork this repository into [https://github.com/roman-corgi/cgi-howfsc](https://github.com/roman-corgi/cgi-howfsc)
-to keep a track of the separate development done by the CPP team. The forked repository is the one used in `corgihowfsc`.
+to keep a track of the separate development done by the CPP team. The forked repository is the one imported in `corgihowfsc`.
 
 The `cgi-howfsc` repository contains a "compact" model of a coronagraph instrument, which is used to calculate a Jacobian
 to use on the Coronagraph Instrument.
 
+:::{important}
+All examples are set up to run on the NFOV HLC mode.  
+All code examples are runnable in the corgiloop conda env of corgihowfsc.
+:::
+
 ## Calculate a Jacobian
 
-To calculate a Jacobian, you can call the function from cgi-howfsc that does this:
+To calculate a Jacobian, you can call the following function from `cgi-howfsc` (within the corgiloop environment by corgihowfsc):
 
 ```python
 from howfsc.scripts.jactest_mp import calculate_jacobian_multiprocessed
@@ -35,7 +40,7 @@ The resulting file has a size of 2.2 GB. The function docstring contains more in
 
 ## Run a nulling test on compact model
 
-You will need to rename your Jacobian for the respective coronagraph mode you want to run a loop on. For the narrof FOV mode
+You will need to rename your Jacobian for the respective coronagraph mode you want to run a loop on. For the narrow FOV mode
 with the HLC, rename the Jacobian to `narrowfov_jac_full.fits`.
 
 Then you can run the GITL nulling test as follows by passing the path to your Jacobian, and output paths:

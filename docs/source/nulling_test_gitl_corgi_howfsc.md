@@ -12,10 +12,15 @@ instrument that is used to calculate a Jacobian to use on the Coronagraph Instru
 
 `corgi-howfsc` also inherits from `corgisim` which is used to generate flight-like images. 
 Even in this case the Jacobian is always calculated using the compact model from `cgi-howfsc`, 
-which is the one that will be used in flight 
+which is the one that will be used in flight.
+
+:::{important}
+All examples are set up to run on the NFOV HLC mode.  
+All code examples are runnable in the corgiloop conda env of corgihowfsc.
+:::
 
 ## Calculate a Jacobian
-To calculate a Jacobian, you can call the function from `cgi-howfsc` that does this:
+To calculate a Jacobian, you can call the following function from `cgi-howfsc` (within the corgiloop environment by corgihowfsc):
 
 ```python
 from howfsc.scripts.jactest_mp import calculate_jacobian_multiprocessed
