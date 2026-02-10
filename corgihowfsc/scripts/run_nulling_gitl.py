@@ -12,7 +12,7 @@ import corgihowfsc
 from corgihowfsc.utils.howfsc_initialization import get_args, load_files
 from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
 from corgihowfsc.sensing.PerfectEstimator import PerfectEstimator
-from corgihowfsc.sensing.GettingProbes import DefaultProbes
+from corgihowfsc.sensing.GettingProbes import ShapeProbes
 from corgihowfsc.utils.contrast_nomalization import CorgiNormalization, EETCNormalization
 from corgihowfsc.gitl.nulling_gitl import nulling_gitl
 from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
@@ -73,7 +73,7 @@ def main():
     supported_shapes = {'default', 'single', 'gaussian'}
 
     if args.probe_shape in supported_shapes:
-        probes = DefaultProbes(args.probe_shape)
+        probes = ShapeProbes(args.probe_shape)
     else:
         raise ValueError(
             f"Probe shape '{args.probe_shape}' not recognized. "
