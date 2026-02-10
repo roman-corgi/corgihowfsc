@@ -129,4 +129,4 @@ use [corgi-howfs with the compact model](#run-a-nulling-test-on-compact-model)
 
 However, it is still possible to use the compact model directly in `cgi_howfs`. 
 This is **not** the recommended method and this should be reserved for particular situations.  
-please refer to [cgi_howfs GITL(Compact)](nulling_test_gitl_cgi_howfsc.md)
+please refer to [cgi_howfs GITL(Compact)](gitl_cgi_howfsc.md)
