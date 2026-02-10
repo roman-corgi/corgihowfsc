@@ -35,15 +35,15 @@ class CorgiNormalization(Normalization):
     def __init__(self, cfg, cstrat, hconf, cor=None, corgi_overrides=None, separation_lamD=None, exptime_norm=1):
         super().__init__()
 
+        # Initialize corgisime manager
+        self.corgisim_manager = CorgisimManager(cfg, cstrat, hconf, cor, corgi_overrides=corgi_overrides)
+
         self.separation_lamD = separation_lamD
         if exptime_norm is None or self.corgisim_manager.is_noise_free:
             self.exptime_norm = 1.
             print("Operating in noise-free regime. Normalization exposure time set to 1.")
         else:
             self.exptime_norm = exptime_norm
-
-        # Initialize corgisime manager
-        self.corgisim_manager = CorgisimManager(cfg, cstrat, hconf, cor, corgi_overrides=corgi_overrides)
 
     def calc_flux_rate(self, get_cgi_eetc, hconf, sl_ind, dm1v, dm2v, gain=1):
         """
