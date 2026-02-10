@@ -3,8 +3,9 @@ from pathlib import Path
 from datetime import datetime
 from howfsc.scripts.jactest_mp import calculate_jacobian_multiprocessed
 
-home_directory = Path.home()
-jacobian_path = os.path.join(home_directory,'cpp_data','jacobians')
+base_path = Path.home()  # this is the proposed default but can be changed
+base_corgiloop_path = 'corgiloop_data'
+jacobian_path = os.path.join(base_path, base_corgiloop_path, 'jacobians')
 os.makedirs(jacobian_path, exist_ok=True)
 
 current_datetime = datetime.now()
