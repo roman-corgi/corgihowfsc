@@ -6,6 +6,13 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import os
+import sys
+
+# Make the repository root importable so `import corgihowfsc` works.
+# This file lives in docs/source/conf.py, so repo root is two levels up.
+sys.path.insert(0, os.path.abspath("../.."))
+
 project = 'corgihowfsc'
 copyright = '2025, Roman Corongraph CPP Team'
 author = 'Roman Corongraph CPP Team'
@@ -19,8 +26,19 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
     'sphinx.ext.githubpages',
+    "sphinx.ext.autosummary",
     'myst_parser',  # Add this for Markdown support
 ]
+
+# Generate autosummary pages automatically (useful for API docs)
+autosummary_generate = True
+
+# Sensible defaults for autodoc blocks
+autodoc_default_options = {
+    "members": True,
+    "show_inheritance": True,
+    "member_order": "bysource",
+}
 
 # Configure MyST
 myst_enable_extensions = [
