@@ -145,7 +145,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
         print(f"Global cubes and final DM maps saved to {dm_outpath}")
 
         # Plot estimation error
-        estimation_error = np.var(np.array(efields) - np.array(perfect_efields))
+        estimation_error = np.var(np.array(efields) - np.array(perfect_efields), axis=0)
         plt.figure()
         plt.plot(np.arange(len(estimation_error)) + 1, estimation_error, marker='o')
         plt.xlabel('Iteration')
