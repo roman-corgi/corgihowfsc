@@ -118,4 +118,4 @@ you are probably missing the LFS files from cgi-eetc.
 
 To fix this...
 - Make sure you have Git LFS installed: https://git-lfs.github.com/
-- If you installed from a cgi-eetc repo clone, run `git lfs pull` in that directory to download the large files.
+- Run `git lfs fetch --all` then `git lfs pull` in your `corgihowfsc` repo, and also `cgi-howfsc` repo if you installed it in dev mode from a local clone.

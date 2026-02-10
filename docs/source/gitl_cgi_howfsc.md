@@ -1,4 +1,4 @@
-# GITL directly with cgi-howfsc loop (dev only)
+# cgi-howfsc loop directly (dev only)
 
 :::{warning}
 We do *not* want to run cgi-howfsc code directly.
@@ -7,7 +7,7 @@ This page exists purely for information purposes.
 
 This example shows how to run the baseline GITL nulling test with the `cgi-howfsc` code as published by NASA.
 This mode is superceded by the implementation of the `cgi-howfsc` compact model in the `corgi_howfsc` repository.  
-Instructions for running loops with corgihowfsc (on either optical model, compact or corgisim) can be found [here](nulling_test_gitl_corgi_howfsc.md).
+Instructions for running loops with corgihowfsc (on either optical model, compact or corgisim) can be found [here](gitl_corgi_howfsc.md).
 
 :::{important}
 The cgi-howfsc loop can only be run on the **compact model**.
@@ -26,6 +26,10 @@ All code examples are runnable in the corgiloop conda env of corgihowfsc.
 :::
 
 ## Calculate a Jacobian
+
+:::{note}
+The Jacobian is always computed using the **compact model**.
+:::
 
 To calculate a Jacobian, you can call the following function from `cgi-howfsc` (within the corgiloop environment by corgihowfsc):
 

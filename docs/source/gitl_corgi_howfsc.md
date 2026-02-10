@@ -1,4 +1,4 @@
-# GITL with corgi-howfsc loop
+# corgi-howfsc loop
 
 This example shows how to run the baseline GITL nulling test with the `corgi-howfsc` code developped by the CPP.
 All examples are set up to run on the NFOV HLC mode.
@@ -20,6 +20,11 @@ All code examples are runnable in the corgiloop conda env of corgihowfsc.
 :::
 
 ## Calculate a Jacobian
+
+:::{note}
+The Jacobian is always computed using the **compact model**, even if you are simulating observed images with the corgisim model.
+:::
+
 To calculate a Jacobian, you can call the following function from `cgi-howfsc` (within the corgiloop environment by corgihowfsc):
 
 ```python
@@ -76,7 +81,7 @@ Optional:
 You will need to rename your Jacobian for the respective coronagraph mode you want to run a loop on. For the narrow FOV mode
 with the HLC, rename the Jacobian to `narrowfov_jac_full.fits`.
 
-Then you can run the `scripts/run_nulling_gitl.py` script as follows by passing the path to your Jacobian, and output paths:
+Then you can run the `scripts/run_corgisim_nulling_gitl.py` script as follows by passing the path to your Jacobian, and output paths:
 
 ```python
 
@@ -124,4 +129,4 @@ use [corgi-howfs with the compact model](#run-a-nulling-test-on-compact-model)
 
 However, it is still possible to use the compact model directly in `cgi_howfs`. 
 This is **not** the recommended method and this should be reserved for particular situations.  
-please refer to [cgi_howfs GITL(Compact)](nulling_test_gitl_cgi_howfsc.md)
+please refer to [cgi_howfs GITL(Compact)](gitl_cgi_howfsc.md)
