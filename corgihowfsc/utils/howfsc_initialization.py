@@ -209,6 +209,17 @@ def load_files(args, howfscpath):
         pr = cProfile.Profile()
         pass
 
+    # Check probes shapes : Default = sinc-sin-sin, others are alternates probes
+    supported_shapes = {'default', 'single', 'gaussian', 'unmodulated_sinc'}
+
+    if args.probe_shape in supported_shapes:
+        pass
+    else:
+        raise ValueError(
+            f"Probe shape '{args.probe_shape}' not recognized. "
+            f"Expected one of: {', '.join(supported_shapes)}"
+        )
+
     # Set up logging
     if logfile is not None:
         logging.basicConfig(filename=logfile, level=logging.INFO)

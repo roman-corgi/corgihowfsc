@@ -69,17 +69,7 @@ def main():
     # Control strategy and estimator
     cstrat = ControlStrategy(cstratfile)
     estimator = DefaultEstimator() # PerfectEstimator() will use the exact efield to make EFC, DefaultEstimator will use PWP.
-
-    # Default = sinc-sin-sin, others are alternates probes
-    supported_shapes = {'default', 'single', 'gaussian', 'unmodulated_sinc'}
-
-    if args.probe_shape in supported_shapes:
-        probes = ProbesShapes(args.probe_shape)
-    else:
-        raise ValueError(
-            f"Probe shape '{args.probe_shape}' not recognized. "
-            f"Expected one of: {', '.join(supported_shapes)}"
-        )
+    probes = ProbesShapes(args.probe_shape)
 
     # Image cropping parameters:
     crop_params = {}
