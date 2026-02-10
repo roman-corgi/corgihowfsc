@@ -34,7 +34,7 @@ def main():
     args = get_args(
         mode='nfov_band1',
         dark_hole='360deg',
-        probe_shape='single',
+        probe_shape='unmodulated_sinc',
         precomp=precomp,
         num_process=0,
         num_threads=1,
@@ -70,7 +70,7 @@ def main():
     cstrat = ControlStrategy(cstratfile)
     estimator = DefaultEstimator() # PerfectEstimator() will use the exact efield to make EFC, DefaultEstimator will use PWP.
 
-    supported_shapes = {'default', 'single', 'gaussian'}
+    supported_shapes = {'default', 'single', 'gaussian', 'unmodulated_sinc'}
 
     if args.probe_shape in supported_shapes:
         probes = ProbesShapes(args.probe_shape)
