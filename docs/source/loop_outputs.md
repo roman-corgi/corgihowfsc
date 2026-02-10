@@ -23,6 +23,8 @@ The outputs within an iteration are:
     Cube of 3 frames, per wavelength, containing the total intensity in the focal plane.
 - `dm_data`
     Directory containing the DM commands per iteration, saved as `dm1_command_history.fits` and `dm2_command_history.fits`, which get updated during each iteration. If N total iterations were run, the fits files contaion N+1 frames, the first one being from before the loop starts.
+- `perfect_efields.fits`
+    Data cube of 2x3 frames containing the perfect/model electric field in the focal plane for each of the 3 wavelengths, real and imaginary. Sorting: R-W1, I-W1, R-W2, I-W2, R-W3, I-W3.
 
 ## Top-level outputs post loop
 After the loop finishes, a number of outputs are generated, containing initial analyses, results and metrics.
