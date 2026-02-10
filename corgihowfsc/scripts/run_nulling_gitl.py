@@ -70,6 +70,7 @@ def main():
     cstrat = ControlStrategy(cstratfile)
     estimator = DefaultEstimator() # PerfectEstimator() will use the exact efield to make EFC, DefaultEstimator will use PWP.
 
+    # Default = sinc-sin-sin, others are alternates probes
     supported_shapes = {'default', 'single', 'gaussian', 'unmodulated_sinc'}
 
     if args.probe_shape in supported_shapes:
