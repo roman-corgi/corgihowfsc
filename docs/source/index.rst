@@ -19,6 +19,7 @@ corgihowfsc documentation
    :caption: corgihowfsc file structure
 
    cstrat_docs
+   hconf_docs
 
 .. toctree::
    :maxdepth: 1
