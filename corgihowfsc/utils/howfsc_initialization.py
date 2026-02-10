@@ -209,6 +209,15 @@ def load_files(args, howfscpath):
         pr = cProfile.Profile()
         pass
 
+    # Check probes shapes : Default = sinc-sin-sin, others are alternates probes
+    supported_shapes = {'default', 'single', 'gaussian', 'unmodulated_sinc'}
+
+    if args.probe_shape not in supported_shapes:
+        raise ValueError(
+            f"Probe shape '{args.probe_shape}' not recognized. "
+            f"Supported: {', '.join(supported_shapes)}"
+        )
+
     # Set up logging
     if logfile is not None:
         logging.basicConfig(filename=logfile, level=logging.INFO)
@@ -237,25 +246,30 @@ def load_files(args, howfscpath):
         if '360deg' in args.dark_hole:
             hconffile = os.path.join(modelpath_band, 'hconf_nfov_flat.yaml')
             cstratfile = os.path.join(modelpath, 'cstrat_nfov_band1.yaml')
-            if args.probe_shape == 'single':
+            if args.probe_shape == 'default':
+                # Sinc-sin-sin probes
+                probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_cos.fits')
+                probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinlr.fits')
+                probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinud.fits')
+            elif args.probe_shape == 'single':
                 # Single actuator probes
                 probe0file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act0.fits')
                 probe1file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act1.fits')
                 probe2file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act2.fits')
-            elif args.probe_shape == 'default':
-                # Sinc probes
-                probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_cos.fits')
-                probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinlr.fits')
-                probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinud.fits')
             elif args.probe_shape == 'gaussian':
                 # Gaussian probes
                 probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian0.fits')
                 probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian1.fits')
                 probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian2.fits')
+            elif args.probe_shape == 'unmodulated_sinc':
+                # Unmodulated sinc probes
+                probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinc.fits')
+                probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinc_shifted_right.fits')
+                probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinc_shifted_diag_ur.fits')
             else:
                 # Raise an error if the probe shape is not recognized
                 raise ValueError(f"Probe shape '{args.probe_shape}' is not recognized. "
-                                 "Supported shapes are: 'single', 'default' and 'gaussian'.")
+                                 "Supported shapes are: 'default', 'single', 'gaussian' and 'unmodulated_sinc'.")
             # if args.dm_start_shape is not None:
             #     dm_start_file = os.path.join(modelpath, args.dm_start_shape)
             # else:

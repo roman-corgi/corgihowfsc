@@ -34,7 +34,7 @@ def main():
     args = get_args(
         mode='nfov_band1',
         dark_hole='360deg',
-        probe_shape='single',
+        probe_shape='default',
         precomp=precomp,
         num_process=0,
         num_threads=1,
@@ -69,16 +69,7 @@ def main():
     # Control strategy and estimator
     cstrat = ControlStrategy(cstratfile)
     estimator = DefaultEstimator() # PerfectEstimator() will use the exact efield to make EFC, DefaultEstimator will use PWP.
-
-    supported_shapes = {'default', 'single', 'gaussian'}
-
-    if args.probe_shape in supported_shapes:
-        probes = ProbesShapes(args.probe_shape)
-    else:
-        raise ValueError(
-            f"Probe shape '{args.probe_shape}' not recognized. "
-            f"Expected one of: {', '.join(supported_shapes)}"
-        )
+    probes = ProbesShapes(args.probe_shape)
 
     # Image cropping parameters:
     crop_params = {}
@@ -96,7 +87,6 @@ def main():
         cor=mode
     )
     normalization_strategy = EETCNormalization()
-    print(probes, probefiles)
     nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps)
 
 if __name__ == '__main__':    
