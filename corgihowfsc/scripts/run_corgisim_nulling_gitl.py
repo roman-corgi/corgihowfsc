@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from datetime import datetime
 import matplotlib
 matplotlib.use('TkAgg')
 
@@ -21,27 +20,28 @@ from corgihowfsc.sensing.GettingProbes import ProbesShapes
 from corgihowfsc.utils.contrast_nomalization import CorgiNormalization, EETCNormalization
 from corgihowfsc.gitl.nulling_gitl import nulling_gitl
 from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
+from corgihowfsc.utils.make_output_file_structure import make_output_file_structure
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'temp')  # User should set to somewhere outside the repo
 
-home_directory = Path.home()
-base_output_path = os.path.join(home_directory,'cpp_data','gitl_data')
-os.makedirs(base_output_path, exist_ok=True)
+base_path = Path.home()  # this is the proposed default but can be changed
+base_corgiloop_path = 'corgiloop_data'
+final_filename = 'final_frames.fits'
 
-current_datetime = datetime.now()
-folder_name = 'gitl_simulation_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
-fits_name = 'final_frames.fits'
-fileout_path = os.path.join(base_output_path, folder_name, fits_name)
+loop_framework = 'corgi-howfsc' # do not modify
+backend_type = 'corgihowfsc'  # 'corgihowfsc' for the corgisim model, otherwise for the compact model use: 'cgi-howfsc'
 
 precomp = 'precomp_jacs_always' #'load_all' if defjacpath is not None else 'precomp_all_once'
 dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
 
+fileout_path = make_output_file_structure(loop_framework, backend_type, base_path, base_corgiloop_path, final_filename)
 
-def main(): 
+def main():
 
     args = get_args(
+        niter=5,
         mode='nfov_band1',
         dark_hole='360deg',
         probe_shape='default',
@@ -86,7 +86,7 @@ def main():
         cfg=cfg,         # Your CoronagraphMode object
         cstrat=cstrat,   # Your ControlStrategy object
         hconf=hconf,      # Your host config with stellar properties
-        backend='corgihowfsc',
+        backend=backend_type,
         cor=mode,
         corgi_overrides=corgi_overrides
     )
