@@ -12,10 +12,8 @@ import corgihowfsc
 from corgihowfsc.utils.howfsc_initialization import get_args, load_files
 from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
 from corgihowfsc.sensing.PerfectEstimator import PerfectEstimator
-from corgihowfsc.sensing.DefaultProbes import DefaultProbes
+from corgihowfsc.sensing.GettingProbes import DefaultProbes
 from corgihowfsc.utils.contrast_nomalization import CorgiNormalization, EETCNormalization
-from corgihowfsc.sensing.SingleProbes import SingleProbes
-from corgihowfsc.sensing.GaussianProbes import GaussianProbes
 from corgihowfsc.gitl.nulling_gitl import nulling_gitl
 from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 
@@ -36,7 +34,7 @@ def main():
     args = get_args(
         mode='nfov_band1',
         dark_hole='360deg',
-        probe_shape='default',
+        probe_shape='single',
         precomp=precomp,
         num_process=0,
         num_threads=1,
@@ -72,20 +70,15 @@ def main():
     cstrat = ControlStrategy(cstratfile)
     estimator = DefaultEstimator() # PerfectEstimator() will use the exact efield to make EFC, DefaultEstimator will use PWP.
 
-    # Initialize the correct probes class based on args.probe_shape
-    if args.probe_shape == 'single':
-        # SingleProbes
-        probes = SingleProbes(args.probe_shape)
-    elif args.probe_shape == 'default':
-        # Sinc probes
+    supported_shapes = {'default', 'single', 'gaussian'}
+
+    if args.probe_shape in supported_shapes:
         probes = DefaultProbes(args.probe_shape)
-    elif args.probe_shape == 'gaussian':
-        # Gaussian probes
-        probes = GaussianProbes(args.probe_shape)
     else:
-        # Raise an error if the probe shape is not recognized (now single, gaussian or default)
-        raise ValueError(f"Probe shape '{args.probe_shape}' is not recognized. "
-                         "Supported shapes are: 'single', 'default' and 'gaussian'.")
+        raise ValueError(
+            f"Probe shape '{args.probe_shape}' not recognized. "
+            f"Expected one of: {', '.join(supported_shapes)}"
+        )
 
     # Image cropping parameters:
     crop_params = {}
@@ -103,7 +96,7 @@ def main():
         cor=mode
     )
     normalization_strategy = EETCNormalization()
-
+    print(probes, probefiles)
     nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps)
 
 if __name__ == '__main__':    
