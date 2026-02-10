@@ -13,6 +13,7 @@ corgihowfsc documentation
 
    gitl_corgi_howfsc
    gitl_cgi_howfsc
+   loop_outputs
 
 .. toctree::
    :maxdepth: 1
