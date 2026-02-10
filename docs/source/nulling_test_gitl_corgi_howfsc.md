@@ -3,8 +3,9 @@
 This example shows how to run the baseline GITL nulling test with the `corgi-howfsc` code developped by the CPP.
 All examples are set up to run on the NFOV HLC mode.
 
-.. important::
+```{important}
     The corgihowfsc loop can be run with **either the corgisim model or the compact model**.
+```
 
 The `corgi-howfsc` inherits from `cgi-howfsc` (Roman CPP fork), which contains a "compact" model of a coronagraph 
 instrument that is used to calculate a Jacobian to use on the Coronagraph Instrument. 
@@ -62,7 +63,7 @@ results of the final iteration of the loop.
 
 ## Run a nulling test on corgisim model
 
-In this situation, the Jacobian is still calculated form [the compact model](#calculate_jac) but the images are generated
+In this situation, the Jacobian is still calculated form [the compact model](#calculate-a-jacobian) but the images are generated
 using the realistic `corgisim` model.  Note that this mode is very slow to run 
 (typically several minutes per iteration on a laptop). 
 
@@ -114,7 +115,7 @@ hconf['star']['stellar_type'] = 'G05'
 7. Define the `probes` class
 
 If user would like to compare the output with the compact model, the recommended method is to 
-use [corgi-howfs with the compact model](#compact_model)
+use [corgi-howfs with the compact model](#run-a-nulling-test-on-compact-model)
 
 However, it is still possible to use the compact model directly in `cgi_howfs`. 
 This is **not** the recommended method and this should be reserved for particular situations.  
