@@ -1,4 +1,4 @@
-# GITL directly with cgi-howfsc loop (dev only)
+# GITL calling directly cgi-howfsc on compact model
 
 .. warning::
     We do *not* want to run cgi-howfsc code directly. This page exists purely for information purposes.
@@ -7,9 +7,6 @@ This example shows how to run the baseline GITL nulling test with the `cgi-howfs
 This mode is superceded by the implementation of the `cgi-howfsc` compact model in `corgi_howfsc`.  
 Instructions for this mode can be found [here](nulling_test_gitl_corgi_howfsc.md)
 All examples are set up to run on the NFOV HLC mode.
-
-.. important::
-    The cgi-howfsc loop can only be run on the **compact model**.
 
 The original code was published under [https://github.com/nasa-jpl/cgi-howfsc](https://github.com/nasa-jpl/cgi-howfsc).
 For CPP work, it was decided to fork this repository into [https://github.com/roman-corgi/cgi-howfsc](https://github.com/roman-corgi/cgi-howfsc)
@@ -31,7 +28,7 @@ calculate_jacobian_multiprocessed(output=output, proc=0)
 
 The resulting file has a size of 2.2 GB. The function docstring contains more information about the input parameters.
 
-## Run a nulling test on compact model
+## Run a nulling test with GITL on compact model
 
 You will need to rename your Jacobian for the respective coronagraph mode you want to run a loop on. For the narrof FOV mode
 with the HLC, rename the Jacobian to `narrowfov_jac_full.fits`.
