@@ -5,7 +5,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    types: [ready_for_review]
+    types: [opened, ready_for_review]
     branches: [ main ]
 
 permissions:
@@ -17,10 +17,6 @@ jobs:
   build_docs:
     name: Build
     runs-on: ubuntu-latest
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
     - uses: actions/checkout@v4
@@ -38,10 +34,21 @@ jobs:
       run: |
         cd docs
         make html
-    
+
+  deploy_docs:
+    name: Deploy
+    if: github.event_name == 'push'
+    needs: build_docs
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
     - name: Setup Pages
       uses: actions/configure-pages@v4
-      
+
     - name: Upload to GitHub Pages
       uses: actions/upload-pages-artifact@v3
       with:
