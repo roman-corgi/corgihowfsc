@@ -59,15 +59,7 @@ git lfs pull
 pip install -e .
 ```
 
-### 5. Get large files and install cgi-eetc
-
-```bash
-cd cgi-eetc
-git lfs pull
-pip install -e .
-```
-
-### 6. Optional: Install cgi-howfsc in editable mode for development
+### 5. Optional: Install cgi-howfsc in editable mode for development
 
 ```bash
 pip uninstall howfsc
@@ -76,7 +68,7 @@ cd cgi-howfsc
 pip install -e .
 ```
 
-### 7. Verify Installation
+### 6. Verify Installation
 
 Test that everything is installed correctly:
 
