@@ -212,12 +212,10 @@ def load_files(args, howfscpath):
     # Check probes shapes : Default = sinc-sin-sin, others are alternates probes
     supported_shapes = {'default', 'single', 'gaussian', 'unmodulated_sinc'}
 
-    if args.probe_shape in supported_shapes:
-        pass
-    else:
+    if args.probe_shape not in supported_shapes:
         raise ValueError(
             f"Probe shape '{args.probe_shape}' not recognized. "
-            f"Expected one of: {', '.join(supported_shapes)}"
+            f"Supported: {', '.join(supported_shapes)}"
         )
 
     # Set up logging
