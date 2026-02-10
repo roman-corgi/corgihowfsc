@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from datetime import datetime
 import matplotlib
 matplotlib.use('TkAgg')
@@ -25,11 +26,16 @@ eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'temp')  # User should set to somewhere outside the repo
 
-precomp = 'precomp_jacs_always' #'load_all' if defjacpath is not None else 'precomp_all_once'
+home_directory = Path.home()
+base_output_path = os.path.join(home_directory,'cpp_data','gitl_data')
+os.makedirs(base_output_path, exist_ok=True)
+
 current_datetime = datetime.now()
 folder_name = 'gitl_simulation_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
 fits_name = 'final_frames.fits'
-fileout_path = os.path.join(os.path.dirname(os.path.dirname(corgihowfsc.__file__)), 'data', folder_name, fits_name)
+fileout_path = os.path.join(base_output_path, folder_name, fits_name)
+
+precomp = 'precomp_jacs_always' #'load_all' if defjacpath is not None else 'precomp_all_once'
 dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
 
 
