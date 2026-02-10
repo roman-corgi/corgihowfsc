@@ -255,7 +255,7 @@ def load_files(args, howfscpath):
             elif args.probe_shape == 'unmodulated_sinc':
                 # Unmodulated sinc probes
                 probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinc.fits')
-                probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinn_shifted_right.fits')
+                probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinc_shifted_right.fits')
                 probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinc_shifted_diag_ur.fits')
             else:
                 # Raise an error if the probe shape is not recognized
