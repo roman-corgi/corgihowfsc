@@ -16,7 +16,7 @@ import corgihowfsc
 from corgihowfsc.utils.howfsc_initialization import get_args, load_files
 from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
 from corgihowfsc.sensing.PerfectEstimator import PerfectEstimator
-from corgihowfsc.sensing.GettingProbes import ShapeProbes
+from corgihowfsc.sensing.GettingProbes import ProbesShapes
 from corgihowfsc.utils.contrast_nomalization import CorgiNormalization, EETCNormalization
 from corgihowfsc.gitl.nulling_gitl import nulling_gitl
 from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
@@ -67,7 +67,7 @@ def main():
     estimator = DefaultEstimator()
 
     # Initialize default probes class
-    probes = ShapeProbes('default')
+    probes = ProbesShapes('default')
 
     # Image cropping parameters:
     crop_params = {}

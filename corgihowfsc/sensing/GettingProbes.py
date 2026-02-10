@@ -6,7 +6,7 @@ from corgihowfsc.sensing.Probes import Probes
 from howfsc.sensing.probephase import probe_ap
 from howfsc.util.insertinto import insertinto
 
-class ShapeProbes(Probes):
+class ProbesShapes(Probes):
     def __init__(self,
                  probe_type,
                  nrow=153,
