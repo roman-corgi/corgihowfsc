@@ -110,12 +110,9 @@ hconf['star']['stellar_type'] = 'G05'
 6. Define the `esitmator`
 7. Define the `probes` class
 
-<<<<<<< Updated upstream
-=======
 If user would like to compare the output with the compact model, the recommended method is to 
 use [corgi-howfs with the compact model](#compact_model)
 
 However, it is still possible to use the compact model directly in `cgi_howfs`. 
 This is **not** the recommended method and this should be reserved for particular situations.  
 please refer to [cgi_howfs GITL(Compact)](nulling_test_gitl_cgi_howfsc.md)
->>>>>>> Stashed changes
