@@ -1,7 +1,7 @@
 # GITL with corgi-howfsc using corgisim
 
 This example shows how to run the baseline GITL nulling test with the `corgi-howfsc` code developped by the CPP.
-All examples are set up to run on the NFOV HLC mode.
+All examples are set up to run on the NFOV HLC mode. If user would like to compare the output with the compact model, please refer to [GITL(Compact)](nulling_test_gitl_cgi_howfsc.md)
 
 The `corgi-howfsc` inherits from `cgi-howfsc` (Roman CPP fork) and contains a "compact" model of a coronagraph instrument, which is used to calculate a Jacobian
 to use on the Coronagraph Instrument. It also inherits from `corgisim` which is used to generate flight-like images.
@@ -99,4 +99,3 @@ hconf['star']['stellar_type'] = 'G05'
 6. Define the `esitmator`
 7. Define the `probes` class
 
-If user would like to compare the output with the compact model, please refer to [GITL(Compact)](nulling_test_gitl_cgi_howfsc.md)
