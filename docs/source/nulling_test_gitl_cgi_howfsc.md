@@ -1,4 +1,4 @@
-# GITL directly with cgi-howfsc loop (dev only)
+# cgi-howfsc loop directly (dev only)
 
 :::{warning}
 We do *not* want to run cgi-howfsc code directly.
@@ -26,6 +26,10 @@ All code examples are runnable in the corgiloop conda env of corgihowfsc.
 :::
 
 ## Calculate a Jacobian
+
+:::{note}
+The Jacobian is always computed using the **compact model**.
+:::
 
 To calculate a Jacobian, you can call the following function from `cgi-howfsc` (within the corgiloop environment by corgihowfsc):
 
