@@ -1,5 +1,8 @@
 # GITL calling directly cgi-howfsc on compact model
 
+> [!CAUTION]
+> We do *not* want to run cgi-howfsc code directly. This page exists purely for information purposes.
+
 This example shows how to run the baseline GITL nulling test with the `cgi-howfsc` code as published by NASA.
 This mode is superceded by the implementation of the `cgi-howfsc` compact model in `corgi_howfsc`.  
 Instructions for this mode can be found [here](nulling_test_gitl_corgi_howfsc.md)
