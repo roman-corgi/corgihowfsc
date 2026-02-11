@@ -212,7 +212,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
             if masked_diff.size > 0 and efield_diff.shape[0] > 1:
                 # For complex data, compute variance of the magnitude
                 masked_diff_magnitude = np.abs(masked_diff)  # Convert to magnitude
-                pixel_variance = np.var(masked_diff_magnitude, axis=0)  # (n_masked_pixels,)
+                pixel_variance = np.nanvar(masked_diff_magnitude, axis=0)  # (n_masked_pixels,) - ignores NaNs
 
                 # Check for problematic values
                 nan_count = np.sum(np.isnan(pixel_variance))
@@ -227,7 +227,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
                 for iter_idx in range(efield_diff.shape[0]):
                     iter_data_magnitude = np.abs(masked_diff[iter_idx, :])  # Use magnitude
                     if len(iter_data_magnitude) > 0:
-                        variance_per_iter.append(np.var(iter_data_magnitude))
+                        variance_per_iter.append(np.nanvar(iter_data_magnitude))  # Ignore NaNs
                     else:
                         variance_per_iter.append(0.0)
                 variance_per_iter_all_wl.append(variance_per_iter)
