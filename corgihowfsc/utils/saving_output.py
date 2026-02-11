@@ -84,9 +84,11 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
 
         # --- E-FIELD ESTIMATIONS ---
         efields = []
+        efields_complex = []
         for n in range(len(cfg.sl_list)):
             efields.append(np.real(oitem[n]['meas_efield']))
             efields.append(np.imag(oitem[n]['meas_efield']))
+            efields_complex.append = np.real(oitem[n]['meas_efield']) + 1j * np.imag(oitem[n]['meas_efield'])
 
         hdr_ef = pyfits.Header()
         hdr_ef['NLAM'] = len(cfg.sl_list)
@@ -96,15 +98,17 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
         hdul_ef.writeto(os.path.join(outpath, f"iteration_{i + 1:04d}", "efield_estimations.fits"), overwrite=True)
 
         # --- PERFECT E-FIELDS ---
-        perfect_efields = []
+        perfect_efields_list = []
+        perfect_efields_complex = []
         for n in range(len(cfg.sl_list)):
-            perfect_efields.append(np.real(oitem[n]['model_efield']))
-            perfect_efields.append(np.imag(oitem[n]['model_efield']))
+            perfect_efields_list.append(np.real(oitem[n]['model_efield']))
+            perfect_efields_list.append(np.imag(oitem[n]['model_efield']))
+            perfect_efields_complex.append = np.real(oitem[n]['model_efield']) + 1j * np.imag(oitem[n]['model_efield'])
 
         hdr_pef = pyfits.Header()
         hdr_pef['NLAM'] = len(cfg.sl_list)
         prim_pef = pyfits.PrimaryHDU(header=hdr_pef)
-        img_pef = pyfits.ImageHDU(perfect_efields)
+        img_pef = pyfits.ImageHDU(perfect_efields_list)
         hdul_pef = pyfits.HDUList([prim_pef, img_pef])
         hdul_pef.writeto(os.path.join(outpath, f"iteration_{i + 1:04d}", "perfect_efields.fits"), overwrite=True)
 
@@ -145,7 +149,12 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
         print(f"Global cubes and final DM maps saved to {dm_outpath}")
 
         # Plot estimation error
-        estimation_error = np.var(np.array(efields) - np.array(perfect_efields), axis=0)
+        estimation_error = np.array([
+            np.mean(np.abs(e - p) ** 2)
+            for e, p in zip(np.array(efields_complex), np.array(perfect_efields_complex))
+            if np.size(e) and np.size(p)
+        ])
+
         plt.figure()
         plt.plot(np.arange(len(estimation_error)) + 1, estimation_error, marker='o')
         plt.xlabel('Iteration')
