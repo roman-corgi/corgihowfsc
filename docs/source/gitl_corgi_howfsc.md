@@ -41,7 +41,7 @@ Optional:
 You will need to rename your Jacobian for the respective coronagraph mode you want to run a loop on. For the narrow FOV mode
 with the HLC, rename the Jacobian to `narrowfov_jac_full.fits`.
 
-Then you can run the `scripts/run_nulling_gitl.py` script as follows by passing the path to your Jacobian, and output paths:
+Then you can run the `scripts/run_corgisim_nulling_gitl.py` script as follows by passing the path to your Jacobian, and output paths:
 
 ```python
 
