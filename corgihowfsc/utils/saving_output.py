@@ -214,8 +214,25 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
         else:
             variance_per_iter_all_wl.append([0.0] * efield_diff.shape[0])
 
-    # Save estimation variance cube
-    pyfits.writeto(os.path.join(outpath, "estimation_variance_cube.fits"), estimation_variance, overwrite=True)
+    # Save estimation variance per pixel to cube
+    pyfits.writeto(os.path.join(outpath, "estimation_variance_per_pixel.fits"), estimation_variance, overwrite=True)
+
+    # Save variance per iteration for all wavelengths as CSV table
+    if variance_per_iter_all_wl:
+        # Convert to numpy array for easier handling
+        max_iterations = max(len(wl_data) for wl_data in variance_per_iter_all_wl)
+        variance_table = np.zeros((max_iterations, len(variance_per_iter_all_wl)))
+
+        # Fill the table with variance data for each wavelength
+        for wl_idx, wl_variance_data in enumerate(variance_per_iter_all_wl):
+            variance_table[:len(wl_variance_data), wl_idx] = wl_variance_data
+
+        # Create header with wavelength labels
+        header = ','.join([f'Wvln_{wl_idx + 1}' for wl_idx in range(len(variance_per_iter_all_wl))])
+
+        # Save as CSV
+        np.savetxt(os.path.join(outpath, "variance_per_iteration_all_wavelengths.csv"),
+                   variance_table, delimiter=",", header=header, comments="")
 
     # Plot electric field error variance for all wavelengths per iteration
     plt.figure()
@@ -231,7 +248,3 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     plt.grid(True, alpha=0.3)
     plt.savefig(os.path.join(outpath, "efield_error_variance_per_iteration.pdf"))
     plt.close()
-
-    # Save estimation error to a csv file
-    np.savetxt(os.path.join(outpath, "estimation_error.csv"), estimation_variance, delimiter=",",
-               header="Estimation error", comments="")
