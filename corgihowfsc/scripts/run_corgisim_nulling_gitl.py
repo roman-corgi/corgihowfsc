@@ -73,15 +73,16 @@ def main():
 
     # Image cropping parameters:
     crop_params = {}
-    crop_params['nrow'] = 153
-    crop_params['ncol'] = 153
-    crop_params['lrow'] = 0
-    crop_params['lcol'] = 0
+    crop_params['nrow'] = 153 # FIXED VALUE; do not change this
+    crop_params['ncol'] = 153 # FIXED VALUE; do not change this
+
 
     # Define imager and normalization (counts->contrast) strategy
     corgi_overrides = {}
     corgi_overrides['output_dim'] = crop_params['nrow']
     corgi_overrides['is_noise_free'] = False
+    corgi_overrides['oversampling_factor'] = 2    
+    
     imager = GitlImage(
         cfg=cfg,         # Your CoronagraphMode object
         cstrat=cstrat,   # Your ControlStrategy object
@@ -91,14 +92,22 @@ def main():
         corgi_overrides=corgi_overrides
     )
 
-    normalization_strategy = CorgiNormalization(cfg,
+    if backend_type == 'cgi-howfsc':
+        crop_params['lrow'] = 436
+        crop_params['lcol'] = 436
+
+        normalization_strategy = EETCNormalization()
+        
+    elif backend_type == 'corgihowfsc':
+        crop_params['lrow'] = 0
+        crop_params['lcol'] = 0  
+        normalization_strategy = CorgiNormalization(cfg,
                                                 cstrat,
                                                 hconf,
                                                 cor=args.mode,
                                                 corgi_overrides=corgi_overrides,
                                                 separation_lamD=7,
                                                 exptime_norm=0.01)
-    # normalization_strategy = EETCNormalization()
 
     nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps)
 
