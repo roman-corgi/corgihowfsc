@@ -21,20 +21,16 @@ All code examples are runnable in the corgiloop conda env of corgihowfsc.
 
 ## Calculate a Jacobian
 
+To calculate a Jacobian, you can use the `script/make_jacobian.py` script.
+
 :::{note}
-The Jacobian is always computed using the **compact model**, even if you are simulating observed images with the corgisim model.
+The Jacobian is always computed using the **compact model**.
 :::
 
-To calculate a Jacobian, you can call the following function from `cgi-howfsc` (within the corgiloop environment by corgihowfsc):
+The resulting file has a size of 2.2 GB inside the `jacobians` folder under the `corgi_loop` base folder,
+located in your home directory. 
 
-```python
-from howfsc.scripts.jactest_mp import calculate_jacobian_multiprocessed
-
-output = '/Users/user/directory/first_jacobian.fits'
-calculate_jacobian_multiprocessed(output=output, proc=0)
-```
-
-The resulting file has a size of 2.2 GB. The function docstring contains more information about the input parameters.
+The `calculate_jacobian_multiprocessed()` function docstring contains more information about the input parameters.
 
 ## Run a nulling test on compact model
 
