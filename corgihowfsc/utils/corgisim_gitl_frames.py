@@ -213,12 +213,10 @@ class GitlImage:
             raise ValueError("crop parameter is required for cgi-howfsc")
 
         if self.backend == 'corgihowfsc':
-            print("Using corgisim to generate e-field...")
             return self.corgisim_manager.generate_e_field(dm1v, dm2v, lind)
 
         else:  # cgi-howfsc
             dmlist = [dm1v, dm2v]
-            print("Using cgi-howfsc to generate e-field...")
             return self.gitlefield_cgihowfsc(
                 dmlist=dmlist,
                 crop=crop,
