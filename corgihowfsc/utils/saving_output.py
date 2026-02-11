@@ -184,6 +184,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
 
     # Apply the dh mask and compute variance per wavelength across iterations
     estimation_variance = np.zeros((efield_diff.shape[1], nrow, ncol))  # (n_wavelengths, nrow, ncol)
+    variance_per_iter_all_wl = []  # Store variance per iteration for each wavelength
 
     for wl_idx in range(efield_diff.shape[1]):  # For each wavelength
         if wl_idx < len(dhmask_cube):  # Only if we have a mask for this wavelength
@@ -199,22 +200,37 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
             # Compute variance across iterations for each masked pixel
             if masked_diff.size > 0:
                 pixel_variance = np.var(masked_diff, axis=0)  # (n_masked_pixels,)
-
                 # Put the variance values back into the full array
                 estimation_variance[wl_idx][mask] = pixel_variance
+
+                # Compute mean variance per iteration for plotting (reuse masked_diff)
+                variance_per_iter = []
+                for iter_idx in range(efield_diff.shape[0]):
+                    iter_data = masked_diff[iter_idx, :]  # Already masked data for this iteration
+                    variance_per_iter.append(np.var(np.abs(iter_data)**2))
+                variance_per_iter_all_wl.append(variance_per_iter)
+            else:
+                variance_per_iter_all_wl.append([0.0] * efield_diff.shape[0])
+        else:
+            variance_per_iter_all_wl.append([0.0] * efield_diff.shape[0])
 
     # Save estimation variance cube
     pyfits.writeto(os.path.join(outpath, "estimation_variance_cube.fits"), estimation_variance, overwrite=True)
 
-    # Plot estimation error variance per iteration
-    if len(mean_estimation_error_per_iteration) > 0:
-        plt.figure()
-        plt.plot(np.arange(len(mean_estimation_error_per_iteration)) + 1, mean_estimation_error_per_iteration, marker='o')
-        plt.xlabel('Iteration')
-        plt.ylabel('Mean Estimation MSE')
-        plt.semilogy()
-        plt.savefig(os.path.join(outpath, "estimation_error_per_iteration.pdf"))
-        plt.close()
+    # Plot electric field error variance for all wavelengths per iteration
+    plt.figure()
+    for wl_idx in range(min(3, len(variance_per_iter_all_wl))):  # Plot up to 3 wavelengths
+        variance_per_iter = variance_per_iter_all_wl[wl_idx]
+        plt.plot(np.arange(len(variance_per_iter)) + 1, variance_per_iter,
+                marker='o', label=f'Wavelength {wl_idx + 1}')
+
+    plt.xlabel('Iteration')
+    plt.ylabel('Electric Field Error Variance')
+    plt.semilogy()
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.savefig(os.path.join(outpath, "efield_error_variance_per_iteration.pdf"))
+    plt.close()
 
     # Save estimation error to a csv file
     np.savetxt(os.path.join(outpath, "estimation_error.csv"), estimation_variance, delimiter=",",
