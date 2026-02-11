@@ -162,3 +162,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
         plt.semilogy()
         plt.savefig(os.path.join(outpath, "estimation_error.pdf"))
         plt.close()
+
+        # Save estimation error to a csv file
+        np.savetxt(os.path.join(outpath, "estimation_error.csv"), estimation_error, delimiter=",",
+                   header="Measured Contrast", comments="")
