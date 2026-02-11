@@ -4,6 +4,7 @@ import matplotlib.pylab as plt
 import numpy as np
 
 from howfsc.util.gitl_tools import param_order_to_list
+from howfsc.util.insertinto import insertinto
 
 def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list):
 
@@ -101,7 +102,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
         hdr_ef = pyfits.Header()
         hdr_ef['NLAM'] = len(cfg.sl_list)
         prim_ef = pyfits.PrimaryHDU(header=hdr_ef)
-        img_ef = pyfits.ImageHDU(efields)
+        img_ef = pyfits.ImageHDU(np.array(efields))
         hdul_ef = pyfits.HDUList([prim_ef, img_ef])
         hdul_ef.writeto(os.path.join(outpath, f"iteration_{i + 1:04d}", "efield_estimations.fits"), overwrite=True)
 
@@ -120,7 +121,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
         hdr_pef = pyfits.Header()
         hdr_pef['NLAM'] = len(cfg.sl_list)
         prim_pef = pyfits.PrimaryHDU(header=hdr_pef)
-        img_pef = pyfits.ImageHDU(perfect_efields_list)
+        img_pef = pyfits.ImageHDU(np.array(perfect_efields_list))
         hdul_pef = pyfits.HDUList([prim_pef, img_pef])
         hdul_pef.writeto(os.path.join(outpath, f"iteration_{i + 1:04d}", "perfect_efields.fits"), overwrite=True)
 
@@ -160,29 +161,60 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
 
         print(f"Global cubes and final DM maps saved to {dm_outpath}")
 
-    ### Plot and save estimation errors
+    ### Calculate and plot estimation error variance
     # Stack all iterations into final cubes
     efields_datacube = np.stack(all_efields_complex, axis=0)  # (iterations, wavelengths, h, w)
     perfect_efields_datacube = np.stack(all_perfect_efields_complex, axis=0)  # (iterations, wavelengths, h, w)
 
-    # Get DH masks per band
-    dh = cfg.sl_list[j].dh.e
-    dhcrop = insertinto(dh, (nrow, ncol)).astype('bool')
-    #-- Feed into cube to mask data
-    dhmask_cube = None
+    # Get dimensions from the first e-field
+    nrow, ncol = efields_datacube.shape[2], efields_datacube.shape[3]
 
-    # Compute variance across iterations for each wavelength and pixel (variance across the first axis which is iterations)
+    # Create DH mask cube for all three wavelengths (indices 0-2)
+    dhmask_cube = []
+    for j in range(min(3, len(cfg.sl_list))):  # Use up to 3 wavelengths or fewer if available
+        dh = cfg.sl_list[j].dh.e
+        dhcrop = insertinto(dh, (nrow, ncol)).astype('bool')
+        dhmask_cube.append(dhcrop)
+
+    # Stack into cube: shape (n_wavelengths, nrow, ncol)
+    dhmask_cube = np.stack(dhmask_cube, axis=0)
+
+    # Compute difference cube
     efield_diff = efields_datacube - perfect_efields_datacube
-    estimation_variance = np.var(efield_diff[np.where(dhmask_cube != 0)], axis=0)  # Shape: (n_wavelengths, height, width)
 
-    # Plot estimation error per iteration
-    plt.figure()
-    plt.plot(np.arange(len(estimation_variance)) + 1, estimation_variance, marker='o')
-    plt.xlabel('Iteration')
-    plt.ylabel('Estimation error')
-    plt.semilogy()
-    plt.savefig(os.path.join(outpath, "estimation_error.pdf"))
-    plt.close()
+    # Apply the dh mask and compute variance per wavelength across iterations
+    estimation_variance = np.zeros((efield_diff.shape[1], nrow, ncol))  # (n_wavelengths, nrow, ncol)
+
+    for wl_idx in range(efield_diff.shape[1]):  # For each wavelength
+        if wl_idx < len(dhmask_cube):  # Only if we have a mask for this wavelength
+            # Get the mask for this wavelength
+            mask = dhmask_cube[wl_idx]
+
+            # Extract data for this wavelength across all iterations
+            wl_diff_data = efield_diff[:, wl_idx, :, :]  # (iterations, nrow, ncol)
+
+            # Apply mask and compute variance across iterations (axis=0)
+            masked_diff = wl_diff_data[:, mask]  # (iterations, n_masked_pixels)
+
+            # Compute variance across iterations for each masked pixel
+            if masked_diff.size > 0:
+                pixel_variance = np.var(masked_diff, axis=0)  # (n_masked_pixels,)
+
+                # Put the variance values back into the full array
+                estimation_variance[wl_idx][mask] = pixel_variance
+
+    # Save estimation variance cube
+    pyfits.writeto(os.path.join(outpath, "estimation_variance_cube.fits"), estimation_variance, overwrite=True)
+
+    # Plot estimation error variance per iteration
+    if len(mean_estimation_error_per_iteration) > 0:
+        plt.figure()
+        plt.plot(np.arange(len(mean_estimation_error_per_iteration)) + 1, mean_estimation_error_per_iteration, marker='o')
+        plt.xlabel('Iteration')
+        plt.ylabel('Mean Estimation MSE')
+        plt.semilogy()
+        plt.savefig(os.path.join(outpath, "estimation_error_per_iteration.pdf"))
+        plt.close()
 
     # Save estimation error to a csv file
     np.savetxt(os.path.join(outpath, "estimation_error.csv"), estimation_variance, delimiter=",",
