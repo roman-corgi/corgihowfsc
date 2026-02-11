@@ -88,7 +88,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
         for n in range(len(cfg.sl_list)):
             efields.append(np.real(oitem[n]['meas_efield']))
             efields.append(np.imag(oitem[n]['meas_efield']))
-            efields_complex.append = np.real(oitem[n]['meas_efield']) + 1j * np.imag(oitem[n]['meas_efield'])
+            efields_complex.append(np.real(oitem[n]['meas_efield']) + 1j * np.imag(oitem[n]['meas_efield']))
 
         hdr_ef = pyfits.Header()
         hdr_ef['NLAM'] = len(cfg.sl_list)
@@ -103,7 +103,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
         for n in range(len(cfg.sl_list)):
             perfect_efields_list.append(np.real(oitem[n]['model_efield']))
             perfect_efields_list.append(np.imag(oitem[n]['model_efield']))
-            perfect_efields_complex.append = np.real(oitem[n]['model_efield']) + 1j * np.imag(oitem[n]['model_efield'])
+            perfect_efields_complex.append(np.real(oitem[n]['model_efield']) + 1j * np.imag(oitem[n]['model_efield']))
 
         hdr_pef = pyfits.Header()
         hdr_pef['NLAM'] = len(cfg.sl_list)
