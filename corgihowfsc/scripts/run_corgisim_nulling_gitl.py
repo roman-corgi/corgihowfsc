@@ -69,7 +69,7 @@ def main():
     estimator = DefaultEstimator()
 
     # Initialize default probes class
-    probes = ProbesShapes('default')
+    probes = ProbesShapes(args.probe_shape)
 
     # Image cropping parameters:
     crop_params = {}
