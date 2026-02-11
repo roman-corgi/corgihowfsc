@@ -28,6 +28,10 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
         if not os.path.exists(iterpath):
             os.makedirs(iterpath)
 
+    # Initialize lists to collect e-field data across all iterations
+    all_efields_complex = []  # Will collect complex e-fields per iteration
+    all_perfect_efields_complex = []  # Will collect perfect complex e-fields per iteration
+
     # Saving separate intensity files per iteration
     for i, flist in enumerate(framelistlist):
         oitem = otherlist[i]
@@ -88,7 +92,11 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
         for n in range(len(cfg.sl_list)):
             efields.append(np.real(oitem[n]['meas_efield']))
             efields.append(np.imag(oitem[n]['meas_efield']))
-            efields_complex.append(np.real(oitem[n]['meas_efield']) + 1j * np.imag(oitem[n]['meas_efield']))
+            efields_complex.append(oitem[n]['meas_efield'])
+
+        # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
+        efields_complex_array = np.stack(efields_complex, axis=0)
+        all_efields_complex.append(efields_complex_array)
 
         hdr_ef = pyfits.Header()
         hdr_ef['NLAM'] = len(cfg.sl_list)
@@ -103,7 +111,11 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
         for n in range(len(cfg.sl_list)):
             perfect_efields_list.append(np.real(oitem[n]['model_efield']))
             perfect_efields_list.append(np.imag(oitem[n]['model_efield']))
-            perfect_efields_complex.append(np.real(oitem[n]['model_efield']) + 1j * np.imag(oitem[n]['model_efield']))
+            perfect_efields_complex.append(oitem[n]['model_efield'])
+
+        # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
+        perfect_efields_complex_array = np.stack(perfect_efields_complex, axis=0)
+        all_perfect_efields_complex.append(perfect_efields_complex_array)
 
         hdr_pef = pyfits.Header()
         hdr_pef['NLAM'] = len(cfg.sl_list)
@@ -148,21 +160,30 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
 
         print(f"Global cubes and final DM maps saved to {dm_outpath}")
 
-        # Plot estimation error
-        estimation_error = np.array([
-            np.mean(np.abs(e - p) ** 2)
-            for e, p in zip(np.array(efields_complex), np.array(perfect_efields_complex))
-            if np.size(e) and np.size(p)
-        ])
+    ### Plot and save estimation errors
+    # Stack all iterations into final cubes
+    efields_datacube = np.stack(all_efields_complex, axis=0)  # (iterations, wavelengths, h, w)
+    perfect_efields_datacube = np.stack(all_perfect_efields_complex, axis=0)  # (iterations, wavelengths, h, w)
 
-        plt.figure()
-        plt.plot(np.arange(len(estimation_error)) + 1, estimation_error, marker='o')
-        plt.xlabel('Iteration')
-        plt.ylabel('Estimation error')
-        plt.semilogy()
-        plt.savefig(os.path.join(outpath, "estimation_error.pdf"))
-        plt.close()
+    # Get DH masks per band
+    dh = cfg.sl_list[j].dh.e
+    dhcrop = insertinto(dh, (nrow, ncol)).astype('bool')
+    #-- Feed into cube to mask data
+    dhmask_cube = None
 
-        # Save estimation error to a csv file
-        np.savetxt(os.path.join(outpath, "estimation_error.csv"), estimation_error, delimiter=",",
-                   header="Measured Contrast", comments="")
+    # Compute variance across iterations for each wavelength and pixel (variance across the first axis which is iterations)
+    efield_diff = efields_datacube - perfect_efields_datacube
+    estimation_variance = np.var(efield_diff[np.where(dhmask_cube != 0)], axis=0)  # Shape: (n_wavelengths, height, width)
+
+    # Plot estimation error per iteration
+    plt.figure()
+    plt.plot(np.arange(len(estimation_variance)) + 1, estimation_variance, marker='o')
+    plt.xlabel('Iteration')
+    plt.ylabel('Estimation error')
+    plt.semilogy()
+    plt.savefig(os.path.join(outpath, "estimation_error.pdf"))
+    plt.close()
+
+    # Save estimation error to a csv file
+    np.savetxt(os.path.join(outpath, "estimation_error.csv"), estimation_variance, delimiter=",",
+               header="Estimation error", comments="")
