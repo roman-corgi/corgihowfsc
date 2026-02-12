@@ -21,6 +21,10 @@ All code examples are runnable in the corgiloop conda env of corgihowfsc.
 
 If you wish to precompute a Jacobian instead of calculating it at runtime, [check here on how to calculate a Jacobian in corgihowfsc](jacobian_computation.md#precomputing-a-jacobian).
 
+:::{important}
+The launcher script for running a corgihowfsc loop is always `scripts/run_corgisim_nulling_gitl.py`, independent of optical model choice.
+:::
+
 ## Run a nulling test with the **compact** model
 
 There is one single parameter that differentiates between running your loop with the compact model or the full `corgisim` model.

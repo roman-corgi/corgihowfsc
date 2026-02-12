@@ -5,6 +5,8 @@ We do *not* want to run cgi-howfsc code directly.
 This page exists purely for information purposes.
 :::
 
+This doc page refers to using the direct cgi-howfsc launcher in `scripts/run_corgisim_nulling_gitl.py`.
+
 This example shows how to run the baseline GITL nulling test with the `cgi-howfsc` code as published by NASA.
 This mode is superceded by the implementation of the `cgi-howfsc` compact model in the `corgi_howfsc` repository.  
 Instructions for running loops with corgihowfsc (on either optical model, compact or corgisim) can be found [here](gitl_corgi_howfsc.md).
