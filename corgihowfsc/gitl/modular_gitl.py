@@ -428,7 +428,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
     # by bad pixel map
     log.info('3. Evaluate mean total contrast over control pixels which ' +
                  'are not masked by bad pixel map')
-    prev_c = eval_c(unprobedlist, dhlist, n2clist) # TypeError: nimlist and n2clist elements must be the same shape at corresponding indices. Problem at index 0
+    prev_c = eval_c(unprobedlist, dhlist, n2clist)
     log.info('Previous contrast = %g', prev_c)
 
     # 4. Estimate complex electric fields and return fields with bad electric
