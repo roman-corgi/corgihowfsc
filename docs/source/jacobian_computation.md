@@ -31,7 +31,7 @@ CGI is anticipated to calculate Jacobians at each iteration, which is why this i
 See original docstrings in the `roman-corgi/cgi-howfsc` repo [here](https://github.com/roman-corgi/cgi-howfsc/blob/0a3a3f1439eb5db4dffd4ae69187f5c4ca1ed12f/howfsc/scripts/nulltest_gitl.py#L91).
 
 :::{warning}
-The below docstring is currently ambiguous and we are confirming with AJ that we understood correctly.
+The below docstring is currently ambiguous and we are confirming with Eric that we understood correctly.
 :::
 
 ```yaml
@@ -60,7 +60,10 @@ The Jacobian is always computed using the **compact model**.
 :::
 
 The resulting file has a size of 2.2 GB inside the `jacobians` folder under the `corgi_loop` base folder,
-located in your home directory. 
+located in your home directory.
+
+You will need to rename your Jacobian for the respective coronagraph mode you want to run a loop on. For the narrow FOV mode
+with the HLC, rename the Jacobian to `narrowfov_jac_full.fits`.
 
 The `calculate_jacobian_multiprocessed()` function docstring contains more information about the input parameters.
 

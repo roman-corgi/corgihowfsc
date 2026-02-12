@@ -21,17 +21,32 @@ All code examples are runnable in the corgiloop conda env of corgihowfsc.
 
 If you wish to precompute a Jacobian instead of calculating it at runtime, [check here on how to calculate a Jacobian in corgihowfsc](jacobian_computation.md#precomputing-a-jacobian).
 
-## Run a nulling test on compact model
+## Run a nulling test with the **compact** model
 
+There is one single parameter that differentiates between running your loop with the compact model or the full `corgisim` model.
+To run with the compact model, set the `backend_type` variable to `cgi-howfsc` (the default is `cgi-howfsc`):
+```python
+backend_type = 'cgi-howfsc'  # 'corgihowfsc' for the corgisim model, otherwise for the compact model use: 'cgi-howfsc'
+```
 In this situation both the Jacobian and the simulated images are generated from the compact model. 
-This is the fastest mode to run. 
+This is the fastest mode to run.
 
-Optional:
-You will need to rename your Jacobian for the respective coronagraph mode you want to run a loop on. For the narrow FOV mode
-with the HLC, rename the Jacobian to `narrowfov_jac_full.fits`.
+## Run a nulling test wiuth the **corgisim** model
 
-Then you can run the `scripts/run_corgisim_nulling_gitl.py` script as follows by passing the path to your Jacobian, and output paths:
+There is one single parameter that differentiates between running your loop with the compact model or the full `corgisim` model.
+To run with the corgisim model, set the `backend_type` variable to `corgihowfsc` (the default is `cgi-howfsc`):
+```python
+backend_type = 'corgihowfsc'  # 'corgihowfsc' for the corgisim model, otherwise for the compact model use: 'cgi-howfsc'
+```
 
+In this situation, the Jacobian is still calculated from [the compact model](jacobian_computation.md#precomputing-a-jacobian) but the images are generated
+using the realistic `corgisim` model.  Note that this mode is very slow to run 
+(typically several minutes per iteration on a laptop). 
+
+## Common parameters between optical models
+
+You can run the `scripts/run_corgisim_nulling_gitl.py` script as follows by passing the path to your Jacobian (optional),
+in which case you need to set the `precomp` variable to `load_all`:
 ```python
 
 defjacpath = '/Users/user/data_from_repos/corgiloop/jacobians'
@@ -42,12 +57,9 @@ If the Jacobian is not pre-computed, users can leave the default as:
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'temp')
 precomp = 'precomp_jacs_always'
 ```
-User can also update the output file path and name:
+User can also update the output path, otherwise all loop outputs will be go throuhg a dedicated folder in your home directory:
 ```python
-current_datetime = datetime.now()
-folder_name = 'gitl_simulation_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
-fits_name = 'final_frames.fits'
-fileout_path = os.path.join(os.path.dirname(os.path.dirname(corgihowfsc.__file__)), 'data', folder_name, fits_name)
+base_path = Path.home()  # this is the proposed default but can be changed
 ```
 The initial DM settings are by default set as:
 ```python
@@ -55,40 +67,6 @@ dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
 ```
 From here the script can be run as-is! The result will be some iteration-specific information printed to stdout, and a `fileout.fits` file containing the
 results of the final iteration of the loop.
-
-## Run a nulling test on corgisim model
-
-In this situation, the Jacobian is still calculated form [the compact model](#calculate-a-jacobian) but the images are generated
-using the realistic `corgisim` model.  Note that this mode is very slow to run 
-(typically several minutes per iteration on a laptop). 
-
-Optional:
-You will need to rename your Jacobian for the respective coronagraph mode you want to run a loop on. For the narrow FOV mode
-with the HLC, rename the Jacobian to `narrowfov_jac_full.fits`.
-
-Then you can run the `scripts/run_corgisim_nulling_gitl.py` script as follows by passing the path to your Jacobian, and output paths:
-
-```python
-
-defjacpath = '/Users/user/data_from_repos/corgiloop/jacobians'
-precomp = 'load_all'
-```
-If the Jacobian is not pre-computed, users can leave the default as:
-```python
-defjacpath = os.path.join(os.path.dirname(howfscpath), 'temp')
-precomp = 'precomp_jacs_always'
-```
-User can also update the output file path and name:
-```python
-current_datetime = datetime.now()
-folder_name = 'gitl_simulation_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
-fits_name = 'final_frames.fits'
-fileout_path = os.path.join(os.path.dirname(os.path.dirname(corgihowfsc.__file__)), 'data', folder_name, fits_name)
-```
-The initial DM settings are by default set as:
-```python
-dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
-```
 
 From here, all of the configuration files are loaded. 
 1. We start with `get_args` which builds the `args` class which contains a number of basic parameters
