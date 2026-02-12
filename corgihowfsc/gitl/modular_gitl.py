@@ -494,13 +494,6 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         log.info('Model e-field at this setting')
 
         # Get e-field from the imager, which will be either the compact model or corigisim model
-<<<<<<< fix_make_jacobian_script
-
-        # If this is corgisim, we only need to call get_efield once per wavelength
-        # since the DM settings don't affect the model e-field (since corgisim doesn't include DMs).  If this is the compact model, we need to call get_efield for each DM setting, since the DM settings do affect the model e-field.
-
-=======
->>>>>>> main
         # Old legacy code to keep just in case we need future reference
         # edm0 = cfg.sl_list[j].eprop(dmlistmeas)
         # ely = cfg.sl_list[j].proptolyot(edm0)
