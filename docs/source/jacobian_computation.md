@@ -51,6 +51,19 @@ precomp : str, optional
     all computed once at the start of the sequence.
 ```
 
+## Precomputing a Jacobian
+
+To calculate a Jacobian outside of the loop, you can use the `script/make_jacobian.py` script.
+
+:::{note}
+The Jacobian is always computed using the **compact model**.
+:::
+
+The resulting file has a size of 2.2 GB inside the `jacobians` folder under the `corgi_loop` base folder,
+located in your home directory. 
+
+The `calculate_jacobian_multiprocessed()` function docstring contains more information about the input parameters.
+
 ## Implementation details
 
 A bunch of implementation caveats for the `corgihowfsc` repo (TBD).
