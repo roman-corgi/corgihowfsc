@@ -494,16 +494,26 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         log.info('Model e-field at this setting')
 
         # Get e-field from the imager, which will be either the compact model or corigisim model
-
-        model_efield = imager.get_efield(dm1v=dmlistmeas[0], dm2v=dmlistmeas[1], lind=j, crop=croplist[j * ndm])
-
         # Old legacy code to keep just in case we need future reference
         # edm0 = cfg.sl_list[j].eprop(dmlistmeas)
         # ely = cfg.sl_list[j].proptolyot(edm0)
         # edh0 = cfg.sl_list[j].proptodh(ely)
         # model_efield = insertinto(edh0, efield.shape)
 
-        other[j]['model_efield'] = model_efield # for reqt 1133640
+        perfect_efield = imager.get_efield(dm1v=dmlistmeas[0], dm2v=dmlistmeas[1], lind=j, crop=croplist[j * ndm])
+
+        if imager.backend == 'corgihowfsc':
+            # TODO - add a warning here for those who wants to speed up the corgisim by changing number of filters in cgisim_bandpasses
+            # TODO - normalisation of the model e-field?
+            log.info('Using corgisim model, so model e-field is same for all DM settings at a given wavelength')
+            mid_index = len(perfect_efield) // 2  # Get the central bandpass for the e-field
+            model_efield = perfect_efield[mid_index]
+        elif imager.backend == 'cgi-howfsc':
+            model_efield = perfect_efield
+        else:
+            raise ValueError(f"Unrecognized imager backend: {imager.backend}")
+
+        other[j]['model_efield'] = model_efield  # for reqt 1133640
 
         log.info('Compute difference to use to predict next iteration')
         dest = insertinto(efield - model_efield, cfg.sl_list[j].dh.e.shape)
