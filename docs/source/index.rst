@@ -14,7 +14,7 @@ corgihowfsc documentation
    gitl_corgi_howfsc
    gitl_cgi_howfsc
    loop_outputs
-   jacobian_stratagies
+   jacobian_computation
 
 .. toctree::
    :maxdepth: 1
