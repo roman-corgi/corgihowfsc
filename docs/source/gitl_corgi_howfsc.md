@@ -66,7 +66,7 @@ The initial DM settings are by default set as:
 dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
 ```
 From here the script can be run as-is! The result will be some iteration-specific information printed to stdout, and a
-suite of output files being saved to the output folder.
+suite of output files being saved to the output folder [see loop outputs](loop_outputs.md).
 
 From here, all of the configuration files are loaded. 
 1. We start with `get_args` which builds the `args` class which contains a number of basic parameters
