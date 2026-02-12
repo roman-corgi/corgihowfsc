@@ -24,7 +24,7 @@ There are three Jacobian strategies for the HOWFSC loop:
 The above are the three options fed into the `precomp` variable of the top-level HOWFSC function called `nulling_gitl()` called in the launcher script.
 
 :::{important}
-CGI is anticipated to calculate Jacobians at each iteration, which is why this is teh default option in `corgihowfsc`.
+CGI is anticipated to calculate Jacobians at each iteration, which is why this is the default option in `corgihowfsc`.
 :::
 
 **Original docstring from `git_howfsc` repo:**  
