@@ -32,6 +32,12 @@ After the loop finishes, a number of outputs are generated, containing initial a
 These are:
 - `contrast_vs_iteration.pdf`
     Plot of composed broadband contrast in three wavelengths vs iteration number.
+- `efield_variance.csv`
+    Electric field variance per wavelength per iteration data as csv table.
+- `efield_variance.pdf`
+    Plot of electric field variance per wavelength vs iteration number.
+- `estimation_variance_per_pixel.fits`
+    Estimation variance per pixel across all iterations, per wavelength, as fits cube of 3 frames.
 - `measured_contrast.csv`
     Composed broadband contrast per iteration data as csv table.
 - `final_frames.fits`
