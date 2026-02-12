@@ -5,6 +5,8 @@ We do *not* want to run cgi-howfsc code directly.
 This page exists purely for information purposes.
 :::
 
+This doc page refers to using the direct cgi-howfsc launcher in `scripts/run_corgisim_nulling_gitl.py`.
+
 This example shows how to run the baseline GITL nulling test with the `cgi-howfsc` code as published by NASA.
 This mode is superceded by the implementation of the `cgi-howfsc` compact model in the `corgi_howfsc` repository.  
 Instructions for running loops with corgihowfsc (on either optical model, compact or corgisim) can be found [here](gitl_corgi_howfsc.md).
@@ -25,20 +27,9 @@ All examples are set up to run on the NFOV HLC mode.
 All code examples are runnable in the corgiloop conda env of corgihowfsc.
 :::
 
-## Calculate a Jacobian
-
-To calculate a Jacobian, you can use the `script/make_jacobian.py` script.
-
-:::{note}
-The Jacobian is always computed using the **compact model**.
-:::
-
-The resulting file has a size of 2.2 GB inside the `jacobians` folder under the `corgi_loop` base folder,
-located in your home directory. 
-
-The `calculate_jacobian_multiprocessed()` function docstring contains more information about the input parameters.
-
 ## Run a nulling test on compact model
+
+If you wish to precompute a Jacobian instead of calculating it at runtime, [check here on how to calculate a Jacobian in corgihowfsc](jacobian_computation.md#precomputing-a-jacobian).
 
 You will need to rename your Jacobian for the respective coronagraph mode you want to run a loop on. For the narrow FOV mode
 with the HLC, rename the Jacobian to `narrowfov_jac_full.fits`.
@@ -55,5 +46,4 @@ jacpath = '/Users/user/data_from_repos/corgiloop/jacobians'
 nulling_test_gitl(logfile=logfile, fileout=fileout, jacpath=jacpath)
 ```
 
-The result will be some iteration-specific information printed to stdout, and a `fileout.fits` file containing the
-results of the final iteration of the loop.
+The result will be some iteration-specific information printed to stdout, and a suite of output files being saved to the output folder [see loop outputs](loop_outputs.md).
