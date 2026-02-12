@@ -19,6 +19,8 @@ There are three Jacobian strategies for the HOWFSC loop:
 - Compute the Jacobian and related files at the start of each iteration (`precomp_jacs_always`).
 :::
 
+The above are the three options fed into the `precomp` variable of the top-level HOWFSC function called `nulling_gitl()` called in the launcher script.
+
 **Original docstring from `git_howfsc` repo:**  
 See original docstrings in the `roman-corgi/cgi-howfsc` repo [here](https://github.com/roman-corgi/cgi-howfsc/blob/0a3a3f1439eb5db4dffd4ae69187f5c4ca1ed12f/howfsc/scripts/nulltest_gitl.py#L91).
 
