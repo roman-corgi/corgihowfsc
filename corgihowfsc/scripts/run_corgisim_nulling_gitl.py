@@ -25,6 +25,7 @@ from corgihowfsc.utils.make_output_file_structure import make_output_file_struct
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'temp')  # User should set to somewhere outside the repo
+precomp = 'precomp_jacs_always' #'load_all' if defjacpath is not None else 'precomp_all_once'
 
 base_path = Path.home()  # this is the proposed default but can be changed
 base_corgiloop_path = 'corgiloop_data'
@@ -33,7 +34,6 @@ final_filename = 'final_frames.fits'
 loop_framework = 'corgi-howfsc' # do not modify
 backend_type = 'corgihowfsc'  # 'corgihowfsc' for the corgisim model, otherwise for the compact model use: 'cgi-howfsc'
 
-precomp = 'precomp_jacs_always' #'load_all' if defjacpath is not None else 'precomp_all_once'
 dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
 
 fileout_path = make_output_file_structure(loop_framework, backend_type, base_path, base_corgiloop_path, final_filename)

@@ -19,66 +19,38 @@ All examples are set up to run on the NFOV HLC mode.
 All code examples are runnable in the corgiloop conda env of corgihowfsc.
 :::
 
-## Calculate a Jacobian
+If you wish to precompute a Jacobian instead of calculating it at runtime, [check here on how to calculate a Jacobian in corgihowfsc](jacobian_computation.md#precomputing-a-jacobian).
 
-To calculate a Jacobian, you can use the `script/make_jacobian.py` script.
-
-:::{note}
-The Jacobian is always computed using the **compact model**.
+:::{important}
+The launcher script for running a corgihowfsc loop is always `scripts/run_corgisim_nulling_gitl.py`, independent of optical model choice.
 :::
 
-The resulting file has a size of 2.2 GB inside the `jacobians` folder under the `corgi_loop` base folder,
-located in your home directory. 
+## Run a nulling test with the **compact** model
 
-The `calculate_jacobian_multiprocessed()` function docstring contains more information about the input parameters.
-
-## Run a nulling test on compact model
-
+There is one single parameter that differentiates between running your loop with the compact model or the full `corgisim` model.
+To run with the compact model, set the `backend_type` variable to `cgi-howfsc` (the default is `cgi-howfsc`):
+```python
+backend_type = 'cgi-howfsc'  # 'corgihowfsc' for the corgisim model, otherwise for the compact model use: 'cgi-howfsc'
+```
 In this situation both the Jacobian and the simulated images are generated from the compact model. 
-This is the fastest mode to run. 
+This is the fastest mode to run.
 
-Optional:
-You will need to rename your Jacobian for the respective coronagraph mode you want to run a loop on. For the narrow FOV mode
-with the HLC, rename the Jacobian to `narrowfov_jac_full.fits`.
+## Run a nulling test with the **corgisim** model
 
-Then you can run the `scripts/run_corgisim_nulling_gitl.py` script as follows by passing the path to your Jacobian, and output paths:
-
+There is one single parameter that differentiates between running your loop with the compact model or the full `corgisim` model.
+To run with the corgisim model, set the `backend_type` variable to `corgihowfsc` (the default is `cgi-howfsc`):
 ```python
+backend_type = 'corgihowfsc'  # 'corgihowfsc' for the corgisim model, otherwise for the compact model use: 'cgi-howfsc'
+```
 
-defjacpath = '/Users/user/data_from_repos/corgiloop/jacobians'
-precomp = 'load_all'
-```
-If the Jacobian is not pre-computed, users can leave the default as:
-```python
-defjacpath = os.path.join(os.path.dirname(howfscpath), 'temp')
-precomp = 'precomp_jacs_always'
-```
-User can also update the output file path and name:
-```python
-current_datetime = datetime.now()
-folder_name = 'gitl_simulation_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
-fits_name = 'final_frames.fits'
-fileout_path = os.path.join(os.path.dirname(os.path.dirname(corgihowfsc.__file__)), 'data', folder_name, fits_name)
-```
-The initial DM settings are by default set as:
-```python
-dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
-```
-From here the script can be run as-is! The result will be some iteration-specific information printed to stdout, and a `fileout.fits` file containing the
-results of the final iteration of the loop.
-
-## Run a nulling test on corgisim model
-
-In this situation, the Jacobian is still calculated form [the compact model](#calculate-a-jacobian) but the images are generated
+In this situation, the Jacobian is still calculated from [the compact model](jacobian_computation.md#precomputing-a-jacobian) but the images are generated
 using the realistic `corgisim` model.  Note that this mode is very slow to run 
 (typically several minutes per iteration on a laptop). 
 
-Optional:
-You will need to rename your Jacobian for the respective coronagraph mode you want to run a loop on. For the narrow FOV mode
-with the HLC, rename the Jacobian to `narrowfov_jac_full.fits`.
+## Common parameters between optical models
 
-Then you can run the `scripts/run_corgisim_nulling_gitl.py` script as follows by passing the path to your Jacobian, and output paths:
-
+You can run the `scripts/run_corgisim_nulling_gitl.py` script as follows by passing the path to your Jacobian (optional),
+in which case you need to set the `precomp` variable to `load_all`:
 ```python
 
 defjacpath = '/Users/user/data_from_repos/corgiloop/jacobians'
@@ -89,17 +61,16 @@ If the Jacobian is not pre-computed, users can leave the default as:
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'temp')
 precomp = 'precomp_jacs_always'
 ```
-User can also update the output file path and name:
+User can also update the output path, otherwise all loop outputs will be go throuhg a dedicated folder in your home directory:
 ```python
-current_datetime = datetime.now()
-folder_name = 'gitl_simulation_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
-fits_name = 'final_frames.fits'
-fileout_path = os.path.join(os.path.dirname(os.path.dirname(corgihowfsc.__file__)), 'data', folder_name, fits_name)
+base_path = Path.home()  # this is the proposed default but can be changed
 ```
 The initial DM settings are by default set as:
 ```python
 dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
 ```
+From here the script can be run as-is! The result will be some iteration-specific information printed to stdout, and a
+suite of output files being saved to the output folder [see loop outputs](loop_outputs.md).
 
 From here, all of the configuration files are loaded. 
 1. We start with `get_args` which builds the `args` class which contains a number of basic parameters
@@ -121,8 +92,8 @@ hconf['star']['stellar_type'] = 'G05'
 7. Define the `probes` class
 
 If user would like to compare the output with the compact model, the recommended method is to 
-use [corgi-howfs with the compact model](#run-a-nulling-test-on-compact-model)
+use [corgi-howfs with the compact model](#run-a-nulling-test-on-compact-model).
 
 However, it is still possible to use the compact model directly in `cgi_howfs`. 
 This is **not** the recommended method and this should be reserved for particular situations.  
-please refer to [cgi_howfs GITL(Compact)](gitl_cgi_howfsc.md)
+Please refer to [cgi_howfs GITL (Compact)](gitl_cgi_howfsc.md).
