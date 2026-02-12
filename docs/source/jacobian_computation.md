@@ -15,10 +15,14 @@ The files relating to a Jacobian input are:
 The different Jacobian strategies represent different choice for when which of the above files are precomputed for the loop and loaded from disk, or computed at runtime.
 
 :::{note}
-There are three Jacobian strategies for the HOWFSC loop:
-- Load Jacobian and related files from disk and keep them fixed throughout the loop (`load_all`).
-- Precompute the Jacobian and related files once at the start of the loop, and then keep them fixed throughout the loop (`precomp_jacs_once`).
-- Compute the Jacobian and related files at the start of each iteration (`precomp_jacs_always`).
+There are four Jacobian strategies for the HOWFSC loop:
+
+| Jacobian and JTWJ                               | n2clist                                         | keyword               |
+|-------------------------------------------------|-------------------------------------------------|-----------------------|
+| Load from disk, keep fixed throughout loop      | Load from disk, keep fixed throughout loop      | `load_all`            |
+| Compute before loop, keep fixed throughout loop | Load from disk, keep fixed throughout loop      | `precomp_jacs_once`   |
+| Compute before each iteration                   | Load from disk, keep fixed throughout loop      | `precomp_jacs_always` |
+| Compute before loop, keep fixed throughout loop | Compute before loop, keep fixed throughout loop | `precomp_all_once`    |
 :::
 
 The above are the three options fed into the `precomp` variable of the top-level HOWFSC function called `nulling_gitl()` called in the launcher script.
@@ -29,10 +33,6 @@ CGI is anticipated to calculate Jacobians at each iteration, which is why this i
 
 **Original docstring from `git_howfsc` repo:**  
 See original docstrings in the `roman-corgi/cgi-howfsc` repo [here](https://github.com/roman-corgi/cgi-howfsc/blob/0a3a3f1439eb5db4dffd4ae69187f5c4ca1ed12f/howfsc/scripts/nulltest_gitl.py#L91).
-
-:::{warning}
-The below docstring is currently ambiguous and we are confirming with Eric that we understood correctly.
-:::
 
 ```yaml
 precomp : str, optional
