@@ -15,7 +15,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     plt.xlabel('Iteration')
     plt.ylabel('Measured Contrast')
     plt.semilogy()
-    plt.savefig(os.path.join(outpath, "contrast_vs_iteration.pdf"))
+    plt.savefig(os.path.join(outpath, "contrast_vs_iteration.pdf"), bbox_inches='tight')
     plt.close()
 
     # Save measured_c to a csv file

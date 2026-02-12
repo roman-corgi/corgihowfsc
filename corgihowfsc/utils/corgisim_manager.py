@@ -160,6 +160,14 @@ class CorgisimManager:
 
             return (self.k_gain*sim_scene.image_on_detector.data - B)/gain - master_dark
 
+    def generate_e_field(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, bias=0):
+        """
+        Generate the e-field from corgisim
+        """
+        optics = self.create_optics(dm1v, dm2v, lind)
+
+        return optics.get_e_field()
+
     def generate_master_dark(self, detector, exptime, gain):
         """
         dark:  master dark

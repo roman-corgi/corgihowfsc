@@ -492,10 +492,17 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
 
         # Model e-field at this DM setting
         log.info('Model e-field at this setting')
-        edm0 = cfg.sl_list[j].eprop(dmlistmeas)
-        ely = cfg.sl_list[j].proptolyot(edm0)
-        edh0 = cfg.sl_list[j].proptodh(ely)
-        model_efield = insertinto(edh0, efield.shape)
+
+        # Get e-field from the imager, which will be either the compact model or corigisim model
+
+        model_efield = imager.get_efield(dm1v=dmlistmeas[0], dm2v=dmlistmeas[1], lind=j, crop=croplist[j * ndm])
+
+        # Old legacy code to keep just in case we need future reference
+        # edm0 = cfg.sl_list[j].eprop(dmlistmeas)
+        # ely = cfg.sl_list[j].proptolyot(edm0)
+        # edh0 = cfg.sl_list[j].proptodh(ely)
+        # model_efield = insertinto(edh0, efield.shape)
+
         other[j]['model_efield'] = model_efield # for reqt 1133640
 
         log.info('Compute difference to use to predict next iteration')

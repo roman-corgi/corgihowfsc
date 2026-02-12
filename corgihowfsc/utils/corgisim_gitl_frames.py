@@ -213,8 +213,7 @@ class GitlImage:
             raise ValueError("crop parameter is required for cgi-howfsc")
 
         if self.backend == 'corgihowfsc':
-            # Futur work
-            raise NotImplementedError("CorgiSim efield not implemented yet.")
+            return self.corgisim_manager.generate_e_field(dm1v, dm2v, lind)
 
         else:  # cgi-howfsc
             dmlist = [dm1v, dm2v]
