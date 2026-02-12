@@ -44,5 +44,4 @@ jacpath = '/Users/user/data_from_repos/corgiloop/jacobians'
 nulling_test_gitl(logfile=logfile, fileout=fileout, jacpath=jacpath)
 ```
 
-The result will be some iteration-specific information printed to stdout, and a `fileout.fits` file containing the
-results of the final iteration of the loop.
+The result will be some iteration-specific information printed to stdout, and a suite of output files being saved to the output folder.
