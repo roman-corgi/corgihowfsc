@@ -1,4 +1,4 @@
-# Jacobian strategies
+# Jacobian computation
 
 The original `cgi-howfsc` loop code comes with several options on when and how to compute the Jacobian matrix and related data.
 These can be called in the same way on the `corgihowfsc` repo, where the relevant loop code is encapsulated in the function 
@@ -10,6 +10,8 @@ The files relating to a Jacobian input are:
 - The JTWJ map, which is the weighting map `W` (`J^T * W * J`) as it is used in the EFC algorithm; more info [here](https://github.com/roman-corgi/cgi-howfsc/blob/0a3a3f1439eb5db4dffd4ae69187f5c4ca1ed12f/howfsc/control/calcjtwj.py#L16).
 - The n2clist, which is a list of conversion factors from normalized intensity to contrast. For more info see [here](https://github.com/roman-corgi/cgi-howfsc/blob/0a3a3f1439eb5db4dffd4ae69187f5c4ca1ed12f/howfsc/control/nextiter.py#L55).
 
+## Jacobian strategies
+
 The different Jacobian strategies represent different choice for when which of the above files are precomputed for the loop and loaded from disk, or computed at runtime.
 
 :::{note}
@@ -20,6 +22,10 @@ There are three Jacobian strategies for the HOWFSC loop:
 :::
 
 The above are the three options fed into the `precomp` variable of the top-level HOWFSC function called `nulling_gitl()` called in the launcher script.
+
+:::{important}
+CGI is anticipated to calculate Jacobians at each iteration, which is why this is teh default option in `corgihowfsc`.
+:::
 
 **Original docstring from `git_howfsc` repo:**  
 See original docstrings in the `roman-corgi/cgi-howfsc` repo [here](https://github.com/roman-corgi/cgi-howfsc/blob/0a3a3f1439eb5db4dffd4ae69187f5c4ca1ed12f/howfsc/scripts/nulltest_gitl.py#L91).
@@ -45,3 +51,6 @@ precomp : str, optional
     all computed once at the start of the sequence.
 ```
 
+## Implementation details
+
+A bunch of implementation caveats for the `corgihowfsc` repo (TBD).
