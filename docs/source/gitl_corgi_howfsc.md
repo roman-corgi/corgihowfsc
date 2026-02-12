@@ -31,7 +31,7 @@ backend_type = 'cgi-howfsc'  # 'corgihowfsc' for the corgisim model, otherwise f
 In this situation both the Jacobian and the simulated images are generated from the compact model. 
 This is the fastest mode to run.
 
-## Run a nulling test wiuth the **corgisim** model
+## Run a nulling test with the **corgisim** model
 
 There is one single parameter that differentiates between running your loop with the compact model or the full `corgisim` model.
 To run with the corgisim model, set the `backend_type` variable to `corgihowfsc` (the default is `cgi-howfsc`):
@@ -88,8 +88,8 @@ hconf['star']['stellar_type'] = 'G05'
 7. Define the `probes` class
 
 If user would like to compare the output with the compact model, the recommended method is to 
-use [corgi-howfs with the compact model](#run-a-nulling-test-on-compact-model)
+use [corgi-howfs with the compact model](#run-a-nulling-test-on-compact-model).
 
 However, it is still possible to use the compact model directly in `cgi_howfs`. 
 This is **not** the recommended method and this should be reserved for particular situations.  
-please refer to [cgi_howfs GITL(Compact)](gitl_cgi_howfsc.md)
+Please refer to [cgi_howfs GITL (Compact)](gitl_cgi_howfsc.md).
