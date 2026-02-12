@@ -146,7 +146,9 @@ def set_num_threads(num_process, num_threads):
 
 def calculate_jacobian(cfgfile, output, jacmethod,
                        num_process=None, num_threads=None):
-    """Calculate a Jacobian and write it to a FITS file.
+    """
+
+    A wrapper function around `caljacs` to handle input validation, parallelism settings, and output file writing for Jacobian calculation. It will calculate a Jacobian and write it to a FITS file.
 
     The number of actuators is derived automatically from the model — all
     actuators across every DM defined in the config file are included.
