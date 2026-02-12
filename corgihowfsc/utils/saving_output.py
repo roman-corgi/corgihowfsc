@@ -16,6 +16,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     plt.xlabel('Iteration')
     plt.ylabel('Measured Contrast')
     plt.semilogy()
+    plt.xticks(np.arange(1, len(measured_c) + 1))
     plt.savefig(os.path.join(outpath, "contrast_vs_iteration.pdf"), bbox_inches='tight')
     plt.close()
 
@@ -269,5 +270,6 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     plt.semilogy()
     plt.legend()
     plt.grid(True, alpha=0.3)
+    plt.xticks(np.arange(1, len(variance_per_iter) + 1))
     plt.savefig(os.path.join(outpath, "efield_variance.pdf"))
     plt.close()
