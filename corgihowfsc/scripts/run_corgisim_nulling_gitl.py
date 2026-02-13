@@ -32,7 +32,7 @@ base_corgiloop_path = 'corgiloop_data'
 final_filename = 'final_frames.fits'
 
 loop_framework = 'corgi-howfsc' # do not modify
-backend_type = 'corgihowfsc'  # 'corgihowfsc' for the corgisim model, otherwise for the compact model use: 'cgi-howfsc'
+backend_type = 'cgi-howfsc'  # 'corgihowfsc' for the corgisim model, otherwise for the compact model use: 'cgi-howfsc'
 
 dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
 
@@ -41,7 +41,7 @@ fileout_path = make_output_file_structure(loop_framework, backend_type, base_pat
 def main():
 
     args = get_args(
-        niter=5,
+        niter=3,
         mode='nfov_band1',
         dark_hole='360deg',
         probe_shape='default',
