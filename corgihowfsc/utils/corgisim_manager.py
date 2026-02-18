@@ -167,7 +167,9 @@ class CorgisimManager:
             dm1v, dm2v: DM1 and DM2 voltages
             lind: wavelength index
             exptime: exposure time
-            crop: To match the call in the perfect estimator, unnecessary here, so hardcoded to “None”
+            crop:  4-tuple of (lower row, lower col, number of rows,
+                    number of columns), indicating where in a clean frame a PSF is taken.
+                    All are integers; the first two must be >= 0 and the second two must be > 0. Only used if name = 'cgi-howfsc'.
         Return:
             Generated_efield: Generated electric field, full or cropped
         """
