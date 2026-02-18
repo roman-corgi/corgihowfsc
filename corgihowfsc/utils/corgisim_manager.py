@@ -10,7 +10,7 @@ from corgihowfsc.utils.corgisim_utils import (
 
 class CorgisimManager:
     """
-    Manages Corgisim optics and scence generation for cgi-howfsc intergration. 
+    Manages Corgisim optics and scence generation for cgi-howfsc integration.
 
     This class handles: 
     - Mapping CGI modes to corgisim modes 
@@ -160,13 +160,35 @@ class CorgisimManager:
 
             return (self.k_gain*sim_scene.image_on_detector.data - B)/gain - master_dark
 
-    def generate_e_field(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, bias=0):
+    def generate_e_field(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, bias=0, crop = None):
         """
         Generate the e-field from corgisim
+        Args:
+            dm1v, dm2v: DM1 and DM2 voltages
+            lind: wavelength index
+            exptime: exposure time
+            crop: To match the call in the perfect estimator, unnecessary here, so hardcoded to “None”
+        Return:
+            Generated_efield: Generated electric field, full or cropped
         """
         optics = self.create_optics(dm1v, dm2v, lind)
+        generated_efield = optics.get_e_field()
+        if crop is not None:
+            # Crop parameters
+            r0, c0, nr, nc = crop
+            h, w = generated_efield.shape
 
-        return optics.get_e_field()
+            # Check if crop is possible
+            if r0 + nr <= h and c0 + nc <= w:
+                generated_efield = generated_efield[r0:r0 + nr, c0:c0 + nc]
+            else:
+                if h == nr and w == nc:
+                    pass
+                else:
+                    print(
+                        f"Warning: Crop {crop} incompatible with E-field shape {generated_efield.shape}. Returning full E-field.")
+        return generated_efield
+
 
     def generate_master_dark(self, detector, exptime, gain):
         """
