@@ -38,6 +38,9 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     for i, flist in enumerate(framelistlist):
         oitem = otherlist[i]
 
+        # Re-define iterpath for this loop
+        iterpath = os.path.join(outpath, f"iteration_{i + 1:04d}")
+
         # List for all intensities (current iteration)
         stack_total = []
         stack_coh = []
@@ -68,25 +71,25 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
         prev = pyfits.ImageHDU(param_order_to_list(camlist[i][1]), name='CAM_PARAMS')
 
         hdul_main = pyfits.HDUList([prim, img_raw, prev])
-        hdul_main.writeto(os.path.join(outpath, f"iteration_{i + 1:04d}", "images.fits"), overwrite=True)
+        hdul_main.writeto(os.path.join(iterpath, "images.fits"), overwrite=True)
 
         # Saving total intensity
         prim_tot = pyfits.PrimaryHDU(header=hdr)
         img_tot = pyfits.ImageHDU(np.array(stack_total), name='TOTAL_INTENSITY')
         hdul_tot = pyfits.HDUList([prim_tot, img_tot])
-        hdul_tot.writeto(os.path.join(outpath, f"iteration_{i + 1:04d}", "intensity_total.fits"), overwrite=True)
+        hdul_tot.writeto(os.path.join(iterpath, "intensity_total.fits"), overwrite=True)
 
         # Saving coherent intensity
         prim_coh = pyfits.PrimaryHDU(header=hdr)
         img_coh = pyfits.ImageHDU(np.array(stack_coh), name='COHERENT_INTENSITY')
         hdul_coh = pyfits.HDUList([prim_coh, img_coh])
-        hdul_coh.writeto(os.path.join(outpath, f"iteration_{i + 1:04d}", "intensity_coherent.fits"), overwrite=True)
+        hdul_coh.writeto(os.path.join(iterpath, "intensity_coherent.fits"), overwrite=True)
 
         # Saving incoherent intensity
         prim_incoh = pyfits.PrimaryHDU(header=hdr)
         img_incoh = pyfits.ImageHDU(np.array(stack_incoh), name='INCOHERENT_INTENSITY')
         hdul_incoh = pyfits.HDUList([prim_incoh, img_incoh])
-        hdul_incoh.writeto(os.path.join(outpath, f"iteration_{i + 1:04d}", "intensity_incoherent.fits"), overwrite=True)
+        hdul_incoh.writeto(os.path.join(iterpath, "intensity_incoherent.fits"), overwrite=True)
 
         # --- E-FIELD ESTIMATIONS ---
         efields = []
@@ -105,7 +108,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
         prim_ef = pyfits.PrimaryHDU(header=hdr_ef)
         img_ef = pyfits.ImageHDU(np.array(efields))
         hdul_ef = pyfits.HDUList([prim_ef, img_ef])
-        hdul_ef.writeto(os.path.join(outpath, f"iteration_{i + 1:04d}", "efield_estimations.fits"), overwrite=True)
+        hdul_ef.writeto(os.path.join(iterpath, "efield_estimations.fits"), overwrite=True)
 
         # --- PERFECT E-FIELDS ---
         perfect_efields_list = []
@@ -124,43 +127,16 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
         prim_pef = pyfits.PrimaryHDU(header=hdr_pef)
         img_pef = pyfits.ImageHDU(np.array(perfect_efields_list))
         hdul_pef = pyfits.HDUList([prim_pef, img_pef])
-        hdul_pef.writeto(os.path.join(outpath, f"iteration_{i + 1:04d}", "perfect_efields.fits"), overwrite=True)
+        hdul_pef.writeto(os.path.join(iterpath, "perfect_efields.fits"), overwrite=True)
+
+        # --- DM STATES (PER ITERATION) ---
+        if dm1_list is not None and i < len(dm1_list):
+            pyfits.writeto(os.path.join(iterpath, "dm1_command.fits"), dm1_list[i], overwrite=True)
+
+        if dm2_list is not None and i < len(dm2_list):
+            pyfits.writeto(os.path.join(iterpath, "dm2_command.fits"), dm2_list[i], overwrite=True)
 
         print(f"Saved outputs (individual) for iteration {i + 1}")
-
-
-    # Check that DM lists are present
-    if dm1_list is not None and dm2_list is not None:
-
-        # Create 'dm_data' subdirectory in the output folder
-        dm_outpath = os.path.join(outpath, "dm_data")
-        if not os.path.exists(dm_outpath):
-            os.makedirs(dm_outpath)
-
-        # Save final maps (for re-seeding) : take the last element of the lists
-        if len(dm1_list) > 0:
-            pyfits.writeto(os.path.join(dm_outpath, "final_dm1.fits"), dm1_list[-1], overwrite=True)
-        if len(dm2_list) > 0:
-            pyfits.writeto(os.path.join(dm_outpath, "final_dm2.fits"), dm2_list[-1], overwrite=True)
-
-        # Save history cubes (full commands)
-        if len(dm1_list) > 0:
-            dm1_cube = np.array(dm1_list)
-            hdr_dm = pyfits.Header()
-            hdr_dm['CONTENT'] = 'DM1 VOLTAGE HISTORY'
-            hdr_dm['UNIT'] = 'Volts'
-            pyfits.writeto(os.path.join(dm_outpath, "dm1_command_history.fits"),
-                           dm1_cube, header=hdr_dm, overwrite=True)
-
-        if len(dm2_list) > 0:
-            dm2_cube = np.array(dm2_list)
-            hdr_dm = pyfits.Header()
-            hdr_dm['CONTENT'] = 'DM2 VOLTAGE HISTORY'
-            hdr_dm['UNIT'] = 'Volts'
-            pyfits.writeto(os.path.join(dm_outpath, "dm2_command_history.fits"),
-                           dm2_cube, header=hdr_dm, overwrite=True)
-
-        print(f"Global cubes and final DM maps saved to {dm_outpath}")
 
     ### Calculate and plot estimation error variance
     # Stack all iterations into final cubes
