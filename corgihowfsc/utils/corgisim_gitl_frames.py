@@ -210,7 +210,7 @@ class GitlImage:
         """
 
         if self.backend == 'corgihowfsc': # Corgisim model
-            return self.corgisim_manager.generate_e_field(dm1v, dm2v, lind, crop)
+            return self.corgisim_manager.generate_e_field(dm1v, dm2v, lind, crop=crop)
 
         else:  # Compact model
             if crop is None:
