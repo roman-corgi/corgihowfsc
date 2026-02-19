@@ -209,13 +209,13 @@ class GitlImage:
           All are integers; the first two must be >= 0 and the second two must be > 0. Only used if name = 'cgi-howfsc'.
         """
 
-        if crop is None:
-            raise ValueError("crop parameter is required for cgi-howfsc")
-
-        if self.backend == 'corgihowfsc':
+        if self.backend == 'corgihowfsc': # Full model
             return self.corgisim_manager.generate_e_field(dm1v, dm2v, lind, crop)
 
-        else:  # cgi-howfsc
+        else:  # Compact model
+            if crop is None:
+                raise ValueError("crop parameter is required for cgi-howfsc backend")
+
             dmlist = [dm1v, dm2v]
             return self.gitlefield_cgihowfsc(
                 dmlist=dmlist,
