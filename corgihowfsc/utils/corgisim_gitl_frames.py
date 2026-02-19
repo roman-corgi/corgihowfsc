@@ -209,7 +209,7 @@ class GitlImage:
           All are integers; the first two must be >= 0 and the second two must be > 0. Only used if name = 'cgi-howfsc'.
         """
 
-        if self.backend == 'corgihowfsc': # Full model
+        if self.backend == 'corgihowfsc': # Corgisim model
             return self.corgisim_manager.generate_e_field(dm1v, dm2v, lind, crop)
 
         else:  # Compact model
