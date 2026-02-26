@@ -36,15 +36,32 @@ class GitlImage:
 
         """
         Arguments:
-            cor: mode string, only required when name = 'cgi-howfsc'. Must be one of ['narrowfov', 'nfov_flat', 'nfov_dm']. If name = 'corgihowfsc', this will be mapped. 
-            polaxis: integer, polarization axis setting for the camera.  Must be one of [0, 10, 20, 30].  Default is 10.
-            cfg: CoronagraphMode object, only required if name = 'cgi-howfsc'.
-            cstrat: ControlStrategy object, only required if name = 'cgi-howfsc'.
-            Vmag: float, V magnitude of the host star, default to 2.56 (del Leo).
-            sptype: string, spectral type of the host star, default to 'A5V'.
-            ref_flag: boolean, if True, use reference spectrum from pysynphot, otherwise use Pickles atlas. Default to False.               
-            is_noise_free: boolean, if True, generate a noise-free frame. Default to True. Only used if name = 'corgihowfsc'.
-            output_dim: integer, output dimension of the cropped image from corgisim. Default to 51. 
+            cfg:
+                A Configuration object defining a coronagraph-mode setup for CGI, including wavelength channels (sl_list), deformable mirror states (dmlist), 
+                and initial DM settings (initmaps), loaded from a YAML file (cfgfile).
+                See https://roman-corgi.github.io/corgihowfsc/cfg_docs.html for more details.
+            cstrat: 
+                A ControlStrategy object which contains the necessary information to perform wavefront sensing and control. 
+                See https://roman-corgi.github.io/corgihowfsc/cstrat_docs.html for more details.
+                
+            hconf:
+                A HardwareConfig object that contains instrument configurations and host star properties.
+                See https://roman-corgi.github.io/corgihowfsc/hconf_docs.html for more details.
+
+            backend: str, either 'corgihowfsc' or 'cgi-howfsc', indicating which optical model to use for image generation. Default is 'cgi-howfsc'. 
+            # TODO - we should change this attribute to something else ... it's not really a backend ... 
+            cor: str, CGI coronagraph mode (e.g., 'narrowfov', 'nfov_flat', 'nfov_dm'). 
+                Required if backend is 'cgi-howfsc'. Ignored if backend is 'corgihowfsc' since corgisim will use its own internal mapping.
+
+            corgi_overrides: Optional dict of CorgiSim-specific overrides:
+                See corgisim doc for details, but some examples include:
+                - bandpass: str, bandpass number ('1', '2', '3', '4')
+                - is_noise_free: bool, generate noise-free images (default: True)
+                - output_dim: int, output image dimension (default: 51)
+                - polaxis: int, polarization axis (default: 10)
+                - Vmag: float, override host star V magnitude
+                - sptype: str, override spectral type
+                - ref_flag: bool, use reference spectrum (default: False)
         """
         # Validate backend choice
         if backend not in ['corgihowfsc', 'cgi-howfsc']:

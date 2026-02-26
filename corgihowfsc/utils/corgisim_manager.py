@@ -10,31 +10,35 @@ from corgihowfsc.utils.corgisim_utils import (
 
 class CorgisimManager:
     """
-    Manages Corgisim optics and scence generation for cgi-howfsc intergration. 
+    Manages Corgisim optics and scene generation for cgi-howfsc integration. 
 
     This class handles: 
     - Mapping CGI modes to corgisim modes 
     - Host star property extraction and management 
     - Scene and Optics config 
-    - PSF and detecor image
-
+    - PSF and detector image
     """
 
     def __init__(self, cfg, cstrat, hconf, cor=None, corgi_overrides=None):
         """
-        
         Args:
-         cfg: CoronagraphMode object with bandpass information (cfg.sl_list)
-         hconf: Host configuration dict/object with star properties
-         cor: CGI coronagraph mode (e.g., 'narrowfov', 'nfov_flat', 'nfov_dm')
-         corgi_overrides: Optional dict of CorgiSim-specific overrides:
-            - bandpass: str, bandpass number ('1', '2', '3', '4')
-            - is_noise_free: bool, generate noise-free images (default: True)
-            - output_dim: int, output image dimension (default: 51)
-            - polaxis: int, polarization axis (default: 10)
-            - Vmag: float, override host star V magnitude
-            - sptype: str, override spectral type
-            - ref_flag: bool, use reference spectrum (default: False)
+            cfg:
+                An instance which contains all of the necessary data to operate CGI in respective modes. 
+                It contains two lists: sl_list (list of SingleLambda objects), dmlist (list of DMFace objects) which together are enough to define a coronagraphic diffraction model.
+            cstrat: 
+                An instance of control strategy which contains the necessary information to perform wavefront sensing   and control. 
+            hconf:
+                An instance contains hardware configurations and host star properties. 
+            cor: CGI coronagraph mode (e.g., 'narrowfov', 'nfov_flat', 'nfov_dm')
+            corgi_overrides: Optional dict of CorgiSim-specific overrides:
+                See corgisim doc for details, but some examples include:
+                - bandpass: str, bandpass number ('1', '2', '3', '4')
+                - is_noise_free: bool, generate noise-free images (default: True)
+                - output_dim: int, output image dimension (default: 51)
+                - polaxis: int, polarization axis (default: 10)
+                - Vmag: float, override host star V magnitude
+                - sptype: str, override spectral type
+                - ref_flag: bool, use reference spectrum (default: False)
         """
 
         if corgi_overrides is None: 
