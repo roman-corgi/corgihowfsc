@@ -20,7 +20,7 @@ from corgihowfsc.sensing.GettingProbes import ProbesShapes
 from corgihowfsc.utils.contrast_nomalization import CorgiNormalization, EETCNormalization
 from corgihowfsc.gitl.nulling_gitl import nulling_gitl
 from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
-from corgihowfsc.utils.make_output_file_structure import make_output_file_structure
+from corgihowfsc.utils.output_management import make_output_file_structure
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
@@ -32,7 +32,7 @@ base_corgiloop_path = 'corgiloop_data'
 final_filename = 'final_frames.fits'
 
 loop_framework = 'corgi-howfsc' # do not modify
-backend_type = 'corgihowfsc'  # 'corgihowfsc' for the corgisim model, otherwise for the compact model use: 'cgi-howfsc'
+backend_type = 'cgi-howfsc'  # 'corgihowfsc' for the corgisim model, otherwise for the compact model use: 'cgi-howfsc'
 
 dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
 
@@ -76,7 +76,6 @@ def main():
     crop_params['nrow'] = 153 # FIXED VALUE; do not change this
     crop_params['ncol'] = 153 # FIXED VALUE; do not change this
 
-
     # Define imager and normalization (counts->contrast) strategy
     corgi_overrides = {}
     corgi_overrides['output_dim'] = crop_params['nrow']
@@ -109,7 +108,31 @@ def main():
                                                 separation_lamD=7,
                                                 exptime_norm=0.01)
 
-    nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps)
+    metadata = {
+        "inputs": {
+            "modelpath": str(modelpath),
+            "cfgfile": str(cfgfile),
+            "hconffile": str(hconffile),
+            "cstratfile": str(cstratfile),
+            "jacfile": str(jacfile),
+            "probefiles": {str(k): str(v) for k, v in probefiles.items()} 
+            if isinstance(probefiles, dict) else probefiles,
+            "n2clistfiles": [str(p) for p in (n2clistfiles or [])],
+        },
+        "hconf": hconf,  # already YAML-safe
+        "objects": {
+            "cfg_class": type(cfg).__name__,
+            "cstrat_class": type(cstrat).__name__,
+            "estimator_class": type(estimator).__name__,
+            "probes_class": type(probes).__name__,
+            "imager_class": type(imager).__name__,
+        },
+        "crop_params": crop_params,
+        "corgi_overrides": corgi_overrides,
+    }
+
+    nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps, metadata)
+
 
 if __name__ == '__main__':    
     main()

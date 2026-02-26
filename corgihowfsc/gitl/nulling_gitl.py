@@ -33,14 +33,14 @@ from howfsc.util.gitl_tools import param_order_to_list
 from corgihowfsc.gitl.modular_gitl import howfsc_computation
 from howfsc.precomp import howfsc_precomputation
 from corgihowfsc.utils.saving_output import save_outputs
-
+from corgihowfsc.utils.output_management import save_run_config, update_yml
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
 
 
-def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps):
+def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps, metadata=None):
     """Run a nulling sequence, using the compact optical model as the data source.
 
     Parameters:
@@ -78,8 +78,6 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     jacfile: string;
         Path to jacobian.
     modelpath, jacfile, probefiles, hconffile, n2clistfiles:
-
-
     """
 
     # User params
@@ -101,9 +99,14 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     num_threads = args.num_threads
 
     # Make filout dir
-    if fileout is not None:
-        print('Making output directory ', fileout)
-        os.makedirs(os.path.dirname(fileout), exist_ok=True)
+    if args.fileout is not None:
+        print('Making output directory ', args.fileout)
+        os.makedirs(os.path.dirname(args.fileout), exist_ok=True)
+
+    config_path = save_run_config(args, args.fileout)
+    print(f"Saved run configuration to {config_path}")
+
+    update_yml(config_path, metadata)
 
     otherlist = []
     abs_dm1list = []

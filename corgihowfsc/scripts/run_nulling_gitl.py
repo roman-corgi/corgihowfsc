@@ -16,7 +16,7 @@ from corgihowfsc.sensing.GettingProbes import ProbesShapes
 from corgihowfsc.utils.contrast_nomalization import CorgiNormalization, EETCNormalization
 from corgihowfsc.gitl.nulling_gitl import nulling_gitl
 from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
-from corgihowfsc.utils.make_output_file_structure import make_output_file_structure
+from corgihowfsc.utils.output_management import make_output_file_structure
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
