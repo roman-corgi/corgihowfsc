@@ -20,7 +20,7 @@ from corgihowfsc.sensing.GettingProbes import ProbesShapes
 from corgihowfsc.utils.contrast_nomalization import CorgiNormalization, EETCNormalization
 from corgihowfsc.gitl.nulling_gitl import nulling_gitl
 from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
-from corgihowfsc.utils.make_output_file_structure import make_output_file_structure
+from corgihowfsc.utils.make_output_file_structure import make_output_file_structure, save_run_config, update_yml
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
@@ -108,6 +108,37 @@ def main():
                                                 corgi_overrides=corgi_overrides,
                                                 separation_lamD=7,
                                                 exptime_norm=0.01)
+
+    # Make filout dir
+    if args.fileout is not None:
+        print('Making output directory ', args.fileout)
+        os.makedirs(os.path.dirname(args.fileout), exist_ok=True)
+
+    config_path = save_run_config(args, args.fileout)
+    print(f"Saved run configuration to {config_path}")
+
+    update_yml(config_path, {
+        "inputs": {
+            "modelpath": str(modelpath),
+            "cfgfile": str(cfgfile),
+            "hconffile": str(hconffile),
+            "cstratfile": str(cstratfile),
+            "jacfile": str(jacfile),
+            "probefiles": {str(k): str(v) for k, v in probefiles.items()} 
+            if isinstance(probefiles, dict) else probefiles
+            "n2clistfiles": [str(p) for p in (n2clistfiles or [])],
+        },
+        "hconf": hconf,  # already YAML-safe
+        "objects": {
+            "cfg_class": type(cfg).__name__,
+            "cstrat_class": type(cstrat).__name__,
+            "estimator_class": type(estimator).__name__,
+            "probes_class": type(probes).__name__,
+            "imager_class": type(imager).__name__,
+        },
+        "crop_params": crop_params,
+        "corgi_overrides": corgi_overrides,
+    })
 
     nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps)
 
