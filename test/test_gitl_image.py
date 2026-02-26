@@ -31,8 +31,8 @@ with patch.dict('sys.modules', {
         nonnegative_scalar_integer=Mock(side_effect=lambda val, name, exc: None if isinstance(val, int) and val >= 0 else exec('raise exc("must be non-negative int")'))
     )
 }):
-    from corgihowfsc.utils.corgisim_gitl_frames import GitlImage, map_wavelength_to_corgisim_bandpass
-
+    from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
+    from corgihowfsc.utils.corgisim_utils import map_wavelength_to_corgisim_bandpass
 
 # Fixtures
 @pytest.fixture

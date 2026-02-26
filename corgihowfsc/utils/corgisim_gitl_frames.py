@@ -225,29 +225,3 @@ class GitlImage:
                 cleancol=cleancol
             )
 
-# Helper function to map wavelength to corgisim bandpass
-def map_wavelength_to_corgisim_bandpass(wavelength_m, tolerance=3e-9):
-    """
-    Map wavelength to CorgiSim bandpass label.
-    
-    Args:
-        wavelength_m: Wavelength in meters
-        tolerance: Matching tolerance in meters (default ±3nm)
-        
-    Returns:
-        CorgiSim bandpass label ('1', '2', '3', or '4')
-    """
-    corgisim_wavelengths = {
-        '1': 575e-9, '2': 660e-9, '3': 730e-9, '4': 825e-9}
-    
-    for bandpass, wl in corgisim_wavelengths.items():
-        if abs(wavelength_m - wl) <= tolerance:
-            return bandpass
-    
-    available_nm = [wl * 1e9 for wl in corgisim_wavelengths.values()]
-    raise ValueError(f"Wavelength {wavelength_m*1e9:.1f} nm does not match any "
-                    f"CorgiSim options {available_nm} nm within ±{tolerance*1e9:.0f} nm")
-
-
-
-
