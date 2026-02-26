@@ -34,7 +34,6 @@ from corgihowfsc.gitl.modular_gitl import howfsc_computation
 from howfsc.precomp import howfsc_precomputation
 from corgihowfsc.utils.saving_output import save_outputs
 
-
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
@@ -99,11 +98,6 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     precomp = args.precomp
     num_process = args.num_process
     num_threads = args.num_threads
-
-    # Make filout dir
-    if fileout is not None:
-        print('Making output directory ', fileout)
-        os.makedirs(os.path.dirname(fileout), exist_ok=True)
 
     otherlist = []
     abs_dm1list = []
