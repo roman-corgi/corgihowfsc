@@ -26,6 +26,10 @@ In the PR:
 
 3. Request at least one review and iterate with the reviewer. You can post in the #cpp-hardware Slack channel to ask for reviewers if needed.
 
+:::{important}
+Keep your PR as a Draft until it is actually ready to merge.
+:::
+
 4. Address all review comments:
 
 - Implement requested changes or create follow-up issues.
@@ -37,3 +41,7 @@ In the PR:
 - Leave in-line comment resolution to the reviewer.
 
 5. Once approved, the PR can be merged.
+
+:::{note}
+Anyone can merge a PR once it has been approved and the CI checks have passed (if the merge button appears green).
+:::
