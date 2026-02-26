@@ -37,17 +37,21 @@ class GitlImage:
         """
         Arguments:
             cfg:
-                An instance which contains all of the necessary data to operate CGI in respective modes. 
-                It contains two lists: sl_list (list of SingleLambda objects), dmlist (list of DMFace objects) which together are enough to define a coronagraphic diffraction model.
+                A Configuration object defining a coronagraph-mode setup for CGI, including wavelength channels (sl_list), deformable mirror states (dmlist), 
+                and initial DM settings (initmaps), loaded from a YAML file (cfgfile).
+                See https://roman-corgi.github.io/corgihowfsc/cfg_docs.html for more details.
             cstrat: 
-                An instance of control strategy which contains the necessary information to perform wavefront sensing   and control. 
+                A ControlStrategy object which contains the necessary information to perform wavefront sensing and control. 
+                See https://roman-corgi.github.io/corgihowfsc/cstrat_docs.html for more details.
+                
             hconf:
-                An instance contains hardware configurations and host star properties. 
+                A HardwareConfig object that contains instrument configurations and host star properties.
+                See https://roman-corgi.github.io/corgihowfsc/hconf_docs.html for more details.
 
             backend: str, either 'corgihowfsc' or 'cgi-howfsc', indicating which optical model to use for image generation. Default is 'cgi-howfsc'. 
             # TODO - we should change this attribute to something else ... it's not really a backend ... 
-
-            cor: str, CGI coronagraph mode (e.g., 'narrowfov', 'nfov_flat', 'nfov_dm'). Required if backend is 'cgi-howfsc'. Ignored if backend is 'corgihowfsc' since corgisim will use its own internal mapping.
+            cor: str, CGI coronagraph mode (e.g., 'narrowfov', 'nfov_flat', 'nfov_dm'). 
+                Required if backend is 'cgi-howfsc'. Ignored if backend is 'corgihowfsc' since corgisim will use its own internal mapping.
 
             corgi_overrides: Optional dict of CorgiSim-specific overrides:
                 See corgisim doc for details, but some examples include:
