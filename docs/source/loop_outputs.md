@@ -4,7 +4,8 @@
 Before the loop starts, a number of informational outputs are generataed in the top-level loop folder.
 
 These are:
-- N/A for now
+- `config.yml`
+    The configuration file used for the loop, containing all input parameters and settings.
 
 ## Per iteration outputs
 
