@@ -22,6 +22,7 @@ def make_output_file_structure(loop_framework, backend_type, base_path, base_cor
     fileout_path = os.path.join(base_output_path, output_folder_name, final_filename)
     return fileout_path
 
+
 def save_run_config(args, fileout):
     """
     Save argparse Namespace (or dict) to a YAML file
@@ -56,6 +57,7 @@ def save_run_config(args, fileout):
         yaml.safe_dump(cfg, f, sort_keys=False)
 
     return config_path
+
 
 def update_yml(path, updates: dict):
     path = Path(path)
