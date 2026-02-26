@@ -125,7 +125,7 @@ def main():
             "cstratfile": str(cstratfile),
             "jacfile": str(jacfile),
             "probefiles": {str(k): str(v) for k, v in probefiles.items()} 
-            if isinstance(probefiles, dict) else probefiles
+            if isinstance(probefiles, dict) else probefiles,
             "n2clistfiles": [str(p) for p in (n2clistfiles or [])],
         },
         "hconf": hconf,  # already YAML-safe
