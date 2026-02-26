@@ -6,6 +6,7 @@ corgihowfsc documentation
    :caption: Getting Started
 
    installation
+   contributing
 
 .. toctree::
    :maxdepth: 1
