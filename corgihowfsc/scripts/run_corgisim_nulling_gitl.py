@@ -20,7 +20,7 @@ from corgihowfsc.sensing.GettingProbes import ProbesShapes
 from corgihowfsc.utils.contrast_nomalization import CorgiNormalization, EETCNormalization
 from corgihowfsc.gitl.nulling_gitl import nulling_gitl
 from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
-from corgihowfsc.utils.make_output_file_structure import make_output_file_structure
+from corgihowfsc.utils.output_management import make_output_file_structure
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
@@ -75,7 +75,6 @@ def main():
     crop_params = {}
     crop_params['nrow'] = 153 # FIXED VALUE; do not change this
     crop_params['ncol'] = 153 # FIXED VALUE; do not change this
-
 
     # Define imager and normalization (counts->contrast) strategy
     corgi_overrides = {}
@@ -133,6 +132,7 @@ def main():
     }
 
     nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps, metadata)
+
 
 if __name__ == '__main__':    
     main()

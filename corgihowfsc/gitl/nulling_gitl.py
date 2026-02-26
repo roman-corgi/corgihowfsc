@@ -33,7 +33,7 @@ from howfsc.util.gitl_tools import param_order_to_list
 from corgihowfsc.gitl.modular_gitl import howfsc_computation
 from howfsc.precomp import howfsc_precomputation
 from corgihowfsc.utils.saving_output import save_outputs
-from corgihowfsc.utils.make_output_file_structure import save_run_config, update_yml
+from corgihowfsc.utils.output_management import save_run_config, update_yml
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
