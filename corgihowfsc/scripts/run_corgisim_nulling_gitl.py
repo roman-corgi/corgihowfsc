@@ -41,7 +41,7 @@ fileout_path = make_output_file_structure(loop_framework, backend_type, base_pat
 def main():
 
     args = get_args(
-        niter=5,
+        niter=3,
         mode='nfov_band1',
         dark_hole='360deg',
         probe_shape='default',
