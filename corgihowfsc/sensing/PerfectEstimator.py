@@ -24,4 +24,9 @@ class PerfectEstimator(Estimator):
             crop=crop
         )
 
+        # For corgisim, take the central wavelenght
+        if getattr(imager, 'backend', None) == 'corgihowfsc':
+            mid_index = len(model_efield) // 2
+            model_efield = model_efield[mid_index]
+
         return model_efield

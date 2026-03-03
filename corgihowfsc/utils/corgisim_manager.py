@@ -10,7 +10,7 @@ from corgihowfsc.utils.corgisim_utils import (
 
 class CorgisimManager:
     """
-    Manages Corgisim optics and scence generation for cgi-howfsc intergration. 
+    Manages Corgisim optics and scence generation for cgi-howfsc integration.
 
     This class handles: 
     - Mapping CGI modes to corgisim modes 
@@ -160,13 +160,23 @@ class CorgisimManager:
 
             return (self.k_gain*sim_scene.image_on_detector.data - B)/gain - master_dark
 
-    def generate_e_field(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, bias=0):
+    def generate_e_field(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, bias=0, crop = None):
         """
         Generate the e-field from corgisim
+        Args:
+            dm1v, dm2v: DM1 and DM2 voltages
+            lind: wavelength index
+            exptime: exposure time
+            crop:  4-tuple of (lower row, lower col, number of rows,
+                    number of columns), indicating where in a clean frame a PSF is taken.
+                    All are integers; the first two must be >= 0 and the second two must be > 0. Only used if name = 'cgi-howfsc'.
+        Return:
+            Generated_efield: Generated electric field, full or cropped
         """
         optics = self.create_optics(dm1v, dm2v, lind)
+        generated_efield = optics.get_e_field()
+        return generated_efield
 
-        return optics.get_e_field()
 
     def generate_master_dark(self, detector, exptime, gain):
         """
