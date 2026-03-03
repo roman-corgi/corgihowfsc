@@ -100,13 +100,16 @@ def main():
     elif backend_type == 'corgihowfsc':
         crop_params['lrow'] = 0
         crop_params['lcol'] = 0  
-        normalization_strategy = CorgiNormalization(cfg,
-                                                cstrat,
-                                                hconf,
-                                                cor=args.mode,
-                                                corgi_overrides=corgi_overrides,
-                                                separation_lamD=7,
-                                                exptime_norm=0.01)
+        if corgi_overrides['is_noise_free']:
+            normalization_strategy = CorgiNormalization(cfg,
+                                                    cstrat,
+                                                    hconf,
+                                                    cor=args.mode,
+                                                    corgi_overrides=corgi_overrides,
+                                                    separation_lamD=7,
+                                                    exptime_norm=0.01)
+        else:
+            normalization_strategy = EETCNormalization()
 
     metadata = {
         "inputs": {
