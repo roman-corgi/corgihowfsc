@@ -116,7 +116,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     log = logging.getLogger(__name__)
 
     config_path = save_run_config(args, args.fileout)
-    print(f"Saved run configuration to {config_path}")
+    log.info(f"Saved run configuration to {config_path}")
 
     update_yml(config_path, metadata)
 
@@ -187,7 +187,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             num_threads=num_threads,
         )
         t1 = time.time()
-        print('Jac/JTWJ/n2clist computation time: ' + str(t1-t0) + ' seconds')
+        log.info('Jac/JTWJ/n2clist computation time: ' + str(t1-t0) + ' seconds')
         pass
     elif precomp in ['precomp_jacs_once', 'precomp_jacs_always']:
         t0 = time.time()
@@ -202,7 +202,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             num_threads=num_threads,
         )
         t1 = time.time()
-        print('Initial jac calc time: ' + str(t1-t0) + ' seconds')
+        log.info('Initial jac calc time: ' + str(t1-t0) + ' seconds')
         n2clist = []
         for n2cfn in n2clistfiles:
             n2clist.append(pyfits.getdata(n2cfn))
@@ -321,12 +321,12 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         # New lists compared to original version
         measured_c.append(prev_c)
 
-        print('-----------------------------------')
-        print('Iteration: ' + str(iteration))
-        print('HOWFSC computation time: ' + str(t1-t0))
-        print('Previous contrast: ' + str(prev_c))
-        print('Next contrast: ' + str(next_c))
-        print('scales: ' + str(scale_factor_list))
+        log.info('-----------------------------------')
+        log.info('Iteration: ' + str(iteration))
+        log.info('HOWFSC computation time: ' + str(t1-t0))
+        log.info('Previous contrast: ' + str(prev_c))
+        log.info('Next contrast: ' + str(next_c))
+        log.info('scales: ' + str(scale_factor_list))
 
 
         # new dm1_list, dm2_list
@@ -361,7 +361,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
                 num_threads=num_threads,
             )
             t1 = time.time()
-            print('Jac recalc time: ' + str(t1-t0) + ' seconds')
+            log.info('Jac recalc time: ' + str(t1-t0) + ' seconds')
 
         # prev_exptime_list
         prev_exptime_list = param_order_to_list(exptime_list)
