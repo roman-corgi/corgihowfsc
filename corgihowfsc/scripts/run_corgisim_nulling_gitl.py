@@ -38,6 +38,8 @@ dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
 
 fileout_path = make_output_file_structure(loop_framework, backend_type, base_path, base_corgiloop_path, final_filename)
 
+output_every_iter = True  # Set to True to save frames at every iteration, False to save only the final frames. Note that setting this to True will increase the runtime and storage requirements.
+
 def main():
 
     args = get_args(
@@ -50,7 +52,7 @@ def main():
         num_threads=1,
         fileout=fileout_path,
         jacpath=defjacpath,
-        dmstartmap_filenames=dmstartmap_filenames,
+        dmstartmap_filenames=dmstartmap_filenames
     )
 
     # User params
@@ -134,7 +136,7 @@ def main():
         "corgi_overrides": corgi_overrides,
     }
 
-    nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps, metadata)
+    nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps, metadata, output_every_iter)
 
 
 if __name__ == '__main__':    
