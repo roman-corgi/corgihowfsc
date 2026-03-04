@@ -51,6 +51,7 @@ def main():
         fileout=fileout_path,
         jacpath=defjacpath,
         dmstartmap_filenames=dmstartmap_filenames,
+        logfile=os.path.join(os.path.dirname(fileout_path), 'gitl.log')
     )
 
     # User params
