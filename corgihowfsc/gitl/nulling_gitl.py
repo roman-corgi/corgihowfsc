@@ -13,6 +13,7 @@ import os
 import argparse
 import cProfile
 import pstats
+import io
 
 import logging
 log = logging.getLogger(__name__)
@@ -414,11 +415,17 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         pass
 
     if isprof:
-        ps = pstats.Stats(pr)
-        ps.sort_stats('cumtime').print_stats('howfsc', 20)
+        # cumtime
+        buf = io.StringIO()
+        ps = pstats.Stats(pr, stream=buf)
+        ps.sort_stats("cumtime").print_stats("howfsc", 20)
+        log.info("Profiler stats (cumtime)\n%s", buf.getvalue())
 
-        print() # line separate tottime
-        ps.sort_stats('tottime').print_stats('howfsc', 20)
+        # tottime
+        buf = io.StringIO()
+        ps = pstats.Stats(pr, stream=buf)
+        ps.sort_stats("tottime").print_stats("howfsc", 20)
+        log.info("Profiler stats (tottime)\n%s", buf.getvalue())
 
         pass
 
