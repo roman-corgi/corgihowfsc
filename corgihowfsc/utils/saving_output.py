@@ -26,7 +26,7 @@ def save_outputs_iter(fileout, cfg, camlist, framelistlist, otherlist, measured_
                header="Measured Contrast", comments="")
 
     # Create iteration subdirectory
-    i = len(framelistlist)-1:
+    i = len(framelistlist)-1
     iterpath = os.path.join(outpath, f"iteration_{i + 1:04d}")
     if not os.path.exists(iterpath):
         os.makedirs(iterpath)
