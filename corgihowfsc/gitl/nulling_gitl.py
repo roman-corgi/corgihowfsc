@@ -13,7 +13,9 @@ import os
 import argparse
 import cProfile
 import pstats
+
 import logging
+log = logging.getLogger(__name__)
 
 import numpy as np
 import astropy.io.fits as pyfits
