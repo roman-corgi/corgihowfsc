@@ -80,7 +80,7 @@ def main():
     corgi_overrides = {}
     corgi_overrides['output_dim'] = crop_params['nrow']
     corgi_overrides['is_noise_free'] = False
-    corgi_overrides['oversampling_factor'] = 2    
+    corgi_overrides['oversampling_factor'] = 3 # Always needs to be odd!    
     
     imager = GitlImage(
         cfg=cfg,         # Your CoronagraphMode object
