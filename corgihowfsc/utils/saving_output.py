@@ -33,8 +33,8 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
         os.makedirs(iterpath)
 
     # Initialize lists to collect e-field data across all iterations
-    all_efields_complex = []  # Will collect complex e-fields per iteration
-    all_perfect_efields_complex = []  # Will collect perfect complex e-fields per iteration
+    # all_efields_complex = []  # Will collect complex e-fields per iteration
+    # all_perfect_efields_complex = []  # Will collect perfect complex e-fields per iteration
 
     # Saving separate intensity files per iteration
     flist = framelistlist[i]
@@ -95,40 +95,21 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
     hdul_incoh.writeto(os.path.join(iterpath, "intensity_incoherent.fits"), overwrite=True)
 
     # --- E-FIELD ESTIMATIONS ---
-    efields = []
-    efields_complex = []
-    for n in range(len(cfg.sl_list)):
-        efields.append(np.real(oitem[n]['meas_efield']))
-        efields.append(np.imag(oitem[n]['meas_efield']))
-        efields_complex.append(oitem[n]['meas_efield'])
-
-    # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
-    efields_complex_array = np.stack(efields_complex, axis=0)
-    all_efields_complex.append(efields_complex_array)
+    efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array = refactor_e_fields(cfg, oitem)
 
     hdr_ef = pyfits.Header()
     hdr_ef['NLAM'] = len(cfg.sl_list)
     prim_ef = pyfits.PrimaryHDU(header=hdr_ef)
-    img_ef = pyfits.ImageHDU(np.array(efields))
+    img_ef = pyfits.ImageHDU(np.array(efields_realimag))
     hdul_ef = pyfits.HDUList([prim_ef, img_ef])
     hdul_ef.writeto(os.path.join(iterpath, "efield_estimations.fits"), overwrite=True)
 
     # --- PERFECT E-FIELDS ---
-    perfect_efields_list = []
-    perfect_efields_complex = []
-    for n in range(len(cfg.sl_list)):
-        perfect_efields_list.append(np.real(oitem[n]['model_efield']))
-        perfect_efields_list.append(np.imag(oitem[n]['model_efield']))
-        perfect_efields_complex.append(oitem[n]['model_efield'])
-
-    # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
-    perfect_efields_complex_array = np.stack(perfect_efields_complex, axis=0)
-    all_perfect_efields_complex.append(perfect_efields_complex_array)
 
     hdr_pef = pyfits.Header()
     hdr_pef['NLAM'] = len(cfg.sl_list)
     prim_pef = pyfits.PrimaryHDU(header=hdr_pef)
-    img_pef = pyfits.ImageHDU(np.array(perfect_efields_list))
+    img_pef = pyfits.ImageHDU(np.array(perfect_efields_realimag))
     hdul_pef = pyfits.HDUList([prim_pef, img_pef])
     hdul_pef.writeto(os.path.join(iterpath, "perfect_efields.fits"), overwrite=True)
 
@@ -141,18 +122,68 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
 
     print(f"Saved outputs (individual) for iteration {i + 1}")
 
-    return all_efields_complex, all_perfect_efields_complex
-        
+    return efields_complex_array, perfect_efields_complex_array
+
+def refactor_e_fields(cfg, oitem):
+    # --- E-FIELD ESTIMATIONS ---
+    efields_realimag = []
+    efields_complex = []
+    for n in range(len(cfg.sl_list)):
+        efields_realimag.append(np.real(oitem[n]['meas_efield']))
+        efields_realimag.append(np.imag(oitem[n]['meas_efield']))
+        efields_complex.append(oitem[n]['meas_efield'])
+
+    # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
+    efields_complex_array = np.stack(efields_complex, axis=0)
+    # all_efields_complex.append(efields_complex_array)
+
+
+    # --- PERFECT E-FIELDS ---
+    perfect_efields_realimag = []
+    perfect_efields_complex = []
+    for n in range(len(cfg.sl_list)):
+        perfect_efields_realimag.append(np.real(oitem[n]['model_efield']))
+        perfect_efields_realimag.append(np.imag(oitem[n]['model_efield']))
+        perfect_efields_complex.append(oitem[n]['model_efield'])
+
+    # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
+    perfect_efields_complex_array = np.stack(perfect_efields_complex, axis=0)
+    # all_perfect_efields_complex.append(perfect_efields_complex_array)
+
+    return efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array
     
 def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter):
 
     outpath = os.path.dirname(fileout)
 
+    # Initialize lists to collect e-field data across all iterations
+    all_efields_complex = []  # Will collect complex e-fields per iteration
+    all_perfect_efields_complex = []  # Will collect perfect complex e-fields per iteration
+
     # Create one subdirectory per iteration
     iters = [len(framelistlist)-1] if output_every_iter else range(len(framelistlist))
     for i in iters:
-        all_efields_complex, all_perfect_efields_complex = save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter)
+        efields_complex_array, perfect_efields_complex_array = save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter)
+        # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
+        efields_complex_array = np.stack(efields_complex_array, axis=0)
+        all_efields_complex.append(efields_complex_array)
 
+        perfect_efields_complex_array = np.stack(perfect_efields_complex_array, axis=0)
+        all_perfect_efields_complex.append(perfect_efields_complex_array)
+
+    # If we are outputting every iteration, we have not assembled the correct all_**_efields_complex so need to loop over
+    # and properly populate those
+    if output_every_iter:
+        for i in range(len(framelistlist)):
+            efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array = refactor_e_fields(
+                cfg, otherlist[i])
+
+            # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
+            efields_complex_array = np.stack(efields_complex_array, axis=0)
+            all_efields_complex.append(efields_complex_array)
+
+            perfect_efields_complex_array = np.stack(perfect_efields_complex_array, axis=0)
+            all_perfect_efields_complex.append(perfect_efields_complex_array)
 
     ### Calculate and plot estimation error variance
     # Stack all iterations into final cubes
