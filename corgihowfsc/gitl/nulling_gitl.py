@@ -105,6 +105,16 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         print('Making output directory: ', args.fileout)
         os.makedirs(os.path.dirname(args.fileout), exist_ok=True)
 
+    # Set up logging
+    if logfile is not None:
+        logging.basicConfig(filename=logfile, level=logging.INFO)
+        pass
+    else:
+        logging.basicConfig(level=logging.INFO)
+        pass
+
+    log = logging.getLogger(__name__)
+
     config_path = save_run_config(args, args.fileout)
     print(f"Saved run configuration to {config_path}")
 
