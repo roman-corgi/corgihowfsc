@@ -309,7 +309,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         # New lists compared to original version
         measured_c.append(prev_c)
 
-        # Write this iterations files now
+        # Write current iterations files now
         if fileout is not None and output_every_iter:
             hdr = pyfits.Header()
             hdr['NLAM'] = len(cfg.sl_list)
