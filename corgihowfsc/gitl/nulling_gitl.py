@@ -102,7 +102,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
 
     # Make filout dir
     if args.fileout is not None:
-        print('Making output directory ', args.fileout)
+        print('Making output directory: ', args.fileout)
         os.makedirs(os.path.dirname(args.fileout), exist_ok=True)
 
     config_path = save_run_config(args, args.fileout)
