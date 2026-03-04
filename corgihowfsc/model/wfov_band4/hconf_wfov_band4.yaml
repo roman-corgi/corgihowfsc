@@ -24,8 +24,8 @@ excam:
 
 # Hardware configuration for observation
 hardware:
-  sequence_list: [CGI_SEQ_WFOV_UNOCC_ASTROM_PHOTOM_PS_4A, CGI_SEQ_WFOV_UNOCC_ASTROM_PHOTOM_PS_4B, CGI_SEQ_WFOV_UNOCC_ASTROM_PHOTOM_PS_4C]
-  sequence_observation: CGI_SEQ_SETUP_NOFPMFS_WFOV
+  sequence_list: [WFOV_WFOV_4A_SEED, WFOV_WFOV_4B_SEED, WFOV_WFOV_4C_SEED]
+  sequence_observation: WFOV_WFOV_4_SEED
   pointer: pointer_howfsc.yaml
 
 # Wavefront control solver config
