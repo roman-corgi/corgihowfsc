@@ -149,7 +149,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     outpath = os.path.dirname(fileout)
 
     # Create one subdirectory per iteration
-    iters = [len(framelistlist)] if output_every_iter else range(len(framelistlist))
+    iters = [len(framelistlist)-1] if output_every_iter else range(len(framelistlist))
     for i in iters:
         all_efields_complex, all_perfect_efields_complex = save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter)
 
