@@ -309,6 +309,19 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         # New lists compared to original version
         measured_c.append(prev_c)
 
+        # Write this iterations files now
+        if fileout is not None:
+            hdr = pyfits.Header()
+            hdr['NLAM'] = len(cfg.sl_list)
+            prim = pyfits.PrimaryHDU(header=hdr)
+            img = pyfits.ImageHDU(framelist)
+            prev = pyfits.ImageHDU(prev_exptime_list)
+            hdul = pyfits.HDUList([prim, img, prev])
+            hdul.writeto(fileout, overwrite=True)
+    
+            save_outputs_iter(fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list)
+
+        
         print('-----------------------------------')
         print('Iteration: ' + str(iteration))
         print('HOWFSC computation time: ' + str(t1-t0))
