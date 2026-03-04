@@ -322,7 +322,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         measured_c.append(prev_c)
 
         log.info('-----------------------------------')
-        log.info('Iteration: ' + str(iteration))
+        log.info('Summary of iteration ' + str(iteration))
         log.info('HOWFSC computation time: ' + str(t1-t0))
         log.info('Previous contrast: ' + str(prev_c))
         log.info('Next contrast: ' + str(next_c))
