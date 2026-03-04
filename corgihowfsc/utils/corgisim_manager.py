@@ -23,12 +23,15 @@ class CorgisimManager:
         """
         Args:
             cfg:
-                An instance which contains all of the necessary data to operate CGI in respective modes. 
-                It contains two lists: sl_list (list of SingleLambda objects), dmlist (list of DMFace objects) which together are enough to define a coronagraphic diffraction model.
+                A Configuration object defining a coronagraph-mode setup for CGI, including wavelength channels (sl_list), deformable mirror states (dmlist),
+                and initial DM settings (initmaps), loaded from a YAML file (cfgfile).
+                See https://roman-corgi.github.io/corgihowfsc/cfg_docs.html for more details.
             cstrat: 
-                An instance of control strategy which contains the necessary information to perform wavefront sensing   and control. 
+                A ControlStrategy object which contains the necessary information to perform wavefront sensing and control.
+                See https://roman-corgi.github.io/corgihowfsc/cstrat_docs.html for more details.
             hconf:
-                An instance contains hardware configurations and host star properties. 
+                A HardwareConfig object that contains instrument configurations and host star properties.
+                See https://roman-corgi.github.io/corgihowfsc/hconf_docs.html for more details.
             cor: CGI coronagraph mode (e.g., 'narrowfov', 'nfov_flat', 'nfov_dm')
             corgi_overrides: Optional dict of CorgiSim-specific overrides:
                 See corgisim doc for details, but some examples include:
