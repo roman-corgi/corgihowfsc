@@ -7,26 +7,27 @@ from howfsc.util.gitl_tools import param_order_to_list
 from howfsc.util.insertinto import insertinto
 
 
-def save_outputs_iter(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list):
+def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter):
 
     outpath = os.path.dirname(fileout)
 
-    # Plot measured_c vs iteration
-    plt.figure()
-    plt.plot(np.arange(len(measured_c)) + 1, measured_c, marker='o')
-    plt.xlabel('Iteration')
-    plt.ylabel('Measured Contrast')
-    plt.semilogy()
-    plt.xticks(np.arange(1, len(measured_c) + 1))
-    plt.savefig(os.path.join(outpath, "contrast_vs_iteration.pdf"), bbox_inches='tight')
-    plt.close()
+    if output_every_iter or (not output_every_iter and i < len(framelistlist)-1):
+        # Plot measured_c vs iteration
+        plt.figure()
+        plt.plot(np.arange(len(measured_c)) + 1, measured_c, marker='o')
+        plt.xlabel('Iteration')
+        plt.ylabel('Measured Contrast')
+        plt.semilogy()
+        plt.xticks(np.arange(1, len(measured_c) + 1))
+        plt.savefig(os.path.join(outpath, "contrast_vs_iteration.pdf"), bbox_inches='tight')
+        plt.close()
 
-    # Save measured_c to a csv file
-    np.savetxt(os.path.join(outpath, "measured_contrast.csv"), np.array(measured_c), delimiter=",",
-               header="Measured Contrast", comments="")
+        # Save measured_c to a csv file
+        np.savetxt(os.path.join(outpath, "measured_contrast.csv"), np.array(measured_c), delimiter=",",
+                   header="Measured Contrast", comments="")
 
     # Create iteration subdirectory
-    i = len(framelistlist)-1
+    # i = len(framelistlist)-1
     iterpath = os.path.join(outpath, f"iteration_{i + 1:04d}")
     if not os.path.exists(iterpath):
         os.makedirs(iterpath)
@@ -139,139 +140,18 @@ def save_outputs_iter(fileout, cfg, camlist, framelistlist, otherlist, measured_
         pyfits.writeto(os.path.join(iterpath, "dm2_command.fits"), dm2_list[i], overwrite=True)
 
     print(f"Saved outputs (individual) for iteration {i + 1}")
+
+    return all_efields_complex, all_perfect_efields_complex
         
     
-def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list):
+def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter):
 
     outpath = os.path.dirname(fileout)
 
-    # Plot measured_c vs iteration
-    plt.figure()
-    plt.plot(np.arange(len(measured_c)) + 1, measured_c, marker='o')
-    plt.xlabel('Iteration')
-    plt.ylabel('Measured Contrast')
-    plt.semilogy()
-    plt.xticks(np.arange(1, len(measured_c) + 1))
-    plt.savefig(os.path.join(outpath, "contrast_vs_iteration.pdf"), bbox_inches='tight')
-    plt.close()
-
-    # Save measured_c to a csv file
-    np.savetxt(os.path.join(outpath, "measured_contrast.csv"), np.array(measured_c), delimiter=",",
-               header="Measured Contrast", comments="")
-
     # Create one subdirectory per iteration
     for i in range(len(framelistlist)):
-        iterpath = os.path.join(outpath, f"iteration_{i + 1:04d}")
-        if not os.path.exists(iterpath):
-            os.makedirs(iterpath)
+        all_efields_complex, all_perfect_efields_complex = save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter)
 
-    # Initialize lists to collect e-field data across all iterations
-    all_efields_complex = []  # Will collect complex e-fields per iteration
-    all_perfect_efields_complex = []  # Will collect perfect complex e-fields per iteration
-
-    # Saving separate intensity files per iteration
-    for i, flist in enumerate(framelistlist):
-        oitem = otherlist[i]
-
-        # Re-define iterpath for this loop
-        iterpath = os.path.join(outpath, f"iteration_{i + 1:04d}")
-
-        # List for all intensities (current iteration)
-        stack_total = []
-        stack_coh = []
-        stack_incoh = []
-
-        for n in range(len(cfg.sl_list)):
-            # Total intensity
-            total_int = oitem[n].get('meas_intensity', np.zeros((1, 1)))
-
-            # Coherent intensity
-            coh_int = oitem[n].get('modul_intensity', np.zeros_like(total_int))
-
-            # Incoherent intensity
-            incoh_int = oitem[n].get('unmodul_intensity', np.zeros_like(total_int))
-
-            # Stacking list
-            stack_total.append(total_int)
-            stack_coh.append(coh_int)
-            stack_incoh.append(incoh_int)
-
-        hdr = pyfits.Header()
-        hdr['NLAM'] = len(cfg.sl_list)
-        hdr['ITER'] = i + 1
-
-        # Saving data of images
-        prim = pyfits.PrimaryHDU(header=hdr)
-        img_raw = pyfits.ImageHDU(flist, name='RAW_IMAGES')
-        prev = pyfits.ImageHDU(param_order_to_list(camlist[i][1]), name='CAM_PARAMS')
-
-        hdul_main = pyfits.HDUList([prim, img_raw, prev])
-        hdul_main.writeto(os.path.join(iterpath, "images.fits"), overwrite=True)
-
-        # Saving total intensity
-        prim_tot = pyfits.PrimaryHDU(header=hdr)
-        img_tot = pyfits.ImageHDU(np.array(stack_total), name='TOTAL_INTENSITY')
-        hdul_tot = pyfits.HDUList([prim_tot, img_tot])
-        hdul_tot.writeto(os.path.join(iterpath, "intensity_total.fits"), overwrite=True)
-
-        # Saving coherent intensity
-        prim_coh = pyfits.PrimaryHDU(header=hdr)
-        img_coh = pyfits.ImageHDU(np.array(stack_coh), name='COHERENT_INTENSITY')
-        hdul_coh = pyfits.HDUList([prim_coh, img_coh])
-        hdul_coh.writeto(os.path.join(iterpath, "intensity_coherent.fits"), overwrite=True)
-
-        # Saving incoherent intensity
-        prim_incoh = pyfits.PrimaryHDU(header=hdr)
-        img_incoh = pyfits.ImageHDU(np.array(stack_incoh), name='INCOHERENT_INTENSITY')
-        hdul_incoh = pyfits.HDUList([prim_incoh, img_incoh])
-        hdul_incoh.writeto(os.path.join(iterpath, "intensity_incoherent.fits"), overwrite=True)
-
-        # --- E-FIELD ESTIMATIONS ---
-        efields = []
-        efields_complex = []
-        for n in range(len(cfg.sl_list)):
-            efields.append(np.real(oitem[n]['meas_efield']))
-            efields.append(np.imag(oitem[n]['meas_efield']))
-            efields_complex.append(oitem[n]['meas_efield'])
-
-        # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
-        efields_complex_array = np.stack(efields_complex, axis=0)
-        all_efields_complex.append(efields_complex_array)
-
-        hdr_ef = pyfits.Header()
-        hdr_ef['NLAM'] = len(cfg.sl_list)
-        prim_ef = pyfits.PrimaryHDU(header=hdr_ef)
-        img_ef = pyfits.ImageHDU(np.array(efields))
-        hdul_ef = pyfits.HDUList([prim_ef, img_ef])
-        hdul_ef.writeto(os.path.join(iterpath, "efield_estimations.fits"), overwrite=True)
-
-        # --- PERFECT E-FIELDS ---
-        perfect_efields_list = []
-        perfect_efields_complex = []
-        for n in range(len(cfg.sl_list)):
-            perfect_efields_list.append(np.real(oitem[n]['model_efield']))
-            perfect_efields_list.append(np.imag(oitem[n]['model_efield']))
-            perfect_efields_complex.append(oitem[n]['model_efield'])
-
-        # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
-        perfect_efields_complex_array = np.stack(perfect_efields_complex, axis=0)
-        all_perfect_efields_complex.append(perfect_efields_complex_array)
-
-        hdr_pef = pyfits.Header()
-        hdr_pef['NLAM'] = len(cfg.sl_list)
-        prim_pef = pyfits.PrimaryHDU(header=hdr_pef)
-        img_pef = pyfits.ImageHDU(np.array(perfect_efields_list))
-        hdul_pef = pyfits.HDUList([prim_pef, img_pef])
-        hdul_pef.writeto(os.path.join(iterpath, "perfect_efields.fits"), overwrite=True)
-
-        # --- DM STATES (PER ITERATION) ---
-        if dm1_list is not None and i < len(dm1_list):
-            pyfits.writeto(os.path.join(iterpath, "dm1_command.fits"), dm1_list[i], overwrite=True)
-
-        if dm2_list is not None and i < len(dm2_list):
-            pyfits.writeto(os.path.join(iterpath, "dm2_command.fits"), dm2_list[i], overwrite=True)
-
-        print(f"Saved outputs (individual) for iteration {i + 1}")
 
     ### Calculate and plot estimation error variance
     # Stack all iterations into final cubes

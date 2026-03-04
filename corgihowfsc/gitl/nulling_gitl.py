@@ -32,7 +32,7 @@ from howfsc.util.gitl_tools import param_order_to_list
 
 from corgihowfsc.gitl.modular_gitl import howfsc_computation
 from howfsc.precomp import howfsc_precomputation
-from corgihowfsc.utils.saving_output import save_outputs
+from corgihowfsc.utils.saving_output import save_outputs, save_outputs_iter
 from corgihowfsc.utils.output_management import save_run_config, update_yml
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
@@ -40,7 +40,7 @@ howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
 
 
-def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps, metadata=None):
+def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps, metadata=None, output_every_iter=True):
     """Run a nulling sequence, using the compact optical model as the data source.
 
     Parameters:
@@ -310,7 +310,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         measured_c.append(prev_c)
 
         # Write this iterations files now
-        if fileout is not None:
+        if fileout is not None and output_every_iter:
             hdr = pyfits.Header()
             hdr['NLAM'] = len(cfg.sl_list)
             prim = pyfits.PrimaryHDU(header=hdr)
@@ -319,7 +319,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             hdul = pyfits.HDUList([prim, img, prev])
             hdul.writeto(fileout, overwrite=True)
     
-            save_outputs_iter(fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list)
+            _, _ = save_outputs_iter(iteration-1, fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter)
 
         
         print('-----------------------------------')
@@ -432,7 +432,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         hdul = pyfits.HDUList([prim, img, prev])
         hdul.writeto(fileout, overwrite=True)
 
-        save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list)
+        save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter)
 
 
 if __name__ == "__main__":
