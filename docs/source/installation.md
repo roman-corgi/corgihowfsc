@@ -18,6 +18,7 @@ Download these files manually by clicking on the following links and save them t
 | `proper_v3.3.4_python.zip`                        | [Proper Library](https://sourceforge.net/projects/proper-library/files/proper_v3.3.4_python.zip/download)                              |
 | `roman_preflight_proper_public_v2.0.2_python.zip` | [Roman preflight Proper model](https://sourceforge.net/projects/cgisim/files/roman_preflight_proper_public_v2.0.2_python.zip/download) |
 | `cgisim_v4.1.zip`                                 | [CGISim](https://sourceforge.net/projects/cgisim/files/cgisim_v4.1.zip/download)                                                       |
+| `sequences.py`                                    | [corgi_ObsPlanning](https://github.com/roman-corgi/corgi_ObsPlanning/blob/main/eetc_sequences/sequences.yaml)                                               |
 
 ### 2. Clone required repositories
 
@@ -68,8 +69,19 @@ cd cgi-howfsc
 pip install -e .
 ```
 
-### 6. Verify Installation
+### 6. Override sequences file for EETC (TEMPORARY)
+Move `sequences.py` file from downloads to `cgi-eetc\eetc\config`. If you are uncertain where your cgi-eetc installation lives, 
+```python
+# In Python, try importing the packages
+import os
+import eetc
+eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 
+print(eetc_path)
+```
+
+
+### 7. Verify Installation
 Test that everything is installed correctly:
 
 ```python

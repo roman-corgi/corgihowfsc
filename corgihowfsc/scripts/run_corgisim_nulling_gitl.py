@@ -80,7 +80,7 @@ def main():
     corgi_overrides = {}
     corgi_overrides['output_dim'] = crop_params['nrow']
     corgi_overrides['is_noise_free'] = False
-    corgi_overrides['oversampling_factor'] = 2    
+    corgi_overrides['oversampling_factor'] = 3 # Always needs to be odd!    
     
     imager = GitlImage(
         cfg=cfg,         # Your CoronagraphMode object
@@ -100,13 +100,16 @@ def main():
     elif backend_type == 'corgihowfsc':
         crop_params['lrow'] = 0
         crop_params['lcol'] = 0  
-        normalization_strategy = CorgiNormalization(cfg,
-                                                cstrat,
-                                                hconf,
-                                                cor=args.mode,
-                                                corgi_overrides=corgi_overrides,
-                                                separation_lamD=7,
-                                                exptime_norm=0.01)
+        if corgi_overrides['is_noise_free']:
+            normalization_strategy = CorgiNormalization(cfg,
+                                                    cstrat,
+                                                    hconf,
+                                                    cor=args.mode,
+                                                    corgi_overrides=corgi_overrides,
+                                                    separation_lamD=7,
+                                                    exptime_norm=0.01)
+        else:
+            normalization_strategy = EETCNormalization()
 
     metadata = {
         "inputs": {
