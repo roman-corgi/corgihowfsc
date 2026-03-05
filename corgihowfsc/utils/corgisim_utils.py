@@ -7,6 +7,8 @@ CGI_TO_CORGI_MAPPING = {
     'nfov_dm': 'hlc',
     'nfov_band1': 'hlc',
     'wfov_band4': 'spc-wide'
+    'spec_band2': 'spc-spec_band2', 
+    'spec_band3': 'spc-spec_band3',
     # NOTE - Add new mappings here as support is added
     # 'widefov': 'widefov',  # Future support
     # 'spec': 'spec',    # Future spectroscopy mode
