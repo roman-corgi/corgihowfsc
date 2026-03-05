@@ -218,15 +218,6 @@ def load_files(args, howfscpath):
             f"Supported: {', '.join(supported_shapes)}"
         )
 
-    # Set up logging
-    if logfile is not None:
-        logging.basicConfig(filename=logfile, level=logging.INFO)
-        pass
-    else:
-        logging.basicConfig(level=logging.INFO)
-        pass
-    log = logging.getLogger(__name__)
-
     model_path_all = os.path.join(howfscpath, 'model', 'every_mask_config')
     n2clistfiles = [
         os.path.join(model_path_all, 'ones_like_fs.fits'),
