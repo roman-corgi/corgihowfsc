@@ -116,8 +116,8 @@ def test_wavelength_mapping_from_cfg(cfg):
     """For each real cfg, map the middle wavelength to a CORGISIM bandpass."""
 
     idx = len(cfg.sl_list) // 2
-    lam = cfg.sl_list[idx].lam
-    band = map_wavelength_to_corgisim_bandpass(lam)
+    wvl = cfg.sl_list[idx].lam
+    band = map_wavelength_to_corgisim_bandpass(wvl)
 
     wavelengths = [sl.lam for sl in cfg.sl_list]
 
@@ -125,11 +125,11 @@ def test_wavelength_mapping_from_cfg(cfg):
     log.info("Model path: %s", cfg.modelpath)
     log.info("Wavelength list: %s", wavelengths)
     log.info("Selected index: %d", idx)
-    log.info("Selected wavelength: %f", lam)
+    log.info("Selected wavelength: %.2e", wvl)
     log.info("Mapped band: %s", band)
 
     assert band in {"1", "2", "3", "4"}, \
-        f"Unexpected band {band} for lam={lam} (idx={idx}, nlam={len(cfg.sl_list)})"
+        f"Unexpected band {band} for wvl={wvl} (idx={idx}, nlam={len(cfg.sl_list)})"
 
 def test_cgi_needs_crop(mock_cfg, mock_cstrat, mock_hconf):
     """Test CGI backend crop validation in check_gitlframeinputs"""
