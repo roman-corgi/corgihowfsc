@@ -1,17 +1,16 @@
 import numpy as np
 
 # Mapping configuration - easy to update for new modes
+# NOTE - Add new mappings here as support is added
+
 CGI_TO_CORGI_MAPPING = {
     'narrowfov': 'hlc',
     'nfov_flat': 'hlc', 
     'nfov_dm': 'hlc',
     'nfov_band1': 'hlc',
-    'wfov_band4': 'spc-wide'
     'spec_band2': 'spc-spec_band2', 
     'spec_band3': 'spc-spec_band3',
-    # NOTE - Add new mappings here as support is added
-    # 'widefov': 'widefov',  # Future support
-    # 'spec': 'spec',    # Future spectroscopy mode
+    'wfov_band4': 'spc-wide'
 }
 
 SUPPORTED_CGI_MODES = list(CGI_TO_CORGI_MAPPING.keys())
