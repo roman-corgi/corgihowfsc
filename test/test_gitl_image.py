@@ -8,6 +8,8 @@ from unittest.mock import Mock, patch
 import sys
 import os
 import corgihowfsc
+import logging
+log = logging.getLogger(__name__)
 
 from howfsc.model.mode import CoronagraphMode
 
@@ -19,7 +21,7 @@ KNOWN_CFGS = [
     ("wfov_band4", "360deg"),
 ]
 
-@pytest.fixture(params=KNOWN_CFGS)
+@pytest.fixture(params=KNOWN_CFGS, ids=lambda p: f"{p[0]}-{p[1]}")
 def cfg(request):
     """Load a real CoronagraphMode for each known (mode, dark_hole)."""
     mode, dark_hole = request.param
@@ -38,6 +40,7 @@ def cfg(request):
     assert os.path.exists(cfgfile), f"Missing cfg file: {cfgfile}"
 
     cfg = CoronagraphMode(cfgfile)
+    cfg.modelpath = modelpath
 
     return cfg
     
@@ -111,10 +114,22 @@ def test_missing_params(mock_hconf):
 
 def test_wavelength_mapping_from_cfg(cfg):
     """For each real cfg, map the middle wavelength to a CORGISIM bandpass."""
+
     idx = len(cfg.sl_list) // 2
     lam = cfg.sl_list[idx].lam
     band = map_wavelength_to_corgisim_bandpass(lam)
-    assert band in {"1", "2", "3", "4"}, f"Unexpected band {band} for lam={lam} (idx={idx}, nlam={len(cfg.sl_list)})"
+
+    wavelengths = [sl.lam for sl in cfg.sl_list]
+
+    log.info("\n--- CFG TEST ---")
+    log.info("Model path: %s", cfg.modelpath)
+    log.info("Wavelength list: %s", wavelengths)
+    log.info("Selected index: %d", idx)
+    log.info("Selected wavelength: %f", lam)
+    log.info("Mapped band: %s", band)
+
+    assert band in {"1", "2", "3", "4"}, \
+        f"Unexpected band {band} for lam={lam} (idx={idx}, nlam={len(cfg.sl_list)})"
 
 def test_cgi_needs_crop(mock_cfg, mock_cstrat, mock_hconf):
     """Test CGI backend crop validation in check_gitlframeinputs"""
