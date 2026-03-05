@@ -315,6 +315,8 @@ def load_files(args, howfscpath):
         probefiles[1] = probe2file
 
     elif mode == 'spec_band2':
+        if args.dark_hole != 'both_sides':
+            raise ValueError("For spectroscopy modes, dark hole must be 'both_sides'")
         modelpath_band = os.path.join(howfscpath, 'model', 'spec_band2')
         modelpath = os.path.join(modelpath_band, mode + '_' + args.dark_hole)
         probepath = os.path.join(howfscpath, 'model', 'probes')
@@ -324,6 +326,7 @@ def load_files(args, howfscpath):
         cfgfile = os.path.join(modelpath, 'howfsc_optical_model.yaml')
         cstratfile = os.path.join(modelpath, 'cstrat_spec_band2.yaml')
 
+        # BUG - file missing - only exist in cgihowfsc but not in corgihowfsc
         probe0file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_cos.fits')
         probe1file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_sinlr.fits')
         probe2file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_sinud.fits')
@@ -346,7 +349,15 @@ def load_files(args, howfscpath):
             os.path.join(model_path_all, 'ones_like_fs.fits'),
         ]
 
+        if dmstartmap_filenames is None:
+            print('No DM start maps provided, loading default...')
+            dmstartmap_filenames = ['iter_061_dm1.fits', 'iter_061_dm2.fits']
+        else:
+            print('Using provided DM start maps: ', dmstartmap_filenames)
+
     elif mode == 'spec_band3':
+        if args.dark_hole != 'both_sides':
+            raise ValueError("For spectroscopy modes, dark hole must be 'both_sides'")
         modelpath_band = os.path.join(howfscpath, 'model', 'spec_band3')
         modelpath = os.path.join(modelpath_band, mode + '_' + args.dark_hole)
         probepath = os.path.join(howfscpath, 'model', 'probes')
@@ -356,6 +367,7 @@ def load_files(args, howfscpath):
         cfgfile = os.path.join(modelpath, 'howfsc_optical_model.yaml')
         cstratfile = os.path.join(modelpath, 'cstrat_spec_band3.yaml')
 
+        # BUG - file missing - only exist in cgihowfsc but not in corgihowfsc
         probe0file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_cos.fits')
         probe1file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_sinlr.fits')
         probe2file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_sinud.fits')
