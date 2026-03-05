@@ -177,6 +177,37 @@ class GitlImage:
             cleanrow=cleanrow,
             cleancol=cleancol
         )
+
+    def get_images(dm1_list, dm2_list, exptime_list, gain_list, croplist, cstrat, hconf, normalization_strategy, get_cgi_eetc):
+
+            rng = np.random.default_rng(12345)
+            framelist = []
+            for indj, sl in enumerate(cfg.sl_list):
+                crop = croplist[indj]
+                # TODO: what are correct camera settings here?
+                _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, indj, dm1_list[0], dm2_list[0], gain=1)
+                for indk in range(ndm):
+                    f = self.get_image(dm1_list[indj*ndm + indk],
+                                     dm2_list[indj*ndm + indk],
+                                     exptime_list[indj*ndm + indk],
+                                     gain=gain_list[indj*ndm + indk],
+                                     crop=crop,
+                                     lind=indj,
+                                     peakflux=peakflux,
+                                     cleanrow=1024,
+                                     cleancol=1024,
+                                     fixedbp=cstrat.fixedbp,
+                                     wfe=None)
+        
+                    bpmeas = rng.random(f.shape) > (1 - fracbadpix)
+                    f[bpmeas] = np.nan
+                    framelist.append(f)
+                    pass
+                pass
+
+
+        return framelist
+        
     def get_image(self, dm1v, dm2v, exptime, gain=1, crop=None, lind=0, peakflux=1, cleanrow=1024, cleancol=1024, fixedbp=np.zeros((1024, 1024), dtype=bool), wfe=None):
 
         """
