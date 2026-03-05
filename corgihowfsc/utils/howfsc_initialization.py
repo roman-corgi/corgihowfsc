@@ -40,8 +40,12 @@ def get_args(niter=5,
             Coronagraph mode from test data; must be one of 'widefov', 'narrowfov',
             'nfov_dm', 'nfov_flat', or 'spectroscopy'.  Defaults to 'narrowfov'.
         isprof : bool, optional
-            If True, runs the Python cProfile profiler on howfsc_computation and
-            displays the top 20 howfsc/ contributors to cumulative time.
+            If True, enables Python's cProfile profiler around calls to
+            `howfsc_computation()` during the nulling loop. Profiling statistics
+            are accumulated across all iterations. At the end of the run, the
+            top 20 entries whose module or file path contains "howfsc" are
+            logged, sorted by both cumulative time ("cumtime") and internal
+            function time ("tottime").
         logfile : str, optional
             If present, absolute path to file location to log to.
         fracbadpix : float, optional
@@ -204,10 +208,6 @@ def load_files(args, howfscpath):
         raise ValueError('Number of bad packets cannot be less than 0.')
     if nbadframe < 0:
         raise ValueError('Number of bad frames cannot be less than 0.')
-
-    if isprof:
-        pr = cProfile.Profile()
-        pass
 
     # Check probes shapes : Default = sinc-sin-sin, others are alternates probes
     supported_shapes = {'default', 'single', 'gaussian', 'unmodulated_sinc'}
