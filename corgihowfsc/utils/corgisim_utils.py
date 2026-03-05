@@ -36,17 +36,18 @@ def _extract_host_properties_from_hconf(hconf):
         raise ValueError(f"hconf missing required star configuration: {e}")
 
 # Helper function to map wavelength to corgisim bandpass
-def map_wavelength_to_corgisim_bandpass(wavelength_m, tolerance=3e-9):
+def map_wavelength_to_corgisim_bandpass(wavelength_m, tolerance=5e-9):
     """
     Map wavelength to CorgiSim bandpass label.
     
     Args:
         wavelength_m: Wavelength in meters
-        tolerance: Matching tolerance in meters (default ±3nm)
+        tolerance: Matching tolerance in meters (default ±5nm)
         
     Returns:
         CorgiSim bandpass label ('1', '2', '3', or '4')
     """
+
     corgisim_wavelengths = {
         '1': 575e-9, '2': 660e-9, '3': 730e-9, '4': 825e-9}
     
