@@ -36,10 +36,16 @@ class CorgiNormalization(Normalization):
         super().__init__()
 
         self.separation_lamD = separation_lamD
-        self.exptime_norm = exptime_norm
+
 
         # Initialize corgisime manager
         self.corgisim_manager = CorgisimManager(cfg, cstrat, hconf, cor, corgi_overrides=corgi_overrides)
+
+        if self.corgisim_manager.is_noise_free:
+            self.exptime_norm = 1
+        else:
+            self.exptime_norm = exptime_norm
+
 
     def calc_flux_rate(self, get_cgi_eetc, hconf, sl_ind, dm1v, dm2v, gain=1):
         """
@@ -75,8 +81,9 @@ class CorgiNormalization(Normalization):
                                                                        lind=sl_ind,
                                                                        exptime=self.exptime_norm,
                                                                        gain=gain)
-        if np.nanmax(image_comp_corgi) > 89610: #10300:
+        if (np.nanmax(image_comp_corgi) > 89610) and (not self.corgisim_manager.is_noise_free): #10300:
             print("**** WARNING: off-axis PSF saturated ****")
+
         peakflux = np.nanmax(image_comp_corgi) / self.exptime_norm
 
         return image_comp_corgi/self.exptime_norm, peakflux
@@ -96,3 +103,38 @@ class CorgiNormalization(Normalization):
 
         # TODO - check the normalisation for the noise case
         return im / exptime / peakflux
+
+
+class CorgiNormalizationOnAxis(CorgiNormalization):
+    def __init__(self, cfg, cstrat, hconf, cor=None, corgi_overrides=None, separation_lamD=None, exptime_norm=1):
+        super().__init__(cfg, cstrat, hconf, cor=None, corgi_overrides=None, separation_lamD=None, exptime_norm=1)
+
+    def calc_flux_rate(self, get_cgi_eetc, hconf, sl_ind, dm1v, dm2v, gain=1):
+        """
+        Calculate peak flux rate for normalization using an off-axis point source (with the stellar PSF input), placed at specified separation in lambda/D.
+
+        Args:
+            dm1v: 2D array of DM1 voltages
+            dm2v: 2D array of DM2 voltages
+            lind: integer, index of the wavelength slice to use
+            exptime: float, exposure time [s]
+            gain: float, gain factor (default 1.0)
+
+        Returns:
+            peakflux: float, peak flux value from the off-axis PSF in [counts/s] or [photons/s]
+
+        Note: the off-axis source is placed at (dx=0, dy=separation_lamD) in mas. lambda/D is calculated at the central wavelength of the bandpass.
+
+        """
+
+        image_comp_corgi = self.corgisim_manager.generate_on_axis_psf(dm1v,
+                                                                       dm2v,
+                                                                       lind=sl_ind,
+                                                                       exptime=self.exptime_norm,
+                                                                       gain=gain)
+        if (np.nanmax(image_comp_corgi) > 89610) and (not self.corgisim_manager.is_noise_free):  # 10300:
+            print("**** WARNING: off-axis PSF saturated ****")
+
+        peakflux = np.nanmax(image_comp_corgi) / self.exptime_norm
+
+        return image_comp_corgi / self.exptime_norm, peakflux
