@@ -369,25 +369,8 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         prev_gain_list = param_order_to_list(gain_list)
 
         # new framelist
-        framelist = []
-        for indj, sl in enumerate(cfg.sl_list):
-            crop = croplist[indj]
-            _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, indj, dm1_list[0], dm2_list[0], gain=1)
-            for indk in range(ndm):
-                f = imager.get_image(dm1_list[indj * ndm + indk],
-                                 dm2_list[indj * ndm + indk],
-                                 prev_exptime_list[indj*ndm + indk],
-                                 gain=prev_gain_list[indj*ndm + indk],
-                                 crop=crop,
-                                 lind=indj,
-                                 peakflux=peakflux,
-                                 cleanrow=1024,
-                                 cleancol=1024,
-                                 fixedbp=cstrat.fixedbp,
-                                 wfe=None)
-                framelist.append(f)
-                pass
-            pass
+        framelist =  imager.get_images(dm1_list, dm2_list, prev_exptime_list, prev_gain_list, croplist, cstrat, hconf,
+                                        normalization_strategy, get_cgi_eetc, ndm, cfg, fracbadpix)
 
         # drop packets for testing if requested
         if nbadpacket > 0:
