@@ -6,6 +6,9 @@ import numpy as np
 from howfsc.util.gitl_tools import param_order_to_list
 from howfsc.util.insertinto import insertinto
 
+import logging
+log = logging.getLogger(__name__)
+
 def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list):
 
     outpath = os.path.dirname(fileout)
@@ -136,7 +139,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
         if dm2_list is not None and i < len(dm2_list):
             pyfits.writeto(os.path.join(iterpath, "dm2_command.fits"), dm2_list[i], overwrite=True)
 
-        print(f"Saved outputs (individual) for iteration {i + 1}")
+        log.info(f"Saved outputs (individual) for iteration {i + 1}")
 
     ### Calculate and plot estimation error variance
     # Stack all iterations into final cubes
@@ -152,7 +155,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
         dh = cfg.sl_list[j].dh.e
         dhcrop = insertinto(dh, (nrow, ncol)).astype('bool')
         dhmask_cube.append(dhcrop)
-        print(f"DH mask {j}: {np.sum(dhcrop)} pixels in dark hole out of {dhcrop.size} total")
+        log.info(f"DH mask {j}: {np.sum(dhcrop)} pixels in dark hole out of {dhcrop.size} total")
 
     # Stack into cube: shape (n_wavelengths, nrow, ncol)
     dhmask_cube = np.stack(dhmask_cube, axis=0)
@@ -160,16 +163,16 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     # Compute difference cube
     efield_diff = efields_datacube - perfect_efields_datacube
 
-    print(f"E-field difference stats:")
-    print(f"  Shape: {efield_diff.shape}")
-    print(f"  Min magnitude: {np.min(np.abs(efield_diff))}")
-    print(f"  Max magnitude: {np.max(np.abs(efield_diff))}")
-    print(f"  Has NaNs: {np.any(np.isnan(efield_diff))}")
-    print(f"  Has Infs: {np.any(np.isinf(efield_diff))}")
+    log.info(f"E-field difference stats:")
+    log.info(f"  Shape: {efield_diff.shape}")
+    log.info(f"  Min magnitude: {np.min(np.abs(efield_diff))}")
+    log.info(f"  Max magnitude: {np.max(np.abs(efield_diff))}")
+    log.info(f"  Has NaNs: {np.any(np.isnan(efield_diff))}")
+    log.info(f"  Has Infs: {np.any(np.isinf(efield_diff))}")
 
     # Apply the dh mask and compute variance per wavelength across iterations
     if efields_datacube.shape[0] < 2:
-        print("Warning: Need at least 2 iterations to compute variance. Current iterations:", efields_datacube.shape[0])
+        log.warning(f"Warning: Need at least 2 iterations to compute variance. Current iterations: {efields_datacube.shape[0]}")
 
     estimation_variance = np.zeros((efield_diff.shape[1], nrow, ncol))  # (n_wavelengths, nrow, ncol)
     variance_per_iter_all_wl = []  # Store variance per iteration for each wavelength
@@ -194,7 +197,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
                 # Check for problematic values
                 nan_count = np.sum(np.isnan(pixel_variance))
                 inf_count = np.sum(np.isinf(pixel_variance))
-                print(f"Wavelength {wl_idx}: {nan_count} NaNs, {inf_count} Infs out of {len(pixel_variance)} pixels")
+                log.info(f"Wavelength {wl_idx}: {nan_count} NaNs, {inf_count} Infs out of {len(pixel_variance)} pixels")
 
                 # Put the variance values back into the full array
                 estimation_variance[wl_idx][mask] = pixel_variance
@@ -209,7 +212,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
                         variance_per_iter.append(0.0)
                 variance_per_iter_all_wl.append(variance_per_iter)
             else:
-                print(f"Wavelength {wl_idx}: Insufficient data for variance calculation")
+                log.warning(f"Wavelength {wl_idx}: Insufficient data for variance calculation")
                 variance_per_iter_all_wl.append([0.0] * efield_diff.shape[0])
         else:
             variance_per_iter_all_wl.append([0.0] * efield_diff.shape[0])
