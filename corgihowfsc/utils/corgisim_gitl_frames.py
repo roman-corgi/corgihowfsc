@@ -21,6 +21,10 @@ import proper
 from corgisim import outputs
 import time
 
+import multiprocessing
+from multiprocessing import Process
+from itertools import repeat
+
 # import helper functions 
 from corgihowfsc.utils.corgisim_utils import _extract_host_properties_from_hconf, CGI_TO_CORGI_MAPPING, SUPPORTED_CORGI_MODES, SUPPORTED_CGI_MODES, map_wavelength_to_corgisim_bandpass
 
@@ -249,16 +253,91 @@ class GitlImage:
 
     def get_images_parallel(self, dm1_list, dm2_list, exptime_list, gain_list, croplist, cstrat, hconf,
                                   normalization_strategy, get_cgi_eetc, ndm, cfg, fracbadpix):
-
-        # Set up multiprocessing pool
-        # WARNING: Use the right number of threads for the specific computer.
-        p = multiprocessing.Pool(processes=3)
         
-        # Start the parallel processing
-        p.starmap(self.get_image,zip(dm1_list,dm2_list,exptime_list,gain_list,croplist,repeat(cstrat),repeat(hconf),
-                                     repeat(normalization_strategy),repeat(get_cgi_eetc),repeat(ndm),repeat(cfg),repeat(fracbadpix)))
+        # TODO: Any camera settings or anything else missing?
+
+        # Set up multiprocessing
+        manager = multiprocessing.Manager()
+        framelist = manager.list()
+        
+        processes = []
+        for dm1_i,dm2_i,exptime_i,gain_i,crop_i in zip(dm1_list,dm2_list,exptime_list,gain_list,croplist):
+            p = Process(target=self.get_image_parallel,args=(framelist,dm1_i,dm2_i,exptime_i,gain_i,crop_i))
+            processes.append(p)
+            p.start()
+            
+        for p in processes:
+            p.join()
 
         #raise NotImplementedError("Parallel image acquisition not yet implemented.")
+        
+    def get_image_parallel(self, framelist,dm1v, dm2v, exptime, gain, crop, lind=0, peakflux=1, cleanrow=1024, cleancol=1024, fixedbp=np.zeros((1024, 1024), dtype=bool), wfe=None):
+        """
+        Get a simulated GITL frame using either the corgisim or cgi-howfsc optical model.
+        This method is designed to be compatible with both backends.
+
+        Arguments:
+         framelist: list of ndarrays
+          List of simulated detector frames.
+         dm1v: ndarray
+          Absolute voltage map for DM1.
+         dm2v: ndarray
+          Absolute voltage map for DM2.
+         exptime: float
+          Exposure time in seconds. Must be a real scalar > 0. If is_noise_free=True,
+          any positive value is acceptable.
+         gain: float, optional
+          EM gain setting for the EMCCD. Real scalar >= 1. Default is 1.
+         crop: 4-tuple of int, optional
+          (lower row, lower col, number of rows, number of columns) defining the
+          sub-region of a clean frame from which the PSF is extracted. The first two
+          values must be >= 0 and the last two must be > 0. Required when backend is
+          'cgi-howfsc'; ignored otherwise.
+         lind: int, optional
+          Index >= 0 indicating which wavelength channel in cfg to use. Must be less
+          than the length of cfg.sl_list. Default is 0.
+         peakflux: float, optional
+          Peak flux scaling factor. Default is 1. Only used when backend is 'cgi-howfsc'.
+         cleanrow: int, optional
+          Number of rows in a clean frame. Must be > 0. Defaults to 1024, matching
+          the EXCAM detector active area; this should not need to change under nominal
+          conditions.
+         cleancol: int, optional
+          Number of columns in a clean frame. Must be > 0. Defaults to 1024, matching
+          the EXCAM detector active area; this should not need to change under nominal
+          conditions.
+         fixedbp: ndarray of bool, optional
+          Fixed bad pixel map of shape (cleanrow, cleancol). Defaults to an array of
+          all False (no bad pixels). If None is passed, defaults to an all-False array
+          of shape (cleanrow, cleancol).
+         wfe: optional
+          Placeholder for future support of additional wavefront error inputs (e.g.
+          Zernike coefficients). Currently unused.
+
+        Returns:
+         list
+          Simulated detector frames.
+
+        Raises:
+         ValueError
+          If crop is None when backend is 'cgi-howfsc', or if other input validation
+          checks in check_gitlframeinputs fail.
+        """
+       
+        if fixedbp is None:
+            fixedbp = np.zeros((cleanrow, cleancol), dtype=bool)
+
+        # Input validation
+        self.check_gitlframeinputs(dm1v, dm2v, fixedbp, exptime, crop, cleanrow, cleancol)
+
+        if self.backend == 'corgihowfsc':
+            return self.gitlframe_corgisim(dm1v, dm2v, fixedbp, exptime, gain, lind, cleanrow, cleancol)
+        else:  # cgi-howfsc
+            if crop is None:
+                raise ValueError("crop parameter is required for cgi-howfsc")
+            dmlist = [dm1v, dm2v]
+            
+            return framelist.append(self.gitlframe_cgihowfsc(dmlist, peakflux, self.cstrat.fixedbp, exptime, crop, lind, cleanrow, cleancol))
 
     def get_images_serial(self, dm1_list, dm2_list, exptime_list, gain_list, croplist, cstrat, hconf,
                                 normalization_strategy, get_cgi_eetc, ndm, cfg, fracbadpix):
