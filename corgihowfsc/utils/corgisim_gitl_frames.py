@@ -250,7 +250,15 @@ class GitlImage:
     def get_images_parallel(self, dm1_list, dm2_list, exptime_list, gain_list, croplist, cstrat, hconf,
                                   normalization_strategy, get_cgi_eetc, ndm, cfg, fracbadpix):
 
-        raise NotImplementedError("Parallel image acquisition not yet implemented.")
+        # Set up multiprocessing pool
+        # WARNING: Use the right number of threads for the specific computer.
+        p = multiprocessing.Pool(processes=3)
+        
+        # Start the parallel processing
+        p.starmap(self.get_image,zip(dm1_list,dm2_list,exptime_list,gain_list,croplist,repeat(cstrat),repeat(hconf),
+                                     repeat(normalization_strategy),repeat(get_cgi_eetc),repeat(ndm),repeat(cfg),repeat(fracbadpix)))
+
+        #raise NotImplementedError("Parallel image acquisition not yet implemented.")
 
     def get_images_serial(self, dm1_list, dm2_list, exptime_list, gain_list, croplist, cstrat, hconf,
                                 normalization_strategy, get_cgi_eetc, ndm, cfg, fracbadpix):
