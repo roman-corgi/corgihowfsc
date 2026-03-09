@@ -13,7 +13,10 @@ import os
 import argparse
 import cProfile
 import pstats
+import io
+
 import logging
+log = logging.getLogger(__name__)
 
 import numpy as np
 import astropy.io.fits as pyfits
@@ -100,11 +103,21 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
 
     # Make filout dir
     if args.fileout is not None:
-        print('Making output directory ', args.fileout)
+        print('Making output directory: ', args.fileout)
         os.makedirs(os.path.dirname(args.fileout), exist_ok=True)
 
+    # Set up logging
+    if logfile is not None:
+        logging.basicConfig(filename=logfile, level=logging.INFO)
+        pass
+    else:
+        logging.basicConfig(level=logging.INFO)
+        pass
+
+    log = logging.getLogger(__name__)
+
     config_path = save_run_config(args, args.fileout)
-    print(f"Saved run configuration to {config_path}")
+    log.info(f"Saved run configuration to {config_path}")
 
     update_yml(config_path, metadata)
 
@@ -175,7 +188,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             num_threads=num_threads,
         )
         t1 = time.time()
-        print('Jac/JTWJ/n2clist computation time: ' + str(t1-t0) + ' seconds')
+        log.info('Jac/JTWJ/n2clist computation time: ' + str(t1-t0) + ' seconds')
         pass
     elif precomp in ['precomp_jacs_once', 'precomp_jacs_always']:
         t0 = time.time()
@@ -190,7 +203,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             num_threads=num_threads,
         )
         t1 = time.time()
-        print('Initial jac calc time: ' + str(t1-t0) + ' seconds')
+        log.info('Initial jac calc time: ' + str(t1-t0) + ' seconds')
         n2clist = []
         for n2cfn in n2clistfiles:
             n2clist.append(pyfits.getdata(n2cfn))
@@ -309,6 +322,13 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         # New lists compared to original version
         measured_c.append(prev_c)
 
+        log.info('-----------------------------------')
+        log.info('Summary of iteration ' + str(iteration))
+        log.info('HOWFSC computation time: ' + str(t1-t0))
+        log.info('Previous contrast: ' + str(prev_c))
+        log.info('Next contrast: ' + str(next_c))
+        log.info('scales: ' + str(scale_factor_list))
+
         # Write current iterations files now
         if fileout is not None and output_every_iter:
             hdr = pyfits.Header()
@@ -362,7 +382,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
                 num_threads=num_threads,
             )
             t1 = time.time()
-            print('Jac recalc time: ' + str(t1-t0) + ' seconds')
+            log.info('Jac recalc time: ' + str(t1-t0) + ' seconds')
 
         # prev_exptime_list
         prev_exptime_list = param_order_to_list(exptime_list)
@@ -415,11 +435,17 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         pass
 
     if isprof:
-        ps = pstats.Stats(pr)
-        ps.sort_stats('cumtime').print_stats('howfsc', 20)
+        # cumtime
+        buf = io.StringIO()
+        ps = pstats.Stats(pr, stream=buf)
+        ps.sort_stats("cumtime").print_stats("howfsc", 20)
+        log.info("Profiler stats (cumtime)\n%s", buf.getvalue())
 
-        print() # line separate tottime
-        ps.sort_stats('tottime').print_stats('howfsc', 20)
+        # tottime
+        buf = io.StringIO()
+        ps = pstats.Stats(pr, stream=buf)
+        ps.sort_stats("tottime").print_stats("howfsc", 20)
+        log.info("Profiler stats (tottime)\n%s", buf.getvalue())
 
         pass
 
