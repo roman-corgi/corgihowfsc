@@ -257,16 +257,37 @@ class GitlImage:
                                   normalization_strategy, get_cgi_eetc, ndm, cfg, fracbadpix):
         
         # TODO: Any camera settings or anything else missing?
+        
+        # Set up the wavelength indices
+        ind_list = []
+        ind_list_all = []
+        for indj, sl in enumerate(cfg.sl_list):
+            ind_list.append(indj)
+            repeated_indj = [indj] * len(dm1_list)
+            ind_list_all.append(repeated_indj)
+        ind_list_all = np.ravel(ind_list_all)
+        
+        # Set up parameter arrays to allow for each wavelength
+        dm1_list_all = dm1_list * len(ind_list)
+        dm2_list_all = dm2_list * len(ind_list)
+        exptime_list_all = exptime_list * len(ind_list)
+        gain_list_all = gain_list * len(ind_list)
+        crop_list_all = croplist * len(ind_list)
+        
+        
 
         # Set up multiprocessing
         manager = multiprocessing.Manager()
         framelist = manager.list()
         
         pool = multiprocessing.Pool(processes=4)
-        pool.starmap_async(self.get_image_parallel,[framelist,zip(dm1_list,dm2_list,exptime_list,gain_list,croplist)])        
+        pool.starmap_async(self.get_image_parallel,[framelist,cstrat,hconf,normalization_strategy,get_cgi_eetc,ndm,cfg,dm1_list[0],dm2_list[0],
+                                                    zip(dm1_list_all,dm2_list_all,exptime_list_all,gain_list_all,crop_list_all,ind_list_all)])        
         
         
-    def get_image_parallel(self, framelist,dm1v, dm2v, exptime, gain, crop, lind=0, peakflux=1, cleanrow=1024, cleancol=1024, fixedbp=np.zeros((1024, 1024), dtype=bool), wfe=None):
+    def get_image_parallel(self, framelist,cstrat,hconf,normalization_strategy,get_cgi_eetc,ndm,cfg, dm1_0, dm2_0,
+                           dm1v, dm2v, exptime, gain, crop, lind, 
+                           cleanrow=1024, cleancol=1024, fixedbp=np.zeros((1024, 1024), dtype=bool), wfe=None):
         """
         Get a simulated GITL frame using either the corgisim or cgi-howfsc optical model.
         This method is designed to be compatible with both backends.
@@ -319,6 +340,8 @@ class GitlImage:
           checks in check_gitlframeinputs fail.
         """
        
+        # TODO: what are the correct camera settings here?
+        _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, lind, dm1_0, dm2_0, gain=1)
         if fixedbp is None:
             fixedbp = np.zeros((cleanrow, cleancol), dtype=bool)
 
