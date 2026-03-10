@@ -138,6 +138,8 @@ class CorgisimManager:
             'use_field_stop': 1
         }
 
+        optics_keywords['NCPUS'] = self.corgi_overrides.get('NCPUS', 7) # default to 7 cores if not specified in optics_keywords
+
         optics = instrument.CorgiOptics(
             self._mode,
             bandpass_recipe,
@@ -189,8 +191,6 @@ class CorgisimManager:
             B = bias * np.ones((self.output_dim, self.output_dim))
 
             return (self.k_gain*sim_scene.image_on_detector.data - B)/gain - master_dark
-
-
 
     def generate_host_star_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, bias=0):
         optics = self.create_optics(dm1v, dm2v, lind)
