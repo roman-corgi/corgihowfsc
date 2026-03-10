@@ -146,7 +146,52 @@ class CorgisimManager:
         )
 
         return optics
-    
+
+    def generate_on_axis_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, bias=0):
+        bandpass_recipe = self._get_bandpass_recipe(lind)
+        use_pupil_mask = 0 if 'hlc' in self.cor_mapped else 1
+
+        optics_keywords = {
+            'cor_type': self.cor_mapped,
+            'use_errors': 2,
+            'polaxis': self.polaxis,
+            'output_dim': self.output_dim,
+            'use_dm1': 1,
+            'dm1_v': dm1v,
+            'use_dm2': 1,
+            'dm2_v': dm2v,
+            'use_fpm': 0,
+            'use_lyot_stop': 1,
+            'use_field_stop': 0,
+            'use_pupil_mask': use_pupil_mask
+        }
+
+        optics = instrument.CorgiOptics(
+            self._mode,
+            bandpass_recipe,
+            optics_keywords=optics_keywords,
+            if_quiet=True
+        )
+
+        sim_scene = optics.get_host_star_psf(self.base_scene)
+
+        if self.is_noise_free:
+            return sim_scene.host_star_image.data
+        else:
+            # generate detector image
+            emccd_dict = {'em_gain': gain, 'bias':bias, 'cr_rate': 0}
+            detector = instrument.CorgiDetector(emccd_dict)
+
+            sim_scene = detector.generate_detector_image(sim_scene, exptime)
+
+            # sim_scene.image_on_detector.data is not gain corrected or bias subtracted
+            master_dark = self.generate_master_dark(detector, exptime, gain)
+            B = bias * np.ones((self.output_dim, self.output_dim))
+
+            return (self.k_gain*sim_scene.image_on_detector.data - B)/gain - master_dark
+
+
+
     def generate_host_star_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, bias=0):
         optics = self.create_optics(dm1v, dm2v, lind)
 
