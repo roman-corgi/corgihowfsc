@@ -21,11 +21,9 @@ import proper
 from corgisim import outputs
 import time
 
-import multiprocessing
+#import multiprocessing
 from multiprocessing import Process,Manager,Pool,cpu_count
 from itertools import repeat
-from functools import partial
-import itertools
 
 # import helper functions 
 from corgihowfsc.utils.corgisim_utils import _extract_host_properties_from_hconf, CGI_TO_CORGI_MAPPING, SUPPORTED_CORGI_MODES, SUPPORTED_CGI_MODES, map_wavelength_to_corgisim_bandpass
@@ -188,7 +186,7 @@ class GitlImage:
             cleancol=cleancol
         )
 
-    def get_images(self, dm1_list, dm2_list, exptime_list, gain_list, croplist, cstrat, hconf, normalization_strategy, get_cgi_eetc, ndm, cfg, fracbadpix):
+    def get_images(self, dm1_list, dm2_list, exptime_list, gain_list, croplist, cstrat, hconf, normalization_strategy, get_cgi_eetc, ndm, cfg, fracbadpix,Ncores=int(cpu_count()/2)):
         """
         Get a batch of simulated GITL frames across all wavelength channels and DM configurations, using either the
         corgisim or cgi-howfsc optical model.
@@ -249,12 +247,12 @@ class GitlImage:
                                                 normalization_strategy, get_cgi_eetc, ndm, cfg, fracbadpix)
         else:
             framelist = self.get_images_parallel(dm1_list, dm2_list, exptime_list, gain_list, croplist, cstrat, hconf,
-                                                 normalization_strategy, get_cgi_eetc, ndm, cfg, fracbadpix)
+                                                 normalization_strategy, get_cgi_eetc, ndm, cfg, fracbadpix,Ncores)
 
         return framelist
 
     def get_images_parallel(self, dm1_list, dm2_list, exptime_list, gain_list, croplist, cstrat, hconf,
-                                  normalization_strategy, get_cgi_eetc, ndm, cfg, fracbadpix):
+                                  normalization_strategy, get_cgi_eetc, ndm, cfg, fracbadpix,Ncores):
         
         # TODO: Any camera settings or anything else missing?
         
@@ -275,17 +273,19 @@ class GitlImage:
         crop_list_all = croplist * len(ind_list)
         
         
-
-        # Set up multiprocessing
-        manager = multiprocessing.Manager()
-        framelist = manager.list()
+        testparams = [(cstrat,hconf,normalization_strategy,get_cgi_eetc,ndm,cfg,fracbadpix,dm1_0,dm2_0,dm1v,dm2v,exptime,gain,crop,lind)
+                      for (cstrat,hconf,normalization_strategy,get_cgi_eetc,ndm,cfg,fracbadpix,dm1_0,dm2_0,dm1v,dm2v,exptime,gain,crop,lind) 
+                      in zip(repeat(cstrat),repeat(hconf),repeat(normalization_strategy),repeat(get_cgi_eetc),repeat(ndm),repeat(cfg),
+                             repeat(fracbadpix),repeat(dm1_list[0]),repeat(dm2_list[0]),dm1_list_all,dm2_list_all,exptime_list_all,gain_list_all,crop_list_all,ind_list_all)]
         
-        pool = multiprocessing.Pool(processes=4)
-        pool.starmap_async(self.get_image_parallel,[framelist,cstrat,hconf,normalization_strategy,get_cgi_eetc,ndm,cfg,fracbadpix,dm1_list[0],dm2_list[0],
-                                                    zip(dm1_list_all,dm2_list_all,exptime_list_all,gain_list_all,crop_list_all,ind_list_all)])        
+        framelist = []
+        with Pool(Ncores) as pool:
+            for result in pool.starmap(self.get_image_parallel, testparams):
+                framelist.append(result)
+                
+        return framelist
         
-        
-    def get_image_parallel(self, framelist,cstrat,hconf,normalization_strategy,get_cgi_eetc,ndm,cfg, fracbadpix, dm1_0, dm2_0,
+    def get_image_parallel(self, cstrat,hconf,normalization_strategy,get_cgi_eetc,ndm,cfg, fracbadpix, dm1_0, dm2_0,
                            dm1v, dm2v, exptime, gain, crop, lind, 
                            cleanrow=1024, cleancol=1024, fixedbp=np.zeros((1024, 1024), dtype=bool), wfe=None):
         """
@@ -349,7 +349,7 @@ class GitlImage:
         self.check_gitlframeinputs(dm1v, dm2v, fixedbp, exptime, crop, cleanrow, cleancol)
 
         if self.backend == 'corgihowfsc':
-            f = self.gitlframe_corgisim(dm1v, dm2v, fixedbp, exptime, gain, lind, cleanrow, cleancol)
+            f = self.gitlframe_corgisim(dm1v, dm2v, fixedbp, exptime, crop, gain, lind, cleanrow, cleancol)
         else:  # cgi-howfsc
             if crop is None:
                 raise ValueError("crop parameter is required for cgi-howfsc")
@@ -360,7 +360,7 @@ class GitlImage:
         rng = np.random.default_rng(12345)
         bpmeas = rng.random(f.shape) > (1 - fracbadpix)
         f[bpmeas] = np.nan
-        framelist.append(f)
+        return f
         
     def get_images_serial(self, dm1_list, dm2_list, exptime_list, gain_list, croplist, cstrat, hconf,
                                 normalization_strategy, get_cgi_eetc, ndm, cfg, fracbadpix):

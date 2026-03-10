@@ -1,5 +1,3 @@
-# %load_ext autoreload
-# %autoreload 2
 from pathlib import Path
 
 import time
@@ -11,7 +9,7 @@ import logging
 from datetime import datetime
 import matplotlib.pyplot as plt
 
-from multiprocessing import Process,Manager,freeze_support
+from multiprocessing import Process,Manager,freeze_support,cpu_count
 from itertools import repeat
 
 import numpy as np
@@ -46,10 +44,11 @@ from howfsc.scripts.gitlframes import sim_gitlframe
 
 import roman_preflight_proper
 ### Then, run the following command to copy the default prescription file 
-roman_preflight_proper.copy_here()
+#roman_preflight_proper.copy_here()
+###############################################################################
 
-
-def parallel_images():
+def time_parallel_or_serial_images(serial_imaging):
+    t=time.time()
     eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
     howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
 
@@ -168,7 +167,7 @@ def parallel_images():
         backend=backend_type, 
         cor=mode,
         corgi_overrides=corgi_overrides,
-        serial_imaging=False
+        serial_imaging=serial_imaging
     )
 
     crop_corgi = (crop_params['lrow'], crop_params['lcol'], crop_params['nrow'], crop_params['ncol'])
@@ -271,8 +270,24 @@ def parallel_images():
     im_norm = normalization_strategy.normalize(im, peakflux, exptime)
 
     print('EETC:\n', 'Peakflux:', peakflux, '\n Max contrast:', np.nanmax(im_norm))
+    
+    elapsed=time.time()-t
+    return elapsed
 
+def compare_parallel_and_serial(Ncores=int(cpu_count()/2)):
+    
+    # Serial Calculation
+    t_serial = time_parallel_or_serial_images(serial_imaging=True)
+    
+    # Parallel Calculation
+    t_parallel = time_parallel_or_serial_images(serial_imaging=False)
+    
+    # Display the comparison
+    print('Time for serial calculations: %.3f seconds' % t_serial)
+    print('Time for parallel calculations with %d cores: %.3f seconds' % (Ncores,t_parallel))
+###############################################################################    
 
 if __name__ == '__main__':
     freeze_support()
-    parallel_images()
+    #time_parallel_or_serial_images(False)
+    compare_parallel_and_serial()
