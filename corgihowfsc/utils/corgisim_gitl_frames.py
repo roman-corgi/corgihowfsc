@@ -22,8 +22,10 @@ from corgisim import outputs
 import time
 
 import multiprocessing
-from multiprocessing import Process
+from multiprocessing import Process,Manager,Pool,cpu_count
 from itertools import repeat
+from functools import partial
+import itertools
 
 # import helper functions 
 from corgihowfsc.utils.corgisim_utils import _extract_host_properties_from_hconf, CGI_TO_CORGI_MAPPING, SUPPORTED_CORGI_MODES, SUPPORTED_CGI_MODES, map_wavelength_to_corgisim_bandpass
@@ -260,16 +262,9 @@ class GitlImage:
         manager = multiprocessing.Manager()
         framelist = manager.list()
         
-        processes = []
-        for dm1_i,dm2_i,exptime_i,gain_i,crop_i in zip(dm1_list,dm2_list,exptime_list,gain_list,croplist):
-            p = Process(target=self.get_image_parallel,args=(framelist,dm1_i,dm2_i,exptime_i,gain_i,crop_i))
-            processes.append(p)
-            p.start()
-            
-        for p in processes:
-            p.join()
-
-        #raise NotImplementedError("Parallel image acquisition not yet implemented.")
+        pool = multiprocessing.Pool(processes=4)
+        pool.starmap_async(self.get_image_parallel,[framelist,zip(dm1_list,dm2_list,exptime_list,gain_list,croplist)])        
+        
         
     def get_image_parallel(self, framelist,dm1v, dm2v, exptime, gain, crop, lind=0, peakflux=1, cleanrow=1024, cleancol=1024, fixedbp=np.zeros((1024, 1024), dtype=bool), wfe=None):
         """
