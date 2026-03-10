@@ -340,8 +340,6 @@ class GitlImage:
           checks in check_gitlframeinputs fail.
         """
        
-        # TODO: what are the correct camera settings here?
-        _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, lind, dm1_0, dm2_0, gain=1)
         if fixedbp is None:
             fixedbp = np.zeros((cleanrow, cleancol), dtype=bool)
 
@@ -353,6 +351,9 @@ class GitlImage:
         else:  # cgi-howfsc
             if crop is None:
                 raise ValueError("crop parameter is required for cgi-howfsc")
+            
+            _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, lind, dm1_0, dm2_0, gain=1)
+            
             dmlist = [dm1v, dm2v]
             
             f = self.gitlframe_cgihowfsc(dmlist, peakflux, self.cstrat.fixedbp, exptime, crop, lind, cleanrow, cleancol)
