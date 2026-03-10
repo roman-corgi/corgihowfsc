@@ -281,11 +281,11 @@ class GitlImage:
         framelist = manager.list()
         
         pool = multiprocessing.Pool(processes=4)
-        pool.starmap_async(self.get_image_parallel,[framelist,cstrat,hconf,normalization_strategy,get_cgi_eetc,ndm,cfg,dm1_list[0],dm2_list[0],
+        pool.starmap_async(self.get_image_parallel,[framelist,cstrat,hconf,normalization_strategy,get_cgi_eetc,ndm,cfg,fracbadpix,dm1_list[0],dm2_list[0],
                                                     zip(dm1_list_all,dm2_list_all,exptime_list_all,gain_list_all,crop_list_all,ind_list_all)])        
         
         
-    def get_image_parallel(self, framelist,cstrat,hconf,normalization_strategy,get_cgi_eetc,ndm,cfg, dm1_0, dm2_0,
+    def get_image_parallel(self, framelist,cstrat,hconf,normalization_strategy,get_cgi_eetc,ndm,cfg, fracbadpix, dm1_0, dm2_0,
                            dm1v, dm2v, exptime, gain, crop, lind, 
                            cleanrow=1024, cleancol=1024, fixedbp=np.zeros((1024, 1024), dtype=bool), wfe=None):
         """
@@ -349,14 +349,19 @@ class GitlImage:
         self.check_gitlframeinputs(dm1v, dm2v, fixedbp, exptime, crop, cleanrow, cleancol)
 
         if self.backend == 'corgihowfsc':
-            return self.gitlframe_corgisim(dm1v, dm2v, fixedbp, exptime, gain, lind, cleanrow, cleancol)
+            f = self.gitlframe_corgisim(dm1v, dm2v, fixedbp, exptime, gain, lind, cleanrow, cleancol)
         else:  # cgi-howfsc
             if crop is None:
                 raise ValueError("crop parameter is required for cgi-howfsc")
             dmlist = [dm1v, dm2v]
             
-            return framelist.append(self.gitlframe_cgihowfsc(dmlist, peakflux, self.cstrat.fixedbp, exptime, crop, lind, cleanrow, cleancol))
+            f = self.gitlframe_cgihowfsc(dmlist, peakflux, self.cstrat.fixedbp, exptime, crop, lind, cleanrow, cleancol)
 
+        rng = np.random.default_rng(12345)
+        bpmeas = rng.random(f.shape) > (1 - fracbadpix)
+        f[bpmeas] = np.nan
+        framelist.append(f)
+        
     def get_images_serial(self, dm1_list, dm2_list, exptime_list, gain_list, croplist, cstrat, hconf,
                                 normalization_strategy, get_cgi_eetc, ndm, cfg, fracbadpix):
         rng = np.random.default_rng(12345)
