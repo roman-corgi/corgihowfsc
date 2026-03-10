@@ -7,6 +7,9 @@ These are:
 - `config.yml`
     The configuration file used for the loop, containing all input parameters and settings.
 
+- `gitl.log`
+    Log file containing runtime information, warnings and diagnostic messages generated during execution. 
+
 ## Per iteration outputs
 
 The per-iteration outputs are saved to a folder named `iteration_XXXX` where `XXXX` is the iteration number, starting at 1.
@@ -43,3 +46,36 @@ These are:
     Composed broadband contrast per iteration data as csv table.
 - `final_frames.fits`
     Final images taken after loop completion. 21 images total: the first images is unprobed in wavelength 1, followed by 3 probe pairs (6 images total); then repeated for wavelength 2 and 3.
+
+## Example output directory structure 
+
+A typical HOWFSC loop run produces a directory with the following struture: 
+
+```
+<run_directory>
+├── config.yml
+├── gitl.log
+├── contrast_vs_iteration.pdf
+├── efield_variance.csv
+├── efield_variance.pdf
+├── estimation_variance_per_pixel.fits
+├── final_frames.fits
+├── measured_contrast.csv
+├── iteration_0001
+│   ├── dm1_command.fits
+│   ├── dm2_command.fits
+│   ├── efield_estimations.fits
+│   ├── images.fits
+│   ├── intensity_coherent.fits
+│   ├── intensity_incoherent.fits
+│   ├── intensity_total.fits
+│   └── perfect_efields.fits
+├── iteration_0002
+│   └── ...
+├── ...
+└── iteration_XXXX
+    └── ...
+```
+
+Where: 
+- <run_directory> is automatically created for each loop run (typically including a timestamp and model name).
