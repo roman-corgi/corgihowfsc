@@ -344,6 +344,8 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
                                                                              jtwj_map, croplist, prev_exptime_list,
                                                                              cstrat, n2clist, hconf, iteration)
 
+     debugging_dict = {}
+
     #--------------------
     # HOWFSC Computation
     #--------------------
@@ -372,6 +374,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
     dhlist = []
     unprobedlist = [] # unprobed NI for contrast estimation
     intlist = [] # NIs for estimation
+    debugging_dict['peakflux'] = np.zeros((nlam,1))
     for j in range(nlam):
         other[j] = dict()
         other[j]['lam'] = cfg.sl_list[j].lam
@@ -385,7 +388,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         # TODO: what are correct camera settings here?
         # Get peakflux for DMs using current DZ setting
         _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, j, dm1_list[0], dm2_list[0], gain=1)
-
+        debugging_dict['peakflux'][j] = peakflux
         log.info('Expect %g photons/sec', peakflux)
         for k in range(ndm):
             log.info('DM setting %d of %d', k+1, ndm)
@@ -560,6 +563,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
                         cleanrow=hconf['excam']['cleanrow'],
                         cleancol=hconf['excam']['cleancol'])
     log.info('Expected next contrast = %g', next_c)
+    debugging_dict['next_c'] = next_c                         
 
     log.info('Get probe scale factors')
     probeheight = cstrat.get_probeheight(iteration, prev_c)
@@ -577,7 +581,17 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
     exptime_list = []
     nframes_list = []
     final_optflag = 0
-
+    debugging_dict['cam_params'] = {}                             
+    debugging_dict['cam_params']['nom'] = np.zeros((nlam, 3))
+    debugging_dict['cam_params']['probing'] = np.zeros((nlam, 3))
+    debugging_dict['cam_params_inputs'] = {}
+    debugging_dict['cam_params_inputs']['pred_mean_contrast'] = np.zeros((nlam, 1))
+    debugging_dict['cam_params_inputs']['pred_bright_contrast'] = np.zeros((nlam, 1))
+    debugging_dict['cam_params_inputs']['pred_mean_contrast_probing'] = np.zeros((nlam, 1))
+    debugging_dict['cam_params_inputs']['pred_bright_contrast_probing'] = np.zeros((nlam, 1))
+    
+    debugging_dict['cam_params_probing'] = np.zeros((nlam, 3))
+                               
     for index, sequence in enumerate(hconf['hardware']['sequence_list']):
         log.info('Sequence = %s', sequence)
         innerg = []
@@ -640,7 +654,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         if optflag != 0:
             final_optflag = optflag
             pass
-
+        debugging_dict['cam_params']['nom'][j, :] = [gain, exptime, nframes]
         # nprobepair probes
         log.info('Probed camera settings from calculator')
         probed_snr = cstrat.get_probedsnr(iteration, prev_c)
@@ -662,7 +676,11 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         if optflag != 0:
             final_optflag = optflag
             pass
-
+        debugging_dict['cam_params']['probing'][j, :] = [gain, exptime, nframes]
+        debugging_dict['cam_params_inputs']['pred_mean_contrast'][index] = scale
+        debugging_dict['cam_params_inputs']['pred_bright_contrast'][index] = scale_bright
+        debugging_dict['cam_params_inputs']['pred_mean_contrast_probing'][index] = pscale
+        debugging_dict['cam_params_inputs']['pred_bright_contrast_probing'][index] = pscale_bright
         for k in range(nprobepair):
             innerg.append(gain)
             innere.append(as_f32_normal(exptime))
