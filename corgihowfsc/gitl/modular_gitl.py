@@ -541,6 +541,8 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
     log.info('dmmultgain = %g', dmmultgain)
     jtwj = jtwj_map.retrieve_jtwj(cstrat, iteration, prev_c)
 
+    debugging_dict['beta'] = beta
+
     # 6. Compute change in DM settings from electric fields
     log.info('6. Compute change in DM settings from electric fields')
     deltadm = jac_solve(jac, emeas, beta, wdm, we0, bpmeas, jtwj,
