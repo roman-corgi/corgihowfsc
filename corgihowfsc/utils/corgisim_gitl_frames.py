@@ -177,6 +177,7 @@ class GitlImage:
             cleanrow=cleanrow,
             cleancol=cleancol
         )
+
     def get_image(self, dm1v, dm2v, exptime, gain=1, crop=None, lind=0, peakflux=1, cleanrow=1024, cleancol=1024, fixedbp=np.zeros((1024, 1024), dtype=bool), wfe=None):
 
         """

@@ -138,7 +138,9 @@ class CorgisimManager:
             'use_field_stop': 1
         }
 
-        optics_keywords['NCPUS'] = self.corgi_overrides.get('NCPUS', 7) # default to 7 cores if not specified in optics_keywords
+        # Default to 2 cores if not specified in corgi_overrides
+        # NCPUS is parameter in 'proper_multirun'
+        optics_keywords['NCPUS'] = self.corgi_overrides.get('NCPUS', 2) 
 
         optics = instrument.CorgiOptics(
             self._mode,
