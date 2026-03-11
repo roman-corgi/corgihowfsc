@@ -343,7 +343,7 @@ def save_debugging_iteration(debugging_dict, iteration, outpath,
     nlam = debugging_dict['peakflux'].shape[0]
 
     fieldnames = [
-        'iteration', 'lam_index',
+        'iteration', 'lam_index', 'beta',
         'peakflux', 'next_c',
         'cam_nom_gain',    'cam_nom_exptime',    'cam_nom_nframes',
         'cam_probe_gain',  'cam_probe_exptime',  'cam_probe_nframes',
@@ -362,6 +362,7 @@ def save_debugging_iteration(debugging_dict, iteration, outpath,
             writer.writerow({
                 'iteration': iteration,
                 'lam_index': j,
+                'beta': debugging_dict['beta'],
                 'peakflux':  debugging_dict['peakflux'][j, 0],
                 'next_c':    debugging_dict['next_c'],
                 'cam_nom_gain':      debugging_dict['cam_params']['nom'][j, 0],
