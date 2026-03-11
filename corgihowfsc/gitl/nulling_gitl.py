@@ -344,8 +344,8 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             hdul.writeto(fileout, overwrite=True)
 
 
-            ni_score, ni_inner, ni_outer = get_ni(framelistlist[iteration-1], cfg, prev_exptime_list, debugging_dict['peakflux'],
-                                                  normalization_strategy, nrow, ncol)
+            ni_score, ni_inner, ni_outer = get_ni(framelistlist[iteration-1], cfg, prev_exptime_list,
+                                                  debugging_dict['peakflux'], normalization_strategy, ndm, nrow, ncol)
             ni_lists['ni_score'].append(ni_score)
             ni_lists['ni_inner'].append(ni_inner)
             ni_lists['ni_outer'].append(ni_outer)
