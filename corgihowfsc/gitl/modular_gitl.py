@@ -654,7 +654,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         if optflag != 0:
             final_optflag = optflag
             pass
-        debugging_dict['cam_params']['nom'][j, :] = [gain, exptime, nframes]
+        debugging_dict['cam_params']['nom'][index, :] = [gain, exptime, nframes]
         # nprobepair probes
         log.info('Probed camera settings from calculator')
         probed_snr = cstrat.get_probedsnr(iteration, prev_c)
@@ -676,7 +676,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         if optflag != 0:
             final_optflag = optflag
             pass
-        debugging_dict['cam_params']['probing'][j, :] = [gain, exptime, nframes]
+        debugging_dict['cam_params']['probing'][index, :] = [gain, exptime, nframes]
         debugging_dict['cam_params_inputs']['pred_mean_contrast'][index] = scale
         debugging_dict['cam_params_inputs']['pred_bright_contrast'][index] = scale_bright
         debugging_dict['cam_params_inputs']['pred_mean_contrast_probing'][index] = pscale
@@ -724,6 +724,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
             next_time,
             stat,
             other,
+            debugging_dict
     )
 
 

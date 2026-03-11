@@ -37,6 +37,7 @@ from corgihowfsc.gitl.modular_gitl import howfsc_computation
 from howfsc.precomp import howfsc_precomputation
 from corgihowfsc.utils.saving_output import save_outputs, save_outputs_iter
 from corgihowfsc.utils.output_management import save_run_config, update_yml
+from corgihowfsc.utils.metrics import get_ni
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
@@ -130,6 +131,8 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
 
     # New lists compared to original
     measured_c = []
+    pred_c = []
+    ni_lists = {'ni_score': [], 'ni_inner': [], 'ni_outer': []}
 
     if nbadpacket < 0:
         raise ValueError('Number of bad packets cannot be less than 0.')
@@ -302,7 +305,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             pr.enable()
             pass
         abs_dm1, abs_dm2, scale_factor_list, gain_list, exptime_list, \
-        nframes_list, prev_c, next_c, next_time, status, other = \
+        nframes_list, prev_c, next_c, next_time, status, other, debugging_dict = \
         howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
                            croplist, prev_exptime_list,
                            cstrat, n2clist, hconf, iteration,
@@ -321,6 +324,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
 
         # New lists compared to original version
         measured_c.append(prev_c)
+        pred_c.append(next_c)
 
         log.info('-----------------------------------')
         log.info('Summary of iteration ' + str(iteration))
@@ -338,8 +342,14 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             prev = pyfits.ImageHDU(prev_exptime_list)
             hdul = pyfits.HDUList([prim, img, prev])
             hdul.writeto(fileout, overwrite=True)
-    
-            _, _ = save_outputs_iter(iteration-1, fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter)
+
+
+            ni_score, ni_inner, ni_outer = get_ni(framelistlist[iteration-1], cfg, prev_exptime_list, debugging_dict['peakflux'],
+                                                  normalization_strategy, nrow, ncol)
+            ni_lists['ni_score'].append(ni_score)
+            ni_lists['ni_inner'].append(ni_inner)
+            ni_lists['ni_outer'].append(ni_outer)
+            _, _ = save_outputs_iter(iteration-1, fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, debugging_dict=debugging_dict)
 
         
         print('-----------------------------------')
@@ -458,7 +468,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         hdul = pyfits.HDUList([prim, img, prev])
         hdul.writeto(fileout, overwrite=True)
 
-        save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter)
+        save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c)
 
 
 if __name__ == "__main__":
