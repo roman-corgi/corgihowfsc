@@ -344,7 +344,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
                                                                              jtwj_map, croplist, prev_exptime_list,
                                                                              cstrat, n2clist, hconf, iteration)
 
-     debugging_dict = {}
+    debugging_dict = {}
 
     #--------------------
     # HOWFSC Computation
