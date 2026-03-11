@@ -52,7 +52,7 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
                    header="Predicted Contrast", comments="")
 
         if debugging_dict is not None:
-            save_debugging_iteration(debugging_dict, i + 1, csv_path='debugging_history.csv')
+            save_debugging_iteration(debugging_dict, i + 1, outpath, csv_path='debugging_history.csv')
 
     # Create iteration subdirectory
     # i = len(framelistlist)-1
@@ -326,10 +326,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     plt.close()
 
 
-
-
-
-def save_debugging_iteration(debugging_dict, iteration,
+def save_debugging_iteration(debugging_dict, iteration, outpath,
                               csv_path='debugging_history.csv'):
     """
     Append per-wavelength scalar quantities to a CSV (one row per wavelength per iteration).
@@ -354,8 +351,9 @@ def save_debugging_iteration(debugging_dict, iteration,
         'pred_mean_contrast_probing', 'pred_bright_contrast_probing',
     ]
 
-    write_header = not os.path.exists(csv_path)
-    with open(csv_path, 'a', newline='') as f:
+    debugging_csv_path = os.path.join(outpath, csv_path)
+    write_header = not os.path.exists(debugging_csv_path)
+    with open(debugging_csv_path, 'a', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         if write_header:
             writer.writeheader()
