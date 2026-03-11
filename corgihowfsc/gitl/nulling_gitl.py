@@ -133,6 +133,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     measured_c = []
     pred_c = []
     ni_lists = {'ni_score': [], 'ni_inner': [], 'ni_outer': []}
+    perfect_efield_list = []
 
     if nbadpacket < 0:
         raise ValueError('Number of bad packets cannot be less than 0.')
@@ -344,16 +345,16 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             hdul.writeto(fileout, overwrite=True)
 
             if output_model_efield and imager.backend == 'corgihowfsc':
-                perfect_efield_list = get_perfect_efield(imager, abs_dm1, abs_dm2, croplist, log, nlam, ndm, speedup=True)
+                perfect_efield_list.append(get_perfect_efield(imager, abs_dm1, abs_dm2, croplist, log, nlam, ndm, speedup=True))
             else:
-                perfect_efield_list = None
+                perfect_efield_list.append(None)
 
             ni_score, ni_inner, ni_outer = get_ni(framelistlist[iteration-1], cfg, prev_exptime_list,
                                                   debugging_dict['peakflux'], normalization_strategy, ndm, nrow, ncol)
             ni_lists['ni_score'].append(ni_score)
             ni_lists['ni_inner'].append(ni_inner)
             ni_lists['ni_outer'].append(ni_outer)
-            _, _ = save_outputs_iter(iteration-1, fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, perfect_efield_list, debugging_dict=debugging_dict)
+            _, _ = save_outputs_iter(iteration-1, fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, perfect_efield_list[iteration-1], debugging_dict=debugging_dict)
 
         
         print('-----------------------------------')

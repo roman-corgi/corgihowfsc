@@ -36,7 +36,7 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
         plt.figure()
         plt.plot(np.arange(len(measured_c)) + 1, measured_c, color='cornflowerblue', marker='o', label='measured contrast')
         for index, key in enumerate(ni_lists.keys()):
-            plt.plot(np.arange(2, len(measured_c) + 1), ni_lists[key], color=colours[index], marker=markers[index], label=key)
+            plt.plot(np.arange(len(ni_lists[key])) + 1, ni_lists[key], color=colours[index], marker=markers[index], label=key)
         plt.xlabel('Iteration')
         plt.ylabel('Measured NI')
         plt.semilogy()
@@ -197,7 +197,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     # Create one subdirectory per iteration
     iters = [len(framelistlist)-1] if output_every_iter else range(len(framelistlist))
     for i in iters:
-        efields_complex_array, perfect_efields_complex_array = save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list)
+        efields_complex_array, perfect_efields_complex_array = save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list[i])
         # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
         efields_complex_array = np.stack(efields_complex_array, axis=0)
         all_efields_complex.append(efields_complex_array)
@@ -210,7 +210,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     if output_every_iter:
         for i in range(len(framelistlist)):
             efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array = refactor_e_fields(
-                cfg, otherlist[i], perfect_efield_list=perfect_efield_list)
+                cfg, otherlist[i], perfect_efield_list=perfect_efield_list[i])
 
             # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
             efields_complex_array = np.stack(efields_complex_array, axis=0)
@@ -239,7 +239,8 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     dhmask_cube = np.stack(dhmask_cube, axis=0)
 
     # Compute difference cube
-    efield_diff = efields_datacube - perfect_efields_datacube
+    efields_datacube_red = efields_datacube if efields_datacube.shape[1] == perfect_efields_datacube.shape[1] else efields_datacube[:,len(cfg.sl_list)//2,:,:]
+    efield_diff = efields_datacube_red - perfect_efields_datacube
 
     log.info(f"E-field difference stats:")
     log.info(f"  Shape: {efield_diff.shape}")
