@@ -37,14 +37,14 @@ from corgihowfsc.gitl.modular_gitl import howfsc_computation
 from howfsc.precomp import howfsc_precomputation
 from corgihowfsc.utils.saving_output import save_outputs, save_outputs_iter
 from corgihowfsc.utils.output_management import save_run_config, update_yml
-from corgihowfsc.utils.metrics import get_ni
+from corgihowfsc.utils.metrics import get_ni, get_perfect_efield
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
 
 
-def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps, metadata=None, output_every_iter=True):
+def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps, metadata=None, output_every_iter=True, output_model_efield=True):
     """Run a nulling sequence, using the compact optical model as the data source.
 
     Parameters:
@@ -344,13 +344,17 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             hdul = pyfits.HDUList([prim, img, prev])
             hdul.writeto(fileout, overwrite=True)
 
+            if output_model_efield and imager.backend == 'corgihowfsc':
+                perfect_efield_list = get_perfect_efield(imager, abs_dm1, abs_dm2, croplist, log, nlam, ndm, speedup=True)
+            else:
+                perfect_efield_list = None
 
             ni_score, ni_inner, ni_outer = get_ni(framelistlist[iteration-1], cfg, prev_exptime_list,
                                                   debugging_dict['peakflux'], normalization_strategy, ndm, nrow, ncol)
             ni_lists['ni_score'].append(ni_score)
             ni_lists['ni_inner'].append(ni_inner)
             ni_lists['ni_outer'].append(ni_outer)
-            _, _ = save_outputs_iter(iteration-1, fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, debugging_dict=debugging_dict)
+            _, _ = save_outputs_iter(iteration-1, fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, perfect_efield_list, debugging_dict=debugging_dict)
 
         
         print('-----------------------------------')
@@ -477,7 +481,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         ni_lists['ni_inner'].append(ni_inner)
         ni_lists['ni_outer'].append(ni_outer)
 
-        save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists)
+        save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, perfect_efield_list)
 
 
 if __name__ == "__main__":

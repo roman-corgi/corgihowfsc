@@ -80,3 +80,17 @@ def get_ni(framelist, cfg, prev_exptime_list, peakfluxlist, normalization_strate
 
     return np.mean(ni_score), np.mean(ni_inner), np.mean(ni_outer)
 
+def get_perfect_efield(imager, abs_dm1, abs_dm2, croplist, log, nlam, ndm, speedup=True):
+    # TODO: normalisation of the model e-field?
+    # TODO: Is this the correct DM command?
+    lam_inds = [nlam//2] if speedup else range(nlam)
+    perfect_efields = []
+    for j in lam_inds:
+        perfect_efields.append(imager.get_efield(dm1v=abs_dm1, dm2v=abs_dm2, lind=j, crop=croplist[j * ndm]))
+
+    if imager.backend == 'corgihowfsc' and speedup:
+        # TODO - add a warning here for those who wants to speed up the corgisim by changing number of filters in cgisim_bandpasses
+        log.info('Using corgisim model, so perfect e-field is same for all DM settings at a given wavelength')
+
+    return perfect_efields
+

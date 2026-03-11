@@ -16,7 +16,7 @@ tab20c = cm.get_cmap('tab20c')
 # colours = [tab20c(i) for i in range(20)]
 colours = [tab20c(i * 4) for i in range(5)]  # 5 groups
 
-def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, debugging_dict=None):
+def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list, debugging_dict=None):
 
     outpath = os.path.dirname(fileout)
 
@@ -36,7 +36,7 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
         plt.figure()
         plt.plot(np.arange(len(measured_c)) + 1, measured_c, color='cornflowerblue', marker='o', label='measured contrast')
         for index, key in enumerate(ni_lists.keys()):
-            plt.plot(np.arange(len(measured_c)) + 1, ni_lists[key], color=colours[index], marker=markers[index], label=key)
+            plt.plot(np.arange(2, len(measured_c) + 1), ni_lists[key], color=colours[index], marker=markers[index], label=key)
         plt.xlabel('Iteration')
         plt.ylabel('Measured NI')
         plt.semilogy()
@@ -123,7 +123,7 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
     hdul_incoh.writeto(os.path.join(iterpath, "intensity_incoherent.fits"), overwrite=True)
 
     # --- E-FIELD ESTIMATIONS ---
-    efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array = refactor_e_fields(cfg, oitem)
+    efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array = refactor_e_fields(cfg, oitem, perfect_efield_list=perfect_efield_list)
 
     hdr_ef = pyfits.Header()
     hdr_ef['NLAM'] = len(cfg.sl_list)
@@ -152,14 +152,14 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
 
     return efields_complex_array, perfect_efields_complex_array
 
-def refactor_e_fields(cfg, oitem):
+def refactor_e_fields(cfg, oitem, perfect_efield_list=None):
     # --- E-FIELD ESTIMATIONS ---
     efields_realimag = []
     efields_complex = []
-    for n in range(len(cfg.sl_list)):
-        efields_realimag.append(np.real(oitem[n]['meas_efield']))
-        efields_realimag.append(np.imag(oitem[n]['meas_efield']))
-        efields_complex.append(oitem[n]['meas_efield'])
+    for j in range(len(cfg.sl_list)):
+        efields_realimag.append(np.real(oitem[j]['meas_efield']))
+        efields_realimag.append(np.imag(oitem[j]['meas_efield']))
+        efields_complex.append(oitem[j]['meas_efield'])
 
     # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
     efields_complex_array = np.stack(efields_complex, axis=0)
@@ -169,18 +169,24 @@ def refactor_e_fields(cfg, oitem):
     # --- PERFECT E-FIELDS ---
     perfect_efields_realimag = []
     perfect_efields_complex = []
-    for n in range(len(cfg.sl_list)):
-        perfect_efields_realimag.append(np.real(oitem[n]['model_efield']))
-        perfect_efields_realimag.append(np.imag(oitem[n]['model_efield']))
-        perfect_efields_complex.append(oitem[n]['model_efield'])
+    lams = range(len(cfg.sl_list)) if perfect_efield_list is None else [0]
+    for j in lams:
+        if perfect_efield_list is not None:
+            perf_efield = perfect_efield_list[j]
+        else:
+            perf_efield = oitem[j]['model_efield']
+        perfect_efields_realimag.append(np.real(perf_efield))
+        perfect_efields_realimag.append(np.imag(perf_efield))
+        perfect_efields_complex.append(perf_efield)
 
     # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
     perfect_efields_complex_array = np.stack(perfect_efields_complex, axis=0)
     # all_perfect_efields_complex.append(perfect_efields_complex_array)
 
     return efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array
-    
-def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists):
+
+
+def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list):
 
     outpath = os.path.dirname(fileout)
 
@@ -191,7 +197,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     # Create one subdirectory per iteration
     iters = [len(framelistlist)-1] if output_every_iter else range(len(framelistlist))
     for i in iters:
-        efields_complex_array, perfect_efields_complex_array = save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists)
+        efields_complex_array, perfect_efields_complex_array = save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list)
         # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
         efields_complex_array = np.stack(efields_complex_array, axis=0)
         all_efields_complex.append(efields_complex_array)
@@ -204,7 +210,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     if output_every_iter:
         for i in range(len(framelistlist)):
             efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array = refactor_e_fields(
-                cfg, otherlist[i])
+                cfg, otherlist[i], perfect_efield_list=perfect_efield_list)
 
             # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
             efields_complex_array = np.stack(efields_complex_array, axis=0)
