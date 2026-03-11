@@ -180,7 +180,7 @@ def refactor_e_fields(cfg, oitem):
 
     return efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array
     
-def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c):
+def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists):
 
     outpath = os.path.dirname(fileout)
 
