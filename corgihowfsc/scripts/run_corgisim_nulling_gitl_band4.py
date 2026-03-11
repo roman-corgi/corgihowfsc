@@ -39,6 +39,16 @@ dmstartmap_filenames = ['iter_061_dm1.fits', 'iter_061_dm2.fits']
 
 fileout_path = make_output_file_structure(loop_framework, backend_type, base_path, base_corgiloop_path, final_filename)
 
+# CPU count setup for parallel processing
+# CHECK - num_proper_process might need to be set to 1 when parallising corgisim?
+num_proper_process = None # Default is set by corgi_overrides in GitlImage initialization to 2. 
+num_jac_process = 2 # Default to 2 processes for Jacobian calculation, can be increased if needed. 
+
+# TODO - dummy numbers now but should be set and implemented later
+num_efield_worker = None
+num_imager_worker = None
+num_corgisim_norm_worker = None
+
 def main(): 
 
     args = get_args(
@@ -47,7 +57,7 @@ def main():
         dark_hole='360deg',
         probe_shape='default',
         precomp=precomp,
-        num_process=2,
+        num_process=num_jac_process,
         num_threads=1,
         fileout=fileout_path,
         jacpath=defjacpath,
@@ -87,6 +97,9 @@ def main():
     corgi_overrides['is_noise_free'] = False
     corgi_overrides['oversampling_factor'] = 2
 
+    if num_proper_process is not None:
+        corgi_overrides['NCPUS'] = num_proper_process
+        
     imager = GitlImage(
         cfg=cfg,  # Your CoronagraphMode object
         cstrat=cstrat,  # Your ControlStrategy object

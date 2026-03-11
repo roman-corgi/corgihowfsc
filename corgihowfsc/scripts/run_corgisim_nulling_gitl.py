@@ -42,6 +42,15 @@ dmstartmap_filenames = ['iter_080_dm1.fits',
 
 output_every_iter = True  # Set to True to save frames at every iteration in real time, False to save all data after the simulation is complete. The file structure will be the same in both cases.
 
+# CPU count setup for parallel processing
+# CHECK - num_proper_process might need to be set to 1 when parallising corgisim?
+num_proper_process = None # Default is set by corgi_overrides in GitlImage initialization to 2. 
+num_jac_process = 2 # Default to 2 processes for Jacobian calculation, can be increased if needed. 
+
+# TODO - dummy numbers now but should be set and implemented later
+num_efield_worker = None
+num_imager_worker = None
+num_corgisim_norm_worker = None
 
 def main():
     # Desired mask, band, dark hole, and probe shape
@@ -62,7 +71,7 @@ def main():
         dark_hole=dark_hole,
         probe_shape=probe_shape,
         precomp=precomp,
-        num_process=2,
+        num_process=num_jac_process,
         num_threads=1,
         fileout=fileout_path,
         jacpath=defjacpath,
@@ -100,6 +109,9 @@ def main():
     corgi_overrides['is_noise_free'] = False
     corgi_overrides['oversampling_factor'] = 3  # Always needs to be odd!
 
+    if num_proper_process is not None:
+        corgi_overrides['NCPUS'] = num_proper_process
+        
     imager = GitlImage(
         cfg=cfg,  # Your CoronagraphMode object
         cstrat=cstrat,  # Your ControlStrategy object
