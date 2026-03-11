@@ -191,7 +191,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     # Create one subdirectory per iteration
     iters = [len(framelistlist)-1] if output_every_iter else range(len(framelistlist))
     for i in iters:
-        efields_complex_array, perfect_efields_complex_array = save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c)
+        efields_complex_array, perfect_efields_complex_array = save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists)
         # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
         efields_complex_array = np.stack(efields_complex_array, axis=0)
         all_efields_complex.append(efields_complex_array)
