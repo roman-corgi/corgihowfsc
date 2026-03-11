@@ -471,7 +471,13 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         hdul = pyfits.HDUList([prim, img, prev])
         hdul.writeto(fileout, overwrite=True)
 
-        save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c)
+        ni_score, ni_inner, ni_outer = get_ni(framelistlist[iteration - 1], cfg, prev_exptime_list,
+                                              debugging_dict['peakflux'], normalization_strategy, ndm, nrow, ncol)
+        ni_lists['ni_score'].append(ni_score)
+        ni_lists['ni_inner'].append(ni_inner)
+        ni_lists['ni_outer'].append(ni_outer)
+
+        save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists)
 
 
 if __name__ == "__main__":
