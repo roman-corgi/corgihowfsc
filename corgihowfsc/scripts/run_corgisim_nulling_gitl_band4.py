@@ -113,7 +113,7 @@ def main():
                                                         separation_lamD=7,
                                                         exptime_norm=0.01)
         else:
-            normalization_strategy = EETCNormalization()
+            normalization_strategy = EETCNormalization(backend, corgi_overrides)
 
     metadata = {
         "inputs": {
