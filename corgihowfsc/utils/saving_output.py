@@ -1,6 +1,8 @@
 import os
+import csv
 import astropy.io.fits as pyfits
 import matplotlib.pylab as plt
+import matplotlib.cm as cm
 import numpy as np
 
 from howfsc.util.gitl_tools import param_order_to_list
@@ -9,25 +11,48 @@ from howfsc.util.insertinto import insertinto
 import logging
 log = logging.getLogger(__name__)
 
+markers = ['o','p','d','+','^']
+tab20c = cm.get_cmap('tab20c')
+# colours = [tab20c(i) for i in range(20)]
+colours = [tab20c(i * 4) for i in range(5)]  # 5 groups
 
-def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter):
+def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list, debugging_dict=None):
 
     outpath = os.path.dirname(fileout)
 
     if output_every_iter or (not output_every_iter and i < len(framelistlist)-1):
         # Plot measured_c vs iteration
         plt.figure()
-        plt.plot(np.arange(len(measured_c)) + 1, measured_c, marker='o')
+        plt.plot(np.arange(len(measured_c)) + 1, measured_c, color='cornflowerblue', marker='o', label='measured')
+        plt.plot(np.arange(len(pred_c)) + 2, pred_c, color='orchid', marker='+', label='predicted (PWP + compact[dE_efc])')
         plt.xlabel('Iteration')
         plt.ylabel('Measured Contrast')
         plt.semilogy()
         plt.xticks(np.arange(1, len(measured_c) + 1))
+        plt.legend(loc='best')
         plt.savefig(os.path.join(outpath, "contrast_vs_iteration.pdf"), bbox_inches='tight')
+        plt.close()
+
+        plt.figure()
+        plt.plot(np.arange(len(measured_c)) + 1, measured_c, color='cornflowerblue', marker='o', label='measured contrast')
+        for index, key in enumerate(ni_lists.keys()):
+            plt.plot(np.arange(len(ni_lists[key])) + 1, ni_lists[key], color=colours[index], marker=markers[index], label=key)
+        plt.xlabel('Iteration')
+        plt.ylabel('Measured NI')
+        plt.semilogy()
+        plt.xticks(np.arange(1, len(measured_c) + 1))
+        plt.legend(loc='best')
+        plt.savefig(os.path.join(outpath, "ni_vs_iteration.pdf"), bbox_inches='tight')
         plt.close()
 
         # Save measured_c to a csv file
         np.savetxt(os.path.join(outpath, "measured_contrast.csv"), np.array(measured_c), delimiter=",",
                    header="Measured Contrast", comments="")
+        np.savetxt(os.path.join(outpath, "predicted_contrast.csv"), np.array(pred_c), delimiter=",",
+                   header="Predicted Contrast", comments="")
+
+        if debugging_dict is not None:
+            save_debugging_iteration(debugging_dict, i + 1, outpath, csv_path='debugging_history.csv')
 
     # Create iteration subdirectory
     # i = len(framelistlist)-1
@@ -98,7 +123,7 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
     hdul_incoh.writeto(os.path.join(iterpath, "intensity_incoherent.fits"), overwrite=True)
 
     # --- E-FIELD ESTIMATIONS ---
-    efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array = refactor_e_fields(cfg, oitem)
+    efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array = refactor_e_fields(cfg, oitem, perfect_efield_list=perfect_efield_list)
 
     hdr_ef = pyfits.Header()
     hdr_ef['NLAM'] = len(cfg.sl_list)
@@ -127,14 +152,14 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
 
     return efields_complex_array, perfect_efields_complex_array
 
-def refactor_e_fields(cfg, oitem):
+def refactor_e_fields(cfg, oitem, perfect_efield_list=None):
     # --- E-FIELD ESTIMATIONS ---
     efields_realimag = []
     efields_complex = []
-    for n in range(len(cfg.sl_list)):
-        efields_realimag.append(np.real(oitem[n]['meas_efield']))
-        efields_realimag.append(np.imag(oitem[n]['meas_efield']))
-        efields_complex.append(oitem[n]['meas_efield'])
+    for j in range(len(cfg.sl_list)):
+        efields_realimag.append(np.real(oitem[j]['meas_efield']))
+        efields_realimag.append(np.imag(oitem[j]['meas_efield']))
+        efields_complex.append(oitem[j]['meas_efield'])
 
     # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
     efields_complex_array = np.stack(efields_complex, axis=0)
@@ -144,18 +169,24 @@ def refactor_e_fields(cfg, oitem):
     # --- PERFECT E-FIELDS ---
     perfect_efields_realimag = []
     perfect_efields_complex = []
-    for n in range(len(cfg.sl_list)):
-        perfect_efields_realimag.append(np.real(oitem[n]['model_efield']))
-        perfect_efields_realimag.append(np.imag(oitem[n]['model_efield']))
-        perfect_efields_complex.append(oitem[n]['model_efield'])
+    lams = range(len(cfg.sl_list)) if perfect_efield_list is None else [0]
+    for j in lams:
+        if perfect_efield_list is not None:
+            perf_efield = perfect_efield_list[j]
+        else:
+            perf_efield = oitem[j]['model_efield']
+        perfect_efields_realimag.append(np.real(perf_efield))
+        perfect_efields_realimag.append(np.imag(perf_efield))
+        perfect_efields_complex.append(perf_efield)
 
     # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
     perfect_efields_complex_array = np.stack(perfect_efields_complex, axis=0)
     # all_perfect_efields_complex.append(perfect_efields_complex_array)
 
     return efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array
-    
-def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter):
+
+
+def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list):
 
     outpath = os.path.dirname(fileout)
 
@@ -166,7 +197,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     # Create one subdirectory per iteration
     iters = [len(framelistlist)-1] if output_every_iter else range(len(framelistlist))
     for i in iters:
-        efields_complex_array, perfect_efields_complex_array = save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter)
+        efields_complex_array, perfect_efields_complex_array = save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list[i])
         # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
         efields_complex_array = np.stack(efields_complex_array, axis=0)
         all_efields_complex.append(efields_complex_array)
@@ -179,7 +210,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     if output_every_iter:
         for i in range(len(framelistlist)):
             efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array = refactor_e_fields(
-                cfg, otherlist[i])
+                cfg, otherlist[i], perfect_efield_list=perfect_efield_list[i])
 
             # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
             efields_complex_array = np.stack(efields_complex_array, axis=0)
@@ -208,7 +239,8 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     dhmask_cube = np.stack(dhmask_cube, axis=0)
 
     # Compute difference cube
-    efield_diff = efields_datacube - perfect_efields_datacube
+    efields_datacube_red = efields_datacube if efields_datacube.shape[1] == perfect_efields_datacube.shape[1] else efields_datacube[:,len(cfg.sl_list)//2,:,:]
+    efield_diff = efields_datacube_red - perfect_efields_datacube
 
     log.info(f"E-field difference stats:")
     log.info(f"  Shape: {efield_diff.shape}")
@@ -299,3 +331,60 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     plt.xticks(np.arange(1, len(variance_per_iter) + 1))
     plt.savefig(os.path.join(outpath, "efield_variance.pdf"))
     plt.close()
+
+
+def save_debugging_iteration(debugging_dict, iteration, outpath,
+                              csv_path='debugging_history.csv'):
+    """
+    Append per-wavelength scalar quantities to a CSV (one row per wavelength per iteration).
+
+    Parameters
+    ----------
+    debugging_dict : dict
+        The debugging dictionary returned each iteration.
+    iteration : int
+        Current iteration index.
+    csv_path : str
+        Path to the output CSV file (appended each call).
+    """
+    nlam = debugging_dict['peakflux'].shape[0]
+
+    fieldnames = [
+        'iteration', 'lam_index', 'beta',
+        'peakflux', 'next_c',
+        'cam_nom_gain',    'cam_nom_exptime',    'cam_nom_nframes',
+        'cam_probe_gain',  'cam_probe_exptime',  'cam_probe_nframes',
+        'pred_mean_contrast',         'pred_bright_contrast',
+        'pred_mean_contrast_probing', 'pred_bright_contrast_probing',
+    ]
+
+    debugging_csv_path = os.path.join(outpath, csv_path)
+    write_header = not os.path.exists(debugging_csv_path)
+    with open(debugging_csv_path, 'a', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        if write_header:
+            writer.writeheader()
+
+        for j in range(nlam):
+            writer.writerow({
+                'iteration': iteration,
+                'lam_index': j,
+                'beta': debugging_dict['beta'],
+                'peakflux':  debugging_dict['peakflux'][j, 0],
+                'next_c':    debugging_dict['next_c'],
+                'cam_nom_gain':      debugging_dict['cam_params']['nom'][j, 0],
+                'cam_nom_exptime':   debugging_dict['cam_params']['nom'][j, 1],
+                'cam_nom_nframes':   debugging_dict['cam_params']['nom'][j, 2],
+                'cam_probe_gain':    debugging_dict['cam_params']['probing'][j, 0],
+                'cam_probe_exptime': debugging_dict['cam_params']['probing'][j, 1],
+                'cam_probe_nframes': debugging_dict['cam_params']['probing'][j, 2],
+                'pred_mean_contrast':
+                    debugging_dict['cam_params_inputs']['pred_mean_contrast'][j, 0],
+                'pred_bright_contrast':
+                    debugging_dict['cam_params_inputs']['pred_bright_contrast'][j, 0],
+                'pred_mean_contrast_probing':
+                    debugging_dict['cam_params_inputs']['pred_mean_contrast_probing'][j, 0],
+                'pred_bright_contrast_probing':
+                    debugging_dict['cam_params_inputs']['pred_bright_contrast_probing'][j, 0],
+            })
+

@@ -13,8 +13,10 @@ class Normalization():
 
 
 class EETCNormalization(Normalization):
-    def __init__(self):
+    def __init__(self, backend, corgi_overrides):
         super().__init__()
+        self.backend = backend
+        self.corgi_overrides = corgi_overrides
 
     def calc_flux_rate(self, get_cgi_eetc, hconf, sl_ind, dm1v, dm2v, gain=1):
         a, peakflux = get_cgi_eetc.calc_flux_rate(
@@ -28,6 +30,9 @@ class EETCNormalization(Normalization):
         check.real_positive_scalar(peakflux, 'peakflux', TypeError)
         check.real_positive_scalar(exptime, 'exptime', TypeError)
 
+        # If the imager is the noise-free option the image is already a rate
+        if self.backend == 'corgihowfsc' and self.corgi_overrides['is_noise_free']:
+            exptime = 1
         return im/exptime/peakflux
 
 
@@ -106,8 +111,8 @@ class CorgiNormalization(Normalization):
 
 
 class CorgiNormalizationOnAxis(CorgiNormalization):
-    def __init__(self, cfg, cstrat, hconf, cor=None, corgi_overrides=None, separation_lamD=None, exptime_norm=1):
-        super().__init__(cfg, cstrat, hconf, cor=None, corgi_overrides=None, separation_lamD=None, exptime_norm=1)
+    def __init__(self, cfg, cstrat, hconf, cor=None, corgi_overrides=None, exptime_norm=1):
+        super().__init__(cfg, cstrat, hconf, cor=cor, corgi_overrides=corgi_overrides, separation_lamD=None, exptime_norm=exptime_norm)
 
     def calc_flux_rate(self, get_cgi_eetc, hconf, sl_ind, dm1v, dm2v, gain=1):
         """
