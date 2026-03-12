@@ -1,6 +1,9 @@
 import numpy as np
 from corgisim import scene, instrument
 
+import logging 
+log = logging.getLogger(__name__)
+
 from corgihowfsc.utils.corgisim_utils import (
     _extract_host_properties_from_hconf,
     CGI_TO_CORGI_MAPPING,
@@ -72,7 +75,9 @@ class CorgisimManager:
     def _initialize_config(self):
         """Initialise the setup for corgisim"""
         if 'bandpass' not in self.corgi_overrides:
-            wavelength = self.cfg.sl_list[1].lam
+            mid_index = len(self.cfg.sl_list) // 2
+            wavelength = self.cfg.sl_list[mid_index].lam
+            log.info(f"Mapping wavelength {wavelength*1e9:.1f} nm to CorgiSim bandpass...")
             self.bandpass = map_wavelength_to_corgisim_bandpass(wavelength)
         else:
             self.bandpass = self.corgi_overrides['bandpass']
