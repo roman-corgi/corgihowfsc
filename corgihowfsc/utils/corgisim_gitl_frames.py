@@ -241,156 +241,71 @@ class GitlImage:
           Simulated detector frames in order of (wavelength channel, DM config),
           with random bad pixels set to NaN. Total length is len(cfg.sl_list) * ndm.
         """
+        
+        # Setup
+        rng = np.random.default_rng(12345)
+        framelist = []
+        
+        if self.backend == 'corgihowfsc':
+            peakflux_list = np.ones(len(cfg.sl_list) * ndm)    
+        else: # cgi-howfsc
+            peakflux_list = []
+            peakflux_list_all = []
+            for indj, sl in enumerate(cfg.sl_list):
+                _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, indj, dm1_list[0], dm2_list[0], gain=1)
+                peakflux_list.append(peakflux)
+                repeated_peakflux = [peakflux] * len(dm1_list)
+                peakflux_list_all.append(repeated_peakflux)
+            peakflux_list_all = np.ravel(peakflux_list_all)
 
         if self.serial_imaging:
-            framelist = self.get_images_serial(dm1_list, dm2_list, exptime_list, gain_list, croplist, cstrat, hconf,
-                                                normalization_strategy, get_cgi_eetc, ndm, cfg, fracbadpix)
+            for indj, sl in enumerate(cfg.sl_list):
+                crop = croplist[indj]
+                for indk in range(ndm):
+                    f = self.get_image(dm1_list[indj*ndm + indk],
+                                     dm2_list[indj*ndm + indk],
+                                     exptime_list[indj*ndm + indk],
+                                     gain=gain_list[indj*ndm + indk],
+                                     crop=crop,
+                                     lind=indj,
+                                     peakflux=peakflux_list_all[indj*ndm + indk],
+                                     cleanrow=1024,
+                                     cleancol=1024,
+                                     fixedbp=cstrat.fixedbp,
+                                     wfe=None)
+
+                    bpmeas = rng.random(f.shape) > (1 - fracbadpix)
+                    f[bpmeas] = np.nan
+                    framelist.append(f)
         else:
-            framelist = self.get_images_parallel(dm1_list, dm2_list, exptime_list, gain_list, croplist, cstrat, hconf,
-                                                 normalization_strategy, get_cgi_eetc, ndm, cfg, fracbadpix,Ncores)
+            # Set up the wavelength indices
+            ind_list = []
+            ind_list_all = []
+            for indj, sl in enumerate(cfg.sl_list):
+                ind_list.append(indj)
+                repeated_indj = [indj] * len(dm1_list)
+                ind_list_all.append(repeated_indj)
+            ind_list_all = np.ravel(ind_list_all)
+            
+            # Set up parameter arrays to allow for each wavelength
+            dm1_list_all = dm1_list * len(ind_list)
+            dm2_list_all = dm2_list * len(ind_list)
+            exptime_list_all = exptime_list * len(ind_list)
+            gain_list_all = gain_list * len(ind_list)
+            crop_list_all = croplist * len(ind_list)
+            
+            
+            parallelparams = [(dm1v,dm2v,exptime,gain,crop,lind,peakflux_list,cleanrow,cleancol,fixedbp)
+                          for (dm1v,dm2v,exptime,gain,crop,lind,peakflux_list,cleanrow,cleancol,fixedbp) 
+                          in zip(dm1_list_all,dm2_list_all,exptime_list_all,gain_list_all,crop_list_all,ind_list_all,peakflux_list_all,repeat(1024),repeat(1024),repeat(cstrat.fixedbp))]
+            
+            with Pool(Ncores) as pool:
+                for f in pool.starmap(self.get_image, parallelparams):
+                    bpmeas = rng.random(f.shape) > (1 - fracbadpix)
+                    f[bpmeas] = np.nan
+                    framelist.append(f)
 
         return framelist
-
-    def get_images_parallel(self, dm1_list, dm2_list, exptime_list, gain_list, croplist, cstrat, hconf,
-                                  normalization_strategy, get_cgi_eetc, ndm, cfg, fracbadpix,Ncores):
-        
-        # TODO: Any camera settings or anything else missing?
-        
-        # Set up the wavelength indices
-        ind_list = []
-        ind_list_all = []
-        for indj, sl in enumerate(cfg.sl_list):
-            ind_list.append(indj)
-            repeated_indj = [indj] * len(dm1_list)
-            ind_list_all.append(repeated_indj)
-        ind_list_all = np.ravel(ind_list_all)
-        
-        # Set up parameter arrays to allow for each wavelength
-        dm1_list_all = dm1_list * len(ind_list)
-        dm2_list_all = dm2_list * len(ind_list)
-        exptime_list_all = exptime_list * len(ind_list)
-        gain_list_all = gain_list * len(ind_list)
-        crop_list_all = croplist * len(ind_list)
-        
-        
-        testparams = [(cstrat,hconf,normalization_strategy,get_cgi_eetc,ndm,cfg,fracbadpix,dm1_0,dm2_0,dm1v,dm2v,exptime,gain,crop,lind)
-                      for (cstrat,hconf,normalization_strategy,get_cgi_eetc,ndm,cfg,fracbadpix,dm1_0,dm2_0,dm1v,dm2v,exptime,gain,crop,lind) 
-                      in zip(repeat(cstrat),repeat(hconf),repeat(normalization_strategy),repeat(get_cgi_eetc),repeat(ndm),repeat(cfg),
-                             repeat(fracbadpix),repeat(dm1_list[0]),repeat(dm2_list[0]),dm1_list_all,dm2_list_all,exptime_list_all,gain_list_all,crop_list_all,ind_list_all)]
-        
-        framelist = []
-        with Pool(Ncores) as pool:
-            for result in pool.starmap(self.get_image_parallel, testparams):
-                framelist.append(result)
-                
-        return framelist
-        
-    def get_image_parallel(self, cstrat,hconf,normalization_strategy,get_cgi_eetc,ndm,cfg, fracbadpix, dm1_0, dm2_0,
-                           dm1v, dm2v, exptime, gain, crop, lind, 
-                           cleanrow=1024, cleancol=1024, fixedbp=np.zeros((1024, 1024), dtype=bool), wfe=None):
-        """
-        Get a simulated GITL frame using either the corgisim or cgi-howfsc optical model.
-        This method is designed to be compatible with both backends.
-
-        Arguments:
-         framelist: list of ndarrays
-          List of simulated detector frames.
-         dm1v: ndarray
-          Absolute voltage map for DM1.
-         dm2v: ndarray
-          Absolute voltage map for DM2.
-         exptime: float
-          Exposure time in seconds. Must be a real scalar > 0. If is_noise_free=True,
-          any positive value is acceptable.
-         gain: float, optional
-          EM gain setting for the EMCCD. Real scalar >= 1. Default is 1.
-         crop: 4-tuple of int, optional
-          (lower row, lower col, number of rows, number of columns) defining the
-          sub-region of a clean frame from which the PSF is extracted. The first two
-          values must be >= 0 and the last two must be > 0. Required when backend is
-          'cgi-howfsc'; ignored otherwise.
-         lind: int, optional
-          Index >= 0 indicating which wavelength channel in cfg to use. Must be less
-          than the length of cfg.sl_list. Default is 0.
-         peakflux: float, optional
-          Peak flux scaling factor. Default is 1. Only used when backend is 'cgi-howfsc'.
-         cleanrow: int, optional
-          Number of rows in a clean frame. Must be > 0. Defaults to 1024, matching
-          the EXCAM detector active area; this should not need to change under nominal
-          conditions.
-         cleancol: int, optional
-          Number of columns in a clean frame. Must be > 0. Defaults to 1024, matching
-          the EXCAM detector active area; this should not need to change under nominal
-          conditions.
-         fixedbp: ndarray of bool, optional
-          Fixed bad pixel map of shape (cleanrow, cleancol). Defaults to an array of
-          all False (no bad pixels). If None is passed, defaults to an all-False array
-          of shape (cleanrow, cleancol).
-         wfe: optional
-          Placeholder for future support of additional wavefront error inputs (e.g.
-          Zernike coefficients). Currently unused.
-
-        Returns:
-         list
-          Simulated detector frames.
-
-        Raises:
-         ValueError
-          If crop is None when backend is 'cgi-howfsc', or if other input validation
-          checks in check_gitlframeinputs fail.
-        """
-       
-        if fixedbp is None:
-            fixedbp = np.zeros((cleanrow, cleancol), dtype=bool)
-
-        # Input validation
-        self.check_gitlframeinputs(dm1v, dm2v, fixedbp, exptime, crop, cleanrow, cleancol)
-
-        if self.backend == 'corgihowfsc':
-            f = self.gitlframe_corgisim(dm1v, dm2v, fixedbp, exptime, crop, gain, lind, cleanrow, cleancol)
-        else:  # cgi-howfsc
-            if crop is None:
-                raise ValueError("crop parameter is required for cgi-howfsc")
-            
-            _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, lind, dm1_0, dm2_0, gain=1)
-            
-            dmlist = [dm1v, dm2v]
-            
-            f = self.gitlframe_cgihowfsc(dmlist, peakflux, self.cstrat.fixedbp, exptime, crop, lind, cleanrow, cleancol)
-
-        rng = np.random.default_rng(12345)
-        bpmeas = rng.random(f.shape) > (1 - fracbadpix)
-        f[bpmeas] = np.nan
-        return f
-        
-    def get_images_serial(self, dm1_list, dm2_list, exptime_list, gain_list, croplist, cstrat, hconf,
-                                normalization_strategy, get_cgi_eetc, ndm, cfg, fracbadpix):
-        rng = np.random.default_rng(12345)
-        framelist = []
-        for indj, sl in enumerate(cfg.sl_list):
-            crop = croplist[indj]
-            # TODO: what are correct camera settings here?
-            _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, indj, dm1_list[0], dm2_list[0], gain=1)
-            for indk in range(ndm):
-                f = self.get_image(dm1_list[indj*ndm + indk],
-                                 dm2_list[indj*ndm + indk],
-                                 exptime_list[indj*ndm + indk],
-                                 gain=gain_list[indj*ndm + indk],
-                                 crop=crop,
-                                 lind=indj,
-                                 peakflux=peakflux,
-                                 cleanrow=1024,
-                                 cleancol=1024,
-                                 fixedbp=cstrat.fixedbp,
-                                 wfe=None)
-
-                bpmeas = rng.random(f.shape) > (1 - fracbadpix)
-                f[bpmeas] = np.nan
-                framelist.append(f)
-                # pass
-            # pass
-        return framelist
-
 
     def get_image(self, dm1v, dm2v, exptime, gain=1, crop=None, lind=0, peakflux=1, cleanrow=1024, cleancol=1024, fixedbp=np.zeros((1024, 1024), dtype=bool), wfe=None):
         """
