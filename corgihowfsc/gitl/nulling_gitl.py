@@ -37,6 +37,7 @@ from corgihowfsc.gitl.modular_gitl import howfsc_computation
 from howfsc.precomp import howfsc_precomputation
 from corgihowfsc.utils.saving_output import save_outputs, save_outputs_iter
 from corgihowfsc.utils.output_management import save_run_config, update_yml
+from corgihowfsc.utils.gitl_worker import _collect_framelist
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
@@ -249,29 +250,26 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     # framelist
     # do last, needs peak flux
     rng = np.random.default_rng(12345)
-    framelist = []
-    for indj, sl in enumerate(cfg.sl_list):
-        crop = croplist[indj]
-        # TODO: what are correct camera settings here?
-        _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, indj, dm1_list[0], dm2_list[0], gain=1)
-        for indk in range(ndm):
-            f = imager.get_image(dm1_list[indj*ndm + indk],
-                             dm2_list[indj*ndm + indk],
-                             exptime,
-                             gain=gain,
-                             crop=crop,
-                             lind=indj,
-                             peakflux=peakflux,
-                             cleanrow=1024,
-                             cleancol=1024,
-                             fixedbp=cstrat.fixedbp,
-                             wfe=None)
+    
+    safe_cpu_count = args.num_imager_worker # TODO - hard coeding
+    print('Using num_imager_worker = ', safe_cpu_count)
 
-            bpmeas = rng.random(f.shape) > (1 - fracbadpix)
-            f[bpmeas] = np.nan
-            framelist.append(f)
-            pass
-        pass
+    # normalisation strategy first then imager, since normalisation strategy is needed to calculate peak flux for framelist collection
+
+    # this step is to apply probe images
+    framelist = _collect_framelist(
+        imager, cfg, dm1_list, dm2_list,
+        exptime_list=[exptime] * (nlam * ndm),
+        gain_list=[gain] * (nlam * ndm),
+        croplist=croplist,
+        normalization_strategy=normalization_strategy,
+        get_cgi_eetc=get_cgi_eetc,
+        hconf=hconf,
+        ndm=ndm,
+        cstrat=cstrat,
+        fracbadpix=fracbadpix,
+        n_jobs=safe_cpu_count,
+    )
 
     # drop packets for testing if requested
     if nbadpacket > 0:
@@ -389,25 +387,21 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         prev_gain_list = param_order_to_list(gain_list)
 
         # new framelist
-        framelist = []
-        for indj, sl in enumerate(cfg.sl_list):
-            crop = croplist[indj]
-            _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, indj, dm1_list[0], dm2_list[0], gain=1)
-            for indk in range(ndm):
-                f = imager.get_image(dm1_list[indj * ndm + indk],
-                                 dm2_list[indj * ndm + indk],
-                                 prev_exptime_list[indj*ndm + indk],
-                                 gain=prev_gain_list[indj*ndm + indk],
-                                 crop=crop,
-                                 lind=indj,
-                                 peakflux=peakflux,
-                                 cleanrow=1024,
-                                 cleancol=1024,
-                                 fixedbp=cstrat.fixedbp,
-                                 wfe=None)
-                framelist.append(f)
-                pass
-            pass
+        # TODO - put get_image worker in here
+
+        framelist = _collect_framelist(
+            imager, cfg, dm1_list, dm2_list,
+            exptime_list=[exptime] * (nlam * ndm),
+            gain_list=[gain] * (nlam * ndm),
+            croplist=croplist,
+            normalization_strategy=normalization_strategy,
+            get_cgi_eetc=get_cgi_eetc,
+            hconf=hconf,
+            ndm=ndm,
+            cstrat=cstrat,
+            fracbadpix=fracbadpix,
+            n_jobs=safe_cpu_count,
+        )
 
         # drop packets for testing if requested
         if nbadpacket > 0:
