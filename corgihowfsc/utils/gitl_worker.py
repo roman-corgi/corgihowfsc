@@ -40,8 +40,6 @@ def _collect_framelist(imager, cfg, dm1_list, dm2_list, exptime_list,
                        get_cgi_eetc, hconf, ndm, cstrat, fracbadpix,
                        n_jobs=1):
 
-    # pre-compute peakflux per wavelength before parallelising
-    # TODO - move this outside of here 
     peakflux_list = [
         normalization_strategy.calc_flux_rate(
             get_cgi_eetc, hconf, indj, dm1_list[0], dm2_list[0], gain=1
@@ -49,25 +47,30 @@ def _collect_framelist(imager, cfg, dm1_list, dm2_list, exptime_list,
         for indj in range(len(cfg.sl_list))
     ]
 
-    # flat args list — one tuple per frame
-    args_list = [
-        (imager,
-         dm1_list[indj * ndm + indk],
-         dm2_list[indj * ndm + indk],
-         exptime_list[indj * ndm + indk],
-         gain_list[indj * ndm + indk],
-         croplist[indj],
-         indj,
-         peakflux_list[indj],
-         cstrat.fixedbp,
-         fracbadpix,
-         indj * ndm + indk,   # seed_offset
-        )
-        for indj in range(len(cfg.sl_list))
-        for indk in range(ndm)
-    ]
+    args_list = []
+    for indj in range(len(cfg.sl_list)):
+        for indk in range(ndm):
+            frame_idx = indj * ndm + indk
+            args_list.append((
+                imager,
+                dm1_list[frame_idx],
+                dm2_list[frame_idx],
+                exptime_list[frame_idx],
+                gain_list[frame_idx],
+                croplist[indj],
+                indj,
+                peakflux_list[indj],
+                cstrat.fixedbp,
+                fracbadpix,
+                frame_idx,  
+            ))
 
-    return run_parallel(_get_image_worker, args_list, n_jobs=n_jobs)
+    return run_parallel(
+        _get_image_worker,
+        args_list,
+        n_jobs=n_jobs,
+        allow_nesting=True,
+    )
 
 def _get_image_worker(imager, dm1v, dm2v, exptime, gain, crop, lind,
                       peakflux, fixedbp, fracbadpix, seed_offset):
