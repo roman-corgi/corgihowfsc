@@ -33,6 +33,7 @@ class EETCNormalization(Normalization):
             CorgiSim override parameters. Must contain 'is_noise_free' (bool)
             when backend is 'corgihowfsc'.
         """
+    def __init__(self, backend, corgi_overrides):
         super().__init__()
         self.backend = backend
         self.corgi_overrides = corgi_overrides
@@ -102,10 +103,10 @@ class EETCNormalization(Normalization):
         check.real_positive_scalar(peakflux, 'peakflux', TypeError)
         check.real_positive_scalar(exptime, 'exptime', TypeError)
 
+        # If the imager is the noise-free option the image is already a rate
         if self.backend == 'corgihowfsc' and self.corgi_overrides['is_noise_free']:
             exptime = 1
-
-        return im / exptime / peakflux
+        return im/exptime/peakflux
 
 
 class CorgiNormalization(Normalization):
