@@ -47,7 +47,17 @@ import roman_preflight_proper
 #roman_preflight_proper.copy_here()
 ###############################################################################
 
-def time_parallel_or_serial_images(serial_imaging):
+def time_parallel_or_serial_images(backend_type,serial_imaging):
+    '''
+    This test script times how long it takes to generate a set of images using
+    either the 'corgihowfsc' or 'cgi-howfsc' backend and using either parallel
+    or serial calculations.
+    
+    Inputs:
+        backend_type: 'corgihowfsc' for the corgisim model, or 'cgi-howfsc' for the compact model
+        serial_imaging: True or False (True = serial, False = parallel)
+    '''
+    
     t=time.time()
     eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
     howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
@@ -71,7 +81,7 @@ def time_parallel_or_serial_images(serial_imaging):
 
     output_every_iter = True  # Set to True to save frames at every iteration in real time, False to save all data after the simulation is complete. The file structure will be the same in both cases.
 
-    backend_type = 'cgi-howfsc'  # 'corgihowfsc' for the corgisim model, otherwise for the compact model use: 'cgi-howfsc'
+    #backend_type = 'cgi-howfsc'  # 'corgihowfsc' for the corgisim model, otherwise for the compact model use: 'cgi-howfsc'
 
     mode = 'nfov_band1'
     dark_hole = '360deg'
@@ -276,18 +286,34 @@ def time_parallel_or_serial_images(serial_imaging):
 
 def compare_parallel_and_serial(Ncores=int(cpu_count()/2)):
     
+    # Compact model:        
     # Serial Calculation
-    t_serial = time_parallel_or_serial_images(serial_imaging=True)
+    t_serial_compact = time_parallel_or_serial_images('cgi-howfsc',serial_imaging=True)
     
     # Parallel Calculation
-    t_parallel = time_parallel_or_serial_images(serial_imaging=False)
+    t_parallel_compact = time_parallel_or_serial_images('cgi-howfsc',serial_imaging=False)
     
+    # corgisim model:
+        
+    # Serial Calculation
+    t_serial_corgisim = time_parallel_or_serial_images('corgihowfsc',serial_imaging=True)
+    
+    # Parallel Calculation
+    t_parallel_corgisim = time_parallel_or_serial_images('corgihowfsc',serial_imaging=False)
+
+
     # Display the comparison
-    print('Time for serial calculations: %.3f seconds' % t_serial)
-    print('Time for parallel calculations with %d cores: %.3f seconds' % (Ncores,t_parallel))
+    print('For the compact model:')
+    print('Time for serial calculations: %.3f seconds' % t_serial_compact)
+    print('Time for parallel calculations with %d cores: %.3f seconds' % (Ncores,t_parallel_compact))
+    
+    print('For the corgisim model:')
+    print('Time for serial calculations: %.3f seconds' % t_serial_corgisim)
+    print('Time for parallel calculations with %d cores: %.3f seconds' % (Ncores,t_parallel_corgisim))
+
 ###############################################################################    
 
 if __name__ == '__main__':
     freeze_support()
     #time_parallel_or_serial_images(False)
-    compare_parallel_and_serial()
+    compare_parallel_and_serial(Ncores=16)
