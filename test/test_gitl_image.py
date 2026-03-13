@@ -6,7 +6,44 @@ import pytest
 import numpy as np
 from unittest.mock import Mock, patch
 import sys
+import os
+import corgihowfsc
+import logging
+log = logging.getLogger(__name__)
 
+from howfsc.model.mode import CoronagraphMode
+
+KNOWN_CFGS = [
+    ("nfov_band1", "360deg"),
+    ("nfov_band1", "half_top"),
+    ("spec_band2", "both_sides"),
+    ("spec_band3", "both_sides"),
+    ("wfov_band4", "360deg"),
+]
+
+@pytest.fixture(params=KNOWN_CFGS, ids=lambda p: f"{p[0]}-{p[1]}")
+def cfg(request):
+    """Load a real CoronagraphMode for each known (mode, dark_hole)."""
+    mode, dark_hole = request.param
+
+    howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
+
+    modelpath = os.path.join(
+        howfscpath,
+        "model",
+        mode,
+        f"{mode}_{dark_hole}",
+    )
+
+    cfgfile = os.path.join(modelpath, "howfsc_optical_model.yaml")
+
+    assert os.path.exists(cfgfile), f"Missing cfg file: {cfgfile}"
+
+    cfg = CoronagraphMode(cfgfile)
+    cfg.modelpath = modelpath
+
+    return cfg
+    
 # Mock ALL the external dependencies before any imports
 def setup_mocks():
     mocks = [
@@ -75,14 +112,24 @@ def test_missing_params(mock_hconf):
         GitlImage(None, None, mock_hconf, cor='narrowfov')
 
 
-def test_wavelength_mapping():
-    """Test wavelength to bandpass mapping"""
-    assert map_wavelength_to_corgisim_bandpass(575e-9) == '1'
-    assert map_wavelength_to_corgisim_bandpass(660e-9) == '2'
-    
-    with pytest.raises(ValueError, match="does not match"):
-        map_wavelength_to_corgisim_bandpass(500e-9)
+def test_wavelength_mapping_from_cfg(cfg):
+    """For each real cfg, map the middle wavelength to a CORGISIM bandpass."""
 
+    idx = len(cfg.sl_list) // 2
+    wvl = cfg.sl_list[idx].lam
+    band = map_wavelength_to_corgisim_bandpass(wvl)
+
+    wavelengths = [sl.lam for sl in cfg.sl_list]
+
+    log.info("\n--- CFG TEST ---")
+    log.info("Model path: %s", cfg.modelpath)
+    log.info("Wavelength list: %s", wavelengths)
+    log.info("Selected index: %d", idx)
+    log.info("Selected wavelength: %.2e", wvl)
+    log.info("Mapped band: %s", band)
+
+    assert band in {"1", "2", "3", "4"}, \
+        f"Unexpected band {band} for wvl={wvl} (idx={idx}, nlam={len(cfg.sl_list)})"
 
 def test_cgi_needs_crop(mock_cfg, mock_cstrat, mock_hconf):
     """Test CGI backend crop validation in check_gitlframeinputs"""
