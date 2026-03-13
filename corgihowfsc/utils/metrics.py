@@ -86,8 +86,13 @@ def get_perfect_efield(imager, abs_dm1, abs_dm2, croplist, log, nlam, ndm, speed
     lam_inds = [nlam//2] if speedup else range(nlam)
     perfect_efields = []
     for j in lam_inds:
-        perfect_efields.append(imager.get_efield(dm1v=abs_dm1, dm2v=abs_dm2, lind=j, crop=croplist[j * ndm]))
-
+        # TODO: why is this 5,153,153??
+        e_field = imager.get_efield(dm1v=abs_dm1, dm2v=abs_dm2, lind=j, crop=croplist[j * ndm])
+        if len(e_field.shape) > 1:
+            mid_sublam = e_field.shape[0] // 2
+            perfect_efields.append(e_field[mid_sublam, :, :])
+        else:
+            perfect_efields.append(e_field)
     if imager.backend == 'corgihowfsc' and speedup:
         # TODO - add a warning here for those who wants to speed up the corgisim by changing number of filters in cgisim_bandpasses
         log.info('Using corgisim model, so perfect e-field is same for all DM settings at a given wavelength')
