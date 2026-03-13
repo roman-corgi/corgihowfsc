@@ -21,9 +21,9 @@ import proper
 from corgisim import outputs
 import time
 
-#import multiprocessing
-from multiprocessing import Process,Manager,Pool,cpu_count
+from corgihowfsc.utils.parallel_executor import run_parallel
 from itertools import repeat
+from multiprocessing import cpu_count
 
 # import helper functions 
 from corgihowfsc.utils.corgisim_utils import _extract_host_properties_from_hconf, CGI_TO_CORGI_MAPPING, SUPPORTED_CORGI_MODES, SUPPORTED_CGI_MODES, map_wavelength_to_corgisim_bandpass
@@ -247,7 +247,7 @@ class GitlImage:
         framelist = []
         
         if self.backend == 'corgihowfsc':
-            peakflux_list = np.ones(len(cfg.sl_list) * ndm)    
+            peakflux_list_all = np.ones(len(cfg.sl_list) * ndm)    
         else: # cgi-howfsc
             peakflux_list = []
             peakflux_list_all = []
@@ -299,11 +299,11 @@ class GitlImage:
                           for (dm1v,dm2v,exptime,gain,crop,lind,peakflux_list,cleanrow,cleancol,fixedbp) 
                           in zip(dm1_list_all,dm2_list_all,exptime_list_all,gain_list_all,crop_list_all,ind_list_all,peakflux_list_all,repeat(1024),repeat(1024),repeat(cstrat.fixedbp))]
             
-            with Pool(Ncores) as pool:
-                for f in pool.starmap(self.get_image, parallelparams):
-                    bpmeas = rng.random(f.shape) > (1 - fracbadpix)
-                    f[bpmeas] = np.nan
-                    framelist.append(f)
+            ftemp = run_parallel(self.get_image, parallelparams,n_jobs=Ncores,allow_nesting=True)
+            for f in ftemp:
+                bpmeas = rng.random(f.shape) > (1 - fracbadpix)
+                f[bpmeas] = np.nan
+                framelist.append(f)
 
         return framelist
 
