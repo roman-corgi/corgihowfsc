@@ -92,7 +92,8 @@ def main():
         backend='cgi-howfsc',
         cor=mode
     )
-    normalization_strategy = EETCNormalization()
+    corgi_overrides = {'is_noise_free': False}
+    normalization_strategy = EETCNormalization(backend_type, corgi_overrides)
     nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps)
 
 if __name__ == '__main__':    

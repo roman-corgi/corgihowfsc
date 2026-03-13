@@ -112,7 +112,7 @@ def main():
         crop_params['lrow'] = 436
         crop_params['lcol'] = 436
 
-        normalization_strategy = EETCNormalization()
+        normalization_strategy = EETCNormalization(backend_type, corgi_overrides)
 
     elif backend_type == 'corgihowfsc':
         crop_params['lrow'] = 0
@@ -126,7 +126,7 @@ def main():
                                                         separation_lamD=7,
                                                         exptime_norm=0.01)
         else:
-            normalization_strategy = EETCNormalization()
+            normalization_strategy = EETCNormalization(backend_type, corgi_overrides)
 
     metadata = {
         "inputs": {
