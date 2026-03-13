@@ -25,12 +25,15 @@ def _extract_host_properties_from_hconf(hconf):
         Vmag = star_config.get('stellar_vmag')
 
         sptype = star_config.get('stellar_type')
+        
+        stellar_diam_mas = star_config.get('stellar_diam_mas')
 
         return {
             'Vmag': Vmag,
             'spectral_type': sptype,
             'magtype': 'vegamag',  # standard default
-            'ref_flag': False  # standard default
+            'ref_flag': False,  # standard default
+            'stellar_diam_mas' : stellar_diam_mas
         }
     except (AttributeError, KeyError) as e:
         raise ValueError(f"hconf missing required star configuration: {e}")
