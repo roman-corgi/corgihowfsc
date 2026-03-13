@@ -1,4 +1,30 @@
-from multiprocessing import Pool
+import multiprocessing as mp
+import multiprocessing.pool as mpp
+
+
+class NoDaemonProcess(mp.Process):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    @property
+    def daemon(self):
+        return False
+
+    @daemon.setter
+    def daemon(self, value):
+        # Ignore attempts by Pool internals to set daemon=True
+        pass
+
+
+class NoDaemonContext(type(mp.get_context())):
+    Process = NoDaemonProcess
+
+
+class NestablePool(mpp.Pool):
+    def __init__(self, *args, **kwargs):
+        kwargs["context"] = NoDaemonContext()
+        super().__init__(*args, **kwargs)
+
 
 def run_parallel(func, args_list, n_jobs=1, allow_nesting=False, start_method="spawn"):
     """
