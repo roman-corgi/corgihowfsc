@@ -58,6 +58,8 @@ def main():
     dark_hole = '360deg'
     probe_shape = 'default'
 
+    print(backend_type, 'nulling Gitl simulation starting with mode = {}, dark hole = {}, probe shape = {}'.format(mode, dark_hole, probe_shape))
+
     # Make output path
     # Note get_args() needs a fileout_path so if it is desired to move make_output_file_structure() after get_args()
     # make sure to update args.fileout with final fileout_path
