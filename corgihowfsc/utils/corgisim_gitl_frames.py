@@ -128,8 +128,8 @@ class GitlImage:
                     check.positive_scalar_integer(val, f'crop[{i}]', TypeError)
         check.positive_scalar_integer(cleanrow, 'cleanrow', TypeError)
         check.positive_scalar_integer(cleancol, 'cleancol', TypeError)
-        
-    def gitlframe_corgisim(self, dm1v, dm2v, fixedbp, exptime, crop, lind=0, gain=1, cleanrow=1024, cleancol=1024, wfe=None):
+
+    def gitlframe_corgisim(self, dm1v, dm2v, fixedbp, exptime, crop, lind=0, gain=1, nframes=1, cleanrow=1024, cleancol=1024, wfe=None):
         """
         Generate a GITL frame using the CorgiSim optical model. Following the procedure in sim_gitlframe in howfsc.util.gitlframes.
 
@@ -147,7 +147,7 @@ class GitlImage:
         """        
         self.check_gitlframeinputs(dm1v, dm2v, fixedbp, exptime=exptime, crop=crop, cleanrow=cleanrow, cleancol=cleancol)
 
-        return self.corgisim_manager.generate_host_star_psf(dm1v, dm2v, lind=lind, exptime=exptime, gain=gain)
+        return self.corgisim_manager.generate_host_star_psf(dm1v, dm2v, lind=lind, exptime=exptime, gain=gain, nframes=nframes)
 
     def gitlframe_cgihowfsc(self, dmlist, peakflux, fixedbp, exptime, crop, lind, cleanrow=1024, cleancol=1024):
         """ 
@@ -177,7 +177,7 @@ class GitlImage:
             cleanrow=cleanrow,
             cleancol=cleancol
         )
-    def get_image(self, dm1v, dm2v, exptime, gain=1, crop=None, lind=0, peakflux=1, cleanrow=1024, cleancol=1024, fixedbp=np.zeros((1024, 1024), dtype=bool), wfe=None):
+    def get_image(self, dm1v, dm2v, exptime, gain=1, nframes=1, crop=None, lind=0, peakflux=1, cleanrow=1024, cleancol=1024, fixedbp=np.zeros((1024, 1024), dtype=bool), wfe=None):
 
         """
         Get a simulated GITL frame using either corgisim or cgi-howfsc repo's optical model. This get_image method should be compatible with both cgi-howfsc and corgisim. 
@@ -207,7 +207,8 @@ class GitlImage:
         self.check_gitlframeinputs(dm1v, dm2v, fixedbp, exptime, crop, cleanrow, cleancol)
 
         if self.backend == 'corgihowfsc':
-            return self.gitlframe_corgisim(dm1v, dm2v, fixedbp, exptime, gain, lind, cleanrow, cleancol)
+
+            return self.gitlframe_corgisim(dm1v, dm2v, fixedbp, exptime, crop, lind=lind, gain=gain, nframes=nframes, cleanrow=cleanrow, cleancol=cleancol)
         else:  # cgi-howfsc
             if crop is None:
                 raise ValueError("crop parameter is required for cgi-howfsc")
