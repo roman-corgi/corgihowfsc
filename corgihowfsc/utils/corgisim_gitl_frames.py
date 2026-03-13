@@ -141,7 +141,8 @@ class GitlImage:
          exptime: Exposure time used when collecting the data in in.  Should be a
           real scalar > 0. If is_noise_free = True, this can be any positive value.
          crop: 4-tuple of (lower row, lower col, number of rows, number of cols). Currently not in used
-         lind = 0: integer >= 0 indicating which wavelength channel in use. 
+         lind = 0: integer >= 0 indicating which wavelength channel in use.
+         nframes: number of frames averaged if backend_type='corgihowfsc' and corgi_overrides['is_noise_free'] = False
 
         wfe is a placeholder argument for now to keep the option of passing additional wavefront error (e.g. zernike coefficients) to modify the frame generation
         """        
@@ -195,6 +196,7 @@ class GitlImage:
          polaxis: integer, polarization axis setting for the camera.  Must be one of [0, 10, 20, 30].  Default is 10.
          cleanrow: Number of rows in a clean frame.  Integer > 0.  Defaults to 1024, the number of active area rows on the EXCAM detector; under nominal conditions, there should be no reason to use anything else.
 
+         nframes: number of frames averaged if backend_type='corgihowfsc' and corgi_overrides['is_noise_free'] = False
          exptime: Exposure time used when collecting the data in in. Should be a real scalar > 0 when noise is included. If is_noise_free = True, this can be any positive value.
          gain: EM gain setting for the EMCCD.  Real scalar >= 1.
 

@@ -153,6 +153,40 @@ class CorgisimManager:
         return optics
 
     def generate_on_axis_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, nframes=1, bias=0):
+        """
+        Generate the on-axis (host star) PSF with optional detector noise simulation.
+
+        Simulates the host star PSF through the coronagraph optical system with the
+        focal plane mask removed. If noise-free mode is active, returns the noiseless
+        host star image directly. Otherwise, applies detector effects and returns the
+        mean of `nframes` bias- and dark-subtracted, gain-corrected frames.
+
+        Parameters
+        ----------
+        dm1v : ndarray
+            Deformable mirror 1 actuator voltages.
+        dm2v : ndarray
+            Deformable mirror 2 actuator voltages.
+        lind : int, optional
+            Wavelength/bandpass index used to select the bandpass recipe.
+            Default is 0.
+        exptime : float, optional
+            Exposure time in seconds for each frame. Default is 1.0.
+        gain : float, optional
+            EMCCD EM gain. Default is 1.
+        nframes : int, optional
+            Number of frames to generate and coadd. Default is 1.
+        bias : float, optional
+            Detector bias level. Default is 0.
+
+        Returns
+        -------
+        ndarray
+            2D array of shape (output_dim, output_dim). In noise-free mode, the
+            noiseless host star image in simulation units. In noisy mode, the mean
+            of `nframes` bias- and dark-subtracted, gain-corrected frames in electrons.
+        """
+
         bandpass_recipe = self._get_bandpass_recipe(lind)
         use_pupil_mask = 0 if 'hlc' in self.cor_mapped else 1
 
@@ -201,6 +235,43 @@ class CorgisimManager:
 
 
     def generate_host_star_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, nframes=1, bias=0):
+        """
+        Generate the host star PSF using the standard coronagraph configuration.
+
+        Simulates the host star PSF through the coronagraph optical system with the focal plane in. If noise-free mode
+        is active, returns the noiseless host star image directly. Otherwise, applies detector effects and returns the
+        mean of `nframes` bias- and dark-subtracted, gain-corrected frames.
+
+        Parameters
+        ----------
+        dm1v : ndarray
+            Deformable mirror 1 actuator voltages.
+        dm2v : ndarray
+            Deformable mirror 2 actuator voltages.
+        lind : int, optional
+            Wavelength/bandpass index used to select the bandpass recipe.
+            Default is 0.
+        exptime : float, optional
+            Exposure time in seconds for each frame. Default is 1.0.
+        gain : float, optional
+            EMCCD EM gain. Default is 1.
+        nframes : int, optional
+            Number of frames to generate and coadd. Default is 1.
+        bias : float, optional
+            Detector bias level in ADU. Default is 0.
+
+        Returns
+        -------
+        ndarray
+            2D array of shape (output_dim, output_dim). In noise-free mode, the
+            noiseless host star image in simulation units. In noisy mode, the mean
+            of `nframes` bias- and dark-subtracted, gain-corrected frames in electrons.
+
+        See Also
+        --------
+        generate_on_axis_psf : Equivalent method with explicit optics keyword construction.
+        """
+
         optics = self.create_optics(dm1v, dm2v, lind)
 
         sim_scene = optics.get_host_star_psf(self.base_scene)
