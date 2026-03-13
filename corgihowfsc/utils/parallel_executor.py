@@ -3,6 +3,18 @@ import multiprocessing.pool as mpp
 
 
 class NoDaemonProcess(mp.Process):
+    """
+    A Process subclass that is never daemonic.
+
+    By default, multiprocessing.Pool marks all worker processes as daemon=True,
+    which prevents them from spawning their own child processes. This class
+    overrides the daemon property to always return False, regardless of what
+    Pool internals try to set it to.
+
+    This is required when workers need to spawn their own child processes —
+    in our case, each imager worker calls PROPER which internally spawns
+    its own multiprocessing.Pool(NCPUS).
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -17,10 +29,35 @@ class NoDaemonProcess(mp.Process):
 
 
 class NoDaemonContext(type(mp.get_context())):
+    """
+    A multiprocessing context that uses NoDaemonProcess instead of the
+    default Process class. Passed to NestablePool so all workers are
+    spawned as non-daemonic processes.
+    """
     Process = NoDaemonProcess
 
 
 class NestablePool(mpp.Pool):
+    """
+    A Pool subclass that allows workers to spawn their own child processes.
+
+    Standard multiprocessing.Pool workers are daemonic and cannot spawn
+    children — attempting to do so raises:
+        AssertionError: daemonic processes are not allowed to have children
+
+    NestablePool injects NoDaemonContext so all workers are non-daemonic,
+    enabling nested process pools. This is required for corgisim backend
+    where each imager worker calls PROPER's internal multiprocessing.Pool.
+
+    Usage:
+        with NestablePool(processes=n) as pool:
+            results = pool.starmap(func, args_list)
+
+    Warning:
+        Only use when nested pools are genuinely required. Non-daemonic
+        workers are not automatically terminated if the parent crashes —
+        always use as a context manager to ensure cleanup.
+    """
     def __init__(self, *args, **kwargs):
         kwargs["context"] = NoDaemonContext()
         super().__init__(*args, **kwargs)
@@ -34,7 +71,7 @@ def run_parallel(func, args_list, n_jobs=1, allow_nesting=False, start_method="s
     Args:
         func:          top-level picklable callable
         args_list:     list of tuples, each unpacked as func(*args)
-        n_jobs:        number of worker processes. Use os.sched_getaffinity(0)
+        n_jobs:        number of worker processes. 
                        on the cluster — never hardcode or use cpu_count()
         allow_nesting: if True, use NestablePool so workers can spawn
                        their own child processes (e.g. PROPER multirun)
