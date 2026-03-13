@@ -200,7 +200,7 @@ class CorgisimManager:
 
 
 
-    def generate_host_star_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, bias=0):
+    def generate_host_star_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, nframes=1, bias=0):
         optics = self.create_optics(dm1v, dm2v, lind)
 
         sim_scene = optics.get_host_star_psf(self.base_scene)
@@ -211,14 +211,17 @@ class CorgisimManager:
             # generate detector image
             emccd_dict = {'em_gain': gain, 'bias':bias, 'cr_rate': 0}
             detector = instrument.CorgiDetector(emccd_dict)
-
-            sim_scene = detector.generate_detector_image(sim_scene, exptime)
-
             # sim_scene.image_on_detector.data is not gain corrected or bias subtracted
             master_dark = self.generate_master_dark(detector, exptime, gain)
             B = bias * np.ones((self.output_dim, self.output_dim))
 
-            return (self.k_gain*sim_scene.image_on_detector.data - B)/gain - master_dark
+            coadd = np.zeros((self.output_dim, self.output_dim))
+            for n in range(nframes):
+                sim_scene = detector.generate_detector_image(sim_scene, exptime)
+                frame = (self.k_gain * sim_scene.image_on_detector.data - B) / gain - master_dark
+                coadd += frame
+            # frame = (sim_scene.image_on_detector.data - B) * self.k_gain / gain - master_dark
+            return coadd/nframes
 
     def generate_e_field(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, bias=0):
         """
