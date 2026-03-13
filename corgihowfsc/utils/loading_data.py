@@ -31,3 +31,19 @@ def load_debugging_csv(csv_path):
             result[field][j] = np.array(values)
 
     return result
+
+def load_contrast_csv(csv_path):
+    """
+    Load a measured contrast CSV written by save_outputs.
+
+    Parameters
+    ----------
+    csv_path : str
+        Path to the CSV file (e.g. 'measured_contrast.csv' or 'predicted_contrast.csv').
+
+    Returns
+    -------
+    contrast : np.ndarray, shape (niter,)
+        Contrast values, one per iteration.
+    """
+    return np.loadtxt(csv_path, delimiter=',', skiprows=1)

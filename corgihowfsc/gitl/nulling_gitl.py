@@ -155,7 +155,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
 
 
     # exptime = 10 # FIXME this should be derived from contrast eventually
-    contrast = 1e-5 # "starting" value to bootstrap getting we0
+    contrast = 3.5e-4 # "starting" value to bootstrap getting we0
 
     # dm1_list, dm2
     # Get DM lists
@@ -239,12 +239,19 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
                                                  hconf['hardware']['pointer']),
     )
 
+    # Initialize things
+    unprobed_snr = cstrat.get_unprobedsnr(1, contrast)
+    probeheight = cstrat.get_probeheight(1, contrast)
+    probed_snr = cstrat.get_probedsnr(1, contrast)
+    pscale = contrast + probeheight
+    pscale_bright = 1.5*contrast + probeheight + \
+                    2 * np.sqrt(probeheight) * np.sqrt(1.5*contrast)
     nframes, exptime, gain, snr_out, optflag = \
         get_cgi_eetc.calc_exp_time(
             sequence_name=hconf['hardware']['sequence_list'][0],
-            snr=1,
-            scale=contrast,
-            scale_bright=contrast,
+            snr=probed_snr,
+            scale=pscale,
+            scale_bright=pscale_bright,
         )
 
     # prev_exptime_list
