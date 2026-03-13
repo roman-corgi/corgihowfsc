@@ -262,8 +262,8 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     # do last, needs peak flux
     rng = np.random.default_rng(12345)
     
-    safe_cpu_count = args.num_imager_worker # TODO - hard coeding
-    print('Using num_imager_worker = ', safe_cpu_count)
+    num_imager_worker = args.num_imager_worker 
+    print('Using num_imager_worker = ', num_imager_worker)
 
     # normalisation strategy first then imager, since normalisation strategy is needed to calculate peak flux for framelist collection
 
@@ -280,7 +280,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         ndm=ndm,
         cstrat=cstrat,
         fracbadpix=fracbadpix,
-        n_jobs=safe_cpu_count,
+        n_jobs=num_imager_worker,
     )
 
     # drop packets for testing if requested
