@@ -117,10 +117,10 @@ def main():
         crop_params['lcol'] = 0
           
     if normalization_type == 'eetc':
-      normalization_strategy = EETCNormalization(backend_type, corgi_overrides)
+        normalization_strategy = EETCNormalization(backend_type, corgi_overrides)
       
     elif normalization_type == 'corgisim-off-axis' and backend_type == 'corgihowfsc':
-      normalization_strategy = CorgiNormalization(cfg,
+        normalization_strategy = CorgiNormalization(cfg,
                                                   cstrat,
                                                   hconf,
                                                   cor=args.mode,
@@ -129,7 +129,7 @@ def main():
                                                   exptime_norm=0.01)
    
     elif normalization_type == 'corgisim-on-axis' and backend_type == 'corgihowfsc':
-      normalization_strategy = CorgiNormalizationOnAxis(cfg, 
+        normalization_strategy = CorgiNormalizationOnAxis(cfg,
                                                         cstrat,
                                                         hconf,
                                                         cor=args.mode,
