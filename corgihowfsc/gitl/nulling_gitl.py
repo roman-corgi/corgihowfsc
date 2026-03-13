@@ -391,8 +391,8 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
 
         framelist = _collect_framelist(
             imager, cfg, dm1_list, dm2_list,
-            exptime_list=[exptime] * (nlam * ndm),
-            gain_list=[gain] * (nlam * ndm),
+            exptime_list=prev_exptime_list,  
+            gain_list=prev_gain_list,         
             croplist=croplist,
             normalization_strategy=normalization_strategy,
             get_cgi_eetc=get_cgi_eetc,
