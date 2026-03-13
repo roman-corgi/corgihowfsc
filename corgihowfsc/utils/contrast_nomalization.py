@@ -33,7 +33,6 @@ class EETCNormalization(Normalization):
             CorgiSim override parameters. Must contain 'is_noise_free' (bool)
             when backend is 'corgihowfsc'.
         """
-    def __init__(self, backend, corgi_overrides):
         super().__init__()
         self.backend = backend
         self.corgi_overrides = corgi_overrides
