@@ -32,7 +32,7 @@ def run_parallel(func, args_list, n_jobs=1, allow_nesting=False, start_method="s
     with ctx.Pool(processes=n_jobs) as pool:
         return pool.starmap(func, args_list)
 
-# Alternative implementation using joblib, but proper is using multiprocessing.Pool for parallel processing in this case. 
+# Alternative implementation using joblib, but proper is using multiprocessing.Pool for parallel processing in this case -> not straightforward as it would crash ... due to nested parallelism. 
 
 # from joblib import Parallel, delayed
 
