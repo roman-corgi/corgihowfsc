@@ -13,27 +13,110 @@ class Normalization():
 
 
 class EETCNormalization(Normalization):
+<<<<<<< feature/debugging_outputs
     def __init__(self, backend, corgi_overrides):
+=======
+    """
+    Normalization strategy using the CGI Exposure Time Calculator (EETC).
+
+    Computes peak flux rates from the EETC sequence list defined in hconf,
+    and normalizes detector images to contrast units by dividing by exposure
+    time and peak flux.
+    """
+
+    def __init__(self, backend, corgi_overrides):
+        """
+        Parameters
+        ----------
+        backend : str
+            Optical model backend, either 'corgihowfsc' or 'cgi-howfsc'.
+            Used to determine whether the image is already a rate (noise-free
+            corgihowfsc) or needs exposure time division.
+        corgi_overrides : dict
+            CorgiSim override parameters. Must contain 'is_noise_free' (bool)
+            when backend is 'corgihowfsc'.
+        """
+>>>>>>> main
         super().__init__()
         self.backend = backend
         self.corgi_overrides = corgi_overrides
 
     def calc_flux_rate(self, get_cgi_eetc, hconf, sl_ind, dm1v, dm2v, gain=1):
+        """
+        Calculate peak flux rate using the EETC sequence list.
+
+        Looks up the sequence name for the given wavelength index from
+        hconf['hardware']['sequence_list'] and queries the EETC for the
+        corresponding flux rate. dm1v, dm2v, and gain are accepted for
+        interface compatibility with other normalization strategies but are
+        not used.
+
+        Parameters
+        ----------
+        get_cgi_eetc : CGIEETC
+            Instantiated EETC object used to compute flux rates.
+        hconf : dict
+            Hardware configuration dict. Must contain
+            hconf['hardware']['sequence_list'] with one entry per wavelength.
+        sl_ind : int
+            Wavelength channel index into hconf['hardware']['sequence_list'].
+        dm1v : np.ndarray
+            DM1 voltage map (unused, present for interface compatibility).
+        dm2v : np.ndarray
+            DM2 voltage map (unused, present for interface compatibility).
+        gain : float, optional
+            EM gain (unused, present for interface compatibility). Default 1.
+
+        Returns
+        -------
+        a : float
+            Flux rate.
+        peakflux : float
+            Peak flux rate in counts/s or photons/s.
+        """
         a, peakflux = get_cgi_eetc.calc_flux_rate(
             sequence_name=hconf['hardware']['sequence_list'][sl_ind],
         )
         return a, peakflux
 
-        # implement normalize as a class method
     def normalize(self, im, peakflux, exptime):
+        """
+        Normalize a detector image to NI units.
+
+        Divides the image by exposure time and peak flux. If the backend is
+        'corgihowfsc' in noise-free mode, the image is already a rate so
+        exptime is set to 1 before division.
+
+        Parameters
+        ----------
+        im : np.ndarray, shape (nrow, ncol)
+            Detector image in counts (or counts/s if noise-free).
+        peakflux : float
+            Peak flux rate in counts/s or photons/s, as returned by
+            calc_flux_rate.
+        exptime : float
+            Exposure time in seconds. Must be > 0.
+
+        Returns
+        -------
+        np.ndarray
+            Normalized image in NI units (im / exptime / peakflux).
+        """
         check.twoD_array(im, 'im', TypeError)
         check.real_positive_scalar(peakflux, 'peakflux', TypeError)
         check.real_positive_scalar(exptime, 'exptime', TypeError)
 
+<<<<<<< feature/debugging_outputs
         # If the imager is the noise-free option the image is already a rate
         if self.backend == 'corgihowfsc' and self.corgi_overrides['is_noise_free']:
             exptime = 1
         return im/exptime/peakflux
+=======
+        if self.backend == 'corgihowfsc' and self.corgi_overrides['is_noise_free']:
+            exptime = 1
+
+        return im / exptime / peakflux
+>>>>>>> main
 
 
 class CorgiNormalization(Normalization):

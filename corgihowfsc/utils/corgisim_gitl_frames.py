@@ -128,8 +128,8 @@ class GitlImage:
                     check.positive_scalar_integer(val, f'crop[{i}]', TypeError)
         check.positive_scalar_integer(cleanrow, 'cleanrow', TypeError)
         check.positive_scalar_integer(cleancol, 'cleancol', TypeError)
-        
-    def gitlframe_corgisim(self, dm1v, dm2v, fixedbp, exptime, crop, lind=0, gain=1, cleanrow=1024, cleancol=1024, wfe=None):
+
+    def gitlframe_corgisim(self, dm1v, dm2v, fixedbp, exptime, crop, lind=0, gain=1, nframes=1, cleanrow=1024, cleancol=1024, wfe=None):
         """
         Generate a GITL frame using the CorgiSim optical model. Following the procedure in sim_gitlframe in howfsc.util.gitlframes.
 
@@ -141,13 +141,14 @@ class GitlImage:
          exptime: Exposure time used when collecting the data in in.  Should be a
           real scalar > 0. If is_noise_free = True, this can be any positive value.
          crop: 4-tuple of (lower row, lower col, number of rows, number of cols). Currently not in used
-         lind = 0: integer >= 0 indicating which wavelength channel in use. 
+         lind = 0: integer >= 0 indicating which wavelength channel in use.
+         nframes: number of frames averaged if backend_type='corgihowfsc' and corgi_overrides['is_noise_free'] = False
 
         wfe is a placeholder argument for now to keep the option of passing additional wavefront error (e.g. zernike coefficients) to modify the frame generation
         """        
         self.check_gitlframeinputs(dm1v, dm2v, fixedbp, exptime=exptime, crop=crop, cleanrow=cleanrow, cleancol=cleancol)
 
-        return self.corgisim_manager.generate_host_star_psf(dm1v, dm2v, lind=lind, exptime=exptime, gain=gain)
+        return self.corgisim_manager.generate_host_star_psf(dm1v, dm2v, lind=lind, exptime=exptime, gain=gain, nframes=nframes)
 
     def gitlframe_cgihowfsc(self, dmlist, peakflux, fixedbp, exptime, crop, lind, cleanrow=1024, cleancol=1024):
         """ 
@@ -177,7 +178,7 @@ class GitlImage:
             cleanrow=cleanrow,
             cleancol=cleancol
         )
-    def get_image(self, dm1v, dm2v, exptime, gain=1, crop=None, lind=0, peakflux=1, cleanrow=1024, cleancol=1024, fixedbp=np.zeros((1024, 1024), dtype=bool), wfe=None):
+    def get_image(self, dm1v, dm2v, exptime, gain=1, nframes=1, crop=None, lind=0, peakflux=1, cleanrow=1024, cleancol=1024, fixedbp=np.zeros((1024, 1024), dtype=bool), wfe=None):
 
         """
         Get a simulated GITL frame using either corgisim or cgi-howfsc repo's optical model. This get_image method should be compatible with both cgi-howfsc and corgisim. 
@@ -195,6 +196,7 @@ class GitlImage:
          polaxis: integer, polarization axis setting for the camera.  Must be one of [0, 10, 20, 30].  Default is 10.
          cleanrow: Number of rows in a clean frame.  Integer > 0.  Defaults to 1024, the number of active area rows on the EXCAM detector; under nominal conditions, there should be no reason to use anything else.
 
+         nframes: number of frames averaged if backend_type='corgihowfsc' and corgi_overrides['is_noise_free'] = False
          exptime: Exposure time used when collecting the data in in. Should be a real scalar > 0 when noise is included. If is_noise_free = True, this can be any positive value.
          gain: EM gain setting for the EMCCD.  Real scalar >= 1.
 
@@ -207,7 +209,8 @@ class GitlImage:
         self.check_gitlframeinputs(dm1v, dm2v, fixedbp, exptime, crop, cleanrow, cleancol)
 
         if self.backend == 'corgihowfsc':
-            return self.gitlframe_corgisim(dm1v, dm2v, fixedbp, exptime, gain, lind, cleanrow, cleancol)
+
+            return self.gitlframe_corgisim(dm1v, dm2v, fixedbp, exptime, crop, lind=lind, gain=gain, nframes=nframes, cleanrow=cleanrow, cleancol=cleancol)
         else:  # cgi-howfsc
             if crop is None:
                 raise ValueError("crop parameter is required for cgi-howfsc")

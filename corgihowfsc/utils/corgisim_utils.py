@@ -1,15 +1,16 @@
 import numpy as np
 
 # Mapping configuration - easy to update for new modes
+# NOTE - Add new mappings here as support is added
+
 CGI_TO_CORGI_MAPPING = {
     'narrowfov': 'hlc',
     'nfov_flat': 'hlc', 
     'nfov_dm': 'hlc',
     'nfov_band1': 'hlc',
+    'spec_band2': 'spc-spec_band2', 
+    'spec_band3': 'spc-spec_band3',
     'wfov_band4': 'spc-wide'
-    # NOTE - Add new mappings here as support is added
-    # 'widefov': 'widefov',  # Future support
-    # 'spec': 'spec',    # Future spectroscopy mode
 }
 
 SUPPORTED_CGI_MODES = list(CGI_TO_CORGI_MAPPING.keys())
@@ -35,17 +36,18 @@ def _extract_host_properties_from_hconf(hconf):
         raise ValueError(f"hconf missing required star configuration: {e}")
 
 # Helper function to map wavelength to corgisim bandpass
-def map_wavelength_to_corgisim_bandpass(wavelength_m, tolerance=3e-9):
+def map_wavelength_to_corgisim_bandpass(wavelength_m, tolerance=5e-9):
     """
     Map wavelength to CorgiSim bandpass label.
     
     Args:
         wavelength_m: Wavelength in meters
-        tolerance: Matching tolerance in meters (default ±3nm)
+        tolerance: Matching tolerance in meters (default ±5nm)
         
     Returns:
         CorgiSim bandpass label ('1', '2', '3', or '4')
     """
+
     corgisim_wavelengths = {
         '1': 575e-9, '2': 660e-9, '3': 730e-9, '4': 825e-9}
     

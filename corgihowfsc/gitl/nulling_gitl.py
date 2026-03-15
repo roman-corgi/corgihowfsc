@@ -270,6 +270,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
                              dm2_list[indj*ndm + indk],
                              exptime,
                              gain=gain,
+                             nframes=nframes,
                              crop=crop,
                              lind=indj,
                              peakflux=peakflux,
@@ -406,9 +407,10 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             t1 = time.time()
             log.info('Jac recalc time: ' + str(t1-t0) + ' seconds')
 
-        # prev_exptime_list
+        # prev_[camparams]_list
         prev_exptime_list = param_order_to_list(exptime_list)
         prev_gain_list = param_order_to_list(gain_list)
+        prev_nframes_list = param_order_to_list(nframes_list)
 
         # new framelist
         framelist = []
@@ -420,6 +422,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
                                  dm2_list[indj * ndm + indk],
                                  prev_exptime_list[indj*ndm + indk],
                                  gain=prev_gain_list[indj*ndm + indk],
+                                 nframes=prev_nframes_list[indj*ndm + indk],
                                  crop=crop,
                                  lind=indj,
                                  peakflux=peakflux,
