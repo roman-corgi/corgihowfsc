@@ -250,7 +250,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     )
 
 
-    print('Calculating eetc exp time')
+    print('Calculating initial eetc exp time')
 
     # Initialize things
     unprobed_snr = cstrat.get_unprobedsnr(1, contrast)
