@@ -259,17 +259,23 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     pscale = contrast + probeheight
     pscale_bright = 1.5*contrast + probeheight + \
                     2 * np.sqrt(probeheight) * np.sqrt(1.5*contrast)
-                    
-    nframes, exptime, gain, snr_out, optflag = \
-        get_cgi_eetc.calc_exp_time(
-            sequence_name=hconf['hardware']['sequence_list'][0],
-            snr=probed_snr,
-            scale=pscale,
-            scale_bright=pscale_bright,
-        )
 
-    # prev_exptime_list
-    prev_exptime_list = [exptime] * (nlam * ndm)
+    prev_exptime_list = []
+    prev_nframes_list = []
+    prev_gain_list = []
+    for indj, sl in enumerate(cfg.sl_list):                
+        nframes, exptime, gain, snr_out, optflag = \
+            get_cgi_eetc.calc_exp_time(
+                sequence_name=hconf['hardware']['sequence_list'][indj],
+                snr=probed_snr,
+                scale=pscale,
+                scale_bright=pscale_bright,
+            )
+
+        # prev_exptime_list
+        prev_exptime_list.append([exptime] * (ndm))
+        prev_nframes_list.append([nframes] * (ndm))
+        prev_gain_list.append([gain] * (ndm))
 
     # framelist
     # do last, needs peak flux
@@ -283,9 +289,9 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     # this step is to apply probe images
     framelist = _collect_framelist(
         imager, cfg, dm1_list, dm2_list,
-        exptime_list=[exptime] * (nlam * ndm),
-        gain_list=[gain] * (nlam * ndm),
-        nframes_list=[nframes] * (nlam * ndm), 
+        exptime_list=prev_exptime_list,
+        gain_list=prev_gain_list,
+        nframes_list=prev_nframes_list, 
         croplist=croplist,
         normalization_strategy=normalization_strategy,
         get_cgi_eetc=get_cgi_eetc,
