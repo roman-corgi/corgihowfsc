@@ -103,6 +103,13 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     num_process = args.num_process
     num_threads = args.num_threads
 
+    safe_cpu_count = args.num_imager_worker # TODO - hard coding
+    print('Using num_imager_worker = ', safe_cpu_count)
+
+    # TODO - move this out from here and change it to os.sched_getaffinity
+    if safe_cpu_count == None:
+        safe_cpu_count = 1
+
     # Make filout dir
     if args.fileout is not None:
         print('Making output directory: ', args.fileout)
@@ -180,6 +187,8 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     abs_dm2list.append(dm20)
 
     # jac, jtwj_map, n2clist
+    print('Calculating jacobian and jtwj_map...')
+
     if precomp in ['precomp_all_once']:
         t0 = time.time()
         jac, jtwj_map, n2clist = howfsc_precomputation(
@@ -240,6 +249,9 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
                                                  hconf['hardware']['pointer']),
     )
 
+
+    print('Calculating eetc exp time')
+
     # Initialize things
     unprobed_snr = cstrat.get_unprobedsnr(1, contrast)
     probeheight = cstrat.get_probeheight(1, contrast)
@@ -247,6 +259,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     pscale = contrast + probeheight
     pscale_bright = 1.5*contrast + probeheight + \
                     2 * np.sqrt(probeheight) * np.sqrt(1.5*contrast)
+                    
     nframes, exptime, gain, snr_out, optflag = \
         get_cgi_eetc.calc_exp_time(
             sequence_name=hconf['hardware']['sequence_list'][0],
@@ -280,7 +293,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         ndm=ndm,
         cstrat=cstrat,
         fracbadpix=fracbadpix,
-        n_jobs=num_imager_worker,
+        n_jobs=safe_cpu_count,
     )
 
     # drop packets for testing if requested
