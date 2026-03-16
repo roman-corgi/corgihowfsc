@@ -43,12 +43,12 @@ output_every_iter = True  # Set to True to save frames at every iteration in rea
 
 # CPU count setup for parallel processing
 # CHECK - num_proper_process might need to be set to 1 when parallising corgisim?
-num_proper_process = 8 # Default is set by corgi_overrides in GitlImage initialization to 2. 
+num_proper_process = 5 # Default is set by corgi_overrides in GitlImage initialization to 2. 
 num_jac_process = 12 # Default to 2 processes for Jacobian calculation, can be increased if needed. 
 
 # TODO - dummy numbers now but should be set and implemented later
 num_efield_worker = None
-num_imager_worker = 1
+num_imager_worker = 5
 num_corgisim_norm_worker = 1
 
 def main():
