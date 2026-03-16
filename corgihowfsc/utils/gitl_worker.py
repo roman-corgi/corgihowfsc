@@ -36,12 +36,11 @@ defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
 
 
 def _collect_framelist(imager, cfg, dm1_list, dm2_list, exptime_list,
-                       gain_list, croplist, normalization_strategy,
+                       gain_list, nframes_list, croplist, normalization_strategy,
                        get_cgi_eetc, hconf, ndm, cstrat, fracbadpix,
                        n_jobs=1):
 
     # pre-compute peakflux per wavelength before parallelising
-    # TODO - move this outside of here 
     peakflux_list = [
         normalization_strategy.calc_flux_rate(
             get_cgi_eetc, hconf, indj, dm1_list[0], dm2_list[0], gain=1
@@ -50,12 +49,15 @@ def _collect_framelist(imager, cfg, dm1_list, dm2_list, exptime_list,
     ]
 
     # flat args list — one tuple per frame
+    # indj * ndm + indk -> frame_index
+
     args_list = [
         (imager,
-         dm1_list[indj * ndm + indk],
+         dm1_list[indj * ndm + indk], 
          dm2_list[indj * ndm + indk],
          exptime_list[indj * ndm + indk],
          gain_list[indj * ndm + indk],
+         nframes_list[indj * ndm + indk],
          croplist[indj],
          indj,
          peakflux_list[indj],
@@ -69,7 +71,7 @@ def _collect_framelist(imager, cfg, dm1_list, dm2_list, exptime_list,
 
     return run_parallel(_get_image_worker, args_list, n_jobs=n_jobs)
 
-def _get_image_worker(imager, dm1v, dm2v, exptime, gain, crop, lind,
+def _get_image_worker(imager, dm1v, dm2v, exptime, gain, nframes, crop, lind,
                       peakflux, fixedbp, fracbadpix, seed_offset):
     """
     Worker function for parallel image collection.
@@ -81,6 +83,7 @@ def _get_image_worker(imager, dm1v, dm2v, exptime, gain, crop, lind,
         dm2v: ndarray, absolute voltage map for DM2
         exptime: float, exposure time in seconds
         gain: float, EM gain
+        nframes: int, number of frames 
         crop: 4-tuple of (lower row, lower col, nrows, ncols)
         lind: int, wavelength channel index
         peakflux: float, pre-computed peak flux for this wavelength
@@ -95,6 +98,7 @@ def _get_image_worker(imager, dm1v, dm2v, exptime, gain, crop, lind,
     f = imager.get_image(
         dm1v, dm2v, exptime,
         gain=gain,
+        nframes=nframes,
         crop=crop,
         lind=lind,
         peakflux=peakflux,
