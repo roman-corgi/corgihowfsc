@@ -234,7 +234,8 @@ def load_files(args, howfscpath):
 
         if '360deg' in args.dark_hole:
             hconffile = os.path.join(modelpath_band, 'hconf_nfov_flat.yaml')
-            cstratfile = os.path.join(modelpath, 'cstrat_nfov_band1.yaml')
+            cstratfile = os.path.join(modelpath, 'cstrat_nfov_band1_360deg_alpha02.yaml')
+            # cstratfile = os.path.join(modelpath, 'cstrat_nfov_band1.yaml')
 
             # if args.dm_start_shape is not None:
             #     dm_start_file = os.path.join(modelpath, args.dm_start_shape)
@@ -343,7 +344,8 @@ def load_files(args, howfscpath):
         hconffile = os.path.join(modelpath_band, 'hconf_wfov_band4.yaml')
 
         cfgfile = os.path.join(modelpath, 'howfsc_optical_model.yaml')
-        cstratfile = os.path.join(modelpath, 'cstrat_wfov_band4.yaml')
+        # cstratfile = os.path.join(modelpath, 'cstrat_wfov_band4.yaml')
+        cstratfile = os.path.join(modelpath, 'cstrat_wfov_band4_360deg_alpha03.yaml')
 
         probe0file = os.path.join(probepath, 'wfov_dmrel_1e-5_cos_constrained.fits')
         probe1file = os.path.join(probepath, 'wfov_dmrel_1e-5_sinlr_constrained.fits')

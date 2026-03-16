@@ -27,7 +27,7 @@ defjacpath = os.path.join(os.path.dirname(howfscpath), 'temp')  # User should se
 
 precomp = 'precomp_jacs_always' #'load_all' if defjacpath is not None else 'precomp_all_once'
 current_datetime = datetime.now()
-folder_name = 'gitl_simulation_wfov_band4_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
+folder_name = 'gitl_simulation_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
 fits_name = 'final_frames.fits'
 fileout_path = os.path.join(os.path.dirname(os.path.dirname(corgihowfsc.__file__)), 'data', folder_name, fits_name)
 dmstartmap_filenames = ['iter_061_dm1.fits', 'iter_061_dm2.fits']
@@ -36,11 +36,12 @@ dmstartmap_filenames = ['iter_061_dm1.fits', 'iter_061_dm2.fits']
 def main(): 
 
     args = get_args(
+        niter=30,
         mode='wfov_band4',
         dark_hole='360deg',
         probe_shape='default',
         precomp=precomp,
-        num_process=2,
+        num_process=0,
         num_threads=1,
         fileout=fileout_path,
         jacpath=defjacpath,
@@ -57,11 +58,7 @@ def main():
 
     # hconffile
     hconf = loadyaml(hconffile, custom_exception=TypeError)
-
-    # If it is desired to overwrite the stellar mag/type, do so here
-    # hconf['star']['stellar_vmag'] = 5
-    # hconf['star']['stellar_type'] = 'G0V'
-
+    print(cstratfile)
     # Define control and estimator strategy
     cstrat = ControlStrategy(cstratfile)
     estimator = DefaultEstimator()
@@ -79,7 +76,7 @@ def main():
     # Define imager and normalization (counts->contrast) strategy
     corgi_overrides = {}
     corgi_overrides['output_dim'] = crop_params['nrow']
-    corgi_overrides['is_noise_free'] = False
+    corgi_overrides['is_noise_free'] = True #False
     imager = GitlImage(
         cfg=cfg,         # Your CoronagraphMode object
         cstrat=cstrat,   # Your ControlStrategy object
@@ -89,14 +86,14 @@ def main():
         corgi_overrides=corgi_overrides
     )
 
-    # normalization_strategy = CorgiNormalization(cfg,
-    #                                             cstrat,
-    #                                             hconf,
-    #                                             cor=args.mode,
-    #                                             corgi_overrides=corgi_overrides,
-    #                                             separation_lamD=7,
-    #                                             exptime_norm=0.01)
-    normalization_strategy = EETCNormalization()
+    normalization_strategy = CorgiNormalization(cfg,
+                                                cstrat,
+                                                hconf,
+                                                cor=args.mode,
+                                                corgi_overrides=corgi_overrides,
+                                                separation_lamD=7,
+                                                exptime_norm=0.01)
+    # normalization_strategy = EETCNormalization()
 
     nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps)
 

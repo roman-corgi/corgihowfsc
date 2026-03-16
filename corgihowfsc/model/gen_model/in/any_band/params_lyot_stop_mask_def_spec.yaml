@@ -1,0 +1,11 @@
+# Details about the high-resolution mask reference
+#
+# Diameter of the high-res reference mask stored in a file  
+diamHighResMaskRef: 1000 
+
+# Filename of the high-res reference mask
+fnMaskRefHighRes: 'LS_SPC_20200617_Spec_1000_XCS.fits'
+
+# Ideal outer diameter of the Lyot stop to fit.
+# Units of normalized beam diameter.
+OD_LS: 0.89
