@@ -80,7 +80,7 @@ def get_ni(framelist, cfg, prev_exptime_list, peakfluxlist, normalization_strate
 
     return np.mean(ni_score), np.mean(ni_inner), np.mean(ni_outer)
 
-def get_perfect_efield(imager, abs_dm1, abs_dm2, croplist, log, nlam, ndm, speedup=True):
+def get_perfect_efield(imager, abs_dm1, abs_dm2, croplist, log, nlam, ndm, speedup=False):
     # TODO: normalisation of the model e-field?
     # TODO: Is this the correct DM command?
     lam_inds = [nlam//2] if speedup else range(nlam)
