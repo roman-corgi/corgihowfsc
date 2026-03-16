@@ -45,9 +45,12 @@ from howfsc.scripts.gitlframes import sim_gitlframe
 import roman_preflight_proper
 ### Then, run the following command to copy the default prescription file 
 #roman_preflight_proper.copy_here()
+
+import matplotlib.pyplot as plt
+
 ###############################################################################
 
-def time_parallel_or_serial_images(backend_type,serial_imaging):
+def time_parallel_or_serial_images(backend_type,serial_imaging,corgisim_noise_free=False,Ncores=int(cpu_count()/2)):
     '''
     This test script times how long it takes to generate a set of images using
     either the 'corgihowfsc' or 'cgi-howfsc' backend and using either parallel
@@ -56,6 +59,7 @@ def time_parallel_or_serial_images(backend_type,serial_imaging):
     Inputs:
         backend_type: 'corgihowfsc' for the corgisim model, or 'cgi-howfsc' for the compact model
         serial_imaging: True or False (True = serial, False = parallel)
+        corgisim_noise_free (optional): Boolean, True for noise-free, False for noisy
     '''
     
     t=time.time()
@@ -74,7 +78,7 @@ def time_parallel_or_serial_images(backend_type,serial_imaging):
     final_filename = 'final_frames.fits'
 
     loop_framework = 'corgi-howfsc'  # do not modify
-    backend_type = 'cgi-howfsc'  # 'corgihowfsc' for the corgisim model, otherwise for the compact model use: 'cgi-howfsc'
+    #backend_type = 'cgi-howfsc'  # 'corgihowfsc' for the corgisim model, otherwise for the compact model use: 'cgi-howfsc'
 
     dmstartmap_filenames = ['iter_080_dm1.fits',
                         'iter_080_dm2.fits']  # For nfov_band1 only. ['iter_061_dm1.fits', 'iter_061_dm2.fits'] for wfov_band4
@@ -157,7 +161,7 @@ def time_parallel_or_serial_images(backend_type,serial_imaging):
 
     corgi_overrides={}
     corgi_overrides['output_dim'] = crop_params['nrow']
-    corgi_overrides['is_noise_free'] = False
+    corgi_overrides['is_noise_free'] = corgisim_noise_free
 
 
     if backend_type == 'cgi-howfsc':
@@ -272,7 +276,7 @@ def time_parallel_or_serial_images(backend_type,serial_imaging):
                              get_cgi_eetc, 
                              ndm, 
                              cfg, 
-                             args.fracbadpix)
+                             args.fracbadpix,Ncores=Ncores)
     
     # Check things using EETCNormalization
     _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, 1, dm1_list[0], dm2_list[0], gain=1)
@@ -282,38 +286,66 @@ def time_parallel_or_serial_images(backend_type,serial_imaging):
     print('EETC:\n', 'Peakflux:', peakflux, '\n Max contrast:', np.nanmax(im_norm))
     
     elapsed=time.time()-t
-    return elapsed
+    return elapsed, ims
 
-def compare_parallel_and_serial(Ncores=int(cpu_count()/2)):
+def test_compare_parallel_and_serial(Ncores=int(cpu_count()/2),print_results=False):
     
     # Compact model:        
     # Serial Calculation
-    t_serial_compact = time_parallel_or_serial_images('cgi-howfsc',serial_imaging=True)
+    t_serial_compact,ims_serial_compact = time_parallel_or_serial_images('cgi-howfsc',serial_imaging=True)
     
     # Parallel Calculation
-    t_parallel_compact = time_parallel_or_serial_images('cgi-howfsc',serial_imaging=False)
+    t_parallel_compact,ims_parallel_compact = time_parallel_or_serial_images('cgi-howfsc',serial_imaging=False,Ncores=Ncores)
     
     # corgisim model:
         
     # Serial Calculation
-    t_serial_corgisim = time_parallel_or_serial_images('corgihowfsc',serial_imaging=True)
-    
+    t_serial_corgisim_noisefree,ims_serial_corgisim_noisefree = time_parallel_or_serial_images('corgihowfsc',serial_imaging=True,corgisim_noise_free=True)    
     # Parallel Calculation
-    t_parallel_corgisim = time_parallel_or_serial_images('corgihowfsc',serial_imaging=False)
+    t_parallel_corgisim_noisefree,ims_parallel_corgisim_noisefree = time_parallel_or_serial_images('corgihowfsc',serial_imaging=False,corgisim_noise_free=True,Ncores=Ncores)
 
+    # Serial Calculation
+    t_serial_corgisim_noisy,ims_serial_corgisim_noisy = time_parallel_or_serial_images('corgihowfsc',serial_imaging=True,corgisim_noise_free=False)    
+    # Parallel Calculation
+    t_parallel_corgisim_noisy,ims_parallel_corgisim_noisy = time_parallel_or_serial_images('corgihowfsc',serial_imaging=False,corgisim_noise_free=False,Ncores=Ncores)
 
     # Display the comparison
-    print('For the compact model:')
-    print('Time for serial calculations: %.3f seconds' % t_serial_compact)
-    print('Time for parallel calculations with %d cores: %.3f seconds' % (Ncores,t_parallel_compact))
+    if print_results == True:
+        print('For the compact model:')
+        print('Time for serial calculations: %.3f seconds' % t_serial_compact)
+        print('Time for parallel calculations with %d cores: %.3f seconds' % (Ncores,t_parallel_compact))
+        
+        print('For the corgisim model, is_noise_free = True:')
+        print('Time for serial calculations: %.3f seconds' % t_serial_corgisim_noisefree)
+        print('Time for parallel calculations with %d cores: %.3f seconds' % (Ncores,t_parallel_corgisim_noisefree))
+        
+        print('For the corgisim model, is_noise_free = False:')
+        print('Time for serial calculations: %.3f seconds' % t_serial_corgisim_noisy)
+        print('Time for parallel calculations with %d cores: %.3f seconds' % (Ncores,t_parallel_corgisim_noisy))
+
+    # Verify that the parallel calculations are faster
+    assert(t_parallel_compact < t_serial_compact)
+    assert(t_parallel_corgisim_noisefree < t_serial_corgisim_noisefree)
+    assert(t_parallel_corgisim_noisy < t_serial_corgisim_noisy)
+
+    # Check that the image arrays are in the correct order
     
-    print('For the corgisim model:')
-    print('Time for serial calculations: %.3f seconds' % t_serial_corgisim)
-    print('Time for parallel calculations with %d cores: %.3f seconds' % (Ncores,t_parallel_corgisim))
+    # The expected order:
+    #                    Wavelength 1, DM patterns 1-21
+    #                    Wavelength 2, DM patterns 1-21
+    #                    Wavelength 3, DM patterns 1-21
+    # Verify that the serial and parallel arrays are in the same order
+    # For the noise-free cases, they should be the same.    
+    for idiff in range(len(ims_serial_compact)):
+        imdiff = ims_serial_compact[idiff] - ims_parallel_compact[idiff]
+        assert[np.max(np.abs(imdiff))==0]
+        imdiff2 = ims_serial_corgisim_noisefree[idiff] - ims_parallel_corgisim_noisefree[idiff]
+        assert[np.max(np.abs(imdiff2))==0]
+    
 
 ###############################################################################    
 
 if __name__ == '__main__':
     freeze_support()
     #time_parallel_or_serial_images(False)
-    compare_parallel_and_serial(Ncores=16)
+    test_compare_parallel_and_serial(Ncores=12,print_results=True)
