@@ -69,7 +69,12 @@ def _collect_framelist(imager, cfg, dm1_list, dm2_list, exptime_list,
         for indk in range(ndm)
     ]
 
-    return run_parallel(_get_image_worker, args_list, n_jobs=n_jobs)
+    return run_parallel(
+        _get_image_worker,
+        args_list,
+        n_jobs=n_jobs,
+        allow_nesting=True,
+    )
 
 def _get_image_worker(imager, dm1v, dm2v, exptime, gain, nframes, crop, lind,
                       peakflux, fixedbp, fracbadpix, seed_offset):
