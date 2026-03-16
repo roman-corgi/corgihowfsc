@@ -102,10 +102,10 @@ class EETCNormalization(Normalization):
         check.real_positive_scalar(peakflux, 'peakflux', TypeError)
         check.real_positive_scalar(exptime, 'exptime', TypeError)
 
+        # If the imager is the noise-free option the image is already a rate
         if self.backend == 'corgihowfsc' and self.corgi_overrides['is_noise_free']:
             exptime = 1
-
-        return im / exptime / peakflux
+        return im/exptime/peakflux
 
 
 class CorgiNormalization(Normalization):
