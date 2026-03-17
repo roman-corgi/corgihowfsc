@@ -15,11 +15,11 @@ import roman_preflight_proper
 roman_preflight_proper.copy_here()
 
 import corgihowfsc
-from corgihowfsc.utils.howfsc_initialization import get_args, load_files
+from corgihowfsc.utils.howfsc_initialization import get_args, load_files, get_cpu_allocation
 from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
 from corgihowfsc.sensing.PerfectEstimator import PerfectEstimator
 from corgihowfsc.sensing.GettingProbes import ProbesShapes
-from corgihowfsc.utils.contrast_nomalization import CorgiNormalization, EETCNormalization
+from corgihowfsc.utils.contrast_nomalization import CorgiNormalization, EETCNormalization, CorgiNormalizationOnAxis
 from corgihowfsc.gitl.nulling_gitl import nulling_gitl
 from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 from corgihowfsc.utils.output_management import make_output_file_structure
@@ -35,18 +35,27 @@ final_filename = 'final_frames.fits'
 
 loop_framework = 'corgi-howfsc'  # do not modify
 backend_type = 'cgi-howfsc'  # 'corgihowfsc' for the corgisim model, otherwise for the compact model use: 'cgi-howfsc'
+normalization_type = 'eetc' # 'eetc' for the compact model (cgi-howfsc), otherwise for the corgisim (corgihowfsc) model can use 'eetc', 'corgisim-off-axis', 'corgisim-on-axis'
 
 dmstartmap_filenames = ['iter_080_dm1.fits',
                         'iter_080_dm2.fits']  # For nfov_band1 only. ['iter_061_dm1.fits', 'iter_061_dm2.fits'] for wfov_band4
 
 output_every_iter = True  # Set to True to save frames at every iteration in real time, False to save all data after the simulation is complete. The file structure will be the same in both cases.
 
+# CPU count setup for parallel processing
+num_proper_process = 5 # Default is set by corgi_overrides in GitlImage initialization to 2. 
+num_jac_process = 12 # Default to 2 processes for Jacobian calculation, can be increased if needed. 
+num_imager_worker = None
 
 def main():
+    global num_jac_process, num_imager_worker, num_proper_process
+
     # Desired mask, band, dark hole, and probe shape
     mode = 'nfov_band1'
     dark_hole = '360deg'
     probe_shape = 'default'
+
+    print(backend_type, 'nulling Gitl simulation starting with mode = {}, dark hole = {}, probe shape = {}'.format(mode, dark_hole, probe_shape))
 
     # Make output path
     # Note get_args() needs a fileout_path so if it is desired to move make_output_file_structure() after get_args()
@@ -55,13 +64,16 @@ def main():
     fileout_path = make_output_file_structure(loop_framework, backend_type, base_path, base_corgiloop_path,
                                               final_filename, tag=folder_tag)
 
+    # Check the CPU allocation and give user a warning if the requested parallelization may exceed available resources
+    num_jac_process, num_imager_worker, num_proper_process = get_cpu_allocation(num_jac_process, num_imager_worker, num_proper_process)
+    
     args = get_args(
         niter=3,
         mode=mode,
         dark_hole=dark_hole,
         probe_shape=probe_shape,
         precomp=precomp,
-        num_process=2,
+        num_process=num_jac_process,
         num_threads=1,
         fileout=fileout_path,
         jacpath=defjacpath,
@@ -69,8 +81,11 @@ def main():
         logfile=os.path.join(os.path.dirname(fileout_path), 'gitl.log')
     )
 
+
     # User params
     mode = args.mode
+    args.num_imager_worker = num_imager_worker
+    args.num_proper_process = num_proper_process
 
     modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps = load_files(args,
                                                                                                            howfscpath)
@@ -99,6 +114,9 @@ def main():
     corgi_overrides['is_noise_free'] = False
     corgi_overrides['oversampling_factor'] = 3  # Always needs to be odd!
 
+    if num_proper_process is not None:
+        corgi_overrides['NCPUS'] = num_proper_process
+        
     imager = GitlImage(
         cfg=cfg,  # Your CoronagraphMode object
         cstrat=cstrat,  # Your ControlStrategy object
@@ -111,22 +129,32 @@ def main():
     if backend_type == 'cgi-howfsc':
         crop_params['lrow'] = 436
         crop_params['lcol'] = 436
-
-        normalization_strategy = EETCNormalization(backend_type, corgi_overrides)
-
     elif backend_type == 'corgihowfsc':
         crop_params['lrow'] = 0
         crop_params['lcol'] = 0
-        if corgi_overrides['is_noise_free']:
-            normalization_strategy = CorgiNormalization(cfg,
+          
+    if normalization_type == 'eetc':
+        normalization_strategy = EETCNormalization(backend_type, corgi_overrides)
+      
+    elif normalization_type == 'corgisim-off-axis' and backend_type == 'corgihowfsc':
+        normalization_strategy = CorgiNormalization(cfg,
+                                                  cstrat,
+                                                  hconf,
+                                                  cor=args.mode,
+                                                  corgi_overrides=corgi_overrides,
+                                                  separation_lamD=7,
+                                                  exptime_norm=0.01)
+   
+    elif normalization_type == 'corgisim-on-axis' and backend_type == 'corgihowfsc':
+        normalization_strategy = CorgiNormalizationOnAxis(cfg,
                                                         cstrat,
                                                         hconf,
                                                         cor=args.mode,
                                                         corgi_overrides=corgi_overrides,
-                                                        separation_lamD=7,
                                                         exptime_norm=0.01)
-        else:
-            normalization_strategy = EETCNormalization(backend_type, corgi_overrides)
+    else:
+      raise ValueError('Invalid normalization type or backend-normalization combo.')
+
 
     metadata = {
         "inputs": {
