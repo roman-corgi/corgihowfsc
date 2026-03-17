@@ -325,7 +325,7 @@ class CorgisimManager:
             # frame = (sim_scene.image_on_detector.data - B) * self.k_gain / gain - master_dark
             return coadd/nframes
 
-    def generate_e_field(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, bias=0, crop = None):
+    def generate_efield(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, bias=0, crop = None):
         """
         Generate the e-field from corgisim
         Args:
