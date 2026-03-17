@@ -8,7 +8,8 @@ from corgihowfsc.utils.corgisim_utils import (
     _extract_host_properties_from_hconf,
     CGI_TO_CORGI_MAPPING,
     SUPPORTED_CGI_MODES,
-    map_wavelength_to_corgisim_bandpass
+    map_wavelength_to_corgisim_bandpass, 
+    _MANAGER_KEYS
     )
 
 class CorgisimManager:
@@ -126,9 +127,17 @@ class CorgisimManager:
         
         return self.bandpass + subband_option[lind]
 
+    def _get_passthrough_keywords(self):
+        """
+        Return any corgi_overrides keys that are not manager-level keys, to be
+        forwarded directly to CorgiOptics as optics_keywords.
+        """
+        return {k: v for k, v in self.corgi_overrides.items() if k not in _MANAGER_KEYS}
+
     def create_optics(self, dm1v, dm2v, lind):
         bandpass_recipe = self._get_bandpass_recipe(lind)
 
+        # Hardcoded defaults
         optics_keywords = {
             'cor_type': self.cor_mapped,
             'use_errors': 2,
