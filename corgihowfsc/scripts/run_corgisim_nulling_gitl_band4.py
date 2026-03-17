@@ -17,7 +17,7 @@ from corgihowfsc.utils.howfsc_initialization import get_args, load_files
 from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
 from corgihowfsc.sensing.PerfectEstimator import PerfectEstimator
 from corgihowfsc.sensing.GettingProbes import ProbesShapes
-from corgihowfsc.utils.contrast_nomalization import CorgiNormalization, EETCNormalization
+from corgihowfsc.utils.contrast_nomalization import CorgiNormalization, EETCNormalization, CorgiNormalizationOnAxis
 from corgihowfsc.gitl.nulling_gitl import nulling_gitl
 from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 from corgihowfsc.utils.output_management import make_output_file_structure
@@ -33,10 +33,21 @@ final_filename = 'final_frames.fits'
 
 loop_framework = 'corgi-howfsc' # do not modify
 backend_type = 'cgi-howfsc'  # 'corgihowfsc' for the corgisim model, otherwise for the compact model use: 'cgi-howfsc'
+normalization_type = 'eetc' # 'eetc' for the compact model (cgi-howfsc), otherwise for the corgisim (corgihowfsc) model can use 'eetc', 'corgisim-off-axis', 'corgisim-on-axis'
 
 dmstartmap_filenames = ['iter_061_dm1.fits', 'iter_061_dm2.fits']
 
 fileout_path = make_output_file_structure(loop_framework, backend_type, base_path, base_corgiloop_path, final_filename)
+
+# CPU count setup for parallel processing
+# CHECK - num_proper_process might need to be set to 1 when parallising corgisim?
+num_proper_process = None # Default is set by corgi_overrides in GitlImage initialization to 2. 
+num_jac_process = 2 # Default to 2 processes for Jacobian calculation, can be increased if needed. 
+
+# TODO - dummy numbers now but should be set and implemented later
+num_efield_worker = None
+num_imager_worker = None
+num_corgisim_norm_worker = None
 
 def main(): 
 
@@ -46,7 +57,7 @@ def main():
         dark_hole='360deg',
         probe_shape='default',
         precomp=precomp,
-        num_process=2,
+        num_process=num_jac_process,
         num_threads=1,
         fileout=fileout_path,
         jacpath=defjacpath,
@@ -86,6 +97,9 @@ def main():
     corgi_overrides['is_noise_free'] = False
     corgi_overrides['oversampling_factor'] = 2
 
+    if num_proper_process is not None:
+        corgi_overrides['NCPUS'] = num_proper_process
+        
     imager = GitlImage(
         cfg=cfg,  # Your CoronagraphMode object
         cstrat=cstrat,  # Your ControlStrategy object
@@ -98,22 +112,31 @@ def main():
     if backend_type == 'cgi-howfsc':
         crop_params['lrow'] = 436
         crop_params['lcol'] = 436
-
-        normalization_strategy = EETCNormalization(backend_type, corgi_overrides)
-
     elif backend_type == 'corgihowfsc':
         crop_params['lrow'] = 0
         crop_params['lcol'] = 0
-        if corgi_overrides['is_noise_free']:
-            normalization_strategy = CorgiNormalization(cfg,
+          
+    if normalization_type == 'eetc':
+      normalization_strategy = EETCNormalization(backend_type, corgi_overrides)
+      
+    elif normalization_type == 'corgisim-off-axis' and backend_type == 'corgihowfsc':
+      normalization_strategy = CorgiNormalization(cfg,
+                                                  cstrat,
+                                                  hconf,
+                                                  cor=args.mode,
+                                                  corgi_overrides=corgi_overrides,
+                                                  separation_lamD=7,
+                                                  exptime_norm=0.01)
+   
+    elif normalization_type == 'corgisim-on-axis' and backend_type == 'corgihowfsc':
+      normalization_strategy = CorgiNormalizationOnAxis(cfg, 
                                                         cstrat,
                                                         hconf,
                                                         cor=args.mode,
                                                         corgi_overrides=corgi_overrides,
-                                                        separation_lamD=7,
                                                         exptime_norm=0.01)
-        else:
-            normalization_strategy = EETCNormalization(backend_type, corgi_overrides)
+    else:
+      raise ValueError('Invalid normalization type or backend-normalization combo.')
 
     metadata = {
         "inputs": {

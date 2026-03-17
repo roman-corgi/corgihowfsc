@@ -157,6 +157,10 @@ class CorgisimManager:
             'use_field_stop': 1
         }
 
+        # Default to 2 cores if not specified in corgi_overrides
+        # NCPUS is parameter in 'proper_multirun'
+        optics_keywords['NCPUS'] = self.corgi_overrides.get('NCPUS', 2) 
+
         optics = instrument.CorgiOptics(
             self._mode,
             bandpass_recipe,
@@ -167,7 +171,41 @@ class CorgisimManager:
 
         return optics
 
-    def generate_on_axis_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, bias=0):
+    def generate_on_axis_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, nframes=1, bias=0):
+        """
+        Generate the on-axis (host star) PSF with optional detector noise simulation.
+
+        Simulates the host star PSF through the coronagraph optical system with the
+        focal plane mask removed. If noise-free mode is active, returns the noiseless
+        host star image directly. Otherwise, applies detector effects and returns the
+        mean of `nframes` bias- and dark-subtracted, gain-corrected frames.
+
+        Parameters
+        ----------
+        dm1v : ndarray
+            Deformable mirror 1 actuator voltages.
+        dm2v : ndarray
+            Deformable mirror 2 actuator voltages.
+        lind : int, optional
+            Wavelength/bandpass index used to select the bandpass recipe.
+            Default is 0.
+        exptime : float, optional
+            Exposure time in seconds for each frame. Default is 1.0.
+        gain : float, optional
+            EMCCD EM gain. Default is 1.
+        nframes : int, optional
+            Number of frames to generate and coadd. Default is 1.
+        bias : float, optional
+            Detector bias level. Default is 0.
+
+        Returns
+        -------
+        ndarray
+            2D array of shape (output_dim, output_dim). In noise-free mode, the
+            noiseless host star image in simulation units. In noisy mode, the mean
+            of `nframes` bias- and dark-subtracted, gain-corrected frames in electrons.
+        """
+
         bandpass_recipe = self._get_bandpass_recipe(lind)
         use_pupil_mask = 0 if 'hlc' in self.cor_mapped else 1
 
@@ -201,18 +239,58 @@ class CorgisimManager:
             # generate detector image
             emccd_dict = {'em_gain': gain, 'bias':bias, 'cr_rate': 0}
             detector = instrument.CorgiDetector(emccd_dict)
-
-            sim_scene = detector.generate_detector_image(sim_scene, exptime)
-
             # sim_scene.image_on_detector.data is not gain corrected or bias subtracted
             master_dark = self.generate_master_dark(detector, exptime, gain)
             B = bias * np.ones((self.output_dim, self.output_dim))
 
-            return (self.k_gain*sim_scene.image_on_detector.data - B)/gain - master_dark
+            coadd = np.zeros((self.output_dim, self.output_dim))
+            for n in range(nframes):
+                sim_scene = detector.generate_detector_image(sim_scene, exptime)
+                frame = (self.k_gain * sim_scene.image_on_detector.data - B) / gain - master_dark
+                coadd += frame
+            # frame = (sim_scene.image_on_detector.data - B) * self.k_gain / gain - master_dark
+            return coadd/nframes
 
 
 
-    def generate_host_star_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, bias=0):
+    def generate_host_star_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, nframes=1, bias=0):
+        """
+        Generate the host star PSF using the standard coronagraph configuration.
+
+        Simulates the host star PSF through the coronagraph optical system with the focal plane in. If noise-free mode
+        is active, returns the noiseless host star image directly. Otherwise, applies detector effects and returns the
+        mean of `nframes` bias- and dark-subtracted, gain-corrected frames.
+
+        Parameters
+        ----------
+        dm1v : ndarray
+            Deformable mirror 1 actuator voltages.
+        dm2v : ndarray
+            Deformable mirror 2 actuator voltages.
+        lind : int, optional
+            Wavelength/bandpass index used to select the bandpass recipe.
+            Default is 0.
+        exptime : float, optional
+            Exposure time in seconds for each frame. Default is 1.0.
+        gain : float, optional
+            EMCCD EM gain. Default is 1.
+        nframes : int, optional
+            Number of frames to generate and coadd. Default is 1.
+        bias : float, optional
+            Detector bias level in ADU. Default is 0.
+
+        Returns
+        -------
+        ndarray
+            2D array of shape (output_dim, output_dim). In noise-free mode, the
+            noiseless host star image in simulation units. In noisy mode, the mean
+            of `nframes` bias- and dark-subtracted, gain-corrected frames in electrons.
+
+        See Also
+        --------
+        generate_on_axis_psf : Equivalent method with explicit optics keyword construction.
+        """
+
         optics = self.create_optics(dm1v, dm2v, lind)
 
         sim_scene = optics.get_host_star_psf(self.base_scene)
@@ -223,14 +301,17 @@ class CorgisimManager:
             # generate detector image
             emccd_dict = {'em_gain': gain, 'bias':bias, 'cr_rate': 0}
             detector = instrument.CorgiDetector(emccd_dict)
-
-            sim_scene = detector.generate_detector_image(sim_scene, exptime)
-
             # sim_scene.image_on_detector.data is not gain corrected or bias subtracted
             master_dark = self.generate_master_dark(detector, exptime, gain)
             B = bias * np.ones((self.output_dim, self.output_dim))
 
-            return (self.k_gain*sim_scene.image_on_detector.data - B)/gain - master_dark
+            coadd = np.zeros((self.output_dim, self.output_dim))
+            for n in range(nframes):
+                sim_scene = detector.generate_detector_image(sim_scene, exptime)
+                frame = (self.k_gain * sim_scene.image_on_detector.data - B) / gain - master_dark
+                coadd += frame
+            # frame = (sim_scene.image_on_detector.data - B) * self.k_gain / gain - master_dark
+            return coadd/nframes
 
     def generate_e_field(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, bias=0):
         """
