@@ -3,7 +3,7 @@ active_model: "cgi-howfsc" # choose from "cgi-howfsc" or "corgihowfsc". This wil
 runtime:
   num_proper_process: 5 # default to 5 
   num_jac_process: 6 # default to 2
-  num_imager_worker: null # default to None for no parallelization, otherwise set to an integer number of workers
+  num_imager_worker: null # default to null for no parallelization, otherwise set to an integer number of workers
 
 sim_settings:
   loop_framework: "corgi-howfsc" # do not modify 
