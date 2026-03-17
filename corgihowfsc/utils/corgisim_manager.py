@@ -152,9 +152,12 @@ class CorgisimManager:
             'use_field_stop': 1
         }
 
-        # Default to 2 cores if not specified in corgi_overrides
-        # NCPUS is parameter in 'proper_multirun'
-        optics_keywords['NCPUS'] = self.corgi_overrides.get('NCPUS', 2) 
+        # Merge in any pass-through keywords from corgi_overrides, then
+        optics_keywords.update(self._get_passthrough_keywords())
+
+        # re-apply DM voltages so they can never be accidentally overridden.
+        optics_keywords['dm1_v'] = dm1v
+        optics_keywords['dm2_v'] = dm2v
 
         optics = instrument.CorgiOptics(
             self._mode,
