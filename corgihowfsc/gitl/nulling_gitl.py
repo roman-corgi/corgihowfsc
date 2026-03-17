@@ -38,7 +38,8 @@ from howfsc.precomp import howfsc_precomputation
 from corgihowfsc.utils.saving_output import save_outputs, save_outputs_iter
 from corgihowfsc.utils.output_management import save_run_config, update_yml
 from corgihowfsc.utils.gitl_worker import _collect_framelist
-from corgihowfsc.utils.metrics import get_ni, get_perfect_efield
+from corgihowfsc.utils.metrics import get_ni
+
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
@@ -361,7 +362,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             hdul.writeto(fileout, overwrite=True)
 
             if output_model_efield and imager.backend == 'corgihowfsc':
-                perfect_efield_list.append(get_perfect_efield(imager, abs_dm1, abs_dm2, croplist, log, nlam, ndm, speedup=True))
+                perfect_efield_list.append(imager.get_perfect_efield(abs_dm1,abs_dm2, croplist,log,nlam,ndm,speedup=True))
             else:
                 perfect_efield_list.append(None)
 
