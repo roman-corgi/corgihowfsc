@@ -160,7 +160,7 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
     hdul_incoh.writeto(os.path.join(iterpath, "intensity_incoherent.fits"), overwrite=True)
 
     # --- E-FIELD ESTIMATIONS ---
-    efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array = refactor_e_fields(cfg, oitem, perfect_efield_list=perfect_efield_list)
+    efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array = refactor_efields(cfg, oitem, perfect_efield_list=perfect_efield_list)
 
     hdr_ef = pyfits.Header()
     hdr_ef['NLAM'] = len(cfg.sl_list)
@@ -189,7 +189,7 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
 
     return efields_complex_array, perfect_efields_complex_array
 
-def refactor_e_fields(cfg, oitem, perfect_efield_list=None):
+def refactor_efields(cfg, oitem, perfect_efield_list=None):
     # --- E-FIELD ESTIMATIONS ---
     efields_realimag = []
     efields_complex = []
@@ -245,7 +245,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     # and properly populate those
     if output_every_iter:
         for i in range(len(framelistlist)):
-            efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array = refactor_e_fields(
+            efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array = refactor_efields(
                 cfg, otherlist[i], perfect_efield_list=perfect_efield_list[i])
 
             # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)

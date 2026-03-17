@@ -238,11 +238,11 @@ class GitlImage:
         """
 
         if self.backend == 'corgihowfsc': # Corgisim model
-            e_field = self.corgisim_manager.generate_e_field(dm1v, dm2v, lind, crop=crop)
-            if speedup and len(e_field.shape) > 2:
-                mid_sublam = e_field.shape[0] // 2
-                return e_field[mid_sublam, :, :]
-            return e_field
+            efield = self.corgisim_manager.generate_efield(dm1v, dm2v, lind, crop=crop)
+            if speedup and len(efield.shape) > 2:
+                mid_sublam = efield.shape[0] // 2
+                return efield[mid_sublam, :, :]
+            return efield
         else:  # Compact model
             if crop is None:
                 raise ValueError("crop parameter is required for cgi-howfsc backend")
@@ -263,14 +263,14 @@ class GitlImage:
         perfect_efields = []
         for j in lam_inds:
             # TODO: why is this 5,153,153??
-            e_field = self.get_efield(
+            efield = self.get_efield(
                 dm1v=abs_dm1,
                 dm2v=abs_dm2,
                 lind=j,
                 crop=croplist[j * ndm],
                 speedup=speedup
             )
-            perfect_efields.append(e_field)
+            perfect_efields.append(efield)
         if self.backend == 'corgihowfsc' and speedup:
             # TODO - add a warning here for those who wants to speed up the corgisim by changing number of filters in cgisim_bandpasses
             log.info('Using corgisim model, so perfect e-field is same for all DM settings at a given wavelength')
