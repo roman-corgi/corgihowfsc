@@ -200,14 +200,14 @@ def refactor_e_fields(cfg, oitem, perfect_efield_list=None):
 
     # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
     efields_complex_array = np.stack(efields_complex, axis=0)
-    # all_efields_complex.append(efields_complex_array)
-
 
     # --- PERFECT E-FIELDS ---
     perfect_efields_realimag = []
     perfect_efields_complex = []
-    lams = range(len(cfg.sl_list)) if perfect_efield_list is None else [0]
-    for j in lams:
+
+    num_perf_lams = len(perfect_efield_list) if perfect_efield_list is not None else len(cfg.sl_list)
+
+    for j in range(num_perf_lams):
         if perfect_efield_list is not None:
             perf_efield = perfect_efield_list[j]
         else:
@@ -218,7 +218,6 @@ def refactor_e_fields(cfg, oitem, perfect_efield_list=None):
 
     # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
     perfect_efields_complex_array = np.stack(perfect_efields_complex, axis=0)
-    # all_perfect_efields_complex.append(perfect_efields_complex_array)
 
     return efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array
 
@@ -276,7 +275,12 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     dhmask_cube = np.stack(dhmask_cube, axis=0)
 
     # Compute difference cube
-    efields_datacube_red = efields_datacube if efields_datacube.shape[1] == perfect_efields_datacube.shape[1] else efields_datacube[:,len(cfg.sl_list)//2,:,:]
+    if efields_datacube.shape[1] == perfect_efields_datacube.shape[1]:
+        efields_datacube_red = efields_datacube
+    else:
+        mid_idx = len(cfg.sl_list) // 2
+        efields_datacube_red = efields_datacube[:, mid_idx:mid_idx + 1, :, :]
+
     efield_diff = efields_datacube_red - perfect_efields_datacube
 
     log.info(f"E-field difference stats:")
