@@ -37,6 +37,7 @@ from corgihowfsc.gitl.modular_gitl import howfsc_computation
 from howfsc.precomp import howfsc_precomputation
 from corgihowfsc.utils.saving_output import save_outputs, save_outputs_iter
 from corgihowfsc.utils.output_management import save_run_config, update_yml
+from corgihowfsc.utils.gitl_worker import _collect_framelist
 from corgihowfsc.utils.metrics import get_ni, get_perfect_efield
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
@@ -101,6 +102,13 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     precomp = args.precomp
     num_process = args.num_process
     num_threads = args.num_threads
+
+    safe_cpu_count = args.num_imager_worker # TODO - hard coding
+    print('Using num_imager_worker = ', safe_cpu_count)
+
+    # TODO - move this out from here and change it to os.sched_getaffinity
+    if safe_cpu_count == None:
+        safe_cpu_count = 1
 
     # Make filout dir
     if args.fileout is not None:
@@ -179,6 +187,8 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     abs_dm2list.append(dm20)
 
     # jac, jtwj_map, n2clist
+    print('Calculating jacobian and jtwj_map...')
+
     if precomp in ['precomp_all_once']:
         t0 = time.time()
         jac, jtwj_map, n2clist = howfsc_precomputation(
@@ -239,6 +249,9 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
                                                  hconf['hardware']['pointer']),
     )
 
+
+    print('Calculating initial eetc exp time')
+
     # Initialize things
     unprobed_snr = cstrat.get_unprobedsnr(1, contrast)
     probeheight = cstrat.get_probeheight(1, contrast)
@@ -246,6 +259,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     pscale = contrast + probeheight
     pscale_bright = 1.5*contrast + probeheight + \
                     2 * np.sqrt(probeheight) * np.sqrt(1.5*contrast)
+                    
     nframes, exptime, gain, snr_out, optflag = \
         get_cgi_eetc.calc_exp_time(
             sequence_name=hconf['hardware']['sequence_list'][0],
@@ -260,30 +274,27 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     # framelist
     # do last, needs peak flux
     rng = np.random.default_rng(12345)
-    framelist = []
-    for indj, sl in enumerate(cfg.sl_list):
-        crop = croplist[indj]
-        # TODO: what are correct camera settings here?
-        _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, indj, dm1_list[0], dm2_list[0], gain=1)
-        for indk in range(ndm):
-            f = imager.get_image(dm1_list[indj*ndm + indk],
-                             dm2_list[indj*ndm + indk],
-                             exptime,
-                             gain=gain,
-                             nframes=nframes,
-                             crop=crop,
-                             lind=indj,
-                             peakflux=peakflux,
-                             cleanrow=1024,
-                             cleancol=1024,
-                             fixedbp=cstrat.fixedbp,
-                             wfe=None)
+    
+    num_imager_worker = args.num_imager_worker 
+    print('Using num_imager_worker = ', num_imager_worker)
 
-            bpmeas = rng.random(f.shape) > (1 - fracbadpix)
-            f[bpmeas] = np.nan
-            framelist.append(f)
-            pass
-        pass
+    # normalisation strategy first then imager, since normalisation strategy is needed to calculate peak flux for framelist collection
+
+    # this step is to apply probe images
+    framelist = _collect_framelist(
+        imager, cfg, dm1_list, dm2_list,
+        exptime_list=[exptime] * (nlam * ndm),
+        gain_list=[gain] * (nlam * ndm),
+        nframes_list=[nframes] * (nlam * ndm), 
+        croplist=croplist,
+        normalization_strategy=normalization_strategy,
+        get_cgi_eetc=get_cgi_eetc,
+        hconf=hconf,
+        ndm=ndm,
+        cstrat=cstrat,
+        fracbadpix=fracbadpix,
+        n_jobs=safe_cpu_count,
+    )
 
     # drop packets for testing if requested
     if nbadpacket > 0:
@@ -413,26 +424,20 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         prev_nframes_list = param_order_to_list(nframes_list)
 
         # new framelist
-        framelist = []
-        for indj, sl in enumerate(cfg.sl_list):
-            crop = croplist[indj]
-            _, peakflux = normalization_strategy.calc_flux_rate(get_cgi_eetc, hconf, indj, dm1_list[0], dm2_list[0], gain=1)
-            for indk in range(ndm):
-                f = imager.get_image(dm1_list[indj * ndm + indk],
-                                 dm2_list[indj * ndm + indk],
-                                 prev_exptime_list[indj*ndm + indk],
-                                 gain=prev_gain_list[indj*ndm + indk],
-                                 nframes=prev_nframes_list[indj*ndm + indk],
-                                 crop=crop,
-                                 lind=indj,
-                                 peakflux=peakflux,
-                                 cleanrow=1024,
-                                 cleancol=1024,
-                                 fixedbp=cstrat.fixedbp,
-                                 wfe=None)
-                framelist.append(f)
-                pass
-            pass
+        framelist = _collect_framelist(
+            imager, cfg, dm1_list, dm2_list,
+            exptime_list=prev_exptime_list,
+            gain_list=prev_gain_list,
+            nframes_list=prev_nframes_list,
+            croplist=croplist,
+            normalization_strategy=normalization_strategy,
+            get_cgi_eetc=get_cgi_eetc,
+            hconf=hconf,
+            ndm=ndm,
+            cstrat=cstrat,
+            fracbadpix=fracbadpix,
+            n_jobs=safe_cpu_count,
+        )
 
         # drop packets for testing if requested
         if nbadpacket > 0:
