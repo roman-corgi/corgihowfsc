@@ -47,6 +47,13 @@ In this situation, the Jacobian is still calculated from [the compact model](jac
 using the realistic `corgisim` model.  Note that this mode is very slow to run 
 (typically several minutes per iteration on a laptop). 
 
+When running with `corgisim` the user can also choose the normalization strategy via which we go from photoelectrons to contrast units. The default normalization strategy is `eetc` which uses the official engineering exposure time calculator to determine the peakflux. Other options include:
+```python
+normalization_type = 'eetc'
+place off-axis source at 7L/D to get peakflux: 'corgisim-off-axis'
+Take FPM out of beam to get peakflux: 'corgisim-on-axis'
+```
+
 ## Common parameters between optical models
 
 You can run the `scripts/run_corgisim_nulling_gitl.py` script as follows by passing the path to your Jacobian (optional),
@@ -65,13 +72,28 @@ User can also update the output path, otherwise all loop outputs will be go thro
 ```python
 base_path = Path.home()  # this is the proposed default but can be changed
 ```
-The initial DM settings are by default set as:
+The initial DM settings are by default set to the NFOV band 1 seed commands as:
 ```python
 dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
 ```
+For WFOV band 4 use:
+```python
+dmstartmap_filenames = ['iter_061_dm1.fits', 'iter_061_dm2.fits']
+```
+
+For parallel computing the parameters are: 
+```python
+num_proper_process = 5 
+num_jac_process = 12 
+num_imager_worker = None
+```
+If running on a powerful desktop or cluster, the user can set `num_imager_worker` to an integer >1 such that multiple probe images are simulated in parallel.
+
+
 From here the script can be run as-is! The result will be some iteration-specific information printed to stdout, and a
 suite of output files being saved to the output folder [see loop outputs](loop_outputs.md).
 
+## Inside of main():
 From here, all of the configuration files are loaded. 
 1. We start with `get_args` which builds the `args` class which contains a number of basic parameters
 determined by the FPM, bandpass, probe shape, dark hole shape, initial DM shapes, and Jacobian calculation properties.
@@ -90,6 +112,8 @@ hconf['star']['stellar_type'] = 'G05'
    * This is where the probe amplitude schedule and EFC regularization schedules are defined
 6. Define the `esitmator`
 7. Define the `probes` class
+8. Define `imager` class
+**Note** any `proper` keyword can be passed through `corgi_overrides` as long as the key used in `corgi_overrides` is the same as the key for the relevant `proper_keyword`.
 
 If user would like to compare the output with the compact model, the recommended method is to 
 use [corgi-howfs with the compact model](#run-a-nulling-test-on-compact-model).
