@@ -8,7 +8,8 @@ from corgihowfsc.utils.corgisim_utils import (
     _extract_host_properties_from_hconf,
     CGI_TO_CORGI_MAPPING,
     SUPPORTED_CGI_MODES,
-    map_wavelength_to_corgisim_bandpass
+    map_wavelength_to_corgisim_bandpass, 
+    _MANAGER_KEYS
     )
 
 class CorgisimManager:
@@ -140,9 +141,17 @@ class CorgisimManager:
         
         return self.bandpass + subband_option[lind]
 
+    def _get_passthrough_keywords(self):
+        """
+        Return any corgi_overrides keys that are not manager-level keys, to be
+        forwarded directly to CorgiOptics as optics_keywords.
+        """
+        return {k: v for k, v in self.corgi_overrides.items() if k not in _MANAGER_KEYS}
+
     def create_optics(self, dm1v, dm2v, lind):
         bandpass_recipe = self._get_bandpass_recipe(lind)
 
+        # Hardcoded defaults
         optics_keywords = {
             'cor_type': self.cor_mapped,
             'use_errors': 2,
@@ -157,9 +166,12 @@ class CorgisimManager:
             'use_field_stop': 1
         }
 
-        # Default to 2 cores if not specified in corgi_overrides
-        # NCPUS is parameter in 'proper_multirun'
-        optics_keywords['NCPUS'] = self.corgi_overrides.get('NCPUS', 2) 
+        # Merge in any pass-through keywords from corgi_overrides, then
+        optics_keywords.update(self._get_passthrough_keywords())
+
+        # re-apply DM voltages so they can never be accidentally overridden.
+        optics_keywords['dm1_v'] = dm1v
+        optics_keywords['dm2_v'] = dm2v
 
         optics = instrument.CorgiOptics(
             self._mode,
