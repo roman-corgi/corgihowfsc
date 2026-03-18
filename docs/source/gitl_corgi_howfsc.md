@@ -113,7 +113,7 @@ hconf['star']['stellar_type'] = 'G05'
 6. Define the `esitmator`
 7. Define the `probes` class
 8. Define `imager` class
-   
+
 **Note** any `proper` keyword can be passed through `corgi_overrides` as long as the key used in `corgi_overrides` is the same as the key for the relevant `proper_keyword`.
 
 If user would like to compare the output with the compact model, the recommended method is to 
