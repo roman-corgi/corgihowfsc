@@ -50,8 +50,8 @@ using the realistic `corgisim` model.  Note that this mode is very slow to run
 When running with `corgisim` the user can also choose the normalization strategy via which we go from photoelectrons to contrast units. The default normalization strategy is `eetc` which uses the official engineering exposure time calculator to determine the peakflux. Other options include:
 ```python
 normalization_type = 'eetc'
-place off-axis source at 7L/D to get peakflux: 'corgisim-off-axis'
-Take FPM out of beam to get peakflux: 'corgisim-on-axis'
+# place off-axis source at 7L/D to get peakflux: 'corgisim-off-axis'
+# Take FPM out of beam to get peakflux: 'corgisim-on-axis'
 ```
 
 ## Common parameters between optical models
@@ -113,6 +113,7 @@ hconf['star']['stellar_type'] = 'G05'
 6. Define the `esitmator`
 7. Define the `probes` class
 8. Define `imager` class
+   
 **Note** any `proper` keyword can be passed through `corgi_overrides` as long as the key used in `corgi_overrides` is the same as the key for the relevant `proper_keyword`.
 
 If user would like to compare the output with the compact model, the recommended method is to 
