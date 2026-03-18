@@ -50,7 +50,7 @@ def main():
     dark_hole = sim_settings['dark_hole']
     probe_shape = sim_settings['probe_shape']
 
-    # Backend specific settings
+    # Backend specific settings - which imager model to use, normalisation strategy, and which dmstartmaps to use for the first iteration (if any)
     backend_type = model_cfg['backend_type']
     normalization_type = model_cfg['normalization_type']
     dmstartmap_filenames = model_cfg['dmstartmap_filenames']
@@ -103,7 +103,7 @@ def main():
         probe_shape=probe_shape,
         precomp=precomp,
         num_process=num_jac_process,
-        num_threads=1,
+        num_threads=1, # Do not change this number
         fileout=fileout_path,
         jacpath=defjacpath,
         dmstartmap_filenames=dmstartmap_filenames,
@@ -175,7 +175,7 @@ def main():
 
 
     metadata = {
-        # --- user-facing run settings ---
+        # --- user run settings ---
         "active_model": active_model,
         "backend_type": backend_type,
         "normalization_type": normalization_type,
