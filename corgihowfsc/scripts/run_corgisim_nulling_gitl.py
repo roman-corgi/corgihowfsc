@@ -45,7 +45,7 @@ output_every_iter = True  # Set to True to save frames at every iteration in rea
 # CPU count setup for parallel processing
 num_proper_process = 5 # Default is set by corgi_overrides in GitlImage initialization to 2. 
 num_jac_process = 12 # Default to 2 processes for Jacobian calculation, can be increased if needed. 
-num_imager_worker = None
+num_imager_worker = None # Number of images to generate in parallel. If None, probing images are simulated in serial.
 
 def main():
     global num_jac_process, num_imager_worker, num_proper_process
