@@ -12,7 +12,6 @@ star:
   stellar_type: G0V
   stellar_vmag_target: 5.0
   stellar_type_target: F5V  # G0V
-  stellar_diam_mas: 1.18
 
 # EXCAM detector parameters and manual camera setting constraints
 excam:
