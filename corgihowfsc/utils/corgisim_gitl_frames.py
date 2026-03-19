@@ -262,7 +262,7 @@ class GitlImage:
         lam_inds = [nlam//2] if speedup else range(nlam)
         perfect_efields = []
         for j in lam_inds:
-            # TODO: why is this 5,153,153??
+            # TODO: why is this 5,153,153?? ANSWER : using corgisim = take for the band 1 for e.g, 5 wavelengths to estimate 1a, then same for 1b and 1c
             efield = self.get_efield(
                 dm1v=abs_dm1,
                 dm2v=abs_dm2,
