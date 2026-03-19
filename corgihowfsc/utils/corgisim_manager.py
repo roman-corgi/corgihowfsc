@@ -310,7 +310,7 @@ class CorgisimManager:
             # frame = (sim_scene.image_on_detector.data - B) * self.k_gain / gain - master_dark
             return coadd/nframes
 
-    def generate_efield(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, bias=0, crop = None):
+    def generate_efield(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, bias=0, crop=None):
         """
         Generate the e-field from corgisim
         Args:
@@ -320,6 +320,8 @@ class CorgisimManager:
             crop:  4-tuple of (lower row, lower col, number of rows,
                     number of columns), indicating where in a clean frame a PSF is taken.
                     All are integers; the first two must be >= 0 and the second two must be > 0. Only used if name = 'cgi-howfsc'.
+            gain: EM gain setting for the detector model. Defaults to 1.
+            bias: Detector bias/offset level [e-]. Defaults to 0.
         Return:
             Generated_efield: Generated electric field, full or cropped
         """
