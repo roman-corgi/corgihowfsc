@@ -21,12 +21,8 @@ class PerfectEstimator(Estimator):
             dm1v=dmlist[0],
             dm2v=dmlist[1],
             lind=lam_idx,
-            crop=crop
+            crop=crop,
+            speedup=True  # We put speedup = True here to have only the central wavelength for the estimation
         )
-
-        # For corgisim, take the central wavelength
-        if getattr(imager, 'backend', None) == 'corgihowfsc':
-            mid_index = len(model_efield) // 2
-            model_efield = model_efield[mid_index]
 
         return model_efield
