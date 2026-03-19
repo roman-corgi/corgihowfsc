@@ -62,7 +62,6 @@ class GitlImage:
                 - Vmag: float, override host star V magnitude
                 - sptype: str, override spectral type
                 - ref_flag: bool, use reference spectrum (default: False)
-                - stellar_diam_and_jitter_keywords: dict, contains parameters for running corgisim's finite stellar diameter and jitter model
         """
         # Validate backend choice
         if backend not in ['corgihowfsc', 'cgi-howfsc']:
