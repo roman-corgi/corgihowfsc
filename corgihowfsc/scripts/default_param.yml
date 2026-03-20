@@ -38,7 +38,7 @@ models:
 
   corgihowfsc:
     backend_type: "corgihowfsc"
-    normalization_type: "corgisim-off-axis" # other options are "eetc" and "corgisim-on-axis"
+    normalization_type: "eetc" # other options are "corgisim-off-axis" and "corgisim-on-axis"
     dmstartmap_filenames:
       - "iter_080_dm1.fits"
       - "iter_080_dm2.fits"
