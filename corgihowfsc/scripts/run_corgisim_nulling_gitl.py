@@ -29,7 +29,25 @@ howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
 
 
 def main():
-    param_file = os.path.join(os.path.dirname(__file__), 'default_param.yml')
+
+    # Set the path to the default parameter file relative to this script
+    default_param_file = os.path.join(os.path.dirname(__file__), 'default_param.yml')
+
+    # Create the argument parser and add the --param_file argument
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--param_file',
+        type=str,
+        default=default_param_file,
+        help='Path to parameter YAML file'
+    )
+
+    cmd_args = parser.parse_args()
+    param_file = os.path.abspath(os.path.expanduser(cmd_args.param_file))
+
+    if not os.path.isfile(param_file):
+        raise FileNotFoundError(f'Parameter file not found: {param_file}')
+
     params = loadyaml(param_file)
 
     # Shared config
