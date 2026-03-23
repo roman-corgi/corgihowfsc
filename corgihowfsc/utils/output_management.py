@@ -68,14 +68,14 @@ def update_yml(path, updates: dict):
         with path.open("r", encoding="utf-8") as f:
             existing = yaml.safe_load(f) or {}
 
-    def merge(d, u):
-        for k, v in u.items():
-            if isinstance(v, dict) and isinstance(d.get(k), dict):
-                merge(d[k], v)
-            else:
-                d[k] = v
-        return d
+    # pull _meta out, put updates first, then existing args, then _meta at top
+    meta = existing.pop("_meta", None)
+    
+    merged = {}
+    if meta:
+        merged["_meta"] = meta
+    merged.update(updates)   # active_model, backend_type, etc. come first
+    merged.update(existing)  # then the args
 
-    merged = merge(existing, updates)
     with path.open("w", encoding="utf-8") as f:
         yaml.safe_dump(merged, f, sort_keys=False)

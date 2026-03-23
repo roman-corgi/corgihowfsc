@@ -15,16 +15,13 @@ def get_cpu_allocation(num_process=None, num_imager_worker=None, num_proper_proc
     """
     Validate CPU counts for nested parallelism against allocated CPUs,
     and warn if oversubscription is detected.
-
     On Linux clusters, uses os.sched_getaffinity(0) to get the number of CPUs
     allocated to the current process. Falls back to
     os.cpu_count() on Windows/macOS, which may overestimate available CPUs on
     shared systems.
-
     The peak concurrent CPU usage is num_imager_worker * num_proper_process:
     - num_imager_worker: outer parallel workers, each collecting one probe image
     - num_proper_process: PROPER's internal multiprocessing CPUs per imager worker
-
     Args:
         num_process: int or None, number of processes for Jacobian computation.
                      Defaults to 1.
@@ -32,12 +29,12 @@ def get_cpu_allocation(num_process=None, num_imager_worker=None, num_proper_proc
                            probe image collection via run_parallel. Defaults to 1.
         num_proper_process: int or None, number of PROPER internal CPUs per imager
                             worker, passed via corgi_overrides['NCPUS']. Defaults to 1.
-
     Returns:
         num_process: int, unchanged from input (or 1 if None)
         num_imager_worker: int, unchanged from input (or 1 if None)
         num_proper_process: int, unchanged from input (or 1 if None)
-
+    Raises:
+        ValueError: If any argument is not a positive integer (when not None).
     Warns:
         If num_imager_worker * num_proper_process exceeds allocated CPUs, warns that
         hardware thrashing is likely.
@@ -54,6 +51,13 @@ def get_cpu_allocation(num_process=None, num_imager_worker=None, num_proper_proc
             "Falling back to os.cpu_count() which may overestimate "
             "available CPUs on shared/cluster systems."
         )
+
+    # Validate inputs
+    for name, val in [('num_process', num_process),
+                      ('num_imager_worker', num_imager_worker),
+                      ('num_proper_process', num_proper_process)]:
+        if val is not None and (not isinstance(val, int) or val < 1):
+            raise ValueError(f"{name} must be a positive integer or None, got {val!r}")
 
     # Defaults
     num_process = num_process or 1

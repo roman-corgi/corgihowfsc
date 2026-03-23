@@ -88,11 +88,18 @@ class GitlImage:
         if self.backend == 'corgihowfsc':
             self._init_corgihowfsc(corgi_overrides)
 
-        else:
-            self.nrow = 153
-            self.ncol = 153
-            self.lrow = 436
-            self.lcol = 436
+        else: 
+            from howfsc.util.loadyaml import loadyaml
+            _defaults = loadyaml(os.path.join(os.path.dirname(__file__), '..', 'scripts', 'default_param.yml'))
+            self.nrow = _defaults['crop']['nrow']
+            self.ncol = _defaults['crop']['ncol']
+            self.lrow = _defaults['models']['cgi-howfsc']['lrow']
+            self.lcol = _defaults['models']['cgi-howfsc']['lcol']
+
+            # self.nrow = 153
+            # self.ncol = 153
+            # self.lrow = 436
+            # self.lcol = 436
 
 
     def _init_corgihowfsc (self, corgi_overrides):
