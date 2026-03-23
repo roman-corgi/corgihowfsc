@@ -31,8 +31,8 @@ models:
     backend_type: "cgi-howfsc"
     normalization_type: "eetc"
     dmstartmap_filenames: 
-      - "ut_dm1_nonflat_volts.fits" 
-      - "ut_dm2_nonflat_volts.fits"
+      - "../any/dmabs_init_dm1.fits" 
+      - "../any/dmabs_init_dm2.fits"
     lrow: 436 # Do not modify
     lcol: 436 # Do not modify
 
