@@ -499,17 +499,5 @@ def load_files(args, howfscpath):
     return modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps
 
 
-# def load_dm_start_maps(dm_start_file):
-#     dmkeylist = ['DM1', 'DM2']
-#     # Load DM settings used to collect channel data
-#     dmstartmaps = []
-#     for dmkey in dmkeylist:
-#         ipath = dm_start_file + dmkey.lower() + '.fits'
-#         dmstartmap = load(ipath)
-#         dmstartmaps.append(dmstartmap)
-
-#     return dmstartmaps
-
-
 
 
