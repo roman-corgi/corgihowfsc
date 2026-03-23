@@ -30,6 +30,7 @@ models:
   cgi-howfsc:
     backend_type: "cgi-howfsc"
     normalization_type: "eetc"
+    starting_contrast: 6e-10 # starting contrast value for dmstartmap_filenames; not actually used in compact model
     dmstartmap_filenames: 
       - "gitl_start_compact_dm1.fits"
       - "gitl_start_compact_dm2.fits"
@@ -39,6 +40,7 @@ models:
   corgihowfsc:
     backend_type: "corgihowfsc"
     normalization_type: "eetc" # other options are "corgisim-off-axis" and "corgisim-on-axis"
+    starting_contrast: 3.5e-4 # starting contrast value for dmstartmap_filenames; if changing starting DM maps update this value
     dmstartmap_filenames:
       - "gitl_start_compact_dm1.fits"
       - "gitl_start_compact_dm2.fits"

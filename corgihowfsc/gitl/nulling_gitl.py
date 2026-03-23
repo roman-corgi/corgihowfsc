@@ -162,8 +162,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     log = logging.getLogger(__name__)
 
 
-    # exptime = 10 # FIXME this should be derived from contrast eventually
-    contrast = 3.5e-4 # "starting" value to bootstrap getting we0
+    contrast = args.starting_contrast # "starting" value to bootstrap getting we0
 
     # dm1_list, dm2
     # Get DM lists
