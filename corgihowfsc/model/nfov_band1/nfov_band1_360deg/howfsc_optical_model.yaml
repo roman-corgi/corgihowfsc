@@ -47,9 +47,9 @@ dms:
     z: 1.0
 init:
   DM1:
-    dminit: ../any/ut_dm1_nonflat_volts.fits # dmabs_init_dm1.fits is the proposed default, but can be changed to any other DM1 flatmap
+    dminit: ../any/dmabs_init_dm1.fits   # dmabs_init_dm1.fits is the proposed default, but can be changed to any other DM1 flatmap
   DM2:
-    dminit: ../any/ut_dm2_nonflat_volts.fits # dmabs_init_dm2.fits is the proposed default, but can be changed to any other DM2 flatmap
+    dminit: ../any/dmabs_init_dm2.fits   # dmabs_init_dm2.fits is the proposed default, but can be changed to any other DM2 flatmap
 sls:
   0:
     lam: 5.545370626178385e-07
