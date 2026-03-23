@@ -9,7 +9,7 @@ sim_settings:
   loop_framework: "corgi-howfsc" # do not modify 
   precomp: "precomp_jacs_always" # options: 'precomp_jacs_always', 'precomp_all_once', 'load_all' (only if defjacpath is not None)
   output_every_iter: true # whether to save the output frames at every iteration (true) or after all iterations are done (false)
-  niter: 3 # number of iterations to run
+  niter: 100 # number of iterations to run
   mode: "nfov_band1" # options: see models
   dark_hole: "360deg"  # options: see models
   probe_shape: "default" 
@@ -31,8 +31,8 @@ models:
     backend_type: "cgi-howfsc"
     normalization_type: "eetc"
     dmstartmap_filenames: 
-      - "iter_080_dm1.fits" 
-      - "iter_080_dm2.fits"
+      - "ut_dm1_nonflat_volts.fits" 
+      - "ut_dm2_nonflat_volts.fits"
     lrow: 436 # Do not modify
     lcol: 436 # Do not modify
 
