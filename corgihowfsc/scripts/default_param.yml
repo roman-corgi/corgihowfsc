@@ -7,7 +7,7 @@ runtime:
 
 sim_settings:
   loop_framework: "corgi-howfsc" # do not modify 
-  precomp: "precomp_jacs_always" # options: 'precomp_jacs_always', 'precomp_all_once', 'load_all' (only if defjacpath is not None)
+  precomp: "precomp_all_once" # options: 'precomp_jacs_always', 'precomp_all_once', 'load_all' (only if defjacpath is not None)
   output_every_iter: true # whether to save the output frames at every iteration (true) or after all iterations are done (false)
   niter: 3 # number of iterations to run
   mode: "nfov_band1" # options: see models

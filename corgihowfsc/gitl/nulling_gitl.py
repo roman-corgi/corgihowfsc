@@ -169,11 +169,14 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         pass
     log = logging.getLogger(__name__)
 
+    contrast = float(args.starting_contrast) # "starting" value to bootstrap getting we0
+
     # dm1_list, dm2
     # Get DM lists
     dm1_list, dm2_list, dmrel_list, dm10, dm20 = probes.get_dm_probes(cfg, probefiles, dmstartmaps)
     nlam = len(cfg.sl_list)
     ndm = 2 * len(dmrel_list) + 1
+    nprobepair = len(dmrel_list)
 
     # cstratfile
     # cstrat = ControlStrategy(cstratfile)
@@ -255,39 +258,59 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
 
 
     print('Calculating initial eetc exp time')
-
     # Initialize things
     unprobed_snr = cstrat.get_unprobedsnr(1, contrast)
+    bright_scaling = 10 if contrast > 1e-6 else 5
     probeheight = cstrat.get_probeheight(1, contrast)
     probed_snr = cstrat.get_probedsnr(1, contrast)
     pscale = contrast + probeheight
-    pscale_bright = 1.5*contrast + probeheight + \
-                    2 * np.sqrt(probeheight) * np.sqrt(1.5*contrast)
-                    
-    nframes, exptime, gain, snr_out, optflag = \
-        get_cgi_eetc.calc_exp_time(
-            sequence_name=hconf['hardware']['sequence_list'][0],
-            snr=probed_snr,
-            scale=pscale,
-            scale_bright=pscale_bright,
-        )
+    pscale_bright = 1.5 * contrast + probeheight + \
+                    2 * np.sqrt(probeheight) * np.sqrt(1.5 * contrast)
+    orig_gain_list = []
+    orig_exptime_list = []
+    orig_nframes_list = []
 
-    prev_exptime_list = []
-    prev_nframes_list = []
-    prev_gain_list = []
-    for indj, sl in enumerate(cfg.sl_list):                
+    for index, sequence in enumerate(hconf['hardware']['sequence_list']):
+        innerg = []
+        innere = []
+        innern = []
+
+        # Unprobed parameters
         nframes, exptime, gain, snr_out, optflag = \
             get_cgi_eetc.calc_exp_time(
-                sequence_name=hconf['hardware']['sequence_list'][indj],
+                sequence_name=sequence,
+                snr=unprobed_snr,
+                scale=contrast,
+                scale_bright=bright_scaling*contrast,
+            )
+        innerg.append(gain)
+        innere.append(exptime)
+        innern.append(nframes)
+
+        # Probed parameters
+        nframes, exptime, gain, snr_out, optflag = \
+            get_cgi_eetc.calc_exp_time(
+                sequence_name=sequence,
                 snr=probed_snr,
                 scale=pscale,
                 scale_bright=pscale_bright,
             )
 
-        # prev_exptime_list
-        prev_exptime_list.append([exptime] * (ndm))
-        prev_nframes_list.append([nframes] * (ndm))
-        prev_gain_list.append([gain] * (ndm))
+        for k in range(nprobepair):
+            innerg.append(gain)
+            innere.append(exptime)
+            innern.append(nframes)
+
+        orig_gain_list.append(innerg)
+        orig_exptime_list.append(innere)
+        orig_nframes_list.append(innern)
+    orig_gain_list = param_order_to_list(orig_gain_list)
+    orig_exptime_list = param_order_to_list(orig_exptime_list)
+    orig_nframes_list = param_order_to_list(orig_nframes_list)
+
+    # prev_exptime_list
+    prev_exptime_list = orig_exptime_list # [exptime] * (nlam * ndm)
+
 
     # framelist
     # do last, needs peak flux
@@ -301,9 +324,9 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     # this step is to apply probe images
     framelist = _collect_framelist(
         imager, cfg, dm1_list, dm2_list,
-        exptime_list=[exptime] * (nlam * ndm),
-        gain_list=[gain] * (nlam * ndm),
-        nframes_list=[nframes] * (nlam * ndm), 
+        exptime_list=orig_exptime_list,
+        gain_list=orig_gain_list,
+        nframes_list=orig_nframes_list,
         croplist=croplist,
         normalization_strategy=normalization_strategy,
         get_cgi_eetc=get_cgi_eetc,
