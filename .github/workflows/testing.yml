@@ -149,7 +149,7 @@ jobs:
           import howfsc
           import eetc
 
-          print("✅ All CGI packages imported successfully!")
+          print("[OK] All CGI packages imported successfully!")
           PY
 
       - name: Run pytest
