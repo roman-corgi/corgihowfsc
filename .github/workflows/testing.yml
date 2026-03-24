@@ -27,6 +27,12 @@ jobs:
           - os: ubuntu-latest
             conda_pkgs_dir: ~/conda_pkgs_dir
             pip_cache_dir: ~/.cache/pip
+          - os: macos-latest
+            conda_pkgs_dir: ~/conda_pkgs_dir
+            pip_cache_dir: ~/.cache/pip
+          - os: windows-latest
+            conda_pkgs_dir: ~\conda_pkgs_dir
+            pip_cache_dir: ~\AppData\Local\pip\Cache
 
     defaults:
       run:
