@@ -42,7 +42,7 @@ from howfsc.util.constrain_dm import ConstrainDMException
 from howfsc.util.actlimits import ActLimitException
 from howfsc.util.check import CheckException
 
-from howfsc.scripts.gitlframes import sim_gitlframe, get_efield_cgihowfsc
+from howfsc.scripts.gitlframes import sim_gitlframe
 
 ###
 

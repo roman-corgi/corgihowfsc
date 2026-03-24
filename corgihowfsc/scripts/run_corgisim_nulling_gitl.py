@@ -68,6 +68,7 @@ def main():
     mode = sim_settings['mode']
     dark_hole = sim_settings['dark_hole']
     probe_shape = sim_settings['probe_shape']
+    is_open = sim_settings.get('open_loop', False)
 
     # Backend specific settings - which imager model to use, normalisation strategy, and which dmstartmaps to use for the first iteration (if any)
     backend_type = model_cfg['backend_type']
@@ -131,6 +132,7 @@ def main():
 
     args.num_imager_worker = num_imager_worker
     args.num_proper_process = num_proper_process
+    args.is_open = is_open
 
     modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps = load_files(args,
                                                                                                            howfscpath)

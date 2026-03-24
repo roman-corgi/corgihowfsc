@@ -63,10 +63,10 @@ probe_keys = ['dmrel_ph_list']
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 
-def howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
+def openloop_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
                        croplist, prev_exptime_list,
                        cstrat, n2clist, hconf, iteration,
-                       estimator, imager, normalization_strategy, probes, get_cgi_eetc):
+                       estimator, imager, normalization_strategy, probes):
     """
     Wrapper for the main HOWFSC computation loop, to handle exceptions in a
     way consistent with the interface specifications (outputs indicated by a
@@ -76,15 +76,15 @@ def howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
     """
     try:
         log.info('-------------------------------')
-        log.info('Begin howfsc_computation')
-        out = _main_howfsc_computation(framelist, dm1_list, dm2_list,
-                                       cfg, jac, jtwj_map,
-                                       croplist, prev_exptime_list,
-                                       cstrat, n2clist, hconf, iteration,
-                                       estimator, imager, normalization_strategy, probes, get_cgi_eetc)
-        log.info('howfsc_computation main loop complete')
+        log.info('Begin openloop_computation')
+        out = _main_openloop_computation(framelist, dm1_list, dm2_list,
+                                         cfg, jac, jtwj_map,
+                                         croplist, prev_exptime_list,
+                                         cstrat, n2clist, hconf, iteration,
+                                         estimator, imager, normalization_strategy, probes)
+        log.info('openloop_computation main loop complete')
         return out
-    # Note: while in principle _main_howfsc_computation() could output a result
+    # Note: while in principle _main_openloop_computation() could output a result
     # with a status other than nominal, in practice the only non-nominal cases
     # identified so far are exceptions which would cause an abort.
     except TypeError:
@@ -173,10 +173,10 @@ def howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
 
 
 
-def _main_open_loop_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
+def _main_openloop_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
                              croplist, prev_exptime_list,
                              cstrat, n2clist, hconf, iteration,
-                             estimator, imager, normalization_strategy, probes, get_cgi_eetc):
+                             estimator, imager, normalization_strategy, probes):
     """
     Execute the HOWFSC GITL computation as defined in the HOWFSC FDD
 
@@ -548,7 +548,7 @@ def _main_open_loop_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, 
     # log.info('dmmultgain = %g', dmmultgain)
     # jtwj = jtwj_map.retrieve_jtwj(cstrat, iteration, prev_c)
 
-    # debugging_dict['beta'] = beta
+    debugging_dict['beta'] = None
 
     # 6. Compute change in DM settings from electric fields
     log.info('6. Compute change in DM settings from electric fields')
@@ -564,11 +564,12 @@ def _main_open_loop_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, 
     log.info('Compute absolute DM settings with constraints applied')
 
     # TODO - check this again in here. 
-
-    abs_dm1 = cfg.dmlist[0].dmvobj.constrain_dm(outdmlist[0])
+    log.info('Keep current absolute DM settings with constraints applied')
+    abs_dm1 = cfg.dmlist[0].dmvobj.constrain_dm(dmlistmeas[0])
     abs_dm1 = remove_subnormals(abs_dm1)
-    abs_dm2 = cfg.dmlist[1].dmvobj.constrain_dm(outdmlist[1])
+    abs_dm2 = cfg.dmlist[1].dmvobj.constrain_dm(dmlistmeas[1])
     abs_dm2 = remove_subnormals(abs_dm2)
+
     log.info('Get next contrast using absolute DM settings')
     next_c = get_next_c(cfg, [abs_dm1, abs_dm2], subcroplist, cstrat.fixedbp,
                         n2clist, destlist,
@@ -580,7 +581,7 @@ def _main_open_loop_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, 
     log.info('Get probe scale factors')
 
     # TODO - check this here again if we need the scale probe
-
+    # TODO - if using satspot, we need new seqeunce file so it cannot be written like this? 
     probeheight = cstrat.get_probeheight(iteration, prev_c)
     log.info('probeheight = %g', probeheight)
     scale_factor_list = get_scale_factor_list(hconf['probe']['dmrel_ph_list'],

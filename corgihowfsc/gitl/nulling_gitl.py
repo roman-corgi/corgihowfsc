@@ -34,6 +34,7 @@ from howfsc.util.loadyaml import loadyaml
 from howfsc.util.gitl_tools import param_order_to_list
 
 from corgihowfsc.gitl.modular_gitl import howfsc_computation
+from corgihowfsc.gitl.openloop_modular_gitl import openloop_computation
 from howfsc.precomp import howfsc_precomputation
 from corgihowfsc.utils.saving_output import save_outputs, save_outputs_iter
 from corgihowfsc.utils.output_management import save_run_config, update_yml
@@ -102,6 +103,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     precomp = args.precomp
     num_process = args.num_process
     num_threads = args.num_threads
+    is_open = args.is_open
 
     safe_cpu_count = args.num_imager_worker # TODO - hard coding
     print('Using num_imager_worker = ', safe_cpu_count)
@@ -324,12 +326,19 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         if isprof:
             pr.enable()
             pass
-        abs_dm1, abs_dm2, scale_factor_list, gain_list, exptime_list, \
-        nframes_list, prev_c, next_c, next_time, status, other, debugging_dict = \
-        howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
-                           croplist, prev_exptime_list,
-                           cstrat, n2clist, hconf, iteration,
-                           estimator, imager, normalization_strategy, probes)
+
+        if is_open:
+            abs_dm1, abs_dm2, scale_factor_list, gain_list, exptime_list, nframes_list, prev_c, next_c, next_time, status, other, debugging_dict = openloop_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
+                                      croplist, prev_exptime_list,
+                                      cstrat, n2clist, hconf, iteration,
+                                      estimator, imager, normalization_strategy, probes)    
+        else:
+            abs_dm1, abs_dm2, scale_factor_list, gain_list, exptime_list, \
+            nframes_list, prev_c, next_c, next_time, status, other, debugging_dict = \
+            howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
+                            croplist, prev_exptime_list,
+                            cstrat, n2clist, hconf, iteration,
+                            estimator, imager, normalization_strategy, probes)
         if isprof:
             pr.disable()
             pass
