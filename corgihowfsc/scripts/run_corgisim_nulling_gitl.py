@@ -29,10 +29,10 @@ eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
 
 
-def main():
+def main(param_file_name='default_param.yml', fullpath=False):
 
     # Set the path to the default parameter file relative to this script
-    default_param_file = os.path.join(os.path.dirname(__file__), 'default_param.yml')
+    default_param_file = param_file_name if fullpath else os.path.join(os.path.dirname(__file__), param_file_name)
 
     # Create the argument parser and add the --param_file argument
     parser = argparse.ArgumentParser()
