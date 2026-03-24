@@ -32,13 +32,14 @@ from howfsc.model.mode import CoronagraphMode
 
 from howfsc.util.loadyaml import loadyaml
 from howfsc.util.gitl_tools import param_order_to_list
+from howfsc.precomp import howfsc_precomputation
 
 from corgihowfsc.gitl.modular_gitl import howfsc_computation
-from howfsc.precomp import howfsc_precomputation
 from corgihowfsc.utils.saving_output import save_outputs, save_outputs_iter
 from corgihowfsc.utils.output_management import save_run_config, update_yml
 from corgihowfsc.utils.gitl_worker import _collect_framelist
 from corgihowfsc.utils.metrics import get_ni, get_perfect_efield
+from corgihowfsc.gitl.gitl_funcs import get_initial_cam_params
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
@@ -258,59 +259,12 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
 
 
     print('Calculating initial eetc exp time')
-    # Initialize things
-    unprobed_snr = cstrat.get_unprobedsnr(1, contrast)
-    bright_scaling = 10 if contrast > 1e-6 else 5
-    probeheight = cstrat.get_probeheight(1, contrast)
-    probed_snr = cstrat.get_probedsnr(1, contrast)
-    pscale = contrast + probeheight
-    pscale_bright = 1.5 * contrast + probeheight + \
-                    2 * np.sqrt(probeheight) * np.sqrt(1.5 * contrast)
-    orig_gain_list = []
-    orig_exptime_list = []
-    orig_nframes_list = []
+    orig_exptime_list, orig_gain_list, orig_nframes_list = get_initial_cam_params(cstrat, contrast, hconf, get_cgi_eetc, nprobepair)
 
-    for index, sequence in enumerate(hconf['hardware']['sequence_list']):
-        innerg = []
-        innere = []
-        innern = []
-
-        # Unprobed parameters
-        nframes, exptime, gain, snr_out, optflag = \
-            get_cgi_eetc.calc_exp_time(
-                sequence_name=sequence,
-                snr=unprobed_snr,
-                scale=contrast,
-                scale_bright=bright_scaling*contrast,
-            )
-        innerg.append(gain)
-        innere.append(exptime)
-        innern.append(nframes)
-
-        # Probed parameters
-        nframes, exptime, gain, snr_out, optflag = \
-            get_cgi_eetc.calc_exp_time(
-                sequence_name=sequence,
-                snr=probed_snr,
-                scale=pscale,
-                scale_bright=pscale_bright,
-            )
-
-        for k in range(nprobepair):
-            innerg.append(gain)
-            innere.append(exptime)
-            innern.append(nframes)
-
-        orig_gain_list.append(innerg)
-        orig_exptime_list.append(innere)
-        orig_nframes_list.append(innern)
-    orig_gain_list = param_order_to_list(orig_gain_list)
-    orig_exptime_list = param_order_to_list(orig_exptime_list)
-    orig_nframes_list = param_order_to_list(orig_nframes_list)
-
-    # prev_exptime_list
-    prev_exptime_list = orig_exptime_list # [exptime] * (nlam * ndm)
-
+    # prev lists for debugging later
+    prev_exptime_list = orig_exptime_list.copy()
+    prev_gain_list = orig_gain_list.copy()
+    prev_nframes_list = orig_nframes_list.copy()
 
     # framelist
     # do last, needs peak flux
@@ -386,6 +340,23 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         # New lists compared to original version
         measured_c.append(prev_c)
         pred_c.append(next_c)
+
+        # Add camera parameters to debugging dictionary
+        debugging_dict['cam_params']['nom'] = np.zeros((nlam, 3))
+        debugging_dict['cam_params']['probing'] = np.zeros((nlam, 3))
+        for j in range(nlam):
+            nom_idx = j * ndm  # unprobed frame index in flat list
+            probe_idx = j * ndm + 1  # first probe frame index
+            debugging_dict['cam_params']['nom'][j, :] = [
+                prev_gain_list[nom_idx],
+                prev_exptime_list[nom_idx],
+                prev_nframes_list[nom_idx],
+            ]
+            debugging_dict['cam_params']['probing'][j, :] = [
+                prev_gain_list[probe_idx],
+                prev_exptime_list[probe_idx],
+                prev_nframes_list[probe_idx],
+            ]
 
         log.info('-----------------------------------')
         log.info('Summary of iteration ' + str(iteration))
