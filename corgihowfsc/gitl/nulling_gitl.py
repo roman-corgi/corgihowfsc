@@ -102,6 +102,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     precomp = args.precomp
     num_process = args.num_process
     num_threads = args.num_threads
+    contrast = float(args.starting_contrast) # "starting" value to bootstrap getting we0
 
     safe_cpu_count = args.num_imager_worker # TODO - hard coding
     print('Using num_imager_worker = ', safe_cpu_count)
@@ -160,9 +161,6 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         logging.basicConfig(level=logging.INFO)
         pass
     log = logging.getLogger(__name__)
-
-
-    contrast = args.starting_contrast # "starting" value to bootstrap getting we0
 
     # dm1_list, dm2
     # Get DM lists
