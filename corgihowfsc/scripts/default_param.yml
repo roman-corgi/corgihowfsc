@@ -1,0 +1,52 @@
+active_model: "cgi-howfsc" # choose from "cgi-howfsc" or "corgihowfsc". This will determine which imager model is used and which settings are applied to the imager initialization.
+
+runtime:
+  num_proper_process: 5 # default to 5 
+  num_jac_process: 6 # default to 2
+  num_imager_worker: null # default to null for no parallelization, otherwise set to an integer number of workers
+
+sim_settings:
+  loop_framework: "corgi-howfsc" # do not modify 
+  precomp: "precomp_jacs_always" # options: 'precomp_jacs_always', 'precomp_all_once', 'load_all' (only if defjacpath is not None)
+  output_every_iter: true # whether to save the output frames at every iteration (true) or after all iterations are done (false)
+  niter: 3 # number of iterations to run
+  mode: "nfov_band1" # options: see models
+  dark_hole: "360deg"  # options: see models
+  probe_shape: "default" 
+
+paths:
+  base_path: "~" # default to home directory, but user can change to a differennt path
+  base_corgiloop_path: "corgiloop_data" # this is the proposed default but can be changed
+  defjacpath: "temp" # this is the proposed default but can be changed, should be somewhere outside the repo if used
+  final_filename: "final_frames.fits" # this is the proposed default but can be changed
+  folder_tag: null # this is an optional string that will be appended to the folder name where results are saved
+
+crop:
+  nrow: 153 # Do not modify
+  ncol: 153 # Do not modify
+
+# model-specific settings that will be used to initialize the imager (cgi-howfsc for compact model and corgihowfsc for full model).
+models: 
+  cgi-howfsc:
+    backend_type: "cgi-howfsc"
+    normalization_type: "eetc"
+    starting_contrast: 6e-10 # starting contrast value for dmstartmap_filenames; not actually used in compact model
+    dmstartmap_filenames: 
+      - "gitl_start_compact_dm1.fits"
+      - "gitl_start_compact_dm2.fits"
+    lrow: 436 # Do not modify
+    lcol: 436 # Do not modify
+
+  corgihowfsc:
+    backend_type: "corgihowfsc"
+    normalization_type: "eetc" # other options are "corgisim-off-axis" and "corgisim-on-axis"
+    starting_contrast: 3.5e-4 # starting contrast value for dmstartmap_filenames; if changing starting DM maps update this value
+    dmstartmap_filenames:
+      - "gitl_start_compact_dm1.fits"
+      - "gitl_start_compact_dm2.fits"
+    lrow: 0 # Do not modify
+    lcol: 0 # Do not modify
+    corgi_overrides: 
+      # Parameters forwarded to GitlImage initialization
+      is_noise_free: false
+      oversampling_factor: 3 # always odd number

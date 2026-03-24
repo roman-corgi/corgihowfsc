@@ -3,6 +3,14 @@ import numpy as np
 # Mapping configuration - easy to update for new modes
 # NOTE - Add new mappings here as support is added
 
+_MANAGER_KEYS = frozenset({
+    'bandpass',
+    'is_noise_free',
+    'Vmag',
+    'sptype',
+    'ref_flag',
+})
+
 CGI_TO_CORGI_MAPPING = {
     'narrowfov': 'hlc',
     'nfov_flat': 'hlc', 

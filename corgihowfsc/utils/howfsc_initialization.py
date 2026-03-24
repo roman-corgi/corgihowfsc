@@ -3,13 +3,85 @@ import os
 import argparse
 import cProfile
 import pstats
-import logging
 import glob
 
 import numpy as np
 from astropy.io import fits
 
 from howfsc.util.load import load
+import warnings
+
+def get_cpu_allocation(num_process=None, num_imager_worker=None, num_proper_process=None):
+    """
+    Validate CPU counts for nested parallelism against allocated CPUs,
+    and warn if oversubscription is detected.
+    On Linux clusters, uses os.sched_getaffinity(0) to get the number of CPUs
+    allocated to the current process. Falls back to
+    os.cpu_count() on Windows/macOS, which may overestimate available CPUs on
+    shared systems.
+    The peak concurrent CPU usage is num_imager_worker * num_proper_process:
+    - num_imager_worker: outer parallel workers, each collecting one probe image
+    - num_proper_process: PROPER's internal multiprocessing CPUs per imager worker
+    Args:
+        num_process: int or None, number of processes for Jacobian computation.
+                     Defaults to 1.
+        num_imager_worker: int or None, number of parallel imager workers for
+                           probe image collection via run_parallel. Defaults to 1.
+        num_proper_process: int or None, number of PROPER internal CPUs per imager
+                            worker, passed via corgi_overrides['NCPUS']. Defaults to 1.
+    Returns:
+        num_process: int, unchanged from input (or 1 if None)
+        num_imager_worker: int, unchanged from input (or 1 if None)
+        num_proper_process: int, unchanged from input (or 1 if None)
+    Raises:
+        ValueError: If any argument is not a positive integer (when not None).
+    Warns:
+        If num_imager_worker * num_proper_process exceeds allocated CPUs, warns that
+        hardware thrashing is likely.
+        If os.sched_getaffinity is unavailable, warns that cpu_count may
+        overestimate available CPUs.
+    """
+    # Get hardware limit
+    if hasattr(os, 'sched_getaffinity'):
+        allocated_cpus = len(os.sched_getaffinity(0))
+    else:
+        allocated_cpus = os.cpu_count() or 1
+        warnings.warn(
+            "os.sched_getaffinity not available on this platform. "
+            "Falling back to os.cpu_count() which may overestimate "
+            "available CPUs on shared/cluster systems."
+        )
+
+    # Validate inputs
+    for name, val in [('num_process', num_process),
+                      ('num_imager_worker', num_imager_worker),
+                      ('num_proper_process', num_proper_process)]:
+        if val is not None and (not isinstance(val, int) or val < 1):
+            raise ValueError(f"{name} must be a positive integer or None, got {val!r}")
+
+    # Defaults
+    num_process = num_process or 1
+    num_imager_worker = num_imager_worker or 1
+    num_proper_process = num_proper_process or 1
+
+    # Peak concurrent load
+    peak_concurrent = num_imager_worker * num_proper_process
+
+    # Case 1: Check for instantaneous oversubscription
+    if peak_concurrent > allocated_cpus:
+        warnings.warn(
+            f"Instantaneous load ({num_imager_worker} workers × {num_proper_process} cores = {peak_concurrent}) "
+            f"exceeds available CPUs ({allocated_cpus})."
+        )
+
+    # Case 2: Check if total task count is high but concurrency is safely throttled
+    if num_process > allocated_cpus:
+        warnings.warn(
+            f"Instantaneous load ({num_process} workers × 1 core = {num_process}) "
+            f"exceeds available CPUs ({allocated_cpus})."
+        )
+
+    return num_process, num_imager_worker, num_proper_process
 
 def get_args(niter=5,
                     mode='narrowfov',
@@ -191,8 +263,6 @@ def get_args_cmd(defjacpath):
     args = ap.parse_args()
 
     return args
-
-
 
 def load_files(args, howfscpath):
     # User params

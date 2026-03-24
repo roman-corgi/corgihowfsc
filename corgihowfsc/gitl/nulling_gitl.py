@@ -102,6 +102,14 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     precomp = args.precomp
     num_process = args.num_process
     num_threads = args.num_threads
+    contrast = float(args.starting_contrast) # "starting" value to bootstrap getting we0
+
+    safe_cpu_count = args.num_imager_worker # TODO - hard coding
+    print('Using num_imager_worker = ', safe_cpu_count)
+
+    # TODO - move this out from here and change it to os.sched_getaffinity
+    if safe_cpu_count == None:
+        safe_cpu_count = 1
 
     safe_cpu_count = args.num_imager_worker # TODO - hard coding
     print('Using num_imager_worker = ', safe_cpu_count)
@@ -160,10 +168,6 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         logging.basicConfig(level=logging.INFO)
         pass
     log = logging.getLogger(__name__)
-
-
-    # exptime = 10 # FIXME this should be derived from contrast eventually
-    contrast = 3.5e-4 # "starting" value to bootstrap getting we0
 
     # dm1_list, dm2
     # Get DM lists
@@ -250,7 +254,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     )
 
 
-    print('Calculating eetc exp time')
+    print('Calculating initial eetc exp time')
 
     # Initialize things
     unprobed_snr = cstrat.get_unprobedsnr(1, contrast)
@@ -259,6 +263,14 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     pscale = contrast + probeheight
     pscale_bright = 1.5*contrast + probeheight + \
                     2 * np.sqrt(probeheight) * np.sqrt(1.5*contrast)
+                    
+    nframes, exptime, gain, snr_out, optflag = \
+        get_cgi_eetc.calc_exp_time(
+            sequence_name=hconf['hardware']['sequence_list'][0],
+            snr=probed_snr,
+            scale=pscale,
+            scale_bright=pscale_bright,
+        )
 
     prev_exptime_list = []
     prev_nframes_list = []
@@ -289,9 +301,9 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     # this step is to apply probe images
     framelist = _collect_framelist(
         imager, cfg, dm1_list, dm2_list,
-        exptime_list=prev_exptime_list,
-        gain_list=prev_gain_list,
-        nframes_list=prev_nframes_list, 
+        exptime_list=[exptime] * (nlam * ndm),
+        gain_list=[gain] * (nlam * ndm),
+        nframes_list=[nframes] * (nlam * ndm), 
         croplist=croplist,
         normalization_strategy=normalization_strategy,
         get_cgi_eetc=get_cgi_eetc,

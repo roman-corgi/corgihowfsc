@@ -1,0 +1,157 @@
+name: Pytests
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, ready_for_review]
+    branches:
+      - main
+  schedule:
+    # GitHub Actions cron uses UTC.
+    # 04:00 UTC = 06:00 CEST on Mondays.
+    - cron: "0 4 * * 1"
+
+env:
+  CACHE_NUMBER: 0
+
+jobs:
+  pytest:
+    name: Pytest on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            conda_pkgs_dir: ~/conda_pkgs_dir
+            pip_cache_dir: ~/.cache/pip
+          - os: macos-latest
+            conda_pkgs_dir: ~/conda_pkgs_dir
+            pip_cache_dir: ~/.cache/pip
+          - os: windows-latest
+            conda_pkgs_dir: ~\conda_pkgs_dir
+            pip_cache_dir: ~\AppData\Local\pip\Cache
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    env:
+      CONDA_PKGS_DIRS: ${{ matrix.conda_pkgs_dir }}
+      PIP_CACHE_DIR: ${{ matrix.pip_cache_dir }}
+
+    steps:
+      - name: Check out corgihowfsc
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Install Git LFS
+        run: |
+          git lfs install
+
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-activate-base: false
+          activate-environment: corgiloop
+          environment-file: environment.yml
+          auto-update-conda: true
+          use-mamba: true
+
+      - name: Set weekly cache stamp
+        run: |
+          echo "DATE=$(date +'y%Y-w%W')" >> $GITHUB_ENV
+
+      - name: Cache conda packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ matrix.conda_pkgs_dir }}
+          key: ${{ runner.os }}-${{ env.DATE }}-r${{ env.CACHE_NUMBER }}-conda-${{ hashFiles('environment.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-r${{ env.CACHE_NUMBER }}-conda-
+            ${{ runner.os }}-
+
+      - name: Cache pip wheels
+        uses: actions/cache@v4
+        with:
+          path: ${{ matrix.pip_cache_dir }}
+          key: ${{ runner.os }}-${{ env.DATE }}-r${{ env.CACHE_NUMBER }}-pip-${{ hashFiles('environment.yml', 'setup.py', 'pyproject.toml', 'setup.cfg', 'requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-r${{ env.CACHE_NUMBER }}-pip-
+            ${{ runner.os }}-
+
+      - name: Show Python and cache info
+        run: |
+          python --version
+          pip --version
+          echo "CONDA_PKGS_DIRS=$CONDA_PKGS_DIRS"
+          echo "PIP_CACHE_DIR=$PIP_CACHE_DIR"
+          pip cache dir || true
+
+      - name: Download required external files
+        run: |
+          mkdir -p "${GITHUB_WORKSPACE}/downloads"
+
+          curl -L \
+            "https://sourceforge.net/projects/proper-library/files/proper_v3.3.4_python.zip/download" \
+            -o "${GITHUB_WORKSPACE}/downloads/proper_v3.3.4_python.zip"
+
+          curl -L \
+            "https://sourceforge.net/projects/cgisim/files/roman_preflight_proper_public_v2.0.2_python.zip/download" \
+            -o "${GITHUB_WORKSPACE}/downloads/roman_preflight_proper_public_v2.0.2_python.zip"
+
+          curl -L \
+            "https://sourceforge.net/projects/cgisim/files/cgisim_v4.1.zip/download" \
+            -o "${GITHUB_WORKSPACE}/downloads/cgisim_v4.1.zip"
+
+          curl -L \
+            "https://raw.githubusercontent.com/roman-corgi/corgi_ObsPlanning/main/eetc_sequences/sequences.yaml" \
+            -o "${GITHUB_WORKSPACE}/downloads/sequences.yaml"
+
+      - name: Install manual CGI packages
+        run: |
+          python setup_cgi_packages.py "${GITHUB_WORKSPACE}/downloads"
+
+      - name: Clone and install cgi-eetc
+        run: |
+          cd "${RUNNER_TEMP}"
+          git clone https://github.com/nasa-jpl/cgi-eetc.git
+          cd cgi-eetc
+          git lfs pull
+          pip install -e .
+
+      - name: Override EETC sequences.yaml
+        run: |
+          python - <<'PY'
+          import os
+          import shutil
+          import eetc
+
+          eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
+          src = os.path.join(os.environ["GITHUB_WORKSPACE"], "downloads", "sequences.yaml")
+          dst = os.path.join(eetc_path, "config", "sequences.yaml")
+
+          os.makedirs(os.path.dirname(dst), exist_ok=True)
+          shutil.copyfile(src, dst)
+
+          print(f"Copied {src} -> {dst}")
+          PY
+
+      - name: Verify installation
+        run: |
+          python - <<'PY'
+          import proper
+          import roman_preflight_proper
+          import cgisim
+          import howfsc
+          import eetc
+
+          print("[OK] All CGI packages imported successfully!")
+          PY
+
+      - name: Run pytest
+        run: |
+          pytest -v -ra test/
