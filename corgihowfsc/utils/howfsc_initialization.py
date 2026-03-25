@@ -341,7 +341,7 @@ def load_files(args, howfscpath):
             #     print('Using ' + start_parts[0] + '_' + start_parts[1] + '_' + ' as starting DM shape')
 
             if dmstartmap_filenames is None:
-                dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
+                dmstartmap_filenames = ['gitl_start_compact_dm1.fits', 'gitl_start_compact_dm2.fits']
 
         elif 'half' in args.dark_hole:
             hconffile = os.path.join(modelpath_band, 'hconf_nfov_flat.yaml')
