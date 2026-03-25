@@ -80,6 +80,12 @@ def main(param_file_name='default_param.yml', fullpath=False):
     final_filename = paths['final_filename']
     folder_tag = paths['folder_tag']
 
+    # Optional path overrides
+    path_overrides = {
+        k: v for k, v in params.get('path_overrides', {}).items()
+        if v is not None
+    }
+
     defjacpath_cfg = paths['defjacpath']
     if os.path.isabs(defjacpath_cfg):
         defjacpath = defjacpath_cfg
@@ -125,11 +131,12 @@ def main(param_file_name='default_param.yml', fullpath=False):
         num_threads=1, # Do not change this number
         fileout=fileout_path,
         jacpath=defjacpath,
+        path_overrides=path_overrides,
         dmstartmap_filenames=dmstartmap_filenames,
         logfile=os.path.join(os.path.dirname(fileout_path), 'gitl.log')
     )
 
-    args.starting_contrast = model_cfg['starting_contrast']
+    args.starting_contrast = float(model_cfg['starting_contrast'])
     args.num_imager_worker = num_imager_worker
     args.num_proper_process = num_proper_process
 
