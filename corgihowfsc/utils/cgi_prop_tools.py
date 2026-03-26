@@ -226,3 +226,55 @@ def make_dmrel_probe_gaussian(cfg, dmlist, dact, xcenter, ycenter, clock, ximin,
     )
 
     return dpv, probe_int, lod_mask, dm_surface, pupil_mask
+
+
+def probe_gaussian(nact, dact, xcenter, ycenter, sigma, height):
+    """
+    Create a Gaussian probe.
+
+    Nominal DM centration with even-numbered DM counts places the center of the
+     DM (and thus the center of the probe pattern) at the gap between the two
+     central actuators in both axes.  The centers of the adjacent actuators are
+     at (+/- 0.5 act, +/- 0.5 act).
+
+    The probe pattern is normalized such that the Fourier transform of the
+    probe pattern has amplitude "height".
+
+    Arguments:
+     nact: number of actuators along one side of the DM (assumes square DM)
+     dact: diameter of pupil, in actuators
+     xcenter: number of actuators to move the center of the DM pattern along
+      the positive x-axis, as seen from the camera.  Negative and fractional
+      inputs are acceptable.
+     ycenter: number of actuators to move the center of the DM pattern along
+      the positive y-axis, as seen from the camera.  Negative and fractional
+      inputs are acceptable.
+     sigma: width of Gaussian probe, in actuators.  > 0.
+     height: height of sinc peak, in meters; actual shape may not reach this
+      value depending on centration
+
+    Returns:
+     a nact x nact 2D array of heights in meters for each actuator
+    """
+
+    # Check inputs
+    check.positive_scalar_integer(nact, 'nact', TypeError)
+    check.real_positive_scalar(dact, 'dact', TypeError)
+    check.real_scalar(xcenter, 'xcenter', TypeError)
+    check.real_scalar(ycenter, 'ycenter', TypeError)
+    check.real_positive_scalar(height, 'height', TypeError)
+
+    # Set up grids with translation
+    xx, yy = np.meshgrid(np.arange(nact)-(nact-1.)/2.-xcenter,
+                           np.arange(nact)-(nact-1.)/2.-ycenter)
+
+    # Build probe shapes, using dact instead of nact so we get the right
+    # lambda/D when the pupil undersizes the DM
+    wx = dact / float(ximax - ximin)
+    wy = dact / float(etamax - etamin)
+    fx = (ximin + ximax) / 2.
+    fy = (etamin + etamax) / 2.
+
+    ddm = height * np.exp(-(xx**2 + yy**2) / (2 * sigma**2))
+
+    return ddm
