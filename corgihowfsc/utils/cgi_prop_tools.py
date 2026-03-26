@@ -17,7 +17,7 @@ import howfsc.util.check as check
 from howfsc.util.prop_tools import efield, open_efield
 
 
-def make_dmrel_probe_gaussian(cfg, dmlist, dact, xcenter, ycenter, target, lod_min, lod_max,
+def make_dmrel_probe_gaussian(cfg, dmlist, dact, xcenter, ycenter, sigma, target, lod_min, lod_max,
                               ind, maxiter=5, verbose=True):
     """
     Make a relative DM probe setting whose probe height is equal to an input.
@@ -43,6 +43,7 @@ def make_dmrel_probe_gaussian(cfg, dmlist, dact, xcenter, ycenter, target, lod_m
      ycenter: number of actuators to move the center of the DM pattern along
       the positive y-axis, as seen from the camera.  Negative and fractional
       inputs are acceptable.
+     sigma: width of Gaussian probe, in actuators.  > 0.
      target: desired probe intensity (i.e. |probe amplitude|**2) within the
       focal plane region of interest).  > 0.
      lod_min: minimum L/D for region of interest, must be less than lod_max.
@@ -129,11 +130,12 @@ def make_dmrel_probe_gaussian(cfg, dmlist, dact, xcenter, ycenter, target, lod_m
         # Since we're iterating to get the probe amplitude right, don't bother
         # trying to account for any other scalar factors
         dp0 = probe_gaussian(cfg.dmlist[dind].registration['nact'],
-                    dact,
-                    xcenter,
-                    ycenter,
-                    np.sqrt(scale)
-                    )
+                             dact,
+                             xcenter,
+                             ycenter,
+                             sigma,
+                             np.sqrt(scale)
+                             )
         dpv = cfg.dmlist[dind].dmvobj.dmh_to_volts(dp0, cfg.sl_list[ind].lam)
 
         eplus = efield(cfg, [dmlist[0]+dpv, dmlist[1]], ind)
@@ -152,11 +154,12 @@ def make_dmrel_probe_gaussian(cfg, dmlist, dact, xcenter, ycenter, target, lod_m
 
     # Redo with final scale, actual input phase
     dp0 = probe_gaussian(cfg.dmlist[dind].registration['nact'],
-                dact,
-                xcenter,
-                ycenter,
-                np.sqrt(scale)
-                )
+                         dact,
+                         xcenter,
+                         ycenter,
+                         sigma,
+                         np.sqrt(scale)
+                         )
 
     dpv = cfg.dmlist[dind].dmvobj.dmh_to_volts(dp0, cfg.sl_list[ind].lam)
 

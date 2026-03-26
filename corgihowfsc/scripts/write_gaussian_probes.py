@@ -33,7 +33,7 @@ from howfsc.model.mode import CoronagraphMode
 from howfsc.util.dmhtoph import dmhtoph
 from howfsc.util.insertinto import insertinto as inin
 from howfsc.util.loadyaml import loadyaml
-from howfsc.util.prop_tools import make_dmrel_probe
+from corgihowfsc.utils.cgi_prop_tools import make_dmrel_probe_gaussian
 
 # PATHS
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -174,11 +174,9 @@ def write_gaussian_probes(
         deltay_act = deltay_act_list[index_probe]
         probe_name = probe_name_list[index_probe]
 
-        probe_tuple = make_dmrel_probe(
-            cfg=cfg, dmlist=dmlist, dact=dact, xcenter=deltax_act, ycenter=deltay_act, clock=0,
-            ximin=ximin, ximax=ximax,
-            etamin=etamin, etamax=etamax,
-            phase=sin_phase, target=ni_desired, lod_min=lod_min, lod_max=lod_max,
+        probe_tuple = make_dmrel_probe_gaussian(
+            cfg=cfg, dmlist=dmlist, dact=dact, xcenter=deltax_act, ycenter=deltay_act, sigma=sigma,
+            target=ni_desired, lod_min=lod_min, lod_max=lod_max,
             ind=1, maxiter=5)
 
         dpv = probe_tuple[0]
