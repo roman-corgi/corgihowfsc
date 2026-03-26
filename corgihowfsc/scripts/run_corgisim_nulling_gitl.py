@@ -170,6 +170,14 @@ def main():
         corgi_overrides=corgi_overrides
     )
 
+    # Estimator selection
+    if model_cfg['estimator'] == 'perfect':
+        estimator = PerfectEstimator()
+    elif model_cfg['estimator'] == 'default':
+        estimator = DefaultEstimator()
+    else:
+        raise ValueError(f"Invalid estimator choice: {model_cfg['estimator']}. Choose 'perfect' or 'default'.")
+
     # Normalization
     if normalization_type == 'eetc':
         normalization_strategy = EETCNormalization(backend_type, corgi_overrides)
