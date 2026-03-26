@@ -115,6 +115,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
 
     safe_cpu_count = args.num_imager_worker # TODO - hard coding
     print('Using num_imager_worker = ', safe_cpu_count)
+    use_mpi = getattr(args, 'use_mpi', False)
 
     # TODO - move this out from here and change it to os.sched_getaffinity
     if safe_cpu_count == None:
@@ -290,6 +291,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         cstrat=cstrat,
         fracbadpix=fracbadpix,
         n_jobs=safe_cpu_count,
+        use_mpi=use_mpi,
     )
 
     # drop packets for testing if requested
@@ -468,6 +470,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             cstrat=cstrat,
             fracbadpix=fracbadpix,
             n_jobs=safe_cpu_count,
+            use_mpi=use_mpi,
         )
 
         # drop packets for testing if requested
