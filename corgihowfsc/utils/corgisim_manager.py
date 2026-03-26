@@ -330,7 +330,9 @@ class CorgisimManager:
 
         e_field_norm = np.zeros_like(generated_efield)
 
-        optics.optics_keywords.update({'use_fpm': 0, 'use_lyot_stop': 0, 'use_field_stop': 0})  # to get the unocculted e-field for normalization
+        use_pupil_mask = 0 if 'hlc' in self.cor_mapped else 1
+
+        optics.optics_keywords.update({'use_fpm': 0, 'use_lyot_stop': 1, 'use_field_stop': 0, 'use_pupil_mask': use_pupil_mask})  # to get the unocculted e-field for normalization
 
         e_field_unocc = optics.get_e_field()
 

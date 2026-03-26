@@ -261,7 +261,7 @@ class GitlImage:
                 cleancol=cleancol
             )
 
-    def get_perfect_efield(self, abs_dm1, abs_dm2, croplist, nlam, ndm, speedup=False):
+    def get_all_efields(self, abs_dm1, abs_dm2, croplist, nlam, ndm, speedup=False):
         
         if self.backend == 'corgihowfsc' and speedup:
             # TODO - add a warning here for those who wants to speed up the corgisim by changing number of filters in cgisim_bandpasses
