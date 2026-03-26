@@ -25,6 +25,7 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
 
     if output_every_iter or (not output_every_iter and i < len(framelistlist)-1):
         # Plot measured_c vs iteration
+        # TODO - add the constrained plot in here
         plt.figure()
         plt.plot(np.arange(len(measured_c)) + 1, measured_c, color='cornflowerblue', marker='o', label='measured')
         plt.plot(np.arange(len(pred_c)) + 2, pred_c, color='orchid', marker='+', label='predicted (PWP + compact[dE_efc])')
@@ -37,6 +38,7 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
         plt.close()
 
         plt.figure()
+        # TODO - add the constrained plot in here
         plt.plot(np.arange(len(measured_c)) + 1, measured_c, color='cornflowerblue', marker='o', label='measured contrast')
         for index, key in enumerate(ni_lists.keys()):
             plt.plot(np.arange(len(ni_lists[key])) + 1, ni_lists[key], color=colours[index], marker=markers[index], label=key)
@@ -321,6 +323,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
 
     # Plot electric field error variance for all wavelengths per iteration
     plt.figure()
+    # TODO - constrained plot in here too
     for wl_idx in range(min(3, len(variance_per_iter_all_wl))):  # Plot up to 3 wavelengths
         variance_per_iter = variance_per_iter_all_wl[wl_idx]
         plt.plot(np.arange(len(variance_per_iter)) + 1, variance_per_iter,
