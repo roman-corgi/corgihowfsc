@@ -38,7 +38,7 @@ defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
 def _collect_framelist(imager, cfg, dm1_list, dm2_list, exptime_list,
                        gain_list, nframes_list, croplist, normalization_strategy,
                        get_cgi_eetc, hconf, ndm, cstrat, fracbadpix,
-                       n_jobs=1):
+                       n_jobs=1, use_mpi=False):
 
     # pre-compute peakflux per wavelength before parallelising
     peakflux_list = [
@@ -74,6 +74,7 @@ def _collect_framelist(imager, cfg, dm1_list, dm2_list, exptime_list,
         args_list,
         n_jobs=n_jobs,
         allow_nesting=True,
+        use_mpi=use_mpi,
     )
 
 def _get_image_worker(imager, dm1v, dm2v, exptime, gain, nframes, crop, lind,
