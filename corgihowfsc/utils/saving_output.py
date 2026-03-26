@@ -19,33 +19,65 @@ tab20c = cm.get_cmap('tab20c')
 # colours = [tab20c(i) for i in range(20)]
 colours = [tab20c(i * 4) for i in range(5)]  # 5 groups
 
+
+def compute_xticks(n, max_ticks=15, threshold=25, values=None):
+    """Return an array of x-tick positions for n iterations to avoid overcrowding.
+
+    - If n <= threshold: return every tick (1..n).
+    - Otherwise pick a step so that roughly <= max_ticks ticks are shown,
+      rounding the step up to a 'nice' value from values.
+    """
+    if values is None:
+        values = np.array([1, 2, 5, 10, 20, 50, 100, 200])
+
+    if n <= threshold:
+        step = 1
+    else:
+        raw_step = int(np.ceil(n / float(max_ticks)))
+        idx = np.searchsorted(values, raw_step)
+        step = int(values[idx]) if idx < len(values) else raw_step
+
+    ticks = np.arange(1, n + 1, step)
+    if ticks.size == 0 or ticks[-1] != n:
+        ticks = np.append(ticks, n)
+    return ticks
+
 def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list, debugging_dict=None):
 
     outpath = os.path.dirname(fileout)
 
     if output_every_iter or (not output_every_iter and i < len(framelistlist)-1):
         # Plot measured_c vs iteration
-        # TODO - add the constrained plot in here
-        plt.figure()
-        plt.plot(np.arange(len(measured_c)) + 1, measured_c, color='cornflowerblue', marker='o', label='measured')
-        plt.plot(np.arange(len(pred_c)) + 2, pred_c, color='orchid', marker='+', label='predicted (PWP + compact[dE_efc])')
+        plt.figure(layout="constrained")
+        x_meas = np.arange(len(measured_c)) + 1
+        x_pred = np.arange(len(pred_c)) + 2
+
+        plt.plot(x_meas, measured_c, color='cornflowerblue', marker='o', label='measured')
+        plt.plot(x_pred, pred_c, color='orchid', marker='+', label='predicted (PWP + compact[dE_efc])')
         plt.xlabel('Iteration')
         plt.ylabel('Measured Contrast')
         plt.semilogy()
-        plt.xticks(np.arange(1, len(measured_c) + 1))
+
+        ticks = compute_xticks(len(measured_c))
+        plt.xticks(ticks)
         plt.legend(loc='best')
         plt.savefig(os.path.join(outpath, "contrast_vs_iteration.pdf"), bbox_inches='tight')
         plt.close()
 
-        plt.figure()
-        # TODO - add the constrained plot in here
-        plt.plot(np.arange(len(measured_c)) + 1, measured_c, color='cornflowerblue', marker='o', label='measured contrast')
+        # NI plot
+        plt.figure(layout="constrained")
+        x_meas = np.arange(len(measured_c)) + 1
+        plt.plot(x_meas, measured_c, color='cornflowerblue', marker='o', label='measured contrast')
         for index, key in enumerate(ni_lists.keys()):
-            plt.plot(np.arange(len(ni_lists[key])) + 1, ni_lists[key], color=colours[index], marker=markers[index], label=key)
+            colour = colours[index % len(colours)]
+            marker = markers[index % len(markers)]
+            plt.plot(np.arange(len(ni_lists[key])) + 1, ni_lists[key], color=colour, marker=marker, label=key)
         plt.xlabel('Iteration')
         plt.ylabel('Measured NI')
         plt.semilogy()
-        plt.xticks(np.arange(1, len(measured_c) + 1))
+
+        ticks = compute_xticks(len(measured_c))
+        plt.xticks(ticks)
         plt.legend(loc='best')
         plt.savefig(os.path.join(outpath, "ni_vs_iteration.pdf"), bbox_inches='tight')
         plt.close()
@@ -323,7 +355,6 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
 
     # Plot electric field error variance for all wavelengths per iteration
     plt.figure()
-    # TODO - constrained plot in here too
     for wl_idx in range(min(3, len(variance_per_iter_all_wl))):  # Plot up to 3 wavelengths
         variance_per_iter = variance_per_iter_all_wl[wl_idx]
         plt.plot(np.arange(len(variance_per_iter)) + 1, variance_per_iter,
