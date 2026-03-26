@@ -22,8 +22,7 @@ class PerfectEstimator(Estimator):
             dm1v=dmlist[0],
             dm2v=dmlist[1],
             lind=lam_idx,
-            crop=crop,
-            speedup=True  # We put speedup = True here to have only the central wavelength for the estimation
+            crop=crop
         )
 
         return model_efield
