@@ -42,7 +42,6 @@ howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
 probepath = os.path.join(howfscpath, 'model', 'probes')
 
 NI_DESIRED_DEFAULT = 1e-5
-MAXSEP_DEFAULT = 22.0
 DELTAX_ACT_DEFAULT = None  # 0
 DELTAY_ACT_DEFAULT = None  # 16
 
@@ -56,10 +55,9 @@ def fft2(arrayIn):
 
 
 def write_gaussian_probes(
-        mode, dark_hole, ni_desired=NI_DESIRED_DEFAULT,  # maxsep=MAXSEP_DEFAULT,
+        mode, dark_hole, ni_desired=NI_DESIRED_DEFAULT,
         deltax_act=DELTAX_ACT_DEFAULT, deltay_act=DELTAY_ACT_DEFAULT,
         write=False,
-        # rot_list=ROT_LIST_DEFAULT, phase_list = PHASE_LIST_DEFAULT,
 ):
     # # Convert the string-ified list of frame ID numbers into an actual list of integers
     # # Blame this on https://www.freecodecamp.org/news/python-string-to-array-how-to-convert-text-to-a-list/
@@ -390,8 +388,6 @@ if __name__ == '__main__':
                         help=f"Dark hole specification in the folder name of the mode used.")
     parser.add_argument("--ni", type=float, default=NI_DESIRED_DEFAULT,
                         help=f"Desired mean normalized intensity of the probe. Default is {NI_DESIRED_DEFAULT}.")
-    # parser.add_argument("--maxsep", type=float, default=MAXSEP_DEFAULT,
-    #                     help=f"Max separation (in both x and y) illuminated by the probe. Must be larger than the OWA, but being overly large hurts coverage within the dark zone. Default is {MAXSEP_DEFAULT}.")
     parser.add_argument("--deltax", type=float, default=DELTAX_ACT_DEFAULT,
                         help=f"x-offset of the probe from the center of the DM. Units of actuator widths. Default is {DELTAX_ACT_DEFAULT}.")
     parser.add_argument("--deltay", type=float, default=DELTAY_ACT_DEFAULT,
@@ -405,6 +401,6 @@ if __name__ == '__main__':
     dark_hole = args.dark_hole
 
     write_gaussian_probes(
-        mode, dark_hole, ni_desired=args.ni,  # maxsep=args.maxsep,
+        mode, dark_hole, ni_desired=args.ni,
         deltax_act=args.deltax, deltay_act=args.deltay, write=args.write
     )
