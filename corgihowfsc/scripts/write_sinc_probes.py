@@ -290,42 +290,6 @@ def write_sinc_probes(
 
         dpv = usable_act_map * dpv
 
-        plt.figure(1)
-        plt.clf()
-        plt.imshow(dpv)
-        plt.title('Probe DMREL Map')
-        plt.gca().invert_yaxis()
-        plt.colorbar()
-
-
-
-        plt.figure(3)
-        plt.clf()
-        plt.title('Scoring Region')
-        plt.imshow(dh_mask.astype(int))
-        plt.gca().invert_yaxis()
-        plt.colorbar()
-
-        plt.figure(2+10*index_phase)
-        # plt.clf()
-        plt.imshow(probe_ni_map)
-        plt.title('Probe-only Intensity')
-        plt.gca().invert_yaxis()
-        plt.colorbar()
-
-        # plt.figure(4)
-        # plt.clf()
-        # plt.imshow(dm_surf)
-        # plt.gca().invert_yaxis()
-        # plt.colorbar()
-
-        # plt.figure(5)
-        # plt.clf()
-        # plt.imshow(pupil_masks)
-        # plt.gca().invert_yaxis()
-        # plt.colorbar()  
-
-        
         if write:
             fn_probe_base = 'dmrel_%s_%s_ni%.0e_sin%d_rot%d' % (mode, dark_hole, ni_desired, sin_phase, rot)
             fn_probe_fits = os.path.join(probepath, fn_probe_base + '.fits')
@@ -333,6 +297,59 @@ def write_sinc_probes(
             fn_probe_bin = os.path.join(probepath, fn_probe_base + '.bin')
             fits.writeto(fn_probe_fits, dpv, overwrite=True)
             # fits2bin('float32', fn_probe_fits, fn_out=fn_probe_bin)
+
+        plt.figure(1)
+        plt.clf()
+        plt.imshow(dpv)
+        plt.title('Probe DMREL Map')
+        plt.gca().invert_yaxis()
+        plt.colorbar()
+        if write:
+            fnout = os.path.join(probepath, fn_probe_base + '_DMREL_map.png')
+            print('Saving graphic to: ', fnout)
+            plt.savefig(fnout, bbox_inches='tight', pad_inches=0.1)
+
+        plt.figure(3)
+        plt.clf()
+        plt.title('Scoring Region')
+        plt.imshow(dh_mask.astype(int))
+        plt.gca().invert_yaxis()
+        plt.colorbar()
+        if write:
+            fnout = os.path.join(probepath, fn_probe_base + '_scoring_region.png')
+            print('Saving graphic to: ', fnout)
+            plt.savefig(fnout, bbox_inches='tight', pad_inches=0.1)
+
+        plt.figure(2+10*index_phase)
+        # plt.clf()
+        plt.imshow(probe_ni_map)
+        plt.title('Probe-only Intensity')
+        plt.gca().invert_yaxis()
+        plt.colorbar()
+        if write:
+            fnout = os.path.join(probepath, fn_probe_base + '_probe_only_intensity.png')
+            print('Saving graphic to: ', fnout)
+            plt.savefig(fnout, bbox_inches='tight', pad_inches=0.1)
+
+        plt.figure(4)
+        plt.clf()
+        plt.imshow(dm_surf)
+        plt.gca().invert_yaxis()
+        plt.colorbar()
+        if write:
+            fnout = os.path.join(probepath, fn_probe_base + '_dm_surf.png')
+            print('Saving graphic to: ', fnout)
+            plt.savefig(fnout, bbox_inches='tight', pad_inches=0.1)
+
+        plt.figure(5)
+        plt.clf()
+        plt.imshow(pupil_masks)
+        plt.gca().invert_yaxis()
+        plt.colorbar()
+        if write:
+            fnout = os.path.join(probepath, fn_probe_base + '_pupil_masks.png')
+            print('Saving graphic to: ', fnout)
+            plt.savefig(fnout, bbox_inches='tight', pad_inches=0.1)
 
         # dm1_dh_m = dpv * gain_map_dm1 * usable_act_map
 
@@ -352,11 +369,16 @@ def write_sinc_probes(
         # masks = amp*spm*lyot
         overlay1 = 3*dm_surf/np.max(dm_surf) + pupil_masks/np.max(pupil_masks)
     
-        # plt.figure(1)
-        # plt.title('dpv')
-        # plt.imshow(dpv)
-        # plt.gca().invert_yaxis()
-        # plt.colorbar()
+        plt.figure(1)
+        plt.clf()
+        plt.title('dpv')
+        plt.imshow(dpv)
+        plt.gca().invert_yaxis()
+        plt.colorbar()
+        if write:
+            fnout = os.path.join(probepath, fn_probe_base + '_dvp.png')
+            print('Saving graphic to: ', fnout)
+            plt.savefig(fnout, bbox_inches='tight', pad_inches=0.1)
 
         plt.figure(6)
         plt.clf()
@@ -374,9 +396,12 @@ def write_sinc_probes(
         plt.title('ft_dm_surf')
         plt.imshow(np.abs(ft_dm_surf))
         plt.gca().invert_yaxis()
+        if write:
+            fnout = os.path.join(probepath, fn_probe_base + '_ft_dm_surf.png')
+            print('Saving graphic to: ', fnout)
+            plt.savefig(fnout, bbox_inches='tight', pad_inches=0.1)
 
-
-        plt.pause(3)
+        plt.pause(2)
 
         print('Close figures to continue...')
         # plt.show()
