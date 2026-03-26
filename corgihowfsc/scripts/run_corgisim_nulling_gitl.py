@@ -141,7 +141,15 @@ def main():
 
     # Define control and estimator strategy
     cstrat = ControlStrategy(cstratfile)
-    estimator = DefaultEstimator()
+    # Estimator selection
+    if model_cfg['estimator'] == 'perfect':
+        estimator = PerfectEstimator()
+        probefiles = [probefiles[0]]
+    elif model_cfg['estimator'] == 'default':
+        estimator = DefaultEstimator()
+    else:
+        raise ValueError(f"Invalid estimator choice: {model_cfg['estimator']}. Choose 'perfect' or 'default'.")
+
 
     # Initialize default probes class
     probes = ProbesShapes(args.probe_shape)
