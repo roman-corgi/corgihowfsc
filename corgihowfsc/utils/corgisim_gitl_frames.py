@@ -241,7 +241,7 @@ class GitlImage:
           number of columns), indicating where in a clean frame a PSF is taken.
           All are integers; the first two must be >= 0 and the second two must be > 0. Only used if name = 'cgi-howfsc'.
         """
-        
+
         if self.backend == 'corgihowfsc': # Corgisim model
             efield = self.corgisim_manager.generate_efield(dm1v, dm2v, lind, crop=crop)
             mid_sublam = efield.shape[0] // 2
@@ -271,7 +271,7 @@ class GitlImage:
         perfect_efields = []
 
         for j in lam_inds:
-            efield = self.corgisim_manager.generate_efield(
+            efield = self.get_efield(
                 dm1v=abs_dm1,
                 dm2v=abs_dm2,
                 lind=j,
