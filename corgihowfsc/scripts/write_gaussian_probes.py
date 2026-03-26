@@ -162,7 +162,7 @@ def write_gaussian_probes(
     usable_act_map = np.zeros((NACT, NACT), dtype=bool)
     usable_act_map[tiemap == 0] = True
 
-    probe_name_list = ['gauss1', 'gauss2', 'gauss3']
+    probe_name_list = ['gauss0', 'gauss1', 'gauss2']
     probe_ni_map_list = []
 
     for index_probe, _ in enumerate(deltax_act_list):
