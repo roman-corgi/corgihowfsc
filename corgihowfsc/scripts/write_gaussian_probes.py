@@ -223,7 +223,7 @@ def write_gaussian_probes(
         # plt.colorbar()
 
         if write:
-            fn_probe_base = 'dmrel_%s_%s_ni%.0e_sin%d_rot%d' % (mode, dark_hole, ni_desired, sin_phase, rot)
+            fn_probe_base = 'dmrel_%s_%s_ni%.0e_x%d_y%d_%s' % (mode, dark_hole, ni_desired, deltax_act, deltay_act, probe_name)
             fn_probe_fits = os.path.join(probepath, fn_probe_base + '.fits')
             fn_probe_png = os.path.join(probepath, fn_probe_base + '.png')
             fn_probe_bin = os.path.join(probepath, fn_probe_base + '.bin')
