@@ -141,7 +141,6 @@ def main():
 
     # Define control and estimator strategy
     cstrat = ControlStrategy(cstratfile)
-    estimator = DefaultEstimator()
 
     # Initialize default probes class
     probes = ProbesShapes(args.probe_shape)
