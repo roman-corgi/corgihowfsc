@@ -261,24 +261,23 @@ class GitlImage:
                 cleancol=cleancol
             )
 
-    def get_perfect_efield(self, abs_dm1, abs_dm2, croplist, log, nlam, ndm, speedup=False):
-        # TODO: normalisation of the model e-field?
-        # TODO: Is this the correct DM command?
-        lam_inds = [nlam//2] if speedup else range(nlam)
-        perfect_efields = []
-        for j in lam_inds:
-            # TODO: why is this 5,153,153?? ANSWER : using corgisim = take for the band 1 for e.g, 5 wavelengths to estimate 1a, then same for 1b and 1c
-            efield = self.get_efield(
-                dm1v=abs_dm1,
-                dm2v=abs_dm2,
-                lind=j,
-                crop=croplist[j * ndm],
-                speedup=speedup
-            )
-            perfect_efields.append(efield)
+    def get_perfect_efield(self, abs_dm1, abs_dm2, croplist, nlam, ndm, speedup=False):
+        
         if self.backend == 'corgihowfsc' and speedup:
             # TODO - add a warning here for those who wants to speed up the corgisim by changing number of filters in cgisim_bandpasses
             log.info('Using corgisim model, so perfect e-field is same for all DM settings at a given wavelength')
+
+        lam_inds = [nlam//2] if speedup else range(nlam)
+        perfect_efields = []
+
+        for j in lam_inds:
+            efield = self.corgisim_manager.generate_efield(
+                dm1v=abs_dm1,
+                dm2v=abs_dm2,
+                lind=j,
+                crop=croplist[j * ndm]
+            )
+            perfect_efields.append(efield)
 
         return perfect_efields
 
