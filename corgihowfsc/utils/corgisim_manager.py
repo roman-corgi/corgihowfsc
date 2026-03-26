@@ -323,11 +323,22 @@ class CorgisimManager:
             gain: EM gain setting for the detector model. Defaults to 1.
             bias: Detector bias/offset level [e-]. Defaults to 0.
         Return:
-            Generated_efield: Generated electric field, full or cropped
+            Generated_efield: Generated electric field, full or cropped. Should be in normalized unit. 
         """
         optics = self.create_optics(dm1v, dm2v, lind)
         generated_efield = optics.get_e_field()
-        return generated_efield
+
+        e_field_norm = np.zeros_like(generated_efield)
+
+        optics.optics_keywords.update({'use_fpm': 0, 'use_lyot_stop': 0, 'use_field_stop': 0})  # to get the unocculted e-field for normalization
+
+        e_field_unocc = optics.get_e_field()
+
+        for i in range(len(generated_efield)):
+            peak_i = np.sqrt(np.nanmax(np.abs(e_field_unocc[i])**2))
+            e_field_norm[i] = generated_efield[i] / peak_i
+        
+        return e_field_norm
 
 
     def generate_master_dark(self, detector, exptime, gain):
