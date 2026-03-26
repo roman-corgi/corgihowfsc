@@ -96,6 +96,7 @@ def main(param_file_name='default_param.yml', fullpath=False):
     num_proper_process = runtime['num_proper_process']
     num_jac_process = runtime['num_jac_process']
     num_imager_worker = runtime['num_imager_worker']
+    use_mpi = runtime.get('use_mpi', False)
 
     print(
         backend_type,
