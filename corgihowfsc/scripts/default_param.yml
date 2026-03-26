@@ -4,6 +4,7 @@ runtime:
   num_proper_process: 5 # default to 5 
   num_jac_process: 6 # default to 2
   num_imager_worker: null # default to null for no parallelization, otherwise set to an integer number of workers
+  use_mpi: false # set to true and launch with: mpiexec -n (num_imager_worker+1) python -m mpi4py.futures script.py
 
 sim_settings:
   loop_framework: "corgi-howfsc" # do not modify 
