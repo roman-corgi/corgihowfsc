@@ -139,6 +139,7 @@ def main(param_file_name='default_param.yml', fullpath=False):
     args.starting_contrast = float(model_cfg['starting_contrast'])
     args.num_imager_worker = num_imager_worker
     args.num_proper_process = num_proper_process
+    args.use_mpi = use_mpi
 
     modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps = load_files(args,
                                                                                                            howfscpath)
