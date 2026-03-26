@@ -152,7 +152,7 @@ def make_dmrel_probe_gaussian(cfg, dmlist, dact, xcenter, ycenter, sigma, target
         j += 1
         pass
 
-    # Redo with final scale, actual input phase
+    # Redo with final scale
     dp0 = probe_gaussian(cfg.dmlist[dind].registration['nact'],
                          dact,
                          xcenter,
