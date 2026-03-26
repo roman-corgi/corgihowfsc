@@ -228,9 +228,12 @@ class GitlImage:
             
             return self.gitlframe_cgihowfsc(dmlist, peakflux, self.cstrat.fixedbp, exptime, crop, lind, cleanrow, cleancol)
 
-    def get_efield(self, dm1v, dm2v, lind=0, crop=None, output_shape=(153, 153), cleanrow=1024, cleancol=1024, speedup=False):
+    def get_efield(self, dm1v, dm2v, lind=0, crop=None, output_shape=(153, 153), cleanrow=1024, cleancol=1024):
         """
-        Get a simulated GITL efield using either corgisim or cgi-howfsc repo's optical model. This get_efield method should be compatible with both cgi-howfsc and corgisim.
+        Get a simulated GITL efield using either corgisim or cgi-howfsc repo's optical model. This get_efield method should be compatible with both cgi-howfsc and corgisim. 
+
+        e-field output should be normalized for both models. e-field output from the compact model is in normalised contrast units. NOTE - the e-field output from corgisim is not normlized at the moment. 
+
         Arguments:
          dm1v: ndarray, absolute voltage map for DM1.
          dm2v: ndarray, absolute voltage map for DM2.
@@ -238,13 +241,13 @@ class GitlImage:
           number of columns), indicating where in a clean frame a PSF is taken.
           All are integers; the first two must be >= 0 and the second two must be > 0. Only used if name = 'cgi-howfsc'.
         """
-
+        
         if self.backend == 'corgihowfsc': # Corgisim model
             efield = self.corgisim_manager.generate_efield(dm1v, dm2v, lind, crop=crop)
-            if speedup and len(efield.shape) > 2:
-                mid_sublam = efield.shape[0] // 2
-                return efield[mid_sublam, :, :]
-            return efield
+            mid_sublam = efield.shape[0] // 2
+
+            return efield[mid_sublam, :, :]
+
         else:  # Compact model
             if crop is None:
                 raise ValueError("crop parameter is required for cgi-howfsc backend")
