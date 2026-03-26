@@ -17,8 +17,7 @@ import howfsc.util.check as check
 from howfsc.util.prop_tools import efield, open_efield
 
 
-def make_dmrel_probe_gaussian(cfg, dmlist, dact, xcenter, ycenter, clock, ximin, ximax,
-                              etamin, etamax, phase, target, lod_min, lod_max,
+def make_dmrel_probe_gaussian(cfg, dmlist, dact, xcenter, ycenter, target, lod_min, lod_max,
                               ind, maxiter=5, verbose=True):
     """
     Make a relative DM probe setting whose probe height is equal to an input.
@@ -44,19 +43,6 @@ def make_dmrel_probe_gaussian(cfg, dmlist, dact, xcenter, ycenter, clock, ximin,
      ycenter: number of actuators to move the center of the DM pattern along
       the positive y-axis, as seen from the camera.  Negative and fractional
       inputs are acceptable.
-     clock: angle in degrees to rotate the DM pattern about its center.  This
-      rotation is clockwise and is applied before the xcenter/ycenter
-      shifts are applied.
-     ximin: min lambda/D along the x-axis in the focal plane for the probe
-      rectangle, must be less than ximax
-     ximax: max lambda/D along the x-axis in the focal plane for the probe
-      rectangle
-     etamin: min lambda/D along the y-axis in the focal plane for the probe
-      rectangle, must be less than etamax
-     etamax: max lambda/D along the y-axis in the focal plane for the probe
-      rectangle
-     phase: phase angle in degrees to shift this particular probe; at phase = 0
-      the modulation will be a sine and at phase = 90 it will be a cosine.
      target: desired probe intensity (i.e. |probe amplitude|**2) within the
       focal plane region of interest).  > 0.
      lod_min: minimum L/D for region of interest, must be less than lod_max.
@@ -106,20 +92,10 @@ def make_dmrel_probe_gaussian(cfg, dmlist, dact, xcenter, ycenter, clock, ximin,
     check.real_positive_scalar(dact, 'dact', TypeError)
     check.real_scalar(xcenter, 'xcenter', TypeError)
     check.real_scalar(ycenter, 'ycenter', TypeError)
-    check.real_scalar(clock, 'clock', TypeError)
-    check.real_scalar(ximin, 'ximin', TypeError)
-    check.real_scalar(ximax, 'ximax', TypeError)
-    check.real_scalar(etamin, 'etamin', TypeError)
-    check.real_scalar(etamax, 'etamax', TypeError)
-    check.real_scalar(phase, 'phase', TypeError)
     check.real_positive_scalar(target, 'target', TypeError)
     check.real_nonnegative_scalar(lod_min, 'lod_min', TypeError)
     check.real_positive_scalar(lod_max, 'lod_max', TypeError)
     check.nonnegative_scalar_integer(ind, 'ind', TypeError)
-    if ximin >= ximax:
-        raise ValueError('ximin must be strictly less than ximax')
-    if etamin >= etamax:
-        raise ValueError('etamin must be strictly less than etamax')
     if lod_min >= lod_max:
         raise ValueError('lod_min must be strictly less than lod_max')
     if ind >= len(cfg.sl_list):
@@ -128,7 +104,6 @@ def make_dmrel_probe_gaussian(cfg, dmlist, dact, xcenter, ycenter, clock, ximin,
     check.positive_scalar_integer(maxiter, 'maxiter', TypeError)
     if not isinstance(verbose, bool):
         raise TypeError('verbose must be a boolean')
-
 
     scale = 1 # first guess: assume we got the amplitude right
     dind = 0 # only using DM1 to probe
@@ -149,50 +124,38 @@ def make_dmrel_probe_gaussian(cfg, dmlist, dact, xcenter, ycenter, clock, ximin,
     j = 0
     measph = target # no effect on first iteration
     while j < maxiter:
-        scale = scale/measph*target
+        scale = scale / measph * target
 
         # Since we're iterating to get the probe amplitude right, don't bother
         # trying to account for any other scalar factors
-        dp0 = probe(cfg.dmlist[dind].registration['nact'],
+        dp0 = probe_gaussian(cfg.dmlist[dind].registration['nact'],
                     dact,
                     xcenter,
                     ycenter,
-                    clock,
-                    np.sqrt(scale),
-                    ximin,
-                    ximax,
-                    etamin,
-                    etamax,
-                    90, # always do cosine first, since there's no nulls
+                    np.sqrt(scale)
                     )
         dpv = cfg.dmlist[dind].dmvobj.dmh_to_volts(dp0, cfg.sl_list[ind].lam)
 
         eplus = efield(cfg, [dmlist[0]+dpv, dmlist[1]], ind)
         eminus = efield(cfg, [dmlist[0]-dpv, dmlist[1]], ind)
 
-        pampe = np.abs((eplus - eminus)/2j)
-        probe_int = pampe**2/ipeak
+        pampe = np.abs((eplus - eminus) / 2j)
+        probe_int = pampe**2 / ipeak
 
         measph = np.mean(probe_int[lod_mask])
         if verbose:
             print("iteration " + str(j) + ": measured = " + str(measph) +
-                  ", fractional error: " + str((measph-target)/target))
+                  ", fractional error: " + str((measph - target) / target))
 
         j += 1
         pass
 
     # Redo with final scale, actual input phase
-    dp0 = probe(cfg.dmlist[dind].registration['nact'],
+    dp0 = probe_gaussian(cfg.dmlist[dind].registration['nact'],
                 dact,
                 xcenter,
                 ycenter,
-                clock,
-                np.sqrt(scale),
-                ximin,
-                ximax,
-                etamin,
-                etamax,
-                phase,
+                np.sqrt(scale)
                 )
 
     dpv = cfg.dmlist[dind].dmvobj.dmh_to_volts(dp0, cfg.sl_list[ind].lam)
