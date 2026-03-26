@@ -203,7 +203,7 @@ def write_gaussian_probes(
         plt.gca().invert_yaxis()
         plt.colorbar()
 
-        plt.figure(2 + 10 * index_phase)
+        plt.figure(2 + 10 * index_probe)
         # plt.clf()
         plt.imshow(probe_ni_map)
         plt.title('Probe-only Intensity')

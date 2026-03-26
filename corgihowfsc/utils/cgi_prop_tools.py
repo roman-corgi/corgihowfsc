@@ -234,13 +234,6 @@ def probe_gaussian(nact, dact, xcenter, ycenter, sigma, height):
     xx, yy = np.meshgrid(np.arange(nact)-(nact-1.)/2.-xcenter,
                            np.arange(nact)-(nact-1.)/2.-ycenter)
 
-    # Build probe shapes, using dact instead of nact so we get the right
-    # lambda/D when the pupil undersizes the DM
-    wx = dact / float(ximax - ximin)
-    wy = dact / float(etamax - etamin)
-    fx = (ximin + ximax) / 2.
-    fy = (etamin + etamax) / 2.
-
     ddm = height * np.exp(-(xx**2 + yy**2) / (2 * sigma**2))
 
     return ddm
