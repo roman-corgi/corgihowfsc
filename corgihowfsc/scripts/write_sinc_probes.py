@@ -103,8 +103,8 @@ def write_sinc_probes(
         if '360' in dark_hole:  # 360-degree dark zone
             rot_list = [0, 0, 90]
             phase_list = 90 + np.array([0, 60, 120]) # [90, 0, 0] 
-            deltax_act = 0 #7 #0
-            deltay_act = 16 #13 #16
+            deltax_act = 13 #7 #0
+            deltay_act = 8 #13 #16
         else:  # half dark zone
             rot_list = [0, 0, 0] # [90, 90, 90]#
             phase_list = 90 + np.array([0, 60, 120])
