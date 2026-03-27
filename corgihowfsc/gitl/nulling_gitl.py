@@ -362,8 +362,8 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             hdul.writeto(fileout, overwrite=True)
 
             if output_model_efield and imager.backend == 'corgihowfsc':
-                # speedup == True: getting the model e-field for the central bandpass (e.g. 1b for band 1)
-                # speedup == False: getting the model e-field for all bandpasses
+                # if speedup == True: getting the model e-field for the central bandpass (e.g. 1b for band 1)
+                # if speedup == False: getting the model e-field for all bandpasses
                 if estimator.name == 'perfect':
                     perfect_efield = [otherlist[iteration-1][j]['meas_efield'] for j in range(len(cfg.sl_list))]
                 else:
