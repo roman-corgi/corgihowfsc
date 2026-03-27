@@ -84,58 +84,71 @@ def analyze_probe_set(cfg, dmlist, dpv_list, dh_mask, ind):
     return averages, stddevs, ptvs, efields, intensities
 
 
-def plot_probe_ni_vs_wvln(averages_list):
+def plot_probe_ni_vs_wvln(averages_cube):
     """
-    Generate analysis plots for probe data.
+    Generate analysis plots for probe data from a single probe set across all wavelengths.
 
     Arguments:
-     averages_list: list of 2x3 arrays of average DH intensities (normalized)
+     averages_cube: 3D array of average DH intensities (normalized)
+                   Shape: (n_wavelengths, 2, 3)
+                   - 0th index: wavelength indices
+                   - 1st index: probe type (0=positive, 1=negative)
+                   - 2nd index: probe number (0, 1, 2)
     """
 
-    # Convert single array to list for backward compatibility
-    if isinstance(averages_list, np.ndarray):
-        averages_list = [averages_list]
+    # Validate input
+    if not isinstance(averages_cube, np.ndarray):
+        raise TypeError("averages_cube must be a numpy array")
+    if len(averages_cube.shape) != 3:
+        raise ValueError(f"averages_cube must be 3D, got shape {averages_cube.shape}")
+    if averages_cube.shape[1] != 2 or averages_cube.shape[2] != 3:
+        raise ValueError(f"averages_cube must have shape (n_wavelengths, 2, 3), got {averages_cube.shape}")
 
     wavelengths_um = np.array([546, 575, 604])
+    n_wavelengths = averages_cube.shape[0]
 
-    # Define colors for each array
-    colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
+    # Ensure we have the right number of wavelengths
+    if len(wavelengths_um) < n_wavelengths:
+        # Extend wavelengths if needed
+        wavelengths_um = np.linspace(546, 604, n_wavelengths)
 
-    # Define markers for each row (positive/negative probes)
-    markers = ['+', 's']  # plus for row 0, minus for row 1
-    labels = ['Positive probe', 'Negative probe']
+    # Define colors for each probe number (0, 1, 2)
+    probe_colors = ['blue', 'green', 'red']
+    probe_labels = ['Probe 0', 'Probe 1', 'Probe 2']
+
+    # Define markers for each probe type (positive/negative)
+    markers = ['+', 'x']  # plus for positive, x for negative
+    probe_type_labels = ['Positive', 'Negative']
 
     # Create the plot
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(12, 8))
 
     # Plot each data point
-    for array_idx, averages in enumerate(averages_list):
-        color = colors[array_idx % len(colors)]  # Cycle through colors if more arrays than colors
+    for wvl_idx in range(n_wavelengths):
+        for probe_type in range(2):  # 0=positive, 1=negative
+            for probe_num in range(3):  # 0, 1, 2
+                ax.scatter(wavelengths_um[wvl_idx], averages_cube[wvl_idx, probe_type, probe_num],
+                          color=probe_colors[probe_num], marker=markers[probe_type],
+                          s=150, alpha=0.8, linewidth=2, edgecolors='black')
 
-        for row in range(averages.shape[0]):
-            for col in range(averages.shape[1]):
-                ax.scatter(wavelengths_um[col], averages[row, col],
-                          color=color, marker=markers[row], s=120,
-                          alpha=0.7, linewidth=2)
-
-    # Create custom legend
-    # Legend for markers (rows)
+    # Create custom legends
+    # Legend for markers (probe types: positive/negative)
     marker_handles = []
-    for i, (marker, label) in enumerate(zip(markers, labels)):
+    for i, (marker, label) in enumerate(zip(markers, probe_type_labels)):
         marker_handles.append(plt.Line2D([0], [0], marker=marker, color='gray',
-                                       linestyle='None', markersize=10, label=label,
+                                       linestyle='None', markersize=12, label=label,
                                        markeredgewidth=2))
 
-    # Legend for colors (arrays)
+    # Legend for colors (probe numbers: 0, 1, 2)
     color_handles = []
-    for i, color in enumerate(colors[:len(averages_list)]):
+    for i, (color, label) in enumerate(zip(probe_colors, probe_labels)):
         color_handles.append(plt.Line2D([0], [0], marker='o', color=color,
-                                      linestyle='None', markersize=8,
-                                      label=f'Array {i+1}'))
+                                      linestyle='None', markersize=10,
+                                      label=label, markeredgecolor='black'))
 
     # Add legends with positioning to avoid data overlap
     legend1 = ax.legend(handles=marker_handles, loc='center left', bbox_to_anchor=(1.02, 0.7), title='Probe Type')
-    legend2 = ax.legend(handles=color_handles, loc='center left', bbox_to_anchor=(1.02, 0.3), title='Array')
+    legend2 = ax.legend(handles=color_handles, loc='center left', bbox_to_anchor=(1.02, 0.3), title='Probe Number')
     ax.add_artist(legend1)  # Add the first legend back
 
     # Set labels and title
@@ -154,6 +167,8 @@ def plot_probe_ni_vs_wvln(averages_list):
     # Adjust layout to make room for legends outside the plot area
     plt.subplots_adjust(right=0.75)
     plt.show()
+
+    return fig, ax
 
 
 def analyze_probe_set_wvln_cubes(cfg, dmlist, dpv_list, dh_mask, indices=[0, 1, 2]):
@@ -316,6 +331,6 @@ if __name__ == '__main__':
     print(f"\nSaving Sinusoidal probe datacubes...")
     save_wvln_cubes_to_disk(averages_cube2, stddevs_cube2, ptvs_cube2, analysis_path, prefix="sinusoidal_probes")
 
-    # # Plot comparison of averages across wavelengths
-    # print("\nGenerating comparison plots...")
-    # plot_probe_ni_vs_wvln([averages_cube1[0], averages_cube1[1], averages_cube1[2]])  # Gaussian probes at 3 wavelengths
+    # Plot comparison of averages across wavelengths
+    print("\nGenerating comparison plots...")
+    plot_probe_ni_vs_wvln(averages_cube1)  # Plot Gaussian probes across all wavelengths
