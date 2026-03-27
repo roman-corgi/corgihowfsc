@@ -208,7 +208,7 @@ def plot_probe_ni_vs_wvln(averages_cube):
      averages_cube: 3D array of average DH intensities (normalized)
                    Shape: (n_wavelengths, 2, 3)
                    - 0th index: wavelength indices
-                   - 1st index: probe type (0=positive, 1=negative)
+                   - 1st index: probe sequence (0=positive, 1=negative)
                    - 2nd index: probe number (0, 1, 2)
     """
 
@@ -232,25 +232,25 @@ def plot_probe_ni_vs_wvln(averages_cube):
     probe_colors = ['blue', 'green', 'red']
     probe_labels = ['Probe 0', 'Probe 1', 'Probe 2']
 
-    # Define markers for each probe type (positive/negative)
+    # Define markers for each probe sequence (positive/negative)
     markers = ['+', 'x']  # plus for positive, x for negative
-    probe_type_labels = ['Positive', 'Negative']
+    probe_sequence_labels = ['Positive', 'Negative']
 
     # Create the plot
     fig, ax = plt.subplots(figsize=(12, 8))
 
     # Plot each data point
     for wvl_idx in range(n_wavelengths):
-        for probe_type in range(2):  # 0=positive, 1=negative
+        for probe_sequence in range(2):  # 0=positive, 1=negative
             for probe_num in range(3):  # 0, 1, 2
-                ax.scatter(wavelengths_um[wvl_idx], averages_cube[wvl_idx, probe_type, probe_num],
-                           color=probe_colors[probe_num], marker=markers[probe_type],
+                ax.scatter(wavelengths_um[wvl_idx], averages_cube[wvl_idx, probe_sequence, probe_num],
+                           color=probe_colors[probe_num], marker=markers[probe_sequence],
                            s=150, alpha=0.8, linewidth=2, edgecolors='black')
 
     # Create custom legends
-    # Legend for markers (probe types: positive/negative)
+    # Legend for markers (probe sequence: positive/negative)
     marker_handles = []
-    for i, (marker, label) in enumerate(zip(markers, probe_type_labels)):
+    for i, (marker, label) in enumerate(zip(markers, probe_sequence_labels)):
         marker_handles.append(plt.Line2D([0], [0], marker=marker, color='gray',
                                          linestyle='None', markersize=12, label=label,
                                          markeredgewidth=2))
@@ -263,7 +263,7 @@ def plot_probe_ni_vs_wvln(averages_cube):
                                         label=label, markeredgecolor='black'))
 
     # Add legends with positioning to avoid data overlap
-    legend1 = ax.legend(handles=marker_handles, loc='center left', bbox_to_anchor=(1.02, 0.7), title='Probe Type')
+    legend1 = ax.legend(handles=marker_handles, loc='center left', bbox_to_anchor=(1.02, 0.7), title='Probe Sequence')
     legend2 = ax.legend(handles=color_handles, loc='center left', bbox_to_anchor=(1.02, 0.3), title='Probe Number')
     ax.add_artist(legend1)  # Add the first legend back
 
