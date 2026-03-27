@@ -173,6 +173,7 @@ def main():
     if model_cfg['estimator'] == 'perfect':
         estimator = PerfectEstimator()
         probefiles = {0: probefiles[0]}
+        hconf['probe']['dmrel_ph_list'] = hconf['probe']['dmrel_ph_list'][:1]
     elif model_cfg['estimator'] == 'default':
         estimator = DefaultEstimator()
     else:

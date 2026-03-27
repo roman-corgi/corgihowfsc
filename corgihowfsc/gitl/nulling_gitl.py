@@ -392,20 +392,29 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         # new dm1_list, dm2_list
         dm1_list = []
         dm2_list = []
+        # for index in range(nlam):
+        #     # DM1 same per wavelength
+        #     dm1_list.append(abs_dm1)
+        #     dm1_list.append(abs_dm1 + scale_factor_list[0]*dmrel_list[0])
+        #     dm1_list.append(abs_dm1 + scale_factor_list[3]*dmrel_list[0])
+        #     dm1_list.append(abs_dm1 + scale_factor_list[1]*dmrel_list[1])
+        #     dm1_list.append(abs_dm1 + scale_factor_list[4]*dmrel_list[1])
+        #     dm1_list.append(abs_dm1 + scale_factor_list[2]*dmrel_list[2])
+        #     dm1_list.append(abs_dm1 + scale_factor_list[5]*dmrel_list[2])
+        #     for j in range(ndm):
+        #         # DM2 always same
+        #         dm2_list.append(abs_dm2)
+        #         pass
+        #     pass
+
+        nprobepair = len(dmrel_list)
         for index in range(nlam):
-            # DM1 same per wavelength
-            dm1_list.append(abs_dm1)
-            dm1_list.append(abs_dm1 + scale_factor_list[0]*dmrel_list[0])
-            dm1_list.append(abs_dm1 + scale_factor_list[3]*dmrel_list[0])
-            dm1_list.append(abs_dm1 + scale_factor_list[1]*dmrel_list[1])
-            dm1_list.append(abs_dm1 + scale_factor_list[4]*dmrel_list[1])
-            dm1_list.append(abs_dm1 + scale_factor_list[2]*dmrel_list[2])
-            dm1_list.append(abs_dm1 + scale_factor_list[5]*dmrel_list[2])
+            dm1_list.append(abs_dm1)  # unprobed
+            for i, dmrel in enumerate(dmrel_list):
+                dm1_list.append(abs_dm1 + scale_factor_list[i] * dmrel)  # positive
+                dm1_list.append(abs_dm1 + scale_factor_list[i + nprobepair] * dmrel)  # negative
             for j in range(ndm):
-                # DM2 always same
                 dm2_list.append(abs_dm2)
-                pass
-            pass
 
         # Skip the very last Jacobian that never gets used
         if precomp in ['precomp_jacs_always'] and iteration < niter:
