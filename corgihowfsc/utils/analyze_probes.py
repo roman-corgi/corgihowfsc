@@ -83,50 +83,58 @@ def analyze_probe_set(cfg, dmlist, dpv_list, dh_mask, ind):
     return averages, stddevs, ptvs, efields, intensities
 
 
-def plot_probe_ni_vs_wvln(averages):
+def plot_probe_ni_vs_wvln(averages_list):
     """
     Generate analysis plots for probe data.
 
     Arguments:
-     averages: 2x3 array of average DH intensities (normalized)
+     averages_list: list of 2x3 arrays of average DH intensities (normalized)
     """
+
+    # Convert single array to list for backward compatibility
+    if isinstance(averages_list, np.ndarray):
+        averages_list = [averages_list]
 
     wavelengths_um = np.array([546, 575, 604])
 
-    # Define colors for each column (wavelength)
-    colors = ['blue', 'green', 'orange']
+    # Define colors for each array
+    colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
 
     # Define markers for each row (positive/negative probes)
-    markers = ['o', 's']  # circle for row 0, square for row 1
+    markers = ['+', 's']  # plus for row 0, minus for row 1
     labels = ['Positive probe', 'Negative probe']
 
     # Create the plot
     fig, ax = plt.subplots(figsize=(10, 6))
 
     # Plot each data point
-    for row in range(averages.shape[0]):
-        for col in range(averages.shape[1]):
-            ax.scatter(wavelengths_um[col], averages[row, col],
-                      color=colors[col], marker=markers[row], s=100,
-                      alpha=0.7, edgecolors='black', linewidth=1)
+    for array_idx, averages in enumerate(averages_list):
+        color = colors[array_idx % len(colors)]  # Cycle through colors if more arrays than colors
+
+        for row in range(averages.shape[0]):
+            for col in range(averages.shape[1]):
+                ax.scatter(wavelengths_um[col], averages[row, col],
+                          color=color, marker=markers[row], s=120,
+                          alpha=0.7, linewidth=2)
 
     # Create custom legend
     # Legend for markers (rows)
     marker_handles = []
     for i, (marker, label) in enumerate(zip(markers, labels)):
         marker_handles.append(plt.Line2D([0], [0], marker=marker, color='gray',
-                                       linestyle='None', markersize=8, label=label))
+                                       linestyle='None', markersize=10, label=label,
+                                       markeredgewidth=2))
 
-    # Legend for colors (columns/wavelengths)
+    # Legend for colors (arrays)
     color_handles = []
-    for i, color in enumerate(colors):
+    for i, color in enumerate(colors[:len(averages_list)]):
         color_handles.append(plt.Line2D([0], [0], marker='o', color=color,
                                       linestyle='None', markersize=8,
-                                      label=f'{wavelengths_um[i]:.3f} μm'))
+                                      label=f'Array {i+1}'))
 
     # Add legends with positioning to avoid data overlap
     legend1 = ax.legend(handles=marker_handles, loc='center left', bbox_to_anchor=(1.02, 0.7), title='Probe Type')
-    legend2 = ax.legend(handles=color_handles, loc='center left', bbox_to_anchor=(1.02, 0.3), title='Wavelength')
+    legend2 = ax.legend(handles=color_handles, loc='center left', bbox_to_anchor=(1.02, 0.3), title='Array')
     ax.add_artist(legend1)  # Add the first legend back
 
     # Set labels and title
@@ -156,10 +164,15 @@ if __name__ == '__main__':
     # Load probes and DH mask from the analysis path
     dh_mask = fits.getdata(os.path.join(analysis_path, 'dh_mask.fits')).astype(bool)
 
-    dpv_list = []
-    dpv_list.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_x13_y8_gauss1.fits')))
-    dpv_list.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_x13_y9_gauss2.fits')))
-    dpv_list.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_x14_y9_gauss3.fits')))
+    dpv_list1 = []
+    dpv_list1.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_x13_y8_gauss1.fits')))
+    dpv_list1.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_x13_y9_gauss2.fits')))
+    dpv_list1.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_x14_y9_gauss3.fits')))
+
+    dpv_list2 = []
+    dpv_list2.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_sin90_rot0.fits')))
+    dpv_list2.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_sin150_rot0.fits')))
+    dpv_list2.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_sin210_rot90.fits')))
 
     howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
     args = get_args(
@@ -170,8 +183,6 @@ if __name__ == '__main__':
     cfg = CoronagraphMode(cfgfile)
     dmlist = cfg.initmaps
 
-    averages, stddevs, ptvs, efields, intensities = analyze_probe_set(cfg, dmlist, dpv_list, dh_mask, ind)
-    plot_probe_ni_vs_wvln(averages)
-
-    print(averages)
-    print(averages.shape)
+    averages1, stddevs1, ptvs1, efields1, intensities1 = analyze_probe_set(cfg, dmlist, dpv_list1, dh_mask, ind)
+    averages2, stddevs2, ptvs2, efields2, intensities2 = analyze_probe_set(cfg, dmlist, dpv_list2, dh_mask, ind)
+    plot_probe_ni_vs_wvln([averages1, averages2])  # Pass as list
