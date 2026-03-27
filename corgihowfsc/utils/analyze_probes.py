@@ -124,9 +124,9 @@ def plot_probe_ni_vs_wvln(averages):
                                       linestyle='None', markersize=8,
                                       label=f'{wavelengths_um[i]:.3f} μm'))
 
-    # Add legends
-    legend1 = ax.legend(handles=marker_handles, loc='upper right', title='Probe Type')
-    legend2 = ax.legend(handles=color_handles, loc='upper left', title='Wavelength')
+    # Add legends with positioning to avoid data overlap
+    legend1 = ax.legend(handles=marker_handles, loc='center left', bbox_to_anchor=(1.02, 0.7), title='Probe Type')
+    legend2 = ax.legend(handles=color_handles, loc='center left', bbox_to_anchor=(1.02, 0.3), title='Wavelength')
     ax.add_artist(legend1)  # Add the first legend back
 
     # Set labels and title
@@ -142,6 +142,8 @@ def plot_probe_ni_vs_wvln(averages):
     ax.set_xlim(wavelengths_um.min() - x_padding, wavelengths_um.max() + x_padding)
 
     plt.tight_layout()
+    # Adjust layout to make room for legends outside the plot area
+    plt.subplots_adjust(right=0.75)
     plt.show()
 
 
