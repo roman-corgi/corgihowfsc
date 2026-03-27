@@ -463,8 +463,8 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         # Measured e-field at this setting
         log.info('Measured e-field at this setting')
 
-        # NOTE - here is where we estimate the e-field. when using perfect estimator, you just return the model e-field in here
-        # e-field you return in here needs to the a slice --> in teh case of corgisim, it will be the central subband
+        # NOTE - when using perfect estimator, the estimator will return model e-field
+        # when imager == corgisim, estimator will return the central subband of its respective bandpass
 
         efield = estimator.estimate_efield(
             intensities=intlist[j],
