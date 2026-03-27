@@ -305,6 +305,9 @@ def write_gaussian_probes(
 
         del probe_tuple
 
+    # Save outputs that are the same for all probes
+    fits.writeto(os.path.join(probepath, "dh_mask.fits"), dh_mask.astype(np.float32), overwrite=True)
+
     # PPL_FPM_CENTRAL = homf_dict['sls'][1]['fpm']['ppl']
     # LAM_CENTRAL = lam
     # PPL_MEAS_REF = 2.26
