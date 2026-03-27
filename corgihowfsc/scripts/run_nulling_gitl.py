@@ -30,7 +30,7 @@ loop_framework = 'cgi-howfsc' # do not modify
 backend_type = 'cgi-howfsc' # Note: the framework cgi-howfsc can only work with the compact model
 
 precomp = 'precomp_jacs_always' #'load_all' if defjacpath is not None else 'precomp_all_once'
-dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
+dmstartmap_filenames = ['gitl_start_compact_dm1.fits', 'gitl_start_compact_dm2.fits']
 
 fileout_path = make_output_file_structure(loop_framework, backend_type, base_path, base_corgiloop_path, final_filename)
 

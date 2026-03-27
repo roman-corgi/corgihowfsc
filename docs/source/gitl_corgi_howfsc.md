@@ -77,17 +77,11 @@ User can also update the output path, otherwise all loop outputs will go through
 ```yaml
 base_path: '~'  # this is the proposed default but can be changed
 ```
-The initial DM settings are by default set to the NFOV band 1 seed commands as:
+The initial DM setting seed commands are different by mode (e.g., NFOV band 1), but the respective file names are always the same:
 ```yaml
 dmstartmap_filenames:
-  - 'iter_080_dm1.fits'
-  - 'iter_080_dm2.fits'
-```
-For WFOV band 4 use:
-```yaml
-dmstartmap_filenames:
-  - 'iter_061_dm1.fits'
-  - 'iter_061_dm2.fits'
+  - 'gitl_start_compact_dm1.fits'
+  - 'gitl_start_compact_dm2.fits'
 ```
 
 For parallel computing the parameters are: 

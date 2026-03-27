@@ -9,10 +9,13 @@ For stability reasons, the PWP is still performed according to my tests, it is j
 """
 
 class PerfectEstimator(Estimator):
+    def __init__(self, name='perfect'):
+        super().__init__(name)
 
     def estimate_efield(self, intensities, phases, imager, dmlist, lam_idx, crop,
                         min_good_probes=2, eestclip=np.inf, eestcondlim=0):
 
+        # retrieve the model e-field  
         if imager is None or dmlist is None or lam_idx is None:
             raise ValueError("PerfectEstimator needs 'imager', 'dmlist' and 'lam_idx'.")
 

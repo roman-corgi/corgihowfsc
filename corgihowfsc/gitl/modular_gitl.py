@@ -462,9 +462,13 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
 
         # Measured e-field at this setting
         log.info('Measured e-field at this setting')
+
+        # NOTE - when using perfect estimator, the estimator will return model e-field
+        # when imager == corgisim, estimator will return the central subband of its respective bandpass
+
         efield = estimator.estimate_efield(
-            intlist[j],
-            plist[j],
+            intensities=intlist[j],
+            phases=plist[j],
             min_good_probes=hconf['howfsc']['min_good_probes'],
             eestclip=hconf['howfsc']['eestclip'],
             eestcondlim=hconf['howfsc']['eestcondlim'],
@@ -506,19 +510,6 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         ely = cfg.sl_list[j].proptolyot(edm0)
         edh0 = cfg.sl_list[j].proptodh(ely)
         model_efield = insertinto(edh0, efield.shape)
-
-        # # TODO - normalisation of the model e-field?
-        # perfect_efield = imager.get_efield(dm1v=dmlistmeas[0], dm2v=dmlistmeas[1], lind=j, crop=croplist[j * ndm])
-        #
-        # if imager.backend == 'corgihowfsc':
-        #     # TODO - add a warning here for those who wants to speed up the corgisim by changing number of filters in cgisim_bandpasses
-        #     log.info('Using corgisim model, so perfect e-field is same for all DM settings at a given wavelength')
-        #     # mid_index = len(perfect_efield) // 2  # Get the central bandpass for the e-field
-        #     # model_efield = perfect_efield[mid_index]
-        # elif imager.backend == 'cgi-howfsc':
-        #     model_efield = perfect_efield
-        # else:
-        #     raise ValueError(f"Unrecognized imager backend: {imager.backend}")
 
         other[j]['model_efield'] = model_efield  # for reqt 1133640
 
