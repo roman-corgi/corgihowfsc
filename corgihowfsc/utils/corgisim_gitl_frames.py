@@ -232,7 +232,7 @@ class GitlImage:
         """
         Get a simulated GITL efield using either corgisim or the compact model model. This get_efield method should be compatible with both cgi-howfsc and corgisim. 
 
-        e-field output should be normalized for both models. e-field output from the compact model is in normalised contrast units. NOTE - the e-field output from corgisim is not normlized at the moment. 
+        e-field output should be normalized for both models. e-field output from the compact & corgisim models are in normalised contrast units. NOTE - the e-field output from corgisim needs to be normalized in the same way the e-field is generated so that the units match; the EETC peakflux cannot be used here. 
 
         Arguments:
          dm1v: ndarray, absolute voltage map for DM1.
