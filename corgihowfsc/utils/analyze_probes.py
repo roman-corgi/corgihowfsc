@@ -51,6 +51,7 @@ def analyze_probe_set(cfg, dmlist, dpv_list, dh_mask, ind):
     # Calculate unocculted electric field for normalization factor in intensity
     iopen = np.abs(open_efield(cfg, dmlist, ind))**2
     ipeak = np.max(iopen)
+    eref = efield(cfg, dmlist, ind)
 
     # Calculate the electric field for each probe, positive and negative
     efields_pos = []
@@ -59,12 +60,12 @@ def analyze_probe_set(cfg, dmlist, dpv_list, dh_mask, ind):
     intensities_neg = []
     for i, probe_v in enumerate(dpv_list):
         probed_field_pos = efield(cfg, [dmlist[0] + probe_v, dmlist[1]], ind)
-        efields_pos.append(probed_field_pos / np.sqrt(ipeak))
-        intensities_pos.append(np.abs(probed_field_pos)**2 / ipeak)
+        efields_pos.append((probed_field_pos - eref) / np.sqrt(ipeak))
+        intensities_pos.append(np.abs(probed_field_pos - eref)**2 / ipeak)
 
         probed_field_neg = efield(cfg, [dmlist[0] - probe_v, dmlist[1]], ind)
-        efields_neg.append(probed_field_neg / np.sqrt(ipeak))
-        intensities_neg.append(np.abs(probed_field_neg)**2 / ipeak)
+        efields_neg.append((probed_field_neg - eref) / np.sqrt(ipeak))
+        intensities_neg.append(np.abs(probed_field_neg - eref)**2 / ipeak)
 
     # Measure DH quantities for each probe
     averages_pos = [np.mean(intensity[dh_mask]) for intensity in intensities_pos]
