@@ -8,6 +8,7 @@ from corgihowfsc.utils.howfsc_initialization import get_args, load_files
 from astropy.io import fits
 import matplotlib.pyplot as plt
 import numpy as np
+import json
 
 import os
 
@@ -214,14 +215,13 @@ def analyze_probe_set_wvln_cubes(cfg, dmlist, dpv_list, dh_mask, indices=[0, 1, 
     return averages_cube, stddevs_cube, ptvs_cube, efields_cube, intensities_cube
 
 
-def save_wvln_cubes_to_disk(averages_cube, stddevs_cube, ptvs_cube, efields_cube, intensities_cube,
+def save_wvln_cubes_to_disk(averages_cube, stddevs_cube, ptvs_cube,
                           output_path, prefix="probe_analysis"):
     """
-    Save the datacubes returned by analyze_probe_set_wvln_cubes to disk as FITS files.
+    Save the datacubes returned by analyze_probe_set_wvln_cubes to disk as JSON files.
 
     Arguments:
      averages_cube, stddevs_cube, ptvs_cube: 3D arrays from analyze_probe_set_wvln_cubes
-     efields_cube, intensities_cube: 4D arrays from analyze_probe_set_wvln_cubes
      output_path: directory path where files will be saved
      prefix: filename prefix (default: "probe_analysis")
     """
@@ -229,30 +229,46 @@ def save_wvln_cubes_to_disk(averages_cube, stddevs_cube, ptvs_cube, efields_cube
     # Create output directory if it doesn't exist
     os.makedirs(output_path, exist_ok=True)
 
-    # Save each datacube as a FITS file
-    fits.writeto(os.path.join(output_path, f"{prefix}_averages.fits"),
-                 averages_cube, overwrite=True)
-    print(f"Saved: {prefix}_averages.fits")
+    # Convert numpy arrays to Python lists for JSON serialization
+    averages_data = averages_cube.tolist()
+    stddevs_data = stddevs_cube.tolist()
+    ptvs_data = ptvs_cube.tolist()
 
-    fits.writeto(os.path.join(output_path, f"{prefix}_stddevs.fits"),
-                 stddevs_cube, overwrite=True)
-    print(f"Saved: {prefix}_stddevs.fits")
+    # Create metadata for the JSON files
+    metadata = {
+        "shape": averages_cube.shape,
+        "description": "3D datacube with dimensions (wavelength_index, probing_sequence, probe_number)",
+        "wavelength_indices": [0, 1, 2],
+        "probing_sequences": ["positive", "negative"],
+        "probe_numbers": [0, 1, 2]
+    }
 
-    fits.writeto(os.path.join(output_path, f"{prefix}_ptvs.fits"),
-                 ptvs_cube, overwrite=True)
-    print(f"Saved: {prefix}_ptvs.fits")
+    # Save each datacube as a JSON file
+    averages_json = {
+        "metadata": metadata,
+        "data": averages_data
+    }
+    with open(os.path.join(output_path, f"{prefix}_averages.json"), 'w') as f:
+        json.dump(averages_json, f, indent=2)
+    print(f"Saved: {prefix}_averages.json")
 
-    fits.writeto(os.path.join(output_path, f"{prefix}_efields_real.fits"),
-                 np.real(efields_cube), overwrite=True)
-    fits.writeto(os.path.join(output_path, f"{prefix}_efields_imag.fits"),
-                 np.imag(efields_cube), overwrite=True)
-    print(f"Saved: {prefix}_efields_real.fits and {prefix}_efields_imag.fits")
+    stddevs_json = {
+        "metadata": metadata,
+        "data": stddevs_data
+    }
+    with open(os.path.join(output_path, f"{prefix}_stddevs.json"), 'w') as f:
+        json.dump(stddevs_json, f, indent=2)
+    print(f"Saved: {prefix}_stddevs.json")
 
-    fits.writeto(os.path.join(output_path, f"{prefix}_intensities.fits"),
-                 intensities_cube, overwrite=True)
-    print(f"Saved: {prefix}_intensities.fits")
+    ptvs_json = {
+        "metadata": metadata,
+        "data": ptvs_data
+    }
+    with open(os.path.join(output_path, f"{prefix}_ptvs.json"), 'w') as f:
+        json.dump(ptvs_json, f, indent=2)
+    print(f"Saved: {prefix}_ptvs.json")
 
-    print(f"All datacubes saved to: {output_path}")
+    print(f"All data saved to: {output_path}")
 
 
 if __name__ == '__main__':
@@ -295,12 +311,10 @@ if __name__ == '__main__':
 
     # Save wvln cubes to disk
     print(f"\nSaving Gaussian probe datacubes...")
-    save_wvln_cubes_to_disk(averages_cube1, stddevs_cube1, ptvs_cube1, efields_cube1, intensities_cube1,
-                            analysis_path, prefix="gaussian_probes")
+    save_wvln_cubes_to_disk(averages_cube1, stddevs_cube1, ptvs_cube1, analysis_path, prefix="gaussian_probes")
 
     print(f"\nSaving Sinusoidal probe datacubes...")
-    save_wvln_cubes_to_disk(averages_cube2, stddevs_cube2, ptvs_cube2, efields_cube2, intensities_cube2,
-                            analysis_path, prefix="sinusoidal_probes")
+    save_wvln_cubes_to_disk(averages_cube2, stddevs_cube2, ptvs_cube2, analysis_path, prefix="sinusoidal_probes")
 
     # # Plot comparison of averages across wavelengths
     # print("\nGenerating comparison plots...")
