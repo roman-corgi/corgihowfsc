@@ -172,6 +172,9 @@ def main():
     # Estimator selection
     if model_cfg['estimator'] == 'perfect':
         estimator = PerfectEstimator()
+        # Reduce number of probe pairs to speed up simulation:
+        probefiles = {0: probefiles[0]}
+        hconf['probe']['dmrel_ph_list'] = hconf['probe']['dmrel_ph_list'][:1]
     elif model_cfg['estimator'] == 'default':
         estimator = DefaultEstimator()
     else:
