@@ -66,7 +66,7 @@ class ProbesShapes(Probes):
         ValueError
             If scalelist is provided but its length is not 2 * nprobepair.
         """
-        dmrel_list = [pyfits.getdata(f) for f in probefiles]
+        dmrel_list = [pyfits.getdata(f) for f in probefiles.values()]
         nprobepair = len(dmrel_list)
 
         if scalelist is None:

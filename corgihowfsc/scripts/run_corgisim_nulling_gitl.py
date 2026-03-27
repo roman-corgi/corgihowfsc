@@ -172,7 +172,7 @@ def main():
     # Estimator selection
     if model_cfg['estimator'] == 'perfect':
         estimator = PerfectEstimator()
-        probefiles = [probefiles[0]]
+        probefiles = {0: probefiles[0]}
     elif model_cfg['estimator'] == 'default':
         estimator = DefaultEstimator()
     else:
