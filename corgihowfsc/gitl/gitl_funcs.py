@@ -385,3 +385,62 @@ def check_inputs(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
 
     return lenflist, nlam, ndm, nprobepair, lendm1list, lendm2list, dm1nact, dm2nact, allpix, lencroplist, nrow, ncol, subcroplist, lenpelist
 
+
+def get_initial_cam_params(cstrat, contrast, hconf, get_cgi_eetc, nprobepair):
+
+    # Initialize things
+    unprobed_snr = cstrat.get_unprobedsnr(1, contrast)
+    bright_scaling = 10 if contrast > 1e-6 else 5
+    probeheight = cstrat.get_probeheight(1, contrast)
+    probed_snr = cstrat.get_probedsnr(1, contrast)
+    pscale = contrast + probeheight
+    pscale_bright = 1.5 * contrast + probeheight + \
+                    2 * np.sqrt(probeheight) * np.sqrt(1.5 * contrast)
+
+    orig_exptime_list = []
+    orig_gain_list = []
+    orig_nframes_list = []
+
+    for index, sequence in enumerate(hconf['hardware']['sequence_list']):
+        innere = []
+        innerg = []
+        innern = []
+
+        # Unprobed parameters
+        nframes, exptime, gain, snr_out, optflag = \
+            get_cgi_eetc.calc_exp_time(
+                sequence_name=sequence,
+                snr=unprobed_snr,
+                scale=contrast,
+                scale_bright=bright_scaling*contrast,
+            )
+
+        innere.append(exptime)
+        innerg.append(gain)
+        innern.append(nframes)
+
+        # Probed parameters
+        nframes, exptime, gain, snr_out, optflag = \
+            get_cgi_eetc.calc_exp_time(
+                sequence_name=sequence,
+                snr=probed_snr,
+                scale=pscale,
+                scale_bright=pscale_bright,
+            )
+
+        for k in range(nprobepair):
+            innere.append(exptime)
+            innerg.append(gain)
+            innern.append(nframes)
+
+        orig_exptime_list.append(innere)
+        orig_gain_list.append(innerg)
+        orig_nframes_list.append(innern)
+
+    orig_exptime_list = param_order_to_list(orig_exptime_list)
+    orig_gain_list = param_order_to_list(orig_gain_list)
+    orig_nframes_list = param_order_to_list(orig_nframes_list)
+
+    return orig_exptime_list, orig_gain_list, orig_nframes_list
+
+
