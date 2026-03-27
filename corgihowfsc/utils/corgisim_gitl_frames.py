@@ -230,7 +230,7 @@ class GitlImage:
 
     def get_efield(self, dm1v, dm2v, lind=0, crop=None, output_shape=(153, 153), cleanrow=1024, cleancol=1024):
         """
-        Get a simulated GITL efield using either corgisim or cgi-howfsc repo's optical model. This get_efield method should be compatible with both cgi-howfsc and corgisim. 
+        Get a simulated GITL efield using either corgisim or the compact model model. This get_efield method should be compatible with both cgi-howfsc and corgisim. 
 
         e-field output should be normalized for both models. e-field output from the compact model is in normalised contrast units. NOTE - the e-field output from corgisim is not normlized at the moment. 
 
