@@ -84,93 +84,6 @@ def analyze_probe_set(cfg, dmlist, dpv_list, dh_mask, ind):
     return averages, stddevs, ptvs, efields, intensities
 
 
-def plot_probe_ni_vs_wvln(averages_cube):
-    """
-    Generate analysis plots for probe data from a single probe set across all wavelengths.
-
-    Arguments:
-     averages_cube: 3D array of average DH intensities (normalized)
-                   Shape: (n_wavelengths, 2, 3)
-                   - 0th index: wavelength indices
-                   - 1st index: probe type (0=positive, 1=negative)
-                   - 2nd index: probe number (0, 1, 2)
-    """
-
-    # Validate input
-    if not isinstance(averages_cube, np.ndarray):
-        raise TypeError("averages_cube must be a numpy array")
-    if len(averages_cube.shape) != 3:
-        raise ValueError(f"averages_cube must be 3D, got shape {averages_cube.shape}")
-    if averages_cube.shape[1] != 2 or averages_cube.shape[2] != 3:
-        raise ValueError(f"averages_cube must have shape (n_wavelengths, 2, 3), got {averages_cube.shape}")
-
-    wavelengths_um = np.array([546, 575, 604])
-    n_wavelengths = averages_cube.shape[0]
-
-    # Ensure we have the right number of wavelengths
-    if len(wavelengths_um) < n_wavelengths:
-        # Extend wavelengths if needed
-        wavelengths_um = np.linspace(546, 604, n_wavelengths)
-
-    # Define colors for each probe number (0, 1, 2)
-    probe_colors = ['blue', 'green', 'red']
-    probe_labels = ['Probe 0', 'Probe 1', 'Probe 2']
-
-    # Define markers for each probe type (positive/negative)
-    markers = ['+', 'x']  # plus for positive, x for negative
-    probe_type_labels = ['Positive', 'Negative']
-
-    # Create the plot
-    fig, ax = plt.subplots(figsize=(12, 8))
-
-    # Plot each data point
-    for wvl_idx in range(n_wavelengths):
-        for probe_type in range(2):  # 0=positive, 1=negative
-            for probe_num in range(3):  # 0, 1, 2
-                ax.scatter(wavelengths_um[wvl_idx], averages_cube[wvl_idx, probe_type, probe_num],
-                          color=probe_colors[probe_num], marker=markers[probe_type],
-                          s=150, alpha=0.8, linewidth=2, edgecolors='black')
-
-    # Create custom legends
-    # Legend for markers (probe types: positive/negative)
-    marker_handles = []
-    for i, (marker, label) in enumerate(zip(markers, probe_type_labels)):
-        marker_handles.append(plt.Line2D([0], [0], marker=marker, color='gray',
-                                       linestyle='None', markersize=12, label=label,
-                                       markeredgewidth=2))
-
-    # Legend for colors (probe numbers: 0, 1, 2)
-    color_handles = []
-    for i, (color, label) in enumerate(zip(probe_colors, probe_labels)):
-        color_handles.append(plt.Line2D([0], [0], marker='o', color=color,
-                                      linestyle='None', markersize=10,
-                                      label=label, markeredgecolor='black'))
-
-    # Add legends with positioning to avoid data overlap
-    legend1 = ax.legend(handles=marker_handles, loc='center left', bbox_to_anchor=(1.02, 0.7), title='Probe Type')
-    legend2 = ax.legend(handles=color_handles, loc='center left', bbox_to_anchor=(1.02, 0.3), title='Probe Number')
-    ax.add_artist(legend1)  # Add the first legend back
-
-    # Set labels and title
-    ax.set_xlabel('Wavelength (μm)', fontsize=12)
-    ax.set_ylabel('Average DH intensity of probe (normalized)', fontsize=12)
-    ax.set_title('Average probed DH intensity vs wavelength', fontsize=14)
-
-    # Add grid
-    ax.grid(True, alpha=0.3)
-
-    # Set x-axis limits with some padding
-    x_padding = (wavelengths_um.max() - wavelengths_um.min()) * 0.1
-    ax.set_xlim(wavelengths_um.min() - x_padding, wavelengths_um.max() + x_padding)
-
-    plt.tight_layout()
-    # Adjust layout to make room for legends outside the plot area
-    plt.subplots_adjust(right=0.75)
-    plt.show()
-
-    return fig, ax
-
-
 def analyze_probe_set_wvln_cubes(cfg, dmlist, dpv_list, dh_mask, indices=[0, 1, 2]):
     """
     Analyze a set of probes across multiple wavelength indices and return datacubes.
@@ -284,6 +197,93 @@ def save_wvln_cubes_to_disk(averages_cube, stddevs_cube, ptvs_cube,
     print(f"Saved: {prefix}_ptvs.json")
 
     print(f"All data saved to: {output_path}")
+
+
+def plot_probe_ni_vs_wvln(averages_cube):
+    """
+    Generate analysis plots for probe data from a single probe set across all wavelengths.
+
+    Arguments:
+     averages_cube: 3D array of average DH intensities (normalized)
+                   Shape: (n_wavelengths, 2, 3)
+                   - 0th index: wavelength indices
+                   - 1st index: probe type (0=positive, 1=negative)
+                   - 2nd index: probe number (0, 1, 2)
+    """
+
+    # Validate input
+    if not isinstance(averages_cube, np.ndarray):
+        raise TypeError("averages_cube must be a numpy array")
+    if len(averages_cube.shape) != 3:
+        raise ValueError(f"averages_cube must be 3D, got shape {averages_cube.shape}")
+    if averages_cube.shape[1] != 2 or averages_cube.shape[2] != 3:
+        raise ValueError(f"averages_cube must have shape (n_wavelengths, 2, 3), got {averages_cube.shape}")
+
+    wavelengths_um = np.array([546, 575, 604])
+    n_wavelengths = averages_cube.shape[0]
+
+    # Ensure we have the right number of wavelengths
+    if len(wavelengths_um) < n_wavelengths:
+        # Extend wavelengths if needed
+        wavelengths_um = np.linspace(546, 604, n_wavelengths)
+
+    # Define colors for each probe number (0, 1, 2)
+    probe_colors = ['blue', 'green', 'red']
+    probe_labels = ['Probe 0', 'Probe 1', 'Probe 2']
+
+    # Define markers for each probe type (positive/negative)
+    markers = ['+', 'x']  # plus for positive, x for negative
+    probe_type_labels = ['Positive', 'Negative']
+
+    # Create the plot
+    fig, ax = plt.subplots(figsize=(12, 8))
+
+    # Plot each data point
+    for wvl_idx in range(n_wavelengths):
+        for probe_type in range(2):  # 0=positive, 1=negative
+            for probe_num in range(3):  # 0, 1, 2
+                ax.scatter(wavelengths_um[wvl_idx], averages_cube[wvl_idx, probe_type, probe_num],
+                           color=probe_colors[probe_num], marker=markers[probe_type],
+                           s=150, alpha=0.8, linewidth=2, edgecolors='black')
+
+    # Create custom legends
+    # Legend for markers (probe types: positive/negative)
+    marker_handles = []
+    for i, (marker, label) in enumerate(zip(markers, probe_type_labels)):
+        marker_handles.append(plt.Line2D([0], [0], marker=marker, color='gray',
+                                         linestyle='None', markersize=12, label=label,
+                                         markeredgewidth=2))
+
+    # Legend for colors (probe numbers: 0, 1, 2)
+    color_handles = []
+    for i, (color, label) in enumerate(zip(probe_colors, probe_labels)):
+        color_handles.append(plt.Line2D([0], [0], marker='o', color=color,
+                                        linestyle='None', markersize=10,
+                                        label=label, markeredgecolor='black'))
+
+    # Add legends with positioning to avoid data overlap
+    legend1 = ax.legend(handles=marker_handles, loc='center left', bbox_to_anchor=(1.02, 0.7), title='Probe Type')
+    legend2 = ax.legend(handles=color_handles, loc='center left', bbox_to_anchor=(1.02, 0.3), title='Probe Number')
+    ax.add_artist(legend1)  # Add the first legend back
+
+    # Set labels and title
+    ax.set_xlabel('Wavelength (μm)', fontsize=12)
+    ax.set_ylabel('Average DH intensity of probe (normalized)', fontsize=12)
+    ax.set_title('Average probed DH intensity vs wavelength', fontsize=14)
+
+    # Add grid
+    ax.grid(True, alpha=0.3)
+
+    # Set x-axis limits with some padding
+    x_padding = (wavelengths_um.max() - wavelengths_um.min()) * 0.1
+    ax.set_xlim(wavelengths_um.min() - x_padding, wavelengths_um.max() + x_padding)
+
+    plt.tight_layout()
+    # Adjust layout to make room for legends outside the plot area
+    plt.subplots_adjust(right=0.75)
+    plt.show()
+
+    return fig, ax
 
 
 if __name__ == '__main__':
