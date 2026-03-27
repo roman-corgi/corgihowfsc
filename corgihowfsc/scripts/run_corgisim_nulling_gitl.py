@@ -90,6 +90,7 @@ def main():
     num_proper_process = runtime['num_proper_process']
     num_jac_process = runtime['num_jac_process']
     num_imager_worker = runtime['num_imager_worker']
+    use_mpi = runtime.get('use_mpi', False)
 
     print(
         backend_type,
@@ -132,6 +133,7 @@ def main():
     args.starting_contrast = model_cfg['starting_contrast']
     args.num_imager_worker = num_imager_worker
     args.num_proper_process = num_proper_process
+    args.use_mpi = use_mpi
 
     modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps = load_files(args,
                                                                                                            howfscpath)
@@ -141,7 +143,6 @@ def main():
 
     # Define control and estimator strategy
     cstrat = ControlStrategy(cstratfile)
-    estimator = DefaultEstimator()
 
     # Initialize default probes class
     probes = ProbesShapes(args.probe_shape)
@@ -169,6 +170,14 @@ def main():
         cor=mode,
         corgi_overrides=corgi_overrides
     )
+
+    # Estimator selection
+    if model_cfg['estimator'] == 'perfect':
+        estimator = PerfectEstimator()
+    elif model_cfg['estimator'] == 'default':
+        estimator = DefaultEstimator()
+    else:
+        raise ValueError(f"Invalid estimator choice: {model_cfg['estimator']}. Choose 'perfect' or 'default'.")
 
     # Normalization
     if normalization_type == 'eetc':

@@ -462,9 +462,13 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
 
         # Measured e-field at this setting
         log.info('Measured e-field at this setting')
+
+        # NOTE - here is where we estimate the e-field. when using perfect estimator, you just return the model e-field in here
+        # e-field you return in here needs to the a slice --> in teh case of corgisim, it will be the central subband
+
         efield = estimator.estimate_efield(
-            intlist[j],
-            plist[j],
+            intensities=intlist[j],
+            phases=plist[j],
             min_good_probes=hconf['howfsc']['min_good_probes'],
             eestclip=hconf['howfsc']['eestclip'],
             eestcondlim=hconf['howfsc']['eestcondlim'],

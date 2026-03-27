@@ -4,6 +4,7 @@ runtime:
   num_proper_process: 5 # default to 5 
   num_jac_process: 6 # default to 2
   num_imager_worker: null # default to null for no parallelization, otherwise set to an integer number of workers
+  use_mpi: false # set to true and launch with: mpiexec -n (num_imager_worker+1) python -m mpi4py.futures script.py
 
 sim_settings:
   loop_framework: "corgi-howfsc" # do not modify 
@@ -30,6 +31,7 @@ models:
   cgi-howfsc:
     backend_type: "cgi-howfsc"
     normalization_type: "eetc"
+    estimator: "default" # options are "perfect" and "default"; perfect estimator uses the model e-field for estimation, while default estimator uses the standard pairwise probing method
     starting_contrast: 6e-10 # starting contrast value for dmstartmap_filenames; not actually used in compact model
     dmstartmap_filenames: 
       - "gitl_start_compact_dm1.fits"
@@ -40,6 +42,7 @@ models:
   corgihowfsc:
     backend_type: "corgihowfsc"
     normalization_type: "eetc" # other options are "corgisim-off-axis" and "corgisim-on-axis"
+    estimator: "default" # options are "perfect" and "default"; perfect estimator uses the model e-field for estimation, while default estimator uses the standard pairwise probing method  
     starting_contrast: 3.5e-4 # starting contrast value for dmstartmap_filenames; if changing starting DM maps update this value
     dmstartmap_filenames:
       - "gitl_start_compact_dm1.fits"

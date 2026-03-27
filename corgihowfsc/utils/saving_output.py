@@ -160,7 +160,7 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
     hdul_incoh.writeto(os.path.join(iterpath, "intensity_incoherent.fits"), overwrite=True)
 
     # --- E-FIELD ESTIMATIONS ---
-    efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array = refactor_e_fields(cfg, oitem, perfect_efield_list=perfect_efield_list)
+    efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array = refactor_efields(cfg, oitem, perfect_efield_list=perfect_efield_list)
 
     hdr_ef = pyfits.Header()
     hdr_ef['NLAM'] = len(cfg.sl_list)
@@ -189,7 +189,7 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
 
     return efields_complex_array, perfect_efields_complex_array
 
-def refactor_e_fields(cfg, oitem, perfect_efield_list=None):
+def refactor_efields(cfg, oitem, perfect_efield_list=None):
     # --- E-FIELD ESTIMATIONS ---
     efields_realimag = []
     efields_complex = []
@@ -200,14 +200,14 @@ def refactor_e_fields(cfg, oitem, perfect_efield_list=None):
 
     # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
     efields_complex_array = np.stack(efields_complex, axis=0)
-    # all_efields_complex.append(efields_complex_array)
-
 
     # --- PERFECT E-FIELDS ---
     perfect_efields_realimag = []
     perfect_efields_complex = []
-    lams = range(len(cfg.sl_list)) if perfect_efield_list is None else [0]
-    for j in lams:
+
+    num_perf_lams = len(perfect_efield_list) if perfect_efield_list is not None else len(cfg.sl_list)
+
+    for j in range(num_perf_lams):
         if perfect_efield_list is not None:
             perf_efield = perfect_efield_list[j]
         else:
@@ -218,7 +218,6 @@ def refactor_e_fields(cfg, oitem, perfect_efield_list=None):
 
     # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
     perfect_efields_complex_array = np.stack(perfect_efields_complex, axis=0)
-    # all_perfect_efields_complex.append(perfect_efields_complex_array)
 
     return efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array
 
@@ -246,7 +245,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     # and properly populate those
     if output_every_iter:
         for i in range(len(framelistlist)):
-            efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array = refactor_e_fields(
+            efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array = refactor_efields(
                 cfg, otherlist[i], perfect_efield_list=perfect_efield_list[i])
 
             # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
@@ -264,9 +263,9 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     # Get dimensions from the first e-field
     nrow, ncol = efields_datacube.shape[2], efields_datacube.shape[3]
 
-    # Create DH mask cube for all three wavelengths (indices 0-2)
+    # Create DH mask cube for all wavelengths
     dhmask_cube = []
-    for j in range(min(3, len(cfg.sl_list))):  # Use up to 3 wavelengths or fewer if available
+    for j in range(len(cfg.sl_list)): # We can have more than 3 wavelengths (band 2 and 3)
         dh = cfg.sl_list[j].dh.e
         dhcrop = insertinto(dh, (nrow, ncol)).astype('bool')
         dhmask_cube.append(dhcrop)
@@ -276,7 +275,12 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     dhmask_cube = np.stack(dhmask_cube, axis=0)
 
     # Compute difference cube
-    efields_datacube_red = efields_datacube if efields_datacube.shape[1] == perfect_efields_datacube.shape[1] else efields_datacube[:,len(cfg.sl_list)//2,:,:]
+    if efields_datacube.shape[1] == perfect_efields_datacube.shape[1]:
+        efields_datacube_red = efields_datacube
+    else:
+        mid_idx = len(cfg.sl_list) // 2
+        efields_datacube_red = efields_datacube[:, mid_idx:mid_idx + 1, :, :]
+
     efield_diff = efields_datacube_red - perfect_efields_datacube
 
     log.info(f"E-field difference stats:")
@@ -293,13 +297,19 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     estimation_variance = np.zeros((efield_diff.shape[1], nrow, ncol))  # (n_wavelengths, nrow, ncol)
     variance_per_iter_all_wl = []  # Store variance per iteration for each wavelength
 
-    for wl_idx in range(efield_diff.shape[1]):  # For each wavelength
-        if wl_idx < len(dhmask_cube):  # Only if we have a mask for this wavelength
-            # Get the mask for this wavelength
-            mask = dhmask_cube[wl_idx]
+    # Speedup mode or not
+    is_speedup = (efield_diff.shape[1] == 1 and len(cfg.sl_list) > 1)
+    mid_idx = len(cfg.sl_list) // 2
+
+    for diff_idx in range(efield_diff.shape[1]):  # For each wavelength slice in the residual cube
+
+        mask_idx = mid_idx if is_speedup else diff_idx
+
+        if mask_idx < len(dhmask_cube):
+            mask = dhmask_cube[mask_idx]
 
             # Extract data for this wavelength across all iterations
-            wl_diff_data = efield_diff[:, wl_idx, :, :]  # (iterations, nrow, ncol)
+            wl_diff_data = efield_diff[:, diff_idx, :, :]  # (iterations, nrow, ncol)
 
             # Apply mask and compute variance across iterations (axis=0)
             masked_diff = wl_diff_data[:, mask]  # (iterations, n_masked_pixels)
@@ -313,10 +323,10 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
                 # Check for problematic values
                 nan_count = np.sum(np.isnan(pixel_variance))
                 inf_count = np.sum(np.isinf(pixel_variance))
-                log.info(f"Wavelength {wl_idx}: {nan_count} NaNs, {inf_count} Infs out of {len(pixel_variance)} pixels")
+                log.info(f"Wavelength {diff_idx}: {nan_count} NaNs, {inf_count} Infs out of {len(pixel_variance)} pixels")
 
                 # Put the variance values back into the full array
-                estimation_variance[wl_idx][mask] = pixel_variance
+                estimation_variance[diff_idx][mask] = pixel_variance
 
                 # Compute mean variance per iteration for plotting (reuse masked_diff)
                 variance_per_iter = []
@@ -328,7 +338,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
                         variance_per_iter.append(0.0)
                 variance_per_iter_all_wl.append(variance_per_iter)
             else:
-                log.warning(f"Wavelength {wl_idx}: Insufficient data for variance calculation")
+                log.warning(f"Wavelength {diff_idx}: Insufficient data for variance calculation")
                 variance_per_iter_all_wl.append([0.0] * efield_diff.shape[0])
         else:
             variance_per_iter_all_wl.append([0.0] * efield_diff.shape[0])
@@ -343,11 +353,11 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
         variance_table = np.zeros((max_iterations, len(variance_per_iter_all_wl)))
 
         # Fill the table with variance data for each wavelength
-        for wl_idx, wl_variance_data in enumerate(variance_per_iter_all_wl):
-            variance_table[:len(wl_variance_data), wl_idx] = wl_variance_data
+        for diff_idx, wl_variance_data in enumerate(variance_per_iter_all_wl):
+            variance_table[:len(wl_variance_data), diff_idx] = wl_variance_data
 
         # Create header with wavelength labels
-        header = ','.join([f'Wvln_{wl_idx + 1}' for wl_idx in range(len(variance_per_iter_all_wl))])
+        header = ','.join([f'Wvln_{diff_idx + 1}' for diff_idx in range(len(variance_per_iter_all_wl))])
 
         # Save as CSV
         np.savetxt(os.path.join(outpath, "efield_variance.csv"),
@@ -355,10 +365,10 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
 
     # Plot electric field error variance for all wavelengths per iteration
     plt.figure()
-    for wl_idx in range(min(3, len(variance_per_iter_all_wl))):  # Plot up to 3 wavelengths
-        variance_per_iter = variance_per_iter_all_wl[wl_idx]
+    for diff_idx in range(len(variance_per_iter_all_wl)):  # Plot all wavelengths
+        variance_per_iter = variance_per_iter_all_wl[diff_idx]
         plt.plot(np.arange(len(variance_per_iter)) + 1, variance_per_iter,
-                marker='o', label=f'Wavelength {wl_idx + 1}')
+                marker='o', label=f'Wavelength {diff_idx + 1}')
 
     plt.xlabel('Iteration')
     plt.ylabel('Electric Field Variance')

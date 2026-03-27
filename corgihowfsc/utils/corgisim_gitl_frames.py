@@ -20,6 +20,9 @@ import numpy as np
 import proper
 from corgisim import outputs
 import time
+import logging
+log = logging.getLogger(__name__)
+
 
 # import helper functions 
 from corgihowfsc.utils.corgisim_utils import _extract_host_properties_from_hconf, CGI_TO_CORGI_MAPPING, SUPPORTED_CORGI_MODES, SUPPORTED_CGI_MODES, map_wavelength_to_corgisim_bandpass
@@ -225,9 +228,12 @@ class GitlImage:
             
             return self.gitlframe_cgihowfsc(dmlist, peakflux, self.cstrat.fixedbp, exptime, crop, lind, cleanrow, cleancol)
 
-    def get_efield(self, dm1v, dm2v, lind=0, crop=None, output_shape=(153, 153),  cleanrow = 1024, cleancol = 1024):
+    def get_efield(self, dm1v, dm2v, lind=0, crop=None, output_shape=(153, 153), cleanrow=1024, cleancol=1024):
         """
-        Get a simulated GITL efield using either corgisim or cgi-howfsc repo's optical model. This get_efield method should be compatible with both cgi-howfsc and corgisim.
+        Get a simulated GITL efield using either corgisim or cgi-howfsc repo's optical model. This get_efield method should be compatible with both cgi-howfsc and corgisim. 
+
+        e-field output should be normalized for both models. e-field output from the compact model is in normalised contrast units. NOTE - the e-field output from corgisim is not normlized at the moment. 
+
         Arguments:
          dm1v: ndarray, absolute voltage map for DM1.
          dm2v: ndarray, absolute voltage map for DM2.
@@ -236,13 +242,16 @@ class GitlImage:
           All are integers; the first two must be >= 0 and the second two must be > 0. Only used if name = 'cgi-howfsc'.
         """
 
-        if crop is None:
-            raise ValueError("crop parameter is required for cgi-howfsc")
+        if self.backend == 'corgihowfsc': # Corgisim model
+            efield = self.corgisim_manager.generate_efield(dm1v, dm2v, lind, crop=crop)
+            mid_sublam = efield.shape[0] // 2
 
-        if self.backend == 'corgihowfsc':
-            return self.corgisim_manager.generate_e_field(dm1v, dm2v, lind)
+            return efield[mid_sublam, :, :]
 
-        else:  # cgi-howfsc
+        else:  # Compact model
+            if crop is None:
+                raise ValueError("crop parameter is required for cgi-howfsc backend")
+
             dmlist = [dm1v, dm2v]
             return self.gitlefield_cgihowfsc(
                 dmlist=dmlist,
@@ -251,4 +260,25 @@ class GitlImage:
                 cleanrow=cleanrow,
                 cleancol=cleancol
             )
+
+    def get_perfect_efield(self, abs_dm1, abs_dm2, croplist, nlam, ndm, speedup=False):
+        
+        if self.backend == 'corgihowfsc' and speedup:
+            # TODO - add a warning here for those who wants to speed up the corgisim by changing number of filters in cgisim_bandpasses
+            log.info('Using corgisim model, so perfect e-field is same for all DM settings at a given wavelength')
+
+        lam_inds = [nlam//2] if speedup else range(nlam)
+        perfect_efields = []
+
+        for j in lam_inds:
+            efield = self.get_efield(
+                dm1v=abs_dm1,
+                dm2v=abs_dm2,
+                lind=j,
+                crop=croplist[j * ndm]
+            )
+            perfect_efields.append(efield)
+
+        return perfect_efields
+
 

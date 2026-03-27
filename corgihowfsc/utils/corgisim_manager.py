@@ -310,13 +310,36 @@ class CorgisimManager:
             # frame = (sim_scene.image_on_detector.data - B) * self.k_gain / gain - master_dark
             return coadd/nframes
 
-    def generate_e_field(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, bias=0):
+    def generate_efield(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, bias=0, crop=None):
         """
         Generate the e-field from corgisim
+        Args:
+            dm1v, dm2v: DM1 and DM2 voltages
+            lind: wavelength index
+            exptime: exposure time
+            crop:  4-tuple of (lower row, lower col, number of rows,
+                    number of columns), indicating where in a clean frame a PSF is taken.
+                    All are integers; the first two must be >= 0 and the second two must be > 0. Only used if name = 'cgi-howfsc'.
+            gain: EM gain setting for the detector model. Defaults to 1.
+            bias: Detector bias/offset level [e-]. Defaults to 0.
+        Return:
+            Generated_efield: Generated electric field, full or cropped. Should be in normalized unit. 
         """
         optics = self.create_optics(dm1v, dm2v, lind)
+        generated_efield = optics.get_e_field()
 
-        return optics.get_e_field()
+        e_field_norm = np.zeros_like(generated_efield)
+
+        optics.optics_keywords.update({'use_fpm': 0, 'use_lyot_stop': 0, 'use_field_stop': 0})  # to get the unocculted e-field for normalization
+
+        e_field_unocc = optics.get_e_field()
+
+        for i in range(len(generated_efield)):
+            peak_i = np.sqrt(np.nanmax(np.abs(e_field_unocc[i])**2))
+            e_field_norm[i] = generated_efield[i] / peak_i
+        
+        return e_field_norm
+
 
     def generate_master_dark(self, detector, exptime, gain):
         """

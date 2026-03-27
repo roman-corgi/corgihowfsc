@@ -38,7 +38,8 @@ from howfsc.precomp import howfsc_precomputation
 from corgihowfsc.utils.saving_output import save_outputs, save_outputs_iter
 from corgihowfsc.utils.output_management import save_run_config, update_yml
 from corgihowfsc.utils.gitl_worker import _collect_framelist
-from corgihowfsc.utils.metrics import get_ni, get_perfect_efield
+from corgihowfsc.utils.metrics import get_ni
+
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
@@ -106,6 +107,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
 
     safe_cpu_count = args.num_imager_worker # TODO - hard coding
     print('Using num_imager_worker = ', safe_cpu_count)
+    use_mpi = getattr(args, 'use_mpi', False)
 
     # TODO - move this out from here and change it to os.sched_getaffinity
     if safe_cpu_count == None:
@@ -282,7 +284,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         imager, cfg, dm1_list, dm2_list,
         exptime_list=[exptime] * (nlam * ndm),
         gain_list=[gain] * (nlam * ndm),
-        nframes_list=[nframes] * (nlam * ndm), 
+        nframes_list=[nframes] * (nlam * ndm),
         croplist=croplist,
         normalization_strategy=normalization_strategy,
         get_cgi_eetc=get_cgi_eetc,
@@ -291,6 +293,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         cstrat=cstrat,
         fracbadpix=fracbadpix,
         n_jobs=safe_cpu_count,
+        use_mpi=use_mpi,
     )
 
     # drop packets for testing if requested
@@ -361,7 +364,9 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             hdul.writeto(fileout, overwrite=True)
 
             if output_model_efield and imager.backend == 'corgihowfsc':
-                perfect_efield_list.append(get_perfect_efield(imager, abs_dm1, abs_dm2, croplist, log, nlam, ndm, speedup=True))
+                # speedup == True: getting the model e-field for the central bandpass (e.g. 1b for band 1)
+                # speedup == False: getting the model e-field for all bandpasses
+                perfect_efield_list.append(imager.get_perfect_efield(abs_dm1=abs_dm1, abs_dm2=abs_dm2, croplist=croplist, nlam=nlam, ndm=ndm, speedup=True))
             else:
                 perfect_efield_list.append(None)
 
@@ -434,6 +439,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             cstrat=cstrat,
             fracbadpix=fracbadpix,
             n_jobs=safe_cpu_count,
+            use_mpi=use_mpi,
         )
 
         # drop packets for testing if requested
