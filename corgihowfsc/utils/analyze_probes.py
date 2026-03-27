@@ -155,11 +155,110 @@ def plot_probe_ni_vs_wvln(averages_list):
     plt.show()
 
 
+def analyze_probe_set_wvln_cubes(cfg, dmlist, dpv_list, dh_mask, indices=[0, 1, 2]):
+    """
+    Analyze a set of probes across multiple wavelength indices and return datacubes.
+
+    Arguments:
+     cfg: CoronagraphMode object
+     dmlist: list of DMs for a current DM setting
+     dpv_list: list of 3 DM probe voltages
+     dh_mask: boolean mask for the dark hole region, in the focal plane
+     indices: list of wavelength indices to analyze (default: [0, 1, 2])
+
+    Returns:
+     averages_cube: 3D array (n_indices, 2, 3) - average DH intensities
+     stddevs_cube: 3D array (n_indices, 2, 3) - standard deviations
+     ptvs_cube: 3D array (n_indices, 2, 3) - peak-to-valley values
+     efields_cube: 4D array (n_indices, 2, 3, *field_shape) - electric fields
+     intensities_cube: 4D array (n_indices, 2, 3, *field_shape) - intensities
+    """
+
+    # Initialize lists to store results for each index
+    all_averages = []
+    all_stddevs = []
+    all_ptvs = []
+    all_efields = []
+    all_intensities = []
+
+    # Loop over the specified indices
+    for ind in indices:
+        print(f"Analyzing wavelength index {ind}...")
+
+        # Call analyze_probe_set for this index
+        averages, stddevs, ptvs, efields, intensities = analyze_probe_set(
+            cfg, dmlist, dpv_list, dh_mask, ind
+        )
+
+        # Store results
+        all_averages.append(averages)
+        all_stddevs.append(stddevs)
+        all_ptvs.append(ptvs)
+        all_efields.append(efields)
+        all_intensities.append(intensities)
+
+    # Convert lists to numpy arrays (datacubes)
+    averages_cube = np.array(all_averages)  # Shape: (n_indices, 2, 3)
+    stddevs_cube = np.array(all_stddevs)    # Shape: (n_indices, 2, 3)
+    ptvs_cube = np.array(all_ptvs)          # Shape: (n_indices, 2, 3)
+    efields_cube = np.array(all_efields)    # Shape: (n_indices, 2, 3, field_height, field_width)
+    intensities_cube = np.array(all_intensities)  # Shape: (n_indices, 2, 3, field_height, field_width)
+
+    print(f"Analysis complete. Datacube shapes:")
+    print(f"  Averages: {averages_cube.shape}")
+    print(f"  Stddevs: {stddevs_cube.shape}")
+    print(f"  PTVs: {ptvs_cube.shape}")
+    print(f"  EFields: {efields_cube.shape}")
+    print(f"  Intensities: {intensities_cube.shape}")
+
+    return averages_cube, stddevs_cube, ptvs_cube, efields_cube, intensities_cube
+
+
+def save_wvln_cubes_to_disk(averages_cube, stddevs_cube, ptvs_cube, efields_cube, intensities_cube,
+                          output_path, prefix="probe_analysis"):
+    """
+    Save the datacubes returned by analyze_probe_set_wvln_cubes to disk as FITS files.
+
+    Arguments:
+     averages_cube, stddevs_cube, ptvs_cube: 3D arrays from analyze_probe_set_wvln_cubes
+     efields_cube, intensities_cube: 4D arrays from analyze_probe_set_wvln_cubes
+     output_path: directory path where files will be saved
+     prefix: filename prefix (default: "probe_analysis")
+    """
+
+    # Create output directory if it doesn't exist
+    os.makedirs(output_path, exist_ok=True)
+
+    # Save each datacube as a FITS file
+    fits.writeto(os.path.join(output_path, f"{prefix}_averages.fits"),
+                 averages_cube, overwrite=True)
+    print(f"Saved: {prefix}_averages.fits")
+
+    fits.writeto(os.path.join(output_path, f"{prefix}_stddevs.fits"),
+                 stddevs_cube, overwrite=True)
+    print(f"Saved: {prefix}_stddevs.fits")
+
+    fits.writeto(os.path.join(output_path, f"{prefix}_ptvs.fits"),
+                 ptvs_cube, overwrite=True)
+    print(f"Saved: {prefix}_ptvs.fits")
+
+    fits.writeto(os.path.join(output_path, f"{prefix}_efields_real.fits"),
+                 np.real(efields_cube), overwrite=True)
+    fits.writeto(os.path.join(output_path, f"{prefix}_efields_imag.fits"),
+                 np.imag(efields_cube), overwrite=True)
+    print(f"Saved: {prefix}_efields_real.fits and {prefix}_efields_imag.fits")
+
+    fits.writeto(os.path.join(output_path, f"{prefix}_intensities.fits"),
+                 intensities_cube, overwrite=True)
+    print(f"Saved: {prefix}_intensities.fits")
+
+    print(f"All datacubes saved to: {output_path}")
+
+
 if __name__ == '__main__':
     mode = 'nfov_band1'
     dark_hole = '360deg'
     analysis_path = '/Users/ilaginja/Nextcloud/Areas/RomanCPP/alternate_probes/probe_comparison/active_analysis'
-    ind = 1
 
     # Load probes and DH mask from the analysis path
     dh_mask = fits.getdata(os.path.join(analysis_path, 'dh_mask.fits')).astype(bool)
@@ -183,6 +282,26 @@ if __name__ == '__main__':
     cfg = CoronagraphMode(cfgfile)
     dmlist = cfg.initmaps
 
-    averages1, stddevs1, ptvs1, efields1, intensities1 = analyze_probe_set(cfg, dmlist, dpv_list1, dh_mask, ind)
-    averages2, stddevs2, ptvs2, efields2, intensities2 = analyze_probe_set(cfg, dmlist, dpv_list2, dh_mask, ind)
-    plot_probe_ni_vs_wvln([averages1, averages2])  # Pass as list
+    # Analyze probe sets for datacubes across wavelength indices [0, 1, 2]
+    print("Analyzing Gaussian probes...")
+    averages_cube1, stddevs_cube1, ptvs_cube1, efields_cube1, intensities_cube1 = analyze_probe_set_wvln_cubes(
+        cfg, dmlist, dpv_list1, dh_mask, indices=[0, 1, 2]
+    )
+
+    print("\nAnalyzing Sinusoidal probes...")
+    averages_cube2, stddevs_cube2, ptvs_cube2, efields_cube2, intensities_cube2 = analyze_probe_set_wvln_cubes(
+        cfg, dmlist, dpv_list2, dh_mask, indices=[0, 1, 2]
+    )
+
+    # Save wvln cubes to disk
+    print(f"\nSaving Gaussian probe datacubes...")
+    save_wvln_cubes_to_disk(averages_cube1, stddevs_cube1, ptvs_cube1, efields_cube1, intensities_cube1,
+                            analysis_path, prefix="gaussian_probes")
+
+    print(f"\nSaving Sinusoidal probe datacubes...")
+    save_wvln_cubes_to_disk(averages_cube2, stddevs_cube2, ptvs_cube2, efields_cube2, intensities_cube2,
+                            analysis_path, prefix="sinusoidal_probes")
+
+    # # Plot comparison of averages across wavelengths
+    # print("\nGenerating comparison plots...")
+    # plot_probe_ni_vs_wvln([averages_cube1[0], averages_cube1[1], averages_cube1[2]])  # Gaussian probes at 3 wavelengths
