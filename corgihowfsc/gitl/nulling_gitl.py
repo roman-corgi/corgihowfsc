@@ -392,6 +392,17 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         # new dm1_list, dm2_list
         dm1_list = []
         dm2_list = []
+        # slight change to allow for different numbers of probe pairs when using perfect estimator to speed up iterations
+        nprobepair = len(dmrel_list)
+        for index in range(nlam):
+            dm1_list.append(abs_dm1)  # unprobed
+            for i, dmrel in enumerate(dmrel_list):
+                dm1_list.append(abs_dm1 + scale_factor_list[i] * dmrel)  # positive
+                dm1_list.append(abs_dm1 + scale_factor_list[i + nprobepair] * dmrel)  # negative
+            for j in range(ndm):
+                dm2_list.append(abs_dm2)
+
+        # Leaving old framework here for future comparison with nulltest_gitl.py (which by design only allows 3 sets of probe commands)
         # for index in range(nlam):
         #     # DM1 same per wavelength
         #     dm1_list.append(abs_dm1)
@@ -406,15 +417,6 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         #         dm2_list.append(abs_dm2)
         #         pass
         #     pass
-
-        nprobepair = len(dmrel_list)
-        for index in range(nlam):
-            dm1_list.append(abs_dm1)  # unprobed
-            for i, dmrel in enumerate(dmrel_list):
-                dm1_list.append(abs_dm1 + scale_factor_list[i] * dmrel)  # positive
-                dm1_list.append(abs_dm1 + scale_factor_list[i + nprobepair] * dmrel)  # negative
-            for j in range(ndm):
-                dm2_list.append(abs_dm2)
 
         # Skip the very last Jacobian that never gets used
         if precomp in ['precomp_jacs_always'] and iteration < niter:
