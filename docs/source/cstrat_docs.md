@@ -241,6 +241,7 @@ fixedbp: '../../every_mask_config/fixedbp_zeros.fits'
 
 **Notes**:
 [//]: If using `path_overrides` in `scripts/default_params.yaml` then the path must be changed to an absolute path
+
 ---
 
 ## Usage Guidelines
