@@ -107,10 +107,6 @@ jobs:
             "https://sourceforge.net/projects/cgisim/files/cgisim_v4.1.zip/download" \
             -o "${GITHUB_WORKSPACE}/downloads/cgisim_v4.1.zip"
 
-          curl -L \
-            "https://raw.githubusercontent.com/roman-corgi/corgi_ObsPlanning/main/eetc_sequences/sequences.yaml" \
-            -o "${GITHUB_WORKSPACE}/downloads/sequences.yaml"
-
       - name: Install manual CGI packages
         run: |
           python setup_cgi_packages.py "${GITHUB_WORKSPACE}/downloads"
@@ -122,23 +118,6 @@ jobs:
           cd cgi-eetc
           git lfs pull
           pip install -e .
-
-      - name: Override EETC sequences.yaml
-        run: |
-          python - <<'PY'
-          import os
-          import shutil
-          import eetc
-
-          eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
-          src = os.path.join(os.environ["GITHUB_WORKSPACE"], "downloads", "sequences.yaml")
-          dst = os.path.join(eetc_path, "config", "sequences.yaml")
-
-          os.makedirs(os.path.dirname(dst), exist_ok=True)
-          shutil.copyfile(src, dst)
-
-          print(f"Copied {src} -> {dst}")
-          PY
 
       - name: Verify installation
         run: |

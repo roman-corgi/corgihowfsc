@@ -5,7 +5,8 @@ class Estimator():
     """
     Abstract estimator base class
     """
-    # def __init__():
+    def __init__(self, name=None):
+        self.name = name
 
     def estimate_efield(self, intensities, phases, imager, dmlist, lam_idx, crop,
                     min_good_probes=2, eestclip=np.inf, eestcondlim=0):

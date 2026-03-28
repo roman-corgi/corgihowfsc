@@ -148,7 +148,6 @@ def main(param_file_name='default_param.yml', fullpath=False):
 
     # Define control and estimator strategy
     cstrat = ControlStrategy(cstratfile)
-    estimator = DefaultEstimator()
 
     # Initialize default probes class
     probes = ProbesShapes(args.probe_shape)
@@ -176,6 +175,14 @@ def main(param_file_name='default_param.yml', fullpath=False):
         cor=mode,
         corgi_overrides=corgi_overrides
     )
+
+    # Estimator selection
+    if model_cfg['estimator'] == 'perfect':
+        estimator = PerfectEstimator()
+    elif model_cfg['estimator'] == 'default':
+        estimator = DefaultEstimator()
+    else:
+        raise ValueError(f"Invalid estimator choice: {model_cfg['estimator']}. Choose 'perfect' or 'default'.")
 
     # Normalization
     if normalization_type == 'eetc':
