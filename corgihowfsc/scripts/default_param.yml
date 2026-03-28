@@ -17,7 +17,7 @@ sim_settings:
 paths:
   base_path: "~" # default to home directory, but user can change to a different path
   base_corgiloop_path: "corgiloop_data" # this is the proposed default but can be changed
-  defjacpath: "C:/Users/sredmond/corgiloop_data/jacobians" # this is the proposed default but can be changed, should be somewhere outside the repo if used
+  defjacpath: "temp" # this is the proposed default but can be changed, should be somewhere outside the repo if used
   final_filename: "final_frames.fits" # this is the proposed default but can be changed
   folder_tag: null # this is an optional string that will be appended to the folder name where results are saved
 
@@ -25,9 +25,9 @@ path_overrides:
   # Set any of these to an absolute path to override the mode-derived default.
   # Leave as null to use the mode-derived path.
   # Can also override defjacpath and dmstartmap_filenames by providing full paths
-  cfgfile: null #"C:/Users/sredmond/corgiloop_data/alternate_files/howfsc_optical_model.yaml"
-  cstratfile: null #"C:/Users/sredmond/corgiloop_data/alternate_files/cstrat_nfov_band1.yaml"
-  hconffile: "C:/Users/sredmond/corgiloop_data/alternate_files/hconf_nfov_flat.yaml"
+  cfgfile: null
+  cstratfile: null
+  hconffile: null
 
 crop:
   nrow: 153 # Do not modify
@@ -40,8 +40,8 @@ models:
     normalization_type: "eetc"
     starting_contrast: 6e-10 # starting contrast value for dmstartmap_filenames; not actually used in compact model
     dmstartmap_filenames: 
-      - "C:/Users/sredmond/corgiloop_data/alternate_files/gitl_start_compact_dm1.fits"  # can provide full path including filename or just a filename if the file is located in the modelpath
-      - "C:/Users/sredmond/corgiloop_data/alternate_files/gitl_start_compact_dm2.fits"  # can provide full path including filename or just a filename if the file is located in the modelpath
+      - "gitl_start_compact_dm1.fits"  # can provide full path including filename or just a filename if the file is located in the modelpath
+      - "gitl_start_compact_dm2.fits"  # can provide full path including filename or just a filename if the file is located in the modelpath
     lrow: 436 # Do not modify
     lcol: 436 # Do not modify
 
