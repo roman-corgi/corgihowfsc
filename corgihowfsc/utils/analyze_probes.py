@@ -289,14 +289,14 @@ def plot_probe_ni_vs_wvln(averages_cube):
     return fig, ax
 
 
-def create_gaussian_probe_sets_sigma_sweep(cfg, dmlist, sigma_range, sigma_step,
+def create_gaussian_probe_sets_sigma_sweep(modelpath, cfgfile, dmlist, sigma_range, sigma_step,
                                          deltax_act_list=[13, 13, 14], deltay_act_list=[8, 9, 9],
                                          ni_desired=1e-5, lod_min=2.8, lod_max=209.7, ind=1):
     """
     Create multiple Gaussian probe sets with different sigma parameters.
 
     Arguments:
-     cfg: CoronagraphMode object
+     cfgfile: configuration file
      dmlist: list of DMs for current DM setting
      sigma_range: tuple of (min_sigma, max_sigma) for the sigma parameter sweep
      sigma_step: step size for sigma parameter sweep
@@ -317,15 +317,12 @@ def create_gaussian_probe_sets_sigma_sweep(cfg, dmlist, sigma_range, sigma_step,
     sigma_min, sigma_max = sigma_range
     sigma_values = np.arange(sigma_min, sigma_max + sigma_step, sigma_step)
 
-    howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
-    # Get config file path - this is a bit hacky but follows the pattern in write_gaussian_probes.py
-    homf_dict = loadyaml(cfg.cfgfile) if hasattr(cfg, 'cfgfile') else None
+    homf_dict = loadyaml(cfgfile)
     diam_pupil_pix = homf_dict['sls'][1]['epup']['pdp']
     dmreg_dm1 = homf_dict['dms']['DM1']['registration']
     dact = diam_pupil_pix / dmreg_dm1['ppact_cx']
 
     # Get tie map for usable actuators
-    modelpath = os.path.dirname(cfg.cfgfile) if hasattr(cfg, 'cfgfile') else None
     tiemap_file = os.path.join(modelpath, homf_dict['dms']['DM1']['voltages']['tiefn'])
     tiemap = fits.getdata(tiemap_file)
     NACT = homf_dict['dms']['DM1']['registration']['nact']
@@ -477,13 +474,13 @@ if __name__ == '__main__':
     # print("\nGenerating comparison plots...")
     # plot_probe_ni_vs_wvln(averages_cube2)
 
-    sigma_range = (0.5, 2.0)  # Example range for sigma values
+    sigma_range = (0.5, 1.7)  # Range for sigma values
     sigma_step = 0.1         # Step size for sigma sweep
 
     # Create Gaussian probe sets with sigma sweep
     print("\nCreating Gaussian probe sets with sigma sweep...")
     dpv_sets_dict, sigma_values, metadata = create_gaussian_probe_sets_sigma_sweep(
-        cfg, dmlist, sigma_range, sigma_step,
+        modelpath, cfgfile, dmlist, sigma_range, sigma_step,
         deltax_act_list=[13, 13, 14], deltay_act_list=[8, 9, 9],
         ni_desired=1e-5, lod_min=2.8, lod_max=209.7, ind=1
     )
