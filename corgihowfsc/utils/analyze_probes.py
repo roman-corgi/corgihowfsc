@@ -984,28 +984,28 @@ if __name__ == '__main__':
     # plot_probe_ni_vs_wvln(averages_cube2)
 
     ################## SIGMA SWEEP ##################
-    output_path = os.path.join(analysis_path, 'sigma_sweep')  # Path where data is saved
+    output_path = os.path.join(analysis_path, 'sigma_sweep_1e-7')  # Path where data is saved
 
     # Option 1: Create new Gaussian probe sets with sigma sweep (uncomment to generate new data)
-    # sigma_range = (0.5, 1.7)  # Range for sigma values
-    # sigma_step = 0.1         # Step size for sigma sweep
-    # 
-    # print("\nCreating Gaussian probe sets with sigma sweep...")
-    # dpv_sets_dict, sigma_values, dh_mask, metadata = create_gaussian_probe_sets_sigma_sweep(
-    #     modelpath, cfgfile, dmlist, sigma_range, sigma_step,
-    #     deltax_act_list=[13, 13, 14], deltay_act_list=[8, 9, 9],
-    #     ni_desired=1e-5, lod_min=2.8, lod_max=209.7, ind=1
-    # )
-    # 
-    # print("\nSaving Gaussian probe sets to disk...")
-    # save_gaussian_probe_sets_sigma_sweep(dpv_sets_dict, sigma_values, dh_mask, metadata, output_path,
-    #                                      mode='nfov_band1', dark_hole='360deg', prefix='gaussian_sigma_sweep')
+    sigma_range = (0.5, 2.0)  # Range for sigma values
+    sigma_step = 0.1         # Step size for sigma sweep
+
+    print("\nCreating Gaussian probe sets with sigma sweep...")
+    dpv_sets_dict, sigma_values, dh_mask, metadata = create_gaussian_probe_sets_sigma_sweep(
+        modelpath, cfgfile, dmlist, sigma_range, sigma_step,
+        deltax_act_list=[13, 13, 14], deltay_act_list=[8, 9, 9],
+        ni_desired=1e-7, lod_min=2.8, lod_max=209.7, ind=1
+    )
+
+    print("\nSaving Gaussian probe sets to disk...")
+    save_gaussian_probe_sets_sigma_sweep(dpv_sets_dict, sigma_values, dh_mask, metadata, output_path,
+                                         mode='nfov_band1', dark_hole='360deg', prefix='gaussian_sigma_sweep')
 
     # Option 2: Load existing Gaussian probe sets from disk
-    print("\nLoading Gaussian probe sets from disk...")
-    dpv_sets_dict, sigma_values, dh_mask, metadata = load_gaussian_probe_sets_sigma_sweep(
-        output_path, prefix='gaussian_sigma_sweep', mode='nfov_band1', dark_hole='360deg'
-    )
+    # print("\nLoading Gaussian probe sets from disk...")
+    # dpv_sets_dict, sigma_values, dh_mask, metadata = load_gaussian_probe_sets_sigma_sweep(
+    #     output_path, prefix='gaussian_sigma_sweep', mode='nfov_band1', dark_hole='360deg'
+    # )
 
     # Plot sigma sweep analysis
     print("\nGenerating sigma sweep analysis plot...")
