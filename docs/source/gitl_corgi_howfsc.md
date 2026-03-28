@@ -98,7 +98,10 @@ path_overrides:
   cstratfile: null
   hconffile: null
 ```
-This will override the `howfsc_optical_model`, `cstrat_nfov_band1`, and `hconf_nfov_flat` files that are loaded. :::{important} Note: if using `path_overrides` all relative paths in the `cfgfile` and `cstratfile` must be changed to absolute paths. :::
+This will override the `howfsc_optical_model`, `cstrat_nfov_band1`, and `hconf_nfov_flat` files that are loaded. 
+:::{important} 
+Note: if using `path_overrides` all relative paths in the `cfgfile` and `cstratfile` must be changed to absolute paths. 
+:::
 
 For parallel computing the parameters are: 
 ```yaml
