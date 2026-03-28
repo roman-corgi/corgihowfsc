@@ -478,7 +478,7 @@ def plot_sigma_sweep_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
     probe_type_labels = ['positive', 'negative']
 
     # Markers for each probe index
-    probe_markers = ['o', 's', '^']  # circle for probe 0, square for probe 1, triangle for probe 2
+    probe_markers = ['o', 's', '*']  # circle for probe 0, square for probe 1, star for probe 2
     probe_marker_labels = ['Probe 0', 'Probe 1', 'Probe 2']
 
     # Plot data for each wavelength, probe type, and probe index
