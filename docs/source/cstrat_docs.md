@@ -90,7 +90,7 @@ pixelweights:
 
 **Notes**:
 
-[//]: If using `path_overrides` in `scripts/default_params.yaml` then the path must be changed to an absolute path
+- If using `path_overrides` in `scripts/default_params.yaml` then the path must be changed to an absolute path
 
 [//]: # (- [FILL IN: How to generate custom pixel weight files])
 
@@ -240,7 +240,8 @@ fixedbp: '../../every_mask_config/fixedbp_zeros.fits'
 - Valid values: 0 = good, 1 = bad
 
 **Notes**:
-[//]: If using `path_overrides` in `scripts/default_params.yaml` then the path must be changed to an absolute path
+
+- If using `path_overrides` in `scripts/default_params.yaml` then the path must be changed to an absolute path
 
 ---
 
