@@ -222,13 +222,13 @@ def plot_probe_ni_vs_wvln(averages_cube):
     if averages_cube.shape[1] != 2 or averages_cube.shape[2] != 3:
         raise ValueError(f"averages_cube must have shape (n_wavelengths, 2, 3), got {averages_cube.shape}")
 
-    wavelengths_um = np.array([546, 575, 604])
+    wavelengths_nm = np.array([546, 575, 604])
     n_wavelengths = averages_cube.shape[0]
 
     # Ensure we have the right number of wavelengths
-    if len(wavelengths_um) < n_wavelengths:
+    if len(wavelengths_nm) < n_wavelengths:
         # Extend wavelengths if needed
-        wavelengths_um = np.linspace(546, 604, n_wavelengths)
+        wavelengths_nm = np.linspace(546, 604, n_wavelengths)
 
     # Define colors for each probe number (0, 1, 2)
     probe_colors = ['blue', 'green', 'red']
@@ -245,7 +245,7 @@ def plot_probe_ni_vs_wvln(averages_cube):
     for wvl_idx in range(n_wavelengths):
         for probe_sequence in range(2):  # 0=positive, 1=negative
             for probe_num in range(3):  # 0, 1, 2
-                ax.scatter(wavelengths_um[wvl_idx], averages_cube[wvl_idx, probe_sequence, probe_num],
+                ax.scatter(wavelengths_nm[wvl_idx], averages_cube[wvl_idx, probe_sequence, probe_num],
                            color=probe_colors[probe_num], marker=markers[probe_sequence],
                            s=150, alpha=0.8, linewidth=2, edgecolors='black')
 
@@ -270,7 +270,7 @@ def plot_probe_ni_vs_wvln(averages_cube):
     ax.add_artist(legend1)  # Add the first legend back
 
     # Set labels and title
-    ax.set_xlabel('Wavelength (μm)', fontsize=12)
+    ax.set_xlabel('Wavelength (nm)', fontsize=12)
     ax.set_ylabel('Average DH intensity of probe (normalized)', fontsize=12)
     ax.set_title('Average probed DH intensity vs wavelength', fontsize=14)
 
@@ -278,8 +278,8 @@ def plot_probe_ni_vs_wvln(averages_cube):
     ax.grid(True, alpha=0.3)
 
     # Set x-axis limits with some padding
-    x_padding = (wavelengths_um.max() - wavelengths_um.min()) * 0.1
-    ax.set_xlim(wavelengths_um.min() - x_padding, wavelengths_um.max() + x_padding)
+    x_padding = (wavelengths_nm.max() - wavelengths_nm.min()) * 0.1
+    ax.set_xlim(wavelengths_nm.min() - x_padding, wavelengths_nm.max() + x_padding)
 
     plt.tight_layout()
     # Adjust layout to make room for legends outside the plot area
@@ -712,6 +712,148 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
     return fig, ax
 
 
+def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
+                                metadata, wavelength_indices=[0, 1, 2], probe_indices=[0, 1, 2]):
+    """
+    Create a plot showing peak-to-valley (max-min) of DH intensity as percentage of ni_desired vs sigma.
+
+    Arguments:
+     dpv_sets_dict: dictionary from create_gaussian_probe_sets_sigma_sweep or load function
+     sigma_values: array of sigma values used
+     cfg: CoronagraphMode object
+     dmlist: list of DMs for current DM setting
+     dh_mask: boolean mask for the dark hole region
+     metadata: metadata dictionary containing ni_desired
+     wavelength_indices: list of wavelength indices to analyze (default: [0, 1, 2])
+     probe_indices: list of probe indices to plot (default: [0, 1, 2])
+
+    Returns:
+     fig, ax: matplotlib figure and axes objects
+    """
+
+    # Get wavelength information and plotting parameters (same as original function)
+    wavelengths_nm = [546, 575, 604]
+    colors = ['blue', 'green', 'red']  # Colors for different wavelengths
+
+    # Get ni_desired from metadata for percentage calculation
+    ni_desired = metadata['ni_desired']
+
+    # Initialize storage for results
+    results = {}
+
+    print(f"Analyzing sigma sweep peak-to-valley data for {len(sigma_values)} sigma values...")
+
+    # Analyze each sigma value
+    for sigma_idx, sigma in enumerate(sigma_values):
+        print(f"Processing sigma = {sigma:.2f} ({sigma_idx+1}/{len(sigma_values)})")
+
+        dpv_list = dpv_sets_dict[sigma]
+
+        # Analyze this probe set across all wavelengths
+        try:
+            _, _, ptvs_cube, _, _ = analyze_probe_set_wvln_cubes(
+                cfg, dmlist, dpv_list, dh_mask, indices=wavelength_indices
+            )
+
+            results[sigma] = ptvs_cube
+
+        except Exception as e:
+            print(f"  Warning: Failed to analyze sigma {sigma:.2f}: {e}")
+            continue
+
+    # Create the plot
+    fig, ax = plt.subplots(figsize=(10, 8))
+
+    # Line styles for positive and negative probes (same as original function)
+    line_styles = ['-', '--']  # solid for positive, dashed for negative
+    probe_sequence_labels = ['positive', 'negative']
+
+    # Markers for each probe index (same as original function)
+    probe_markers = ['o', 's', '*']  # circle for probe 0, square for probe 1, star for probe 2
+    probe_marker_labels = ['Probe 0', 'Probe 1', 'Probe 2']
+
+    # Plot data for each wavelength, probe sequence, and probe index
+    for wvl_idx, (wvl, color) in enumerate(zip(wavelength_indices, colors)):
+        wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wvl}"
+
+        for probe_sequence in range(2):  # 0=positive, 1=negative
+            for probe_idx in probe_indices:
+                # Extract data for this configuration
+                sigma_plot = []
+                ptv_plot = []
+
+                for sigma in sigma_values:
+                    if sigma in results:
+                        try:
+                            # Get peak-to-valley for this wavelength, probe sequence, and probe index
+                            ptv = results[sigma][wvl_idx, probe_sequence, probe_idx]
+                            # Convert to percentage of ni_desired
+                            ptv_percent = (ptv / ni_desired) * 100
+                            sigma_plot.append(sigma)
+                            ptv_plot.append(ptv_percent)
+                        except (IndexError, KeyError):
+                            continue
+
+                if len(sigma_plot) > 0:
+                    # Create label
+                    label = f"{wvl_nm}nm, probe {probe_idx}, {probe_sequence_labels[probe_sequence]}"
+
+                    # Plot the line with probe-specific marker
+                    marker = probe_markers[probe_idx] if probe_idx < len(probe_markers) else 'o'
+                    ax.plot(sigma_plot, ptv_plot,
+                           color=color, linestyle=line_styles[probe_sequence],
+                           alpha=0.7, linewidth=1.5, label=label, marker=marker, markersize=4)
+
+    # Customize the plot
+    ax.set_xlabel('Gaussian σ (in actuator pitch)', fontsize=12)
+    ax.set_ylabel('Peak-to-valley of DH intensity (in % of target NI)', fontsize=12)
+    ax.set_title('Peak-to-valley of DH intensity vs. Gaussian FWHM', fontsize=14)
+
+    # Add grid
+    ax.grid(True, alpha=0.3)
+
+    # Add legends to explain the plot elements (same structure as original function)
+    from matplotlib.lines import Line2D
+
+    # Legend for line styles (probe sequence)
+    line_style_handles = []
+    for i, (style, label) in enumerate(zip(line_styles, probe_sequence_labels)):
+        line_style_handles.append(Line2D([0], [0], color='gray', linestyle=style,
+                                        linewidth=1.5, label=label))
+
+    # Legend for markers (probe indices)
+    marker_handles = []
+    for i, (marker, label) in enumerate(zip(probe_markers, probe_marker_labels)):
+        marker_handles.append(Line2D([0], [0], color='gray', marker=marker,
+                                   linestyle='None', markersize=6, label=label))
+
+    # Legend for colors (wavelengths)
+    color_handles = []
+    for i, color in enumerate(colors[:len(wavelength_indices)]):
+        wvl_nm = wavelengths_nm[i] if i < len(wavelengths_nm) else f"λ{wavelength_indices[i]}"
+        color_handles.append(Line2D([0], [0], color=color, linewidth=2, label=f"{wvl_nm}nm"))
+
+    # Create three separate legends
+    legend1 = ax.legend(handles=line_style_handles, loc='center left', bbox_to_anchor=(1.02, 0.85),
+                       title='Probe sequence', fontsize=9)
+    legend2 = ax.legend(handles=marker_handles, loc='center left', bbox_to_anchor=(1.02, 0.65),
+                       title='Probe index', fontsize=9)
+    legend3 = ax.legend(handles=color_handles, loc='center left', bbox_to_anchor=(1.02, 0.45),
+                       title='Wavelength', fontsize=9)
+
+    # Add the first two legends back (matplotlib only keeps the last one by default)
+    ax.add_artist(legend1)
+    ax.add_artist(legend2)
+
+    # Adjust layout to accommodate legend
+    plt.tight_layout()
+    plt.subplots_adjust(right=0.7)
+
+    plt.show()
+
+    return fig, ax
+
+
 def load_gaussian_probe_sets_sigma_sweep(input_path, prefix='gaussian_sigma_sweep',
                                         mode='nfov_band1', dark_hole='360deg'):
     """
@@ -845,27 +987,27 @@ if __name__ == '__main__':
     output_path = os.path.join(analysis_path, 'sigma_sweep')  # Path where data is saved
 
     # Option 1: Create new Gaussian probe sets with sigma sweep (uncomment to generate new data)
-    sigma_range = (0.5, 1.7)  # Range for sigma values
-    sigma_step = 0.1         # Step size for sigma sweep
-
-    print("\nCreating Gaussian probe sets with sigma sweep...")
-    dpv_sets_dict, sigma_values, dh_mask, metadata = create_gaussian_probe_sets_sigma_sweep(
-        modelpath, cfgfile, dmlist, sigma_range, sigma_step,
-        deltax_act_list=[13, 13, 14], deltay_act_list=[8, 9, 9],
-        ni_desired=1e-5, lod_min=2.8, lod_max=209.7, ind=1
-    )
-
-    print("\nSaving Gaussian probe sets to disk...")
-    save_gaussian_probe_sets_sigma_sweep(dpv_sets_dict, sigma_values, dh_mask, metadata, output_path,
-                                         mode='nfov_band1', dark_hole='360deg', prefix='gaussian_sigma_sweep')
+    # sigma_range = (0.5, 1.7)  # Range for sigma values
+    # sigma_step = 0.1         # Step size for sigma sweep
+    # 
+    # print("\nCreating Gaussian probe sets with sigma sweep...")
+    # dpv_sets_dict, sigma_values, dh_mask, metadata = create_gaussian_probe_sets_sigma_sweep(
+    #     modelpath, cfgfile, dmlist, sigma_range, sigma_step,
+    #     deltax_act_list=[13, 13, 14], deltay_act_list=[8, 9, 9],
+    #     ni_desired=1e-5, lod_min=2.8, lod_max=209.7, ind=1
+    # )
+    # 
+    # print("\nSaving Gaussian probe sets to disk...")
+    # save_gaussian_probe_sets_sigma_sweep(dpv_sets_dict, sigma_values, dh_mask, metadata, output_path,
+    #                                      mode='nfov_band1', dark_hole='360deg', prefix='gaussian_sigma_sweep')
 
     # Option 2: Load existing Gaussian probe sets from disk
-    # print("\nLoading Gaussian probe sets from disk...")
-    # dpv_sets_dict, sigma_values, dh_mask, metadata = load_gaussian_probe_sets_sigma_sweep(
-    #     output_path, prefix='gaussian_sigma_sweep', mode='nfov_band1', dark_hole='360deg'
-    # )
+    print("\nLoading Gaussian probe sets from disk...")
+    dpv_sets_dict, sigma_values, dh_mask, metadata = load_gaussian_probe_sets_sigma_sweep(
+        output_path, prefix='gaussian_sigma_sweep', mode='nfov_band1', dark_hole='360deg'
+    )
 
-    # # Plot sigma sweep analysis
+    # Plot sigma sweep analysis
     print("\nGenerating sigma sweep analysis plot...")
     plot_sigma_sweep_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
                              wavelength_indices=[0, 1, 2])
@@ -874,3 +1016,9 @@ if __name__ == '__main__':
     print("\nGenerating sigma sweep standard deviation analysis plot...")
     plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
                                     metadata, wavelength_indices=[0, 1, 2])
+
+    # Plot sigma sweep peak-to-valley analysis
+    print("\nGenerating sigma sweep peak-to-valley analysis plot...")
+    plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
+                                  metadata, wavelength_indices=[0, 1, 2])
+
