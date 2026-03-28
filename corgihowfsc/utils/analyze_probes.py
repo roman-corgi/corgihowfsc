@@ -481,7 +481,7 @@ def plot_sigma_sweep_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
 
     # Line styles for positive and negative probes
     line_styles = ['-', '--']  # solid for positive, dashed for negative
-    probe_type_labels = ['positive', 'negative']
+    probe_sequence_labels = ['positive', 'negative']
 
     # Markers for each probe index
     probe_markers = ['o', 's', '*']  # circle for probe 0, square for probe 1, star for probe 2
@@ -491,7 +491,7 @@ def plot_sigma_sweep_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
     for wvl_idx, (wvl, color) in enumerate(zip(wavelength_indices, colors)):
         wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wvl}"
 
-        for probe_type in range(2):  # 0=positive, 1=negative
+        for probe_sequence in range(2):  # 0=positive, 1=negative
             for probe_idx in probe_indices:
                 # Extract data for this configuration
                 sigma_plot = []
@@ -501,7 +501,7 @@ def plot_sigma_sweep_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
                     if sigma in results:
                         try:
                             # Get intensity for this wavelength, probe sequence, and probe index
-                            intensity = results[sigma][wvl_idx, probe_type, probe_idx]
+                            intensity = results[sigma][wvl_idx, probe_sequence, probe_idx]
                             sigma_plot.append(sigma)
                             intensity_plot.append(intensity)
                         except (IndexError, KeyError):
@@ -509,12 +509,12 @@ def plot_sigma_sweep_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
 
                 if len(sigma_plot) > 0:
                     # Create label
-                    label = f"{wvl_nm}nm, probe {probe_idx}, {probe_type_labels[probe_type]}"
+                    label = f"{wvl_nm}nm, probe {probe_idx}, {probe_sequence_labels[probe_sequence]}"
 
                     # Plot the line with probe-specific marker
                     marker = probe_markers[probe_idx] if probe_idx < len(probe_markers) else 'o'
                     ax.plot(sigma_plot, intensity_plot,
-                           color=color, linestyle=line_styles[probe_type],
+                           color=color, linestyle=line_styles[probe_sequence],
                            alpha=0.7, linewidth=1.5, label=label, marker=marker, markersize=4)
 
     # Customize the plot
@@ -533,7 +533,7 @@ def plot_sigma_sweep_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
 
     # Legend for line styles (probe sequence)
     line_style_handles = []
-    for i, (style, label) in enumerate(zip(line_styles, probe_type_labels)):
+    for i, (style, label) in enumerate(zip(line_styles, probe_sequence_labels)):
         line_style_handles.append(Line2D([0], [0], color='gray', linestyle=style,
                                         linewidth=1.5, label=label))
 
@@ -624,7 +624,7 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
 
     # Line styles for positive and negative probes (same as original function)
     line_styles = ['-', '--']  # solid for positive, dashed for negative
-    probe_type_labels = ['positive', 'negative']
+    probe_sequence_labels = ['positive', 'negative']
 
     # Markers for each probe index (same as original function)
     probe_markers = ['o', 's', '*']  # circle for probe 0, square for probe 1, star for probe 2
@@ -634,7 +634,7 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
     for wvl_idx, (wvl, color) in enumerate(zip(wavelength_indices, colors)):
         wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wvl}"
 
-        for probe_type in range(2):  # 0=positive, 1=negative
+        for probe_sequence in range(2):  # 0=positive, 1=negative
             for probe_idx in probe_indices:
                 # Extract data for this configuration
                 sigma_plot = []
@@ -644,7 +644,7 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
                     if sigma in results:
                         try:
                             # Get standard deviation for this wavelength, probe sequence, and probe index
-                            stdev = results[sigma][wvl_idx, probe_type, probe_idx]
+                            stdev = results[sigma][wvl_idx, probe_sequence, probe_idx]
                             # Convert to percentage of ni_desired
                             stdev_percent = (stdev / ni_desired) * 100
                             sigma_plot.append(sigma)
@@ -654,12 +654,12 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
 
                 if len(sigma_plot) > 0:
                     # Create label
-                    label = f"{wvl_nm}nm, probe {probe_idx}, {probe_type_labels[probe_type]}"
+                    label = f"{wvl_nm}nm, probe {probe_idx}, {probe_sequence_labels[probe_sequence]}"
 
                     # Plot the line with probe-specific marker
                     marker = probe_markers[probe_idx] if probe_idx < len(probe_markers) else 'o'
                     ax.plot(sigma_plot, stdev_plot,
-                           color=color, linestyle=line_styles[probe_type],
+                           color=color, linestyle=line_styles[probe_sequence],
                            alpha=0.7, linewidth=1.5, label=label, marker=marker, markersize=4)
 
     # Customize the plot
@@ -675,7 +675,7 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
 
     # Legend for line styles (probe sequence)
     line_style_handles = []
-    for i, (style, label) in enumerate(zip(line_styles, probe_type_labels)):
+    for i, (style, label) in enumerate(zip(line_styles, probe_sequence_labels)):
         line_style_handles.append(Line2D([0], [0], color='gray', linestyle=style,
                                         linewidth=1.5, label=label))
 
