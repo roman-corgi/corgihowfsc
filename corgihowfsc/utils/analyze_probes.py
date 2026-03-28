@@ -372,11 +372,14 @@ def create_gaussian_probe_sets_sigma_sweep(modelpath, cfgfile, dmlist, sigma_ran
         dpv_sets_dict[sigma] = dpv_list
         print(f"  Completed probe set for sigma = {sigma:.2f}")
 
+    # Access DH mask, assuming that all probes used the same mask
+    dh_mask = probe_tuple[2]
+
     print(f"\nCompleted generation of {len(sigma_values)} probe sets")
-    return dpv_sets_dict, sigma_values, metadata
+    return dpv_sets_dict, sigma_values, dh_mask, metadata
 
 
-def save_gaussian_probe_sets_sigma_sweep(dpv_sets_dict, sigma_values, metadata, output_path,
+def save_gaussian_probe_sets_sigma_sweep(dpv_sets_dict, sigma_values, dh_mask, metadata, output_path,
                                          mode='nfov_band1', dark_hole='360deg', prefix='gaussian_sigma_sweep'):
     """
     Save Gaussian probe sets from sigma sweep to disk as FITS files.
@@ -407,8 +410,11 @@ def save_gaussian_probe_sets_sigma_sweep(dpv_sets_dict, sigma_values, metadata, 
             filename = f"dmrel_{mode}_{dark_hole}_ni{ni_desired:.0e}_x{deltax}_y{deltay}_sigma{sigma:.2f}_gauss{probe_idx}.fits"
             filepath = os.path.join(output_path, filename)
 
-            fits.writeto(filepath, dpv.astype(np.float32), overwrite=True)
+            fits.writeto(filepath, dpv, overwrite=True)
             print(f"Saved: {filename}")
+
+    # Save DH mask as a FITS file
+    fits.writeto(os.path.join(output_path, "dh_mask.fits"), dh_mask.astype(np.float32), overwrite=True)
 
     # Save metadata as JSON
     metadata_enhanced = metadata.copy()
@@ -658,8 +664,8 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
 
     # Customize the plot
     ax.set_xlabel('Gaussian σ (in actuator pitch)', fontsize=12)
-    ax.set_ylabel('Stddev if DH intensity (in % of target NI)', fontsize=12)
-    ax.set_title('Stdev of DH intensity vs. Gaussian FWHM', fontsize=14)
+    ax.set_ylabel('Stddev of DH intensity (in % of target NI)', fontsize=12)
+    ax.set_title('Stddev of DH intensity vs. Gaussian FWHM', fontsize=14)
 
     # Add grid
     ax.grid(True, alpha=0.3)
@@ -739,6 +745,9 @@ def load_gaussian_probe_sets_sigma_sweep(input_path, prefix='gaussian_sigma_swee
     print(f"Loading Gaussian probe sets from: {input_path}")
     print(f"Found metadata for {len(sigma_values)} sigma values")
 
+    # Load the DH mask
+    dh_mask = fits.getdata(os.path.join(input_path, "dh_mask.fits")).astype(bool)
+
     # Load the DPV arrays for each sigma value
     dpv_sets_dict = {}
 
@@ -779,7 +788,7 @@ def load_gaussian_probe_sets_sigma_sweep(input_path, prefix='gaussian_sigma_swee
         print(f"  Completed loading probe set for sigma = {sigma:.2f}")
 
     print(f"Completed loading {len(sigma_values)} probe sets from disk")
-    return dpv_sets_dict, sigma_values, metadata
+    return dpv_sets_dict, sigma_values, dh_mask, metadata
 
 
 if __name__ == '__main__':
@@ -836,32 +845,32 @@ if __name__ == '__main__':
     output_path = os.path.join(analysis_path, 'sigma_sweep')  # Path where data is saved
 
     # Option 1: Create new Gaussian probe sets with sigma sweep (uncomment to generate new data)
-    # sigma_range = (0.5, 1.7)  # Range for sigma values
-    # sigma_step = 0.1         # Step size for sigma sweep
-    #
-    # print("\nCreating Gaussian probe sets with sigma sweep...")
-    # dpv_sets_dict, sigma_values, metadata = create_gaussian_probe_sets_sigma_sweep(
-    #     modelpath, cfgfile, dmlist, sigma_range, sigma_step,
-    #     deltax_act_list=[13, 13, 14], deltay_act_list=[8, 9, 9],
-    #     ni_desired=1e-5, lod_min=2.8, lod_max=209.7, ind=1
-    # )
-    #
-    # print("\nSaving Gaussian probe sets to disk...")
-    # save_gaussian_probe_sets_sigma_sweep(dpv_sets_dict, sigma_values, metadata, output_path,
-    #                                      mode='nfov_band1', dark_hole='360deg', prefix='gaussian_sigma_sweep')
+    sigma_range = (0.5, 1.7)  # Range for sigma values
+    sigma_step = 0.1         # Step size for sigma sweep
 
-    # Option 2: Load existing Gaussian probe sets from disk
-    print("\nLoading Gaussian probe sets from disk...")
-    dpv_sets_dict, sigma_values, metadata = load_gaussian_probe_sets_sigma_sweep(
-        output_path, prefix='gaussian_sigma_sweep', mode='nfov_band1', dark_hole='360deg'
+    print("\nCreating Gaussian probe sets with sigma sweep...")
+    dpv_sets_dict, sigma_values, dh_mask, metadata = create_gaussian_probe_sets_sigma_sweep(
+        modelpath, cfgfile, dmlist, sigma_range, sigma_step,
+        deltax_act_list=[13, 13, 14], deltay_act_list=[8, 9, 9],
+        ni_desired=1e-5, lod_min=2.8, lod_max=209.7, ind=1
     )
 
+    print("\nSaving Gaussian probe sets to disk...")
+    save_gaussian_probe_sets_sigma_sweep(dpv_sets_dict, sigma_values, dh_mask, metadata, output_path,
+                                         mode='nfov_band1', dark_hole='360deg', prefix='gaussian_sigma_sweep')
+
+    # Option 2: Load existing Gaussian probe sets from disk
+    # print("\nLoading Gaussian probe sets from disk...")
+    # dpv_sets_dict, sigma_values, dh_mask, metadata = load_gaussian_probe_sets_sigma_sweep(
+    #     output_path, prefix='gaussian_sigma_sweep', mode='nfov_band1', dark_hole='360deg'
+    # )
+
     # # Plot sigma sweep analysis
-    # print("\nGenerating sigma sweep analysis plot...")
-    # plot_sigma_sweep_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
-    #                          wavelength_indices=[0, 1, 2])
+    print("\nGenerating sigma sweep analysis plot...")
+    plot_sigma_sweep_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
+                             wavelength_indices=[0, 1, 2])
 
     # Plot sigma sweep standard deviation analysis
     print("\nGenerating sigma sweep standard deviation analysis plot...")
     plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
-                                   metadata, wavelength_indices=[0, 1, 2])
+                                    metadata, wavelength_indices=[0, 1, 2])
