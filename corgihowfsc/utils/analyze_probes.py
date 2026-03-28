@@ -481,7 +481,7 @@ def plot_sigma_sweep_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
     probe_markers = ['o', 's', '*']  # circle for probe 0, square for probe 1, star for probe 2
     probe_marker_labels = ['Probe 0', 'Probe 1', 'Probe 2']
 
-    # Plot data for each wavelength, probe type, and probe index
+    # Plot data for each wavelength, probe sequence, and probe index
     for wvl_idx, (wvl, color) in enumerate(zip(wavelength_indices, colors)):
         wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wvl}"
 
@@ -494,7 +494,7 @@ def plot_sigma_sweep_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
                 for sigma in sigma_values:
                     if sigma in results:
                         try:
-                            # Get intensity for this wavelength, probe type, and probe index
+                            # Get intensity for this wavelength, probe sequence, and probe index
                             intensity = results[sigma][wvl_idx, probe_type, probe_idx]
                             sigma_plot.append(sigma)
                             intensity_plot.append(intensity)
@@ -525,7 +525,149 @@ def plot_sigma_sweep_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
     # Add legends to explain the plot elements
     from matplotlib.lines import Line2D
 
-    # Legend for line styles (probe types)
+    # Legend for line styles (probe sequence)
+    line_style_handles = []
+    for i, (style, label) in enumerate(zip(line_styles, probe_type_labels)):
+        line_style_handles.append(Line2D([0], [0], color='gray', linestyle=style,
+                                        linewidth=1.5, label=label))
+
+    # Legend for markers (probe indices)
+    marker_handles = []
+    for i, (marker, label) in enumerate(zip(probe_markers, probe_marker_labels)):
+        marker_handles.append(Line2D([0], [0], color='gray', marker=marker,
+                                   linestyle='None', markersize=6, label=label))
+
+    # Legend for colors (wavelengths)
+    color_handles = []
+    for i, color in enumerate(colors[:len(wavelength_indices)]):
+        wvl_nm = wavelengths_nm[i] if i < len(wavelengths_nm) else f"λ{wavelength_indices[i]}"
+        color_handles.append(Line2D([0], [0], color=color, linewidth=2, label=f"{wvl_nm}nm"))
+
+    # Create three separate legends
+    legend1 = ax.legend(handles=line_style_handles, loc='center left', bbox_to_anchor=(1.02, 0.85),
+                       title='Probe sequence', fontsize=9)
+    legend2 = ax.legend(handles=marker_handles, loc='center left', bbox_to_anchor=(1.02, 0.65),
+                       title='Probe index', fontsize=9)
+    legend3 = ax.legend(handles=color_handles, loc='center left', bbox_to_anchor=(1.02, 0.45),
+                       title='Wavelength', fontsize=9)
+
+    # Add the first two legends back (matplotlib only keeps the last one by default)
+    ax.add_artist(legend1)
+    ax.add_artist(legend2)
+
+    # Adjust layout to accommodate legend
+    plt.tight_layout()
+    plt.subplots_adjust(right=0.7)
+
+    plt.show()
+
+    return fig, ax
+
+
+def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
+                                   metadata, wavelength_indices=[0, 1, 2], probe_indices=[0, 1, 2]):
+    """
+    Create a plot showing standard deviation of DH intensity as percentage of ni_desired vs sigma.
+
+    Arguments:
+     dpv_sets_dict: dictionary from create_gaussian_probe_sets_sigma_sweep or load function
+     sigma_values: array of sigma values used
+     cfg: CoronagraphMode object
+     dmlist: list of DMs for current DM setting
+     dh_mask: boolean mask for the dark hole region
+     metadata: metadata dictionary containing ni_desired
+     wavelength_indices: list of wavelength indices to analyze (default: [0, 1, 2])
+     probe_indices: list of probe indices to plot (default: [0, 1, 2])
+
+    Returns:
+     fig, ax: matplotlib figure and axes objects
+    """
+
+    # Get wavelength information and plotting parameters (same as original function)
+    wavelengths_nm = [546, 575, 604]
+    colors = ['blue', 'green', 'red']  # Colors for different wavelengths
+
+    # Get ni_desired from metadata for percentage calculation
+    ni_desired = metadata['ni_desired']
+
+    # Initialize storage for results
+    results = {}
+
+    print(f"Analyzing sigma sweep standard deviation data for {len(sigma_values)} sigma values...")
+
+    # Analyze each sigma value
+    for sigma_idx, sigma in enumerate(sigma_values):
+        print(f"Processing sigma = {sigma:.2f} ({sigma_idx+1}/{len(sigma_values)})")
+
+        dpv_list = dpv_sets_dict[sigma]
+
+        # Analyze this probe set across all wavelengths
+        try:
+            _, stddevs_cube, _, _, _ = analyze_probe_set_wvln_cubes(
+                cfg, dmlist, dpv_list, dh_mask, indices=wavelength_indices
+            )
+
+            results[sigma] = stddevs_cube
+
+        except Exception as e:
+            print(f"  Warning: Failed to analyze sigma {sigma:.2f}: {e}")
+            continue
+
+    # Create the plot
+    fig, ax = plt.subplots(figsize=(10, 8))
+
+    # Line styles for positive and negative probes (same as original function)
+    line_styles = ['-', '--']  # solid for positive, dashed for negative
+    probe_type_labels = ['positive', 'negative']
+
+    # Markers for each probe index (same as original function)
+    probe_markers = ['o', 's', '*']  # circle for probe 0, square for probe 1, star for probe 2
+    probe_marker_labels = ['Probe 0', 'Probe 1', 'Probe 2']
+
+    # Plot data for each wavelength, probe sequence, and probe index
+    for wvl_idx, (wvl, color) in enumerate(zip(wavelength_indices, colors)):
+        wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wvl}"
+
+        for probe_type in range(2):  # 0=positive, 1=negative
+            for probe_idx in probe_indices:
+                # Extract data for this configuration
+                sigma_plot = []
+                stdev_plot = []
+
+                for sigma in sigma_values:
+                    if sigma in results:
+                        try:
+                            # Get standard deviation for this wavelength, probe sequence, and probe index
+                            stdev = results[sigma][wvl_idx, probe_type, probe_idx]
+                            # Convert to percentage of ni_desired
+                            stdev_percent = (stdev / ni_desired) * 100
+                            sigma_plot.append(sigma)
+                            stdev_plot.append(stdev_percent)
+                        except (IndexError, KeyError):
+                            continue
+
+                if len(sigma_plot) > 0:
+                    # Create label
+                    label = f"{wvl_nm}nm, probe {probe_idx}, {probe_type_labels[probe_type]}"
+
+                    # Plot the line with probe-specific marker
+                    marker = probe_markers[probe_idx] if probe_idx < len(probe_markers) else 'o'
+                    ax.plot(sigma_plot, stdev_plot,
+                           color=color, linestyle=line_styles[probe_type],
+                           alpha=0.7, linewidth=1.5, label=label, marker=marker, markersize=4)
+
+    # Customize the plot
+    ax.set_xlabel('Gaussian σ (in actuator pitch)', fontsize=12)
+    ax.set_ylabel('Stddev if DH intensity (in % of target NI)', fontsize=12)
+    ax.set_title('Stdev of DH intensity vs. Gaussian FWHM', fontsize=14)
+
+    # Add grid
+    ax.grid(True, alpha=0.3)
+
+    # Add legends to explain the plot elements (same structure as original function)
+    from matplotlib.lines import Line2D
+
+    # Legend for line styles (probe sequence)
     line_style_handles = []
     for i, (style, label) in enumerate(zip(line_styles, probe_type_labels)):
         line_style_handles.append(Line2D([0], [0], color='gray', linestyle=style,
@@ -714,7 +856,12 @@ if __name__ == '__main__':
         output_path, prefix='gaussian_sigma_sweep', mode='nfov_band1', dark_hole='360deg'
     )
 
-    # Plot sigma sweep analysis
-    print("\nGenerating sigma sweep analysis plot...")
-    plot_sigma_sweep_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
-                             wavelength_indices=[0, 1, 2])
+    # # Plot sigma sweep analysis
+    # print("\nGenerating sigma sweep analysis plot...")
+    # plot_sigma_sweep_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
+    #                          wavelength_indices=[0, 1, 2])
+
+    # Plot sigma sweep standard deviation analysis
+    print("\nGenerating sigma sweep standard deviation analysis plot...")
+    plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
+                                   metadata, wavelength_indices=[0, 1, 2])
