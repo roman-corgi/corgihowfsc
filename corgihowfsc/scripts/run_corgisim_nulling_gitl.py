@@ -29,10 +29,10 @@ eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
 
 
-def main():
+def main(param_file_name='default_param.yml', fullpath=False):
 
     # Set the path to the default parameter file relative to this script
-    default_param_file = os.path.join(os.path.dirname(__file__), 'default_param.yml')
+    default_param_file = param_file_name if fullpath else os.path.join(os.path.dirname(__file__), param_file_name)
 
     # Create the argument parser and add the --param_file argument
     parser = argparse.ArgumentParser()
@@ -80,6 +80,12 @@ def main():
     final_filename = paths['final_filename']
     folder_tag = paths['folder_tag']
 
+    # Optional path overrides
+    path_overrides = {
+        k: v for k, v in params.get('path_overrides', {}).items()
+        if v is not None
+    }
+
     defjacpath_cfg = paths['defjacpath']
     if os.path.isabs(defjacpath_cfg):
         defjacpath = defjacpath_cfg
@@ -125,11 +131,12 @@ def main():
         num_threads=1, # Do not change this number
         fileout=fileout_path,
         jacpath=defjacpath,
+        path_overrides=path_overrides,
         dmstartmap_filenames=dmstartmap_filenames,
         logfile=os.path.join(os.path.dirname(fileout_path), 'gitl.log')
     )
 
-    args.starting_contrast = model_cfg['starting_contrast']
+    args.starting_contrast = float(model_cfg['starting_contrast'])
     args.num_imager_worker = num_imager_worker
     args.num_proper_process = num_proper_process
 
