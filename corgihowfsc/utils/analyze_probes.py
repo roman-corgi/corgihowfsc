@@ -477,6 +477,10 @@ def plot_sigma_sweep_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
     line_styles = ['-', '--']  # solid for positive, dashed for negative
     probe_type_labels = ['positive', 'negative']
 
+    # Markers for each probe index
+    probe_markers = ['o', 's', '^']  # circle for probe 0, square for probe 1, triangle for probe 2
+    probe_marker_labels = ['Probe 0', 'Probe 1', 'Probe 2']
+
     # Plot data for each wavelength, probe type, and probe index
     for wvl_idx, (wvl, color) in enumerate(zip(wavelength_indices, colors)):
         wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wvl}"
@@ -501,10 +505,11 @@ def plot_sigma_sweep_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
                     # Create label
                     label = f"{wvl_nm}nm, probe {probe_idx}, {probe_type_labels[probe_type]}"
 
-                    # Plot the line
+                    # Plot the line with probe-specific marker
+                    marker = probe_markers[probe_idx] if probe_idx < len(probe_markers) else 'o'
                     ax.plot(sigma_plot, intensity_plot,
                            color=color, linestyle=line_styles[probe_type],
-                           alpha=0.7, linewidth=1.5, label=label, marker='o', markersize=3)
+                           alpha=0.7, linewidth=1.5, label=label, marker=marker, markersize=4)
 
     # Customize the plot
     ax.set_xlabel('Gaussian σ (in actuator pitch)', fontsize=12)
@@ -517,8 +522,38 @@ def plot_sigma_sweep_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
     # Format y-axis to show scientific notation if needed
     ax.ticklabel_format(style='scientific', axis='y', scilimits=(0,0))
 
-    # Add legend (outside plot area to avoid overlap)
-    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
+    # Add legends to explain the plot elements
+    from matplotlib.lines import Line2D
+
+    # Legend for line styles (probe types)
+    line_style_handles = []
+    for i, (style, label) in enumerate(zip(line_styles, probe_type_labels)):
+        line_style_handles.append(Line2D([0], [0], color='gray', linestyle=style,
+                                        linewidth=1.5, label=label))
+
+    # Legend for markers (probe indices)
+    marker_handles = []
+    for i, (marker, label) in enumerate(zip(probe_markers, probe_marker_labels)):
+        marker_handles.append(Line2D([0], [0], color='gray', marker=marker,
+                                   linestyle='None', markersize=6, label=label))
+
+    # Legend for colors (wavelengths)
+    color_handles = []
+    for i, color in enumerate(colors[:len(wavelength_indices)]):
+        wvl_nm = wavelengths_nm[i] if i < len(wavelengths_nm) else f"λ{wavelength_indices[i]}"
+        color_handles.append(Line2D([0], [0], color=color, linewidth=2, label=f"{wvl_nm}nm"))
+
+    # Create three separate legends
+    legend1 = ax.legend(handles=line_style_handles, loc='center left', bbox_to_anchor=(1.02, 0.85),
+                       title='Probe Type', fontsize=9)
+    legend2 = ax.legend(handles=marker_handles, loc='center left', bbox_to_anchor=(1.02, 0.65),
+                       title='Probe Index', fontsize=9)
+    legend3 = ax.legend(handles=color_handles, loc='center left', bbox_to_anchor=(1.02, 0.45),
+                       title='Wavelength', fontsize=9)
+
+    # Add the first two legends back (matplotlib only keeps the last one by default)
+    ax.add_artist(legend1)
+    ax.add_artist(legend2)
 
     # Adjust layout to accommodate legend
     plt.tight_layout()
@@ -556,6 +591,7 @@ if __name__ == '__main__':
     cfg = CoronagraphMode(cfgfile)
     dmlist = cfg.initmaps
 
+    ################## BASIC ANALYSIS OF TWO SETS OF PROBES ##################
     # # Analyze probe sets for datacubes across wavelength indices [0, 1, 2]
     # print("Analyzing Gaussian probes...")
     # averages_cube1, stddevs_cube1, ptvs_cube1, efields_cube1, intensities_cube1 = analyze_probe_set_wvln_cubes(
@@ -578,6 +614,7 @@ if __name__ == '__main__':
     # print("\nGenerating comparison plots...")
     # plot_probe_ni_vs_wvln(averages_cube2)
 
+    ################## SIGMA SWEEP ##################
     sigma_range = (0.5, 1.7)  # Range for sigma values
     sigma_step = 0.1         # Step size for sigma sweep
 
