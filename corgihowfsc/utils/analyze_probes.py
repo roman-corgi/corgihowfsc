@@ -425,6 +425,110 @@ def save_gaussian_probe_sets_sigma_sweep(dpv_sets_dict, sigma_values, metadata, 
 
     print(f"All probe sets saved to: {output_path}")
 
+def plot_sigma_sweep_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
+                             wavelength_indices=[0, 1, 2], probe_indices=[0, 1, 2]):
+    """
+    Create a plot showing average DH intensity vs sigma for different wavelengths and probes.
+
+    Arguments:
+     dpv_sets_dict: dictionary from create_gaussian_probe_sets_sigma_sweep
+     sigma_values: array of sigma values used
+     cfg: CoronagraphMode object
+     dmlist: list of DMs for current DM setting
+     dh_mask: boolean mask for the dark hole region
+     wavelength_indices: list of wavelength indices to analyze (default: [0, 1, 2])
+     probe_indices: list of probe indices to plot (default: [0, 1, 2])
+
+    Returns:
+     fig, ax: matplotlib figure and axes objects
+    """
+
+    # Get wavelength information
+    wavelengths_nm = [546, 575, 604]  # Assuming these are the standard wavelengths
+    colors = ['blue', 'green', 'red']  # Colors for different wavelengths
+
+    # Initialize storage for results
+    results = {}
+
+    print(f"Analyzing sigma sweep data for {len(sigma_values)} sigma values...")
+
+    # Analyze each sigma value
+    for sigma_idx, sigma in enumerate(sigma_values):
+        print(f"Processing sigma = {sigma:.2f} ({sigma_idx+1}/{len(sigma_values)})")
+
+        dpv_list = dpv_sets_dict[sigma]
+
+        # Analyze this probe set across all wavelengths
+        try:
+            averages_cube, _, _, _, _ = analyze_probe_set_wvln_cubes(
+                cfg, dmlist, dpv_list, dh_mask, indices=wavelength_indices
+            )
+
+            results[sigma] = averages_cube
+
+        except Exception as e:
+            print(f"  Warning: Failed to analyze sigma {sigma:.2f}: {e}")
+            continue
+
+    # Create the plot
+    fig, ax = plt.subplots(figsize=(10, 8))
+
+    # Line styles for positive and negative probes
+    line_styles = ['-', '--']  # solid for positive, dashed for negative
+    probe_type_labels = ['positive', 'negative']
+
+    # Plot data for each wavelength, probe type, and probe index
+    for wvl_idx, (wvl, color) in enumerate(zip(wavelength_indices, colors)):
+        wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wvl}"
+
+        for probe_type in range(2):  # 0=positive, 1=negative
+            for probe_idx in probe_indices:
+                # Extract data for this configuration
+                sigma_plot = []
+                intensity_plot = []
+
+                for sigma in sigma_values:
+                    if sigma in results:
+                        try:
+                            # Get intensity for this wavelength, probe type, and probe index
+                            intensity = results[sigma][wvl_idx, probe_type, probe_idx]
+                            sigma_plot.append(sigma)
+                            intensity_plot.append(intensity)
+                        except (IndexError, KeyError):
+                            continue
+
+                if len(sigma_plot) > 0:
+                    # Create label
+                    label = f"{wvl_nm}nm, probe {probe_idx}, {probe_type_labels[probe_type]}"
+
+                    # Plot the line
+                    ax.plot(sigma_plot, intensity_plot,
+                           color=color, linestyle=line_styles[probe_type],
+                           alpha=0.7, linewidth=1.5, label=label, marker='o', markersize=3)
+
+    # Customize the plot
+    ax.set_xlabel('Gaussian σ (in actuator pitch)', fontsize=12)
+    ax.set_ylabel('Average intensity in DH', fontsize=12)
+    ax.set_title('Average normalized intensity in DH vs. Gaussian FWHM', fontsize=14)
+
+    # Add grid
+    ax.grid(True, alpha=0.3)
+
+    # Format y-axis to show scientific notation if needed
+    ax.ticklabel_format(style='scientific', axis='y', scilimits=(0,0))
+
+    # Add legend (outside plot area to avoid overlap)
+    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
+
+    # Adjust layout to accommodate legend
+    plt.tight_layout()
+    plt.subplots_adjust(right=0.7)
+
+    plt.show()
+
+    return fig, ax
+
+
 if __name__ == '__main__':
     mode = 'nfov_band1'
     dark_hole = '360deg'
@@ -490,3 +594,8 @@ if __name__ == '__main__':
     print("\nSaving Gaussian probe sets to disk...")
     save_gaussian_probe_sets_sigma_sweep(dpv_sets_dict, sigma_values, metadata, output_path,
                                          mode='nfov_band1', dark_hole='360deg', prefix='gaussian_sigma_sweep')
+
+    # Plot sigma sweep analysis
+    print("\nGenerating sigma sweep analysis plot...")
+    plot_sigma_sweep_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
+                             wavelength_indices=[0, 1, 2])
