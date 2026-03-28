@@ -947,9 +947,9 @@ if __name__ == '__main__':
     dpv_list1.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_x14_y9_gauss3.fits')))
 
     dpv_list2 = []
-    dpv_list2.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_sin90_rot0.fits')))
-    dpv_list2.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_sin150_rot0.fits')))
-    dpv_list2.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_sin210_rot90.fits')))
+    dpv_list2.append(fits.getdata('/Users/ilaginja/repos/corgihowfsc/corgihowfsc/model/probes/nfov_dm_dmrel_4_1.0e-05_cos.fits'))
+    dpv_list2.append(fits.getdata('/Users/ilaginja/repos/corgihowfsc/corgihowfsc/model/probes/nfov_dm_dmrel_4_1.0e-05_sinlr.fits'))
+    dpv_list2.append(fits.getdata('/Users/ilaginja/repos/corgihowfsc/corgihowfsc/model/probes/nfov_dm_dmrel_4_1.0e-05_sinud.fits'))
 
     howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
     args = get_args(
