@@ -32,12 +32,13 @@ from howfsc.model.mode import CoronagraphMode
 
 from howfsc.util.loadyaml import loadyaml
 from howfsc.util.gitl_tools import param_order_to_list
+from howfsc.precomp import howfsc_precomputation
 
 from corgihowfsc.gitl.modular_gitl import howfsc_computation
-from howfsc.precomp import howfsc_precomputation
 from corgihowfsc.utils.saving_output import save_outputs, save_outputs_iter
 from corgihowfsc.utils.output_management import save_run_config, update_yml
 from corgihowfsc.utils.gitl_worker import _collect_framelist
+from corgihowfsc.gitl.gitl_funcs import get_initial_cam_params
 from corgihowfsc.utils.metrics import get_ni
 
 
@@ -112,6 +113,13 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     if safe_cpu_count == None:
         safe_cpu_count = 1
 
+    safe_cpu_count = args.num_imager_worker # TODO - hard coding
+    print('Using num_imager_worker = ', safe_cpu_count)
+
+    # TODO - move this out from here and change it to os.sched_getaffinity
+    if safe_cpu_count == None:
+        safe_cpu_count = 1
+
     # Make filout dir
     if args.fileout is not None:
         print('Making output directory: ', args.fileout)
@@ -163,11 +171,14 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         pass
     log = logging.getLogger(__name__)
 
+    contrast = float(args.starting_contrast) # "starting" value to bootstrap getting we0
+
     # dm1_list, dm2
     # Get DM lists
     dm1_list, dm2_list, dmrel_list, dm10, dm20 = probes.get_dm_probes(cfg, probefiles, dmstartmaps)
     nlam = len(cfg.sl_list)
     ndm = 2 * len(dmrel_list) + 1
+    nprobepair = len(dmrel_list)
 
     # cstratfile
     # cstrat = ControlStrategy(cstratfile)
@@ -249,25 +260,12 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
 
 
     print('Calculating initial eetc exp time')
+    orig_exptime_list, orig_gain_list, orig_nframes_list = get_initial_cam_params(cstrat, contrast, hconf, get_cgi_eetc, nprobepair)
 
-    # Initialize things
-    unprobed_snr = cstrat.get_unprobedsnr(1, contrast)
-    probeheight = cstrat.get_probeheight(1, contrast)
-    probed_snr = cstrat.get_probedsnr(1, contrast)
-    pscale = contrast + probeheight
-    pscale_bright = 1.5*contrast + probeheight + \
-                    2 * np.sqrt(probeheight) * np.sqrt(1.5*contrast)
-                    
-    nframes, exptime, gain, snr_out, optflag = \
-        get_cgi_eetc.calc_exp_time(
-            sequence_name=hconf['hardware']['sequence_list'][0],
-            snr=probed_snr,
-            scale=pscale,
-            scale_bright=pscale_bright,
-        )
-
-    # prev_exptime_list
-    prev_exptime_list = [exptime] * (nlam * ndm)
+    # prev lists for debugging later
+    prev_exptime_list = orig_exptime_list.copy()
+    prev_gain_list = orig_gain_list.copy()
+    prev_nframes_list = orig_nframes_list.copy()
 
     # framelist
     # do last, needs peak flux
@@ -281,9 +279,9 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     # this step is to apply probe images
     framelist = _collect_framelist(
         imager, cfg, dm1_list, dm2_list,
-        exptime_list=[exptime] * (nlam * ndm),
-        gain_list=[gain] * (nlam * ndm),
-        nframes_list=[nframes] * (nlam * ndm), 
+        exptime_list=orig_exptime_list,
+        gain_list=orig_gain_list,
+        nframes_list=orig_nframes_list,
         croplist=croplist,
         normalization_strategy=normalization_strategy,
         get_cgi_eetc=get_cgi_eetc,
@@ -343,6 +341,23 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         # New lists compared to original version
         measured_c.append(prev_c)
         pred_c.append(next_c)
+
+        # Add camera parameters to debugging dictionary
+        debugging_dict['cam_params']['nom'] = np.zeros((nlam, 3))
+        debugging_dict['cam_params']['probing'] = np.zeros((nlam, 3))
+        for j in range(nlam):
+            nom_idx = j * ndm  # unprobed frame index in flat list
+            probe_idx = j * ndm + 1  # first probe frame index
+            debugging_dict['cam_params']['nom'][j, :] = [
+                prev_gain_list[nom_idx],
+                prev_exptime_list[nom_idx],
+                prev_nframes_list[nom_idx],
+            ]
+            debugging_dict['cam_params']['probing'][j, :] = [
+                prev_gain_list[probe_idx],
+                prev_exptime_list[probe_idx],
+                prev_nframes_list[probe_idx],
+            ]
 
         log.info('-----------------------------------')
         log.info('Summary of iteration ' + str(iteration))

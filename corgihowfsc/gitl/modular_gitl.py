@@ -576,9 +576,8 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
     exptime_list = []
     nframes_list = []
     final_optflag = 0
-    debugging_dict['cam_params'] = {}                             
-    debugging_dict['cam_params']['nom'] = np.zeros((nlam, 3))
-    debugging_dict['cam_params']['probing'] = np.zeros((nlam, 3))
+
+    debugging_dict['cam_params'] = {}
     debugging_dict['cam_params_inputs'] = {}
     debugging_dict['cam_params_inputs']['pred_mean_contrast'] = np.zeros((nlam, 1))
     debugging_dict['cam_params_inputs']['pred_bright_contrast'] = np.zeros((nlam, 1))
@@ -649,7 +648,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         if optflag != 0:
             final_optflag = optflag
             pass
-        debugging_dict['cam_params']['nom'][index, :] = [gain, exptime, nframes]
+
         # nprobepair probes
         log.info('Probed camera settings from calculator')
         probed_snr = cstrat.get_probedsnr(iteration, prev_c)
@@ -671,7 +670,6 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         if optflag != 0:
             final_optflag = optflag
             pass
-        debugging_dict['cam_params']['probing'][index, :] = [gain, exptime, nframes]
         debugging_dict['cam_params_inputs']['pred_mean_contrast'][index] = scale
         debugging_dict['cam_params_inputs']['pred_bright_contrast'][index] = scale_bright
         debugging_dict['cam_params_inputs']['pred_mean_contrast_probing'][index] = pscale

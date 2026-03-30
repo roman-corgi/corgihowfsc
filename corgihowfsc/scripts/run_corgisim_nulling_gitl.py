@@ -129,7 +129,7 @@ def main():
         logfile=os.path.join(os.path.dirname(fileout_path), 'gitl.log')
     )
 
-    args.starting_contrast = model_cfg['starting_contrast']
+    args.starting_contrast = float(model_cfg['starting_contrast'])
     args.num_imager_worker = num_imager_worker
     args.num_proper_process = num_proper_process
 
@@ -160,6 +160,9 @@ def main():
     if num_proper_process is not None:
         corgi_overrides['NCPUS'] = num_proper_process
 
+    if num_proper_process is not None:
+        corgi_overrides['NCPUS'] = num_proper_process
+        
     imager = GitlImage(
         cfg=cfg,  # Your CoronagraphMode object
         cstrat=cstrat,  # Your ControlStrategy object
