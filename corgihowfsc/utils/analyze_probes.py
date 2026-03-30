@@ -1069,8 +1069,10 @@ def plot_dm_amplitude_vs_sigma(dpv_sets_dict, sigma_values, dpv_list2, cfg, dmli
 
         # Plot sinc probe as a single point with distinct styling
         marker = probe_markers[probe_idx]
+        # Make star marker three times bigger since it appears smaller than circle/square
+        marker_size = 300 if marker == '*' else 100
         ax.scatter(equivalent_sigma, amplitude,
-                  color='black', s=100, marker=marker,
+                  color='black', s=marker_size, marker=marker,
                   edgecolors='white', linewidth=2,
                   label=f"Sinc probe {probe_idx} (σ≈{equivalent_sigma:.2f})",
                   zorder=10)
