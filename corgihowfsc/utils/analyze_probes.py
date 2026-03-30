@@ -933,6 +933,178 @@ def load_gaussian_probe_sets_sigma_sweep(input_path, prefix='gaussian_sigma_swee
     return dpv_sets_dict, sigma_values, dh_mask, metadata
 
 
+def plot_dm_amplitude_vs_sigma(dpv_sets_dict, sigma_values, dpv_list2, cfg, dmlist, dh_mask,
+                               metadata, wavelength_indices=[0, 1, 2], probe_indices=[0, 1, 2]):
+    """
+    Create a plot showing probe amplitude on DM in peak-to-valley (volts) vs Gaussian FWHM (sigma)
+    in units of actuator pitch, with sinc-sinc-sine probe data overlaid.
+
+    Arguments:
+     dpv_sets_dict: dictionary from create_gaussian_probe_sets_sigma_sweep
+     sigma_values: array of sigma values used for Gaussian probes
+     dpv_list2: list of sinc-sinc-sine probe voltage arrays
+     cfg: CoronagraphMode object
+     dmlist: list of DMs for current DM setting
+     dh_mask: boolean mask for the dark hole region
+     metadata: metadata dictionary containing ni_desired
+     wavelength_indices: list of wavelength indices to analyze (default: [0, 1, 2])
+     probe_indices: list of probe indices to plot (default: [0, 1, 2])
+
+    Returns:
+     fig, ax: matplotlib figure and axes objects
+    """
+
+    # Get wavelength information and plotting parameters
+    wavelengths_nm = [546, 575, 604]
+    colors = ['blue', 'green', 'red']  # Colors for different wavelengths
+
+    # Markers for different probes
+    probe_markers = ['o', 's', '*']  # circle, square, star
+
+    # Initialize storage for Gaussian probe results
+    gaussian_results = {}
+
+    print(f"Analyzing DM amplitude data for {len(sigma_values)} Gaussian sigma values...")
+
+    # Analyze each Gaussian sigma value
+    for sigma_idx, sigma in enumerate(sigma_values):
+        print(f"Processing Gaussian sigma = {sigma:.2f} ({sigma_idx+1}/{len(sigma_values)})")
+
+        dpv_list = dpv_sets_dict[sigma]
+
+        # Calculate peak-to-valley amplitude for each probe in this set
+        probe_ptvs = []
+        for dpv in dpv_list:
+            ptv_volts = np.max(dpv) - np.min(dpv)
+            probe_ptvs.append(ptv_volts)
+
+        # Analyze probe intensities for each wavelength
+        wvln_results = []
+        for wvl_idx in wavelength_indices:
+            averages, stddevs, ptvs, efields, intensities = analyze_probe_set(
+                cfg, dmlist, dpv_list, dh_mask, wvl_idx
+            )
+            wvln_results.append(averages)
+
+        # Store results: [wavelength_idx, pos/neg_sequence, probe_idx] -> (amplitude_ptv, intensity_avg)
+        wvln_results = np.array(wvln_results)  # shape: (n_wvl, 2, n_probes)
+        gaussian_results[sigma] = {
+            'amplitudes': probe_ptvs,
+            'intensities': wvln_results
+        }
+
+    # Analyze sinc-sinc-sine probes
+    print("\nAnalyzing sinc-sinc-sine probes...")
+    sinc_amplitudes = []
+    sinc_intensities_by_wvl = []
+
+    for dpv in dpv_list2:
+        ptv_volts = np.max(dpv) - np.min(dpv)
+        sinc_amplitudes.append(ptv_volts)
+
+    # Get sinc probe intensities for each wavelength
+    for wvl_idx in wavelength_indices:
+        averages, stddevs, ptvs, efields, intensities = analyze_probe_set(
+            cfg, dmlist, dpv_list2, dh_mask, wvl_idx
+        )
+        sinc_intensities_by_wvl.append(averages)
+
+    sinc_intensities_by_wvl = np.array(sinc_intensities_by_wvl)  # shape: (n_wvl, 2, n_probes)
+
+    # Calculate equivalent sigma for sinc-sinc-sine probes based on intensity matching
+    print("\nCalculating equivalent sigma for sinc-sinc-sine probes...")
+    sinc_equivalent_sigmas = []
+
+    for probe_idx in range(len(dpv_list2)):
+        # For each sinc probe, find the Gaussian sigma that gives closest intensity match
+        # Use the average intensity from positive and negative sequences at middle wavelength
+        wvl_middle_idx = len(wavelength_indices) // 2
+        sinc_avg_intensity = np.mean(sinc_intensities_by_wvl[wvl_middle_idx, :, probe_idx])
+
+        best_sigma = None
+        min_diff = float('inf')
+
+        for sigma in sigma_values:
+            gauss_avg_intensity = np.mean(gaussian_results[sigma]['intensities'][wvl_middle_idx, :, probe_idx])
+            diff = abs(gauss_avg_intensity - sinc_avg_intensity)
+            if diff < min_diff:
+                min_diff = diff
+                best_sigma = sigma
+
+        sinc_equivalent_sigmas.append(best_sigma)
+        print(f"  Sinc probe {probe_idx}: equivalent sigma = {best_sigma:.2f}")
+
+    # Create the plot
+    fig, ax = plt.subplots(figsize=(12, 8))
+
+    # Plot Gaussian probe data
+    for wvl_idx, wvl_nm in enumerate(wavelengths_nm):
+        if wvl_idx not in wavelength_indices:
+            continue
+
+        color = colors[wvl_idx]
+
+        for probe_idx in probe_indices:
+            if probe_idx >= len(probe_markers):
+                continue
+
+            # Extract data for this configuration
+            sigma_plot = []
+            amplitude_plot = []
+
+            for sigma in sigma_values:
+                if sigma in gaussian_results:
+                    try:
+                        amplitude = gaussian_results[sigma]['amplitudes'][probe_idx]
+                        sigma_plot.append(sigma)
+                        amplitude_plot.append(amplitude)
+                    except (IndexError, KeyError):
+                        continue
+
+            if len(sigma_plot) > 0:
+                # Create label for Gaussian data
+                label = f"Gaussian {wvl_nm}nm, probe {probe_idx}"
+
+                # Plot the Gaussian curve
+                marker = probe_markers[probe_idx]
+                ax.plot(sigma_plot, amplitude_plot,
+                       color=color, linestyle='-', alpha=0.7, linewidth=2,
+                       marker=marker, markersize=6, label=label)
+
+    # Overlay sinc-sinc-sine probe data
+    for probe_idx in probe_indices:
+        if probe_idx >= len(sinc_amplitudes):
+            continue
+
+        equivalent_sigma = sinc_equivalent_sigmas[probe_idx]
+        amplitude = sinc_amplitudes[probe_idx]
+
+        # Plot sinc probe as a single point with distinct styling
+        marker = probe_markers[probe_idx]
+        ax.scatter(equivalent_sigma, amplitude,
+                  color='black', s=100, marker=marker,
+                  edgecolors='white', linewidth=2,
+                  label=f"Sinc probe {probe_idx} (σ≈{equivalent_sigma:.2f})",
+                  zorder=10)
+
+    # Customize the plot
+    ax.set_xlabel('Gaussian FWHM (σ) [actuator pitch]', fontsize=12)
+    ax.set_ylabel('DM Probe Amplitude Peak-to-Valley [V]', fontsize=12)
+    ax.set_title('DM Probe Amplitude vs Gaussian Sigma with Sinc-Sinc-Sine Overlay', fontsize=14)
+    ax.grid(True, alpha=0.3)
+    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=10)
+
+    # Set reasonable axis limits
+    if len(sigma_values) > 0:
+        ax.set_xlim(min(sigma_values) - 0.1, max(sigma_values) + 0.3)
+
+    plt.tight_layout()
+    plt.subplots_adjust(right=0.7)
+    plt.show()
+
+    return fig, ax
+
+
 if __name__ == '__main__':
     mode = 'nfov_band1'
     dark_hole = '360deg'
@@ -986,39 +1158,44 @@ if __name__ == '__main__':
     ################## SIGMA SWEEP ##################
     output_path = os.path.join(analysis_path, 'sigma_sweep_1e-7')  # Path where data is saved
 
-    # Option 1: Create new Gaussian probe sets with sigma sweep (uncomment to generate new data)
-    sigma_range = (0.5, 2.0)  # Range for sigma values
-    sigma_step = 0.1         # Step size for sigma sweep
-
-    print("\nCreating Gaussian probe sets with sigma sweep...")
-    dpv_sets_dict, sigma_values, dh_mask, metadata = create_gaussian_probe_sets_sigma_sweep(
-        modelpath, cfgfile, dmlist, sigma_range, sigma_step,
-        deltax_act_list=[13, 13, 14], deltay_act_list=[8, 9, 9],
-        ni_desired=1e-7, lod_min=2.8, lod_max=209.7, ind=1
-    )
-
-    print("\nSaving Gaussian probe sets to disk...")
-    save_gaussian_probe_sets_sigma_sweep(dpv_sets_dict, sigma_values, dh_mask, metadata, output_path,
-                                         mode='nfov_band1', dark_hole='360deg', prefix='gaussian_sigma_sweep')
+    # # Option 1: Create new Gaussian probe sets with sigma sweep (uncomment to generate new data)
+    # sigma_range = (0.5, 2.0)  # Range for sigma values
+    # sigma_step = 0.1         # Step size for sigma sweep
+    #
+    # print("\nCreating Gaussian probe sets with sigma sweep...")
+    # dpv_sets_dict, sigma_values, dh_mask, metadata = create_gaussian_probe_sets_sigma_sweep(
+    #     modelpath, cfgfile, dmlist, sigma_range, sigma_step,
+    #     deltax_act_list=[13, 13, 14], deltay_act_list=[8, 9, 9],
+    #     ni_desired=1e-7, lod_min=2.8, lod_max=209.7, ind=1
+    # )
+    #
+    # print("\nSaving Gaussian probe sets to disk...")
+    # save_gaussian_probe_sets_sigma_sweep(dpv_sets_dict, sigma_values, dh_mask, metadata, output_path,
+    #                                      mode='nfov_band1', dark_hole='360deg', prefix='gaussian_sigma_sweep')
 
     # Option 2: Load existing Gaussian probe sets from disk
-    # print("\nLoading Gaussian probe sets from disk...")
-    # dpv_sets_dict, sigma_values, dh_mask, metadata = load_gaussian_probe_sets_sigma_sweep(
-    #     output_path, prefix='gaussian_sigma_sweep', mode='nfov_band1', dark_hole='360deg'
-    # )
+    print("\nLoading Gaussian probe sets from disk...")
+    dpv_sets_dict, sigma_values, dh_mask, metadata = load_gaussian_probe_sets_sigma_sweep(
+        output_path, prefix='gaussian_sigma_sweep', mode='nfov_band1', dark_hole='360deg'
+    )
 
-    # Plot sigma sweep analysis
-    print("\nGenerating sigma sweep analysis plot...")
-    plot_sigma_sweep_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
-                             wavelength_indices=[0, 1, 2])
+    # # Plot sigma sweep analysis
+    # print("\nGenerating sigma sweep analysis plot...")
+    # plot_sigma_sweep_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
+    #                          wavelength_indices=[0, 1, 2])
+    # 
+    # # Plot sigma sweep standard deviation analysis
+    # print("\nGenerating sigma sweep standard deviation analysis plot...")
+    # plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
+    #                                 metadata, wavelength_indices=[0, 1, 2])
+    #
+    # # Plot sigma sweep peak-to-valley analysis
+    # print("\nGenerating sigma sweep peak-to-valley analysis plot...")
+    # plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
+    #                               metadata, wavelength_indices=[0, 1, 2])
 
-    # Plot sigma sweep standard deviation analysis
-    print("\nGenerating sigma sweep standard deviation analysis plot...")
-    plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
-                                    metadata, wavelength_indices=[0, 1, 2])
-
-    # Plot sigma sweep peak-to-valley analysis
-    print("\nGenerating sigma sweep peak-to-valley analysis plot...")
-    plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
-                                  metadata, wavelength_indices=[0, 1, 2])
+    # Plot DM amplitude vs sigma with sinc-sinc-sine overlay
+    print("\nGenerating DM amplitude vs sigma analysis plot with sinc-sinc-sine overlay...")
+    plot_dm_amplitude_vs_sigma(dpv_sets_dict, sigma_values, dpv_list2, cfg, dmlist, dh_mask,
+                               metadata, wavelength_indices=[0, 1, 2])
 
