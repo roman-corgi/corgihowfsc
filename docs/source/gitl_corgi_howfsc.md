@@ -77,6 +77,18 @@ User can also update the output path, otherwise all loop outputs will go through
 ```yaml
 base_path: '~'  # this is the proposed default but can be changed
 ```
+There are two choices of `estimator`, the nominal setting is:
+```yaml
+estimator: "default" # options are "perfect" and "default"; perfect estimator uses the model e-field for estimation, while default estimator uses the standard pairwise probing method  
+```
+
+The initial contrast is set via:
+```yaml
+starting_contrast: 3.5e-4 
+```
+This is mainly relevant if `active_model: "corgihowfsc" ` since the predicted starting contrast is used to acquire the initial camera parameters. If `starting_contrast` is wrong, this can lead to bad exposure times being chosen which also impacts the estimate. 
+
+    
 The initial DM setting seed commands are different by mode (e.g., NFOV band 1), but the respective file names are always the same:
 ```yaml
 dmstartmap_filenames:
@@ -115,8 +127,9 @@ hconf['star']['stellar_type'] = 'G05'
 6. Next we load the control strategy file to generate the `cstrat` object
    * This is where the probe amplitude schedule and EFC regularization schedules are defined
 7. Define the `estimator`
-8. Define the `probes` class
-9. Define `imager` class
+   * If `estimator: "perfect"` in `default_params`, we redefine `probefiles = {0: probefiles[0]}`. This reduces the number of probed images acquired to speed up the loop. 
+9. Define the `probes` class
+10. Define `imager` class
 
 **Note** any `proper` keyword can be passed through `corgi_overrides` in the model section of the parameter file as long as the key used in `corgi_overrides` is the same as the key for the relevant `proper_keyword`.
 

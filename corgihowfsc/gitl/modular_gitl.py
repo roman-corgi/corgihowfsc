@@ -565,11 +565,13 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
     log.info('probeheight = %g', probeheight)
     scale_factor_list = get_scale_factor_list(hconf['probe']['dmrel_ph_list'],
                                                probeheight)
-    log.info('scale factors = [%g, %g, %g, %g, %g, %g]', scale_factor_list[0],
-             scale_factor_list[1], scale_factor_list[2],
-             scale_factor_list[3], scale_factor_list[4],
-             scale_factor_list[5],
-    )
+    # Leaving old logging here for future comparison with gitl.py
+    # log.info('scale factors = [%g, %g, %g, %g, %g, %g]', scale_factor_list[0],
+    #          scale_factor_list[1], scale_factor_list[2],
+    #          scale_factor_list[3], scale_factor_list[4],
+    #          scale_factor_list[5],
+    # )
+    log.info('scale factors = ' + str(scale_factor_list))
 
     log.info('Compute camera settings using exposure time calculator')
     gain_list = []
