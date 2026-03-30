@@ -296,6 +296,7 @@ def create_gaussian_probe_sets_sigma_sweep(modelpath, cfgfile, dmlist, sigma_ran
     Create multiple Gaussian probe sets with different sigma parameters.
 
     Arguments:
+     modelpath: path to the HOWFSC model directory
      cfgfile: configuration file
      dmlist: list of DMs for current DM setting
      sigma_range: tuple of (min_sigma, max_sigma) for the sigma parameter sweep
@@ -387,6 +388,7 @@ def save_gaussian_probe_sets_sigma_sweep(dpv_sets_dict, sigma_values, dh_mask, m
     Arguments:
      dpv_sets_dict: dictionary from create_gaussian_probe_sets_sigma_sweep
      sigma_values: array of sigma values
+     dh_mask: boolean mask for the dark hole region, in the focal plane
      metadata: metadata dictionary
      output_path: directory path where files will be saved
      mode: coronagraph mode string for filename
@@ -431,8 +433,9 @@ def save_gaussian_probe_sets_sigma_sweep(dpv_sets_dict, sigma_values, dh_mask, m
 
     print(f"All probe sets saved to: {output_path}")
 
-def plot_sigma_sweep_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
-                             wavelength_indices=[0, 1, 2], probe_indices=[0, 1, 2]):
+
+def plot_sigma_sweep_mean_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
+                                   wavelength_indices=[0, 1, 2], probe_indices=[0, 1, 2]):
     """
     Create a plot showing average DH intensity vs sigma for different wavelengths and probes.
 
