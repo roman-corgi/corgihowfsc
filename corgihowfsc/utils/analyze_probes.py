@@ -905,29 +905,12 @@ def load_gaussian_probe_sets_sigma_sweep(input_path, prefix='gaussian_sigma_swee
             filename = f"dmrel_{mode}_{dark_hole}_ni{ni_desired:.0e}_x{deltax}_y{deltay}_sigma{sigma:.2f}_gauss{probe_idx}.fits"
             filepath = os.path.join(input_path, filename)
 
-            if not os.path.exists(filepath):
-                print(f"  Warning: File not found: {filename}")
-                # Create a zero array as fallback
-                if len(dpv_list) > 0:
-                    dpv = np.zeros_like(dpv_list[0])
-                else:
-                    # Use a reasonable default size
-                    dpv = np.zeros((48, 48), dtype=np.float32)
-                dpv_list.append(dpv)
-                continue
-
             try:
                 dpv = fits.getdata(filepath)
                 dpv_list.append(dpv)
                 print(f"  Loaded: {filename}")
             except Exception as e:
-                print(f"  Error loading {filename}: {e}")
-                # Create a zero array as fallback
-                if len(dpv_list) > 0:
-                    dpv = np.zeros_like(dpv_list[0])
-                else:
-                    dpv = np.zeros((48, 48), dtype=np.float32)
-                dpv_list.append(dpv)
+                raise FileNotFoundError(f"  Error loading {filename}: {e}")
 
         dpv_sets_dict[sigma] = dpv_list
         print(f"  Completed loading probe set for sigma = {sigma:.2f}")
