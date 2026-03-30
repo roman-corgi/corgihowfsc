@@ -565,20 +565,21 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
     log.info('probeheight = %g', probeheight)
     scale_factor_list = get_scale_factor_list(hconf['probe']['dmrel_ph_list'],
                                                probeheight)
-    log.info('scale factors = [%g, %g, %g, %g, %g, %g]', scale_factor_list[0],
-             scale_factor_list[1], scale_factor_list[2],
-             scale_factor_list[3], scale_factor_list[4],
-             scale_factor_list[5],
-    )
+    # Leaving old logging here for future comparison with gitl.py
+    # log.info('scale factors = [%g, %g, %g, %g, %g, %g]', scale_factor_list[0],
+    #          scale_factor_list[1], scale_factor_list[2],
+    #          scale_factor_list[3], scale_factor_list[4],
+    #          scale_factor_list[5],
+    # )
+    log.info('scale factors = ' + str(scale_factor_list))
 
     log.info('Compute camera settings using exposure time calculator')
     gain_list = []
     exptime_list = []
     nframes_list = []
     final_optflag = 0
-    debugging_dict['cam_params'] = {}                             
-    debugging_dict['cam_params']['nom'] = np.zeros((nlam, 3))
-    debugging_dict['cam_params']['probing'] = np.zeros((nlam, 3))
+
+    debugging_dict['cam_params'] = {}
     debugging_dict['cam_params_inputs'] = {}
     debugging_dict['cam_params_inputs']['pred_mean_contrast'] = np.zeros((nlam, 1))
     debugging_dict['cam_params_inputs']['pred_bright_contrast'] = np.zeros((nlam, 1))
@@ -649,7 +650,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         if optflag != 0:
             final_optflag = optflag
             pass
-        debugging_dict['cam_params']['nom'][index, :] = [gain, exptime, nframes]
+
         # nprobepair probes
         log.info('Probed camera settings from calculator')
         probed_snr = cstrat.get_probedsnr(iteration, prev_c)
@@ -671,7 +672,6 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         if optflag != 0:
             final_optflag = optflag
             pass
-        debugging_dict['cam_params']['probing'][index, :] = [gain, exptime, nframes]
         debugging_dict['cam_params_inputs']['pred_mean_contrast'][index] = scale
         debugging_dict['cam_params_inputs']['pred_bright_contrast'][index] = scale_bright
         debugging_dict['cam_params_inputs']['pred_mean_contrast_probing'][index] = pscale
