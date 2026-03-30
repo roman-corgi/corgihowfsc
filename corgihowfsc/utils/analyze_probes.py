@@ -1103,15 +1103,29 @@ if __name__ == '__main__':
     # Load probes and DH mask from the analysis path
     dh_mask = fits.getdata(os.path.join(analysis_path, 'dh_mask.fits')).astype(bool)
 
-    dpv_list1 = []
-    dpv_list1.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_x13_y8_gauss1.fits')))
-    dpv_list1.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_x13_y9_gauss2.fits')))
-    dpv_list1.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_x14_y9_gauss3.fits')))
+    dpv_list1 = []   # Gaussian probes
+    ### 1e-5
+    # dpv_list1.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_x13_y8_gauss1.fits')))
+    # dpv_list1.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_x13_y9_gauss2.fits')))
+    # dpv_list1.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_x14_y9_gauss3.fits')))
 
-    dpv_list2 = []
-    dpv_list2.append(fits.getdata('/Users/ilaginja/repos/corgihowfsc/corgihowfsc/model/probes/nfov_dm_dmrel_4_1.0e-05_cos.fits'))
-    dpv_list2.append(fits.getdata('/Users/ilaginja/repos/corgihowfsc/corgihowfsc/model/probes/nfov_dm_dmrel_4_1.0e-05_sinlr.fits'))
-    dpv_list2.append(fits.getdata('/Users/ilaginja/repos/corgihowfsc/corgihowfsc/model/probes/nfov_dm_dmrel_4_1.0e-05_sinud.fits'))
+    ### 1e-7 with sigma=1 from sigma sweep
+    dpv_list1.append(fits.getdata(os.path.join(analysis_path, 'sigma_sweep_1e-7', 'dmrel_nfov_band1_360deg_ni1e-07_x13_y8_sigma1.00_gauss0.fits')))
+    dpv_list1.append(fits.getdata(os.path.join(analysis_path, 'sigma_sweep_1e-7', 'dmrel_nfov_band1_360deg_ni1e-07_x13_y8_sigma1.00_gauss0.fits')))
+    dpv_list1.append(fits.getdata(os.path.join(analysis_path, 'sigma_sweep_1e-7', 'dmrel_nfov_band1_360deg_ni1e-07_x13_y8_sigma1.00_gauss0.fits')))
+
+    dpv_list2 = []   # Baseline sinc-sinc-sine probes, originally scaled to 1e-5
+    scale = 0.13
+    cos = fits.getdata('/Users/ilaginja/repos/corgihowfsc/corgihowfsc/model/probes/nfov_dm_dmrel_4_1.0e-05_cos.fits') * scale
+    dpv_list2.append(cos)
+    sinlr = fits.getdata('/Users/ilaginja/repos/corgihowfsc/corgihowfsc/model/probes/nfov_dm_dmrel_4_1.0e-05_sinlr.fits') * scale
+    dpv_list2.append(sinlr)
+    sinud = fits.getdata('/Users/ilaginja/repos/corgihowfsc/corgihowfsc/model/probes/nfov_dm_dmrel_4_1.0e-05_sinud.fits') * scale
+    dpv_list2.append(sinud)
+
+    print(f"  Probe voltages (min, max) for cos: {np.min(cos), np.max(cos)} -> PtV = {np.max(cos) - np.min(cos)}")
+    print(f"  Probe voltages (min, max) for sinlr: {np.min(sinlr), np.max(sinlr)} -> PtV = {np.max(sinlr) - np.min(sinlr)}")
+    print(f"  Probe voltages (min, max) for sinud: {np.min(sinud), np.max(sinud)} -> PtV = {np.max(sinud) - np.min(sinud)}")
 
     howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
     args = get_args(
