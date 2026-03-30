@@ -95,6 +95,23 @@ dmstartmap_filenames:
   - 'gitl_start_compact_dm1.fits'
   - 'gitl_start_compact_dm2.fits'
 ```
+If it is desired to start from a different DM shape, the user can provide the full path to that fits file. For example:
+```yaml
+dmstartmap_filenames:
+  - 'C:/user/roman_preflight_proper_public_v2.0.1_python/roman_preflight_proper/examples/hlc_ni_3e-8_dm1_v.fits'
+  - 'C:/user/roman_preflight_proper_public_v2.0.1_python/roman_preflight_proper/examples/hlc_ni_3e-8_dm2_v.fits'
+```
+would start the DMs using the PROPER commands that create a 3e-8 dark hole. It must be specified consistently: either both entries are filenames relative to modelpath, or both are absolute paths. Mixed usage is not supported.
+
+For overriding paths to the configuration yaml files users can set:
+```yaml
+path_overrides:
+  cfgfile: null
+  cstratfile: null
+  hconffile: null
+```
+This will override the `howfsc_optical_model`, `cstrat_nfov_band1`, and `hconf_nfov_flat` files that are loaded. 
+**Note: if using `path_overrides` all relative paths in the `cfgfile` and `cstratfile` must be changed to absolute paths.**
 
 For parallel computing the parameters are: 
 ```yaml

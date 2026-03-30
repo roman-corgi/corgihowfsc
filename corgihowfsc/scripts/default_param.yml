@@ -15,11 +15,19 @@ sim_settings:
   probe_shape: "default" 
 
 paths:
-  base_path: "~" # default to home directory, but user can change to a differennt path
+  base_path: "~" # default to home directory, but user can change to a different path
   base_corgiloop_path: "corgiloop_data" # this is the proposed default but can be changed
   defjacpath: "temp" # this is the proposed default but can be changed, should be somewhere outside the repo if used
   final_filename: "final_frames.fits" # this is the proposed default but can be changed
   folder_tag: null # this is an optional string that will be appended to the folder name where results are saved
+
+path_overrides:
+  # Set any of these to an absolute path to override the mode-derived default.
+  # Leave as null to use the mode-derived path.
+  # Can also override defjacpath and dmstartmap_filenames by providing full paths
+  cfgfile: null
+  cstratfile: null
+  hconffile: null
 
 crop:
   nrow: 153 # Do not modify
@@ -33,8 +41,12 @@ models:
     estimator: "default" # options are "perfect" and "default"; perfect estimator uses the model e-field for estimation, while default estimator uses the standard pairwise probing method
     starting_contrast: 6e-10 # starting contrast value for dmstartmap_filenames; not actually used in compact model
     dmstartmap_filenames: 
-      - "gitl_start_compact_dm1.fits"
-      - "gitl_start_compact_dm2.fits"
+    # Initial DM shape. Provide either:
+    # - two filenames relative to modelpath, or
+    # - two absolute paths.
+    # Mixed absolute/relative entries are not supported.
+      - "gitl_start_compact_dm1.fits"  # can provide full path including filename or just a filename if the file is located in the modelpath
+      - "gitl_start_compact_dm2.fits"  # can provide full path including filename or just a filename if the file is located in the modelpath
     lrow: 436 # Do not modify
     lcol: 436 # Do not modify
 
@@ -44,8 +56,8 @@ models:
     estimator: "default" # options are "perfect" and "default"; perfect estimator uses the model e-field for estimation, while default estimator uses the standard pairwise probing method  
     starting_contrast: 3.5e-4 # starting contrast value for dmstartmap_filenames; if changing starting DM maps update this value
     dmstartmap_filenames:
-      - "gitl_start_compact_dm1.fits"
-      - "gitl_start_compact_dm2.fits"
+      - "gitl_start_compact_dm1.fits"  # can provide full path including filename or just a filename if the file is located in the modelpath
+      - "gitl_start_compact_dm2.fits"  # can provide full path including filename or just a filename if the file is located in the modelpath
     lrow: 0 # Do not modify
     lcol: 0 # Do not modify
     corgi_overrides: 

@@ -101,7 +101,8 @@ def get_args(niter=5,
                     stellarvmagtarget=None,
                     stellartypetarget=None,
                     jacpath=None,
-                    dmstartmap_filenames=None):
+                    dmstartmap_filenames=None,
+                    path_overrides=None):
         """
         Initialize HOWFSC simulation with all required variables and configurations.
         Returns all variables needed for the main simulation loop.
@@ -205,6 +206,7 @@ def get_args(niter=5,
         args.jacpath = jacpath
         args.dmstartmap_filenames = dmstartmap_filenames
         # args.dm_start_shape = dm_start_shape
+        args.path_overrides = path_overrides or {}
 
         return args
 
@@ -489,10 +491,39 @@ def load_files(args, howfscpath):
         # should not reach here; argparse should catch this
         raise ValueError('Invalid coronagraph mode type')
 
-    dmstartmaps = [
-        fits.getdata(os.path.join(modelpath, dmstartmap_filenames[0])),
-        fits.getdata(os.path.join(modelpath, dmstartmap_filenames[1])),
-    ]
+    # Apply any explicit path overrides
+    _local_paths = {'cfgfile': cfgfile, 'cstratfile': cstratfile, 'hconffile': hconffile}
+    for key, val in getattr(args, 'path_overrides', {}).items():
+        if key in _local_paths:
+            _local_paths[key] = val
+        else:
+            raise ValueError(f"Unrecognized path override key: '{key}'")
+
+    cfgfile, cstratfile, hconffile = (
+        _local_paths['cfgfile'],
+        _local_paths['cstratfile'],
+        _local_paths['hconffile'],
+    )
+
+    dm_abs_flags = [os.path.isabs(p) for p in dmstartmap_filenames]
+
+    if any(dm_abs_flags) and not all(dm_abs_flags):
+        raise ValueError(
+            "dmstartmap_filenames must be specified consistently: "
+            "either both absolute paths or both filenames relative to modelpath. "
+            f"Got: {dmstartmap_filenames}"
+        )
+
+    if os.path.isabs(dmstartmap_filenames[0]):
+        dmstartmaps = [
+            fits.getdata(dmstartmap_filenames[0]),
+            fits.getdata(dmstartmap_filenames[1]),
+        ]
+    else:
+        dmstartmaps = [
+            fits.getdata(os.path.join(modelpath, dmstartmap_filenames[0])),
+            fits.getdata(os.path.join(modelpath, dmstartmap_filenames[1])),
+        ]
     # dmstartmaps = load_dm_start_maps(dm_start_file)
 
 
