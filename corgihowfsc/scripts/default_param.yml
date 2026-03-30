@@ -41,6 +41,10 @@ models:
     estimator: "default" # options are "perfect" and "default"; perfect estimator uses the model e-field for estimation, while default estimator uses the standard pairwise probing method
     starting_contrast: 6e-10 # starting contrast value for dmstartmap_filenames; not actually used in compact model
     dmstartmap_filenames: 
+    # Initial DM shape. Provide either:
+    # - two filenames relative to modelpath, or
+    # - two absolute paths.
+    # Mixed absolute/relative entries are not supported.
       - "gitl_start_compact_dm1.fits"  # can provide full path including filename or just a filename if the file is located in the modelpath
       - "gitl_start_compact_dm2.fits"  # can provide full path including filename or just a filename if the file is located in the modelpath
     lrow: 436 # Do not modify

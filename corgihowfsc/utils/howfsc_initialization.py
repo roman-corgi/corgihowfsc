@@ -505,6 +505,15 @@ def load_files(args, howfscpath):
         _local_paths['hconffile'],
     )
 
+    dm_abs_flags = [os.path.isabs(p) for p in dmstartmap_filenames]
+
+    if any(dm_abs_flags) and not all(dm_abs_flags):
+        raise ValueError(
+            "dmstartmap_filenames must be specified consistently: "
+            "either both absolute paths or both filenames relative to modelpath. "
+            f"Got: {dmstartmap_filenames}"
+        )
+
     if os.path.isabs(dmstartmap_filenames[0]):
         dmstartmaps = [
             fits.getdata(dmstartmap_filenames[0]),

@@ -101,7 +101,7 @@ dmstartmap_filenames:
   - 'C:/user/roman_preflight_proper_public_v2.0.1_python/roman_preflight_proper/examples/hlc_ni_3e-8_dm1_v.fits'
   - 'C:/user/roman_preflight_proper_public_v2.0.1_python/roman_preflight_proper/examples/hlc_ni_3e-8_dm2_v.fits'
 ```
-would start the DMs using the PROPER commands that create a 3e-8 dark hole.
+would start the DMs using the PROPER commands that create a 3e-8 dark hole. It must be specified consistently: either both entries are filenames relative to modelpath, or both are absolute paths. Mixed usage is not supported.
 
 For overriding paths to the configuration yaml files users can set:
 ```yaml
