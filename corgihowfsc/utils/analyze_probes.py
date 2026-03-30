@@ -372,6 +372,7 @@ def create_gaussian_probe_sets_sigma_sweep(modelpath, cfgfile, dmlist, sigma_ran
 
         dpv_sets_dict[sigma] = dpv_list
         print(f"  Completed probe set for sigma = {sigma:.2f}")
+        print(f"  Probe voltages (min, max) for this set: {np.min(dpv_list), np.max(dpv_list)}")
 
     # Access DH mask, assuming that all probes used the same mask
     dh_mask = probe_tuple[2]
@@ -914,6 +915,7 @@ def load_gaussian_probe_sets_sigma_sweep(input_path, prefix='gaussian_sigma_swee
 
         dpv_sets_dict[sigma] = dpv_list
         print(f"  Completed loading probe set for sigma = {sigma:.2f}")
+        print(f"  Probe voltages (min, max) for this set: {np.min(dpv_list), np.max(dpv_list)}")
 
     print(f"Completed loading {len(sigma_values)} probe sets from disk")
     return dpv_sets_dict, sigma_values, dh_mask, metadata
