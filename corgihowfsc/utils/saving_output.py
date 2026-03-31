@@ -43,7 +43,7 @@ def compute_xticks(n, max_ticks=15, threshold=25, values=None):
         ticks = np.append(ticks, n)
     return ticks
 
-def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list, debugging_dict=None):
+def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list, jac, debugging_dict=None):
 
     outpath = os.path.dirname(fileout)
 
@@ -178,6 +178,13 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
     img_pef = pyfits.ImageHDU(np.array(perfect_efields_realimag))
     hdul_pef = pyfits.HDUList([prim_pef, img_pef])
     hdul_pef.writeto(os.path.join(iterpath, "perfect_efields.fits"), overwrite=True)
+
+    # --- E-FIELD SVD ---
+    e0list = [oitem[j]['meas_efield'] for j in range(len(cfg.sl_list))]
+    snorm, iri = calc_svd_spectrum(jac, cfg, e0list)
+
+    pyfits.writeto(os.path.join(iterpath, "svd_snorm.fits"), snorm.astype(np.float32), overwrite=True)
+    pyfits.writeto(os.path.join(iterpath, "svd_iri.fits"), iri.astype(np.float32), overwrite=True)
 
     # --- DM STATES (PER ITERATION) ---
     if dm1_list is not None and i < len(dm1_list):
