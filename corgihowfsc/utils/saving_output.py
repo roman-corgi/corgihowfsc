@@ -142,8 +142,8 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
       - ``intensity_incoherent.fits`` : incoherent (unmodulated) intensity per wavelength
       - ``efield_estimations.fits``   : real and imaginary parts of estimated e-fields
       - ``perfect_efields.fits``      : real and imaginary parts of model (perfect) e-fields
-      - ``svd_snorm.fits``
-      - ``svd_iri.fits``
+      - ``svd_snorm.fits``            : singular values squared, normalized by the maximum, ordered largest to smallest
+      - ``svd_iri.fits``              : power per singular-value mode, in the same order as svd_snorm
       - ``dm1_command.fits``          : absolute DM1 voltage command (if dm1_list provided)
       - ``dm2_command.fits``          : absolute DM2 voltage command (if dm2_list provided)
     """
