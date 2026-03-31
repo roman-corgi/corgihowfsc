@@ -386,7 +386,7 @@ def check_inputs(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
     return lenflist, nlam, ndm, nprobepair, lendm1list, lendm2list, dm1nact, dm2nact, allpix, lencroplist, nrow, ncol, subcroplist, lenpelist
 
 
-def get_initial_cam_params(cstrat, contrast, hconf, get_cgi_eetc, nprobepair):
+def get_initial_cam_params(cstrat, contrast, hconf, get_cgi_eetc, nprobepair, ndm, nlam):
 
     # Initialize things
     unprobed_snr = cstrat.get_unprobedsnr(1, contrast)
@@ -441,6 +441,18 @@ def get_initial_cam_params(cstrat, contrast, hconf, get_cgi_eetc, nprobepair):
     orig_gain_list = param_order_to_list(orig_gain_list)
     orig_nframes_list = param_order_to_list(orig_nframes_list)
 
-    return orig_exptime_list, orig_gain_list, orig_nframes_list
+    next_time = expected_time(ndm,
+                              nlam,
+                              param_order_to_list(orig_exptime_list),
+                              param_order_to_list(orig_nframes_list),
+                              hconf['overhead']['overdm'],
+                              hconf['overhead']['overfilt'],
+                              hconf['overhead']['overboth'],
+                              hconf['overhead']['overfixed'],
+                              hconf['overhead']['overframe'],
+                              )
+
+
+    return orig_exptime_list, orig_gain_list, orig_nframes_list, next_time
 
 

@@ -260,7 +260,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
 
 
     print('Calculating initial eetc exp time')
-    orig_exptime_list, orig_gain_list, orig_nframes_list = get_initial_cam_params(cstrat, contrast, hconf, get_cgi_eetc, nprobepair)
+    orig_exptime_list, orig_gain_list, orig_nframes_list, this_iter_time = get_initial_cam_params(cstrat, contrast, hconf, get_cgi_eetc, nprobepair, ndm, nlam)
 
     # prev lists for debugging later
     prev_exptime_list = orig_exptime_list.copy()
@@ -393,8 +393,12 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             ni_lists['ni_score'].append(ni_score)
             ni_lists['ni_inner'].append(ni_inner)
             ni_lists['ni_outer'].append(ni_outer)
+
+            debugging_dict['this_iter_time'] = this_iter_time
             _, _ = save_outputs_iter(iteration-1, fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, perfect_efield_list[iteration-1], debugging_dict=debugging_dict)
 
+            # Set this iteration time to the next iter value
+            this_iter_time = debugging_dict['next_iter_dur']
         
         print('-----------------------------------')
         print('Iteration: ' + str(iteration))
