@@ -44,6 +44,109 @@ def compute_xticks(n, max_ticks=15, threshold=25, values=None):
     return ticks
 
 def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list, jac, debugging_dict=None):
+    """
+    Save all outputs for a single HOWFSC iteration and update cumulative summary plots.
+
+    Writes per-iteration data into a subdirectory ``iteration_{i+1:04d}/`` under
+    ``os.path.dirname(fileout)``. Also updates cumulative output files (contrast
+    plots, NI plot, CSV logs) in the top-level output directory on every call,
+    unless ``output_every_iter`` is False and this is the final iteration.
+
+    Parameters
+    ----------
+    i : int
+        Zero-based index of the iteration to save. Used to index into
+        ``framelistlist``, ``otherlist``, ``camlist``, ``dm1_list``, and
+        ``dm2_list``, and to name the output subdirectory.
+    fileout : str
+        Absolute path to the top-level output FITS file. The directory portion
+        is used as the root for all output files and subdirectories.
+    cfg : CoronagraphMode
+        Optical model object. Used to determine the number of wavelength
+        channels (``cfg.sl_list``) and dark hole masks.
+    camlist : list
+        List of camera parameter triples accumulated across iterations. Each
+        element is ``[gain_list, exptime_list, nframes_list]`` for one
+        iteration. ``camlist[i][1]`` (exposure times) is saved to
+        ``images.fits``.
+    framelistlist : list
+        List of framelists accumulated across iterations. Each element is the
+        ``nlam * ndm`` list of 2D intensity images for one iteration.
+        ``framelistlist[i]`` is saved to ``images.fits``.
+    otherlist : list
+        List of ``other`` dictionaries accumulated across iterations. Each
+        element is a dict keyed by wavelength index ``j``, containing products
+        such as ``meas_efield``, ``meas_intensity``, ``modul_intensity``, and
+        ``unmodul_intensity`` for that iteration.
+    measured_c : list of float
+        Measured contrast values accumulated across iterations, one per
+        iteration. Plotted and saved to ``measured_contrast.csv``.
+    dm1_list : list of ndarray or None
+        Absolute DM1 command arrays accumulated across iterations, one 48x48
+        array per iteration. ``dm1_list[i]`` is saved to
+        ``dm1_command.fits``. Pass None to skip saving DM1 state.
+    dm2_list : list of ndarray or None
+        Absolute DM2 command arrays accumulated across iterations, one 48x48
+        array per iteration. ``dm2_list[i]`` is saved to
+        ``dm2_command.fits``. Pass None to skip saving DM2 state.
+    output_every_iter : bool
+        If True, cumulative summary plots and CSVs are updated on every call.
+        If False, they are only written on the last iteration
+        (``i < len(framelistlist) - 1`` check).
+    pred_c : list of float
+        Predicted contrast values accumulated across iterations, one per
+        iteration. Plotted and saved to ``predicted_contrast.csv``.
+    ni_lists : dict
+        Dictionary of normalized intensity (NI) metric lists accumulated across iterations. Keys are
+        metric names (e.g. ``'ni_score'``, ``'ni_inner'``, ``'ni_outer'``);
+        values are lists of floats, one per iteration. All keys are plotted
+        together on the NI summary plot.
+    perfect_efield_list : list or None
+        Perfect (model) electric fields for this iteration, one 2D complex
+        array per wavelength. Passed directly to ``refactor_efields`` and saved
+        to ``perfect_efields.fits``. Pass None if perfect e-fields are not
+        available.
+    jac : ndarray
+        3D real-valued DM Jacobian array of shape ``(2, Ndm, Npix)``, as
+        produced by ``calcjacs()``. Real parts are in ``jac[0]``, imaginary
+        parts in ``jac[1]``. Used for SVD spectrum computation.
+    debugging_dict : dict or None, optional
+        Dictionary of scalar debugging quantities for this iteration, as
+        returned by ``howfsc_computation``. If provided, per-wavelength scalars
+        are appended to ``debugging_history.csv`` via
+        ``save_debugging_iteration``. Defaults to None.
+
+    Returns
+    -------
+    efields_complex_array : ndarray
+        Complex e-field estimates for this iteration, shape
+        ``(nlam, nrow, ncol)``.
+    perfect_efields_complex_array : ndarray
+        Perfect (model) complex e-fields for this iteration, shape
+        ``(n_perf_lam, nrow, ncol)``, where ``n_perf_lam`` may differ from
+        ``nlam`` if a speedup mode (single central wavelength) is in use.
+
+    Files Written
+    -------------
+    Top-level output directory (cumulative, updated each call):
+      - ``contrast_vs_iteration.pdf`` : measured and predicted contrast vs. iteration
+      - ``ni_vs_iteration.pdf``       : NI metrics vs. iteration
+      - ``measured_contrast.csv``     : measured contrast values
+      - ``predicted_contrast.csv``    : predicted contrast values
+      - ``debugging_history.csv``     : per-wavelength debugging scalars (if debugging_dict provided)
+
+    Per-iteration subdirectory ``iteration_{i+1:04d}/``:
+      - ``images.fits``               : raw GITL frames and exposure times
+      - ``intensity_total.fits``      : total (coherent + incoherent) intensity per wavelength
+      - ``intensity_coherent.fits``   : coherent (modulated) intensity per wavelength
+      - ``intensity_incoherent.fits`` : incoherent (unmodulated) intensity per wavelength
+      - ``efield_estimations.fits``   : real and imaginary parts of estimated e-fields
+      - ``perfect_efields.fits``      : real and imaginary parts of model (perfect) e-fields
+      - ``svd_snorm.fits``
+      - ``svd_iri.fits``
+      - ``dm1_command.fits``          : absolute DM1 voltage command (if dm1_list provided)
+      - ``dm2_command.fits``          : absolute DM2 voltage command (if dm2_list provided)
+    """
 
     outpath = os.path.dirname(fileout)
 
@@ -230,7 +333,7 @@ def refactor_efields(cfg, oitem, perfect_efield_list=None):
     return efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array
 
 
-def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list):
+def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list, jac):
 
     outpath = os.path.dirname(fileout)
 
@@ -241,7 +344,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     # Create one subdirectory per iteration
     iters = [len(framelistlist)-1] if output_every_iter else range(len(framelistlist))
     for i in iters:
-        efields_complex_array, perfect_efields_complex_array = save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list[i])
+        efields_complex_array, perfect_efields_complex_array = save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list[i], jac)
         # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
         efields_complex_array = np.stack(efields_complex_array, axis=0)
         all_efields_complex.append(efields_complex_array)
