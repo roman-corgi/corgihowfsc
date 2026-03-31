@@ -25,6 +25,13 @@ def analyze_probe_set(cfg, dmlist, dpv_list, dh_mask, ind):
      dpv_list: list of 3 DM probe voltages.
      dh_maks: boolean mask for the dark hole region, in the focal plane.
      ind: index of cfg wavelength to use for model
+
+    Returns:
+        averages: 2D array (2, 3) - average DH intensities for each probe (positive and negative)
+        stddevs: 2D array (2, 3) - standard deviations of DH intensities for each probe
+        ptvs: 2D array (2, 3) - peak-to-valley values of DH intensities for each probe
+        efields: 4D array (2, 3, *field_shape) - electric fields for each probe
+        intensities: 4D array (2, 3, *field_shape) - intensities for each probe
     """
     # Check inputs
     if not isinstance(cfg, CoronagraphMode):
