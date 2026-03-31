@@ -7,6 +7,7 @@ import numpy as np
 
 from howfsc.util.gitl_tools import param_order_to_list
 from howfsc.util.insertinto import insertinto
+from howfsc.util.svd_spectrum import calc_svd_spectrum
 
 import matplotlib
 matplotlib.use('Agg')
