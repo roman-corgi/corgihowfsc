@@ -781,6 +781,7 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
             mean_lines_data[wvl_idx] = (unique_sigmas, mean_stdevs)
 
     # Plot sinc probe means at intersection points with Gaussian mean lines
+    intersection_sigmas = []  # Store sigma values for legend display
     if sinc_mean_stddevs is not None:
         for wvl_idx in range(len(wavelength_indices)):
             if wvl_idx in mean_lines_data:
@@ -795,6 +796,7 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
                 differences = [abs(stdev - sinc_mean) for stdev in mean_stdevs]
                 closest_idx = np.argmin(differences)
                 intersection_sigma = unique_sigmas[closest_idx]
+                intersection_sigmas.append((wvl_nm, intersection_sigma))
 
                 # Plot sinc probe mean at intersection
                 ax.plot(intersection_sigma, sinc_mean, color=color, marker='D',
@@ -854,6 +856,17 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
     ax.add_artist(legend1)
     ax.add_artist(legend2)
     ax.add_artist(legend3)
+
+    # Add sigma intersection values underneath the legends
+    if sinc_mean_stddevs is not None and intersection_sigmas:
+        sigma_text = "Sinc σ intersections:\n"
+        for wvl_nm, sigma_val in intersection_sigmas:
+            sigma_text += f"{wvl_nm}: σ={sigma_val:.2f}\n"
+
+        # Add text below the legends
+        ax.text(1.02, 0.15, sigma_text, transform=ax.transAxes, fontsize=8,
+                verticalalignment='top', bbox=dict(boxstyle='round,pad=0.3',
+                facecolor='lightgray', alpha=0.8))
 
     # Adjust layout to accommodate legend
     plt.tight_layout()
