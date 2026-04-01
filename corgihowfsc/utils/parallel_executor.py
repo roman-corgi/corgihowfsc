@@ -1,6 +1,5 @@
 import multiprocessing as mp
 import multiprocessing.pool as mpp
-from mpi4py.futures import MPIPoolExecutor
 
 
 class NoDaemonProcess(mp.Process):
@@ -66,9 +65,9 @@ class NestablePool(mpp.Pool):
 
 def run_parallel(
         func, args_list, n_jobs=1, allow_nesting=False,
-        start_method="spawn", use_mpi=False):
+        start_method="spawn"):
     """
-    Run func over args_list in parallel using multiprocessing.Pool or MPI.
+    Run func over args_list in parallel using multiprocessing.Pool.
     Blocks until all jobs finish (barrier).
 
     Args:
@@ -78,13 +77,8 @@ def run_parallel(
                        on the cluster — never hardcode or use cpu_count()
         allow_nesting: if True, use NestablePool so workers can spawn
                        their own child processes (e.g. PROPER multirun).
-                       Ignored when use_mpi=True (MPI workers are non-daemonic).
         start_method:  process start method. 'spawn' is safest for
-                       nested/process-heavy workloads. Ignored when use_mpi=True.
-        use_mpi:       if True, use mpi4py.futures.MPIPoolExecutor instead of
-                       multiprocessing.Pool. Requires launching with:
-                         mpiexec -n (n_jobs+1) python -m mpi4py.futures script.py
-                       Worker ranks are pre-allocated by mpiexec; rank 0 is master.
+                       nested/process-heavy workloads.
 
     Returns:
         list of results in the same order as args_list
@@ -94,10 +88,6 @@ def run_parallel(
 
     if n_jobs == 1:
         return [func(*a) for a in args_list]
-
-    if use_mpi:
-        with MPIPoolExecutor(max_workers=n_jobs) as executor:
-            return list(executor.starmap(func, args_list))
 
     if allow_nesting:
         with NestablePool(processes=n_jobs) as pool:
