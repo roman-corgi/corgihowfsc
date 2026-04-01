@@ -342,91 +342,91 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
                 pass
             pass
 
-    for iteration in range(1, niter+1): # var is number of next iteration
+        for iteration in range(1, niter+1): # var is number of next iteration
 
-        t0 = time.time()
-        if isprof:
-            pr.enable()
-            pass
-        abs_dm1, abs_dm2, scale_factor_list, gain_list, exptime_list, \
-        nframes_list, prev_c, next_c, next_time, status, other, debugging_dict = \
-        howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
-                           croplist, prev_exptime_list,
-                           cstrat, n2clist, hconf, iteration,
-                           estimator, imager, normalization_strategy, probes)
-        if isprof:
-            pr.disable()
-            pass
-        t1 = time.time()
-
-        otherlist.append(other)
-        abs_dm1list.append(abs_dm1)
-        abs_dm2list.append(abs_dm2)
-        framelistlist.append(framelist)
-        scalelistout.append(scale_factor_list)
-        camlist.append([gain_list, exptime_list, nframes_list])
-
-        # New lists compared to original version
-        measured_c.append(prev_c)
-        pred_c.append(next_c)
-
-        log.info('-----------------------------------')
-        log.info('Summary of iteration ' + str(iteration))
-        log.info('HOWFSC computation time: ' + str(t1-t0))
-        log.info('Previous contrast: ' + str(prev_c))
-        log.info('Next contrast: ' + str(next_c))
-        log.info('scales: ' + str(scale_factor_list))
-
-        # Write current iterations files now
-        if fileout is not None and output_every_iter:
-            hdr = pyfits.Header()
-            hdr['NLAM'] = len(cfg.sl_list)
-            prim = pyfits.PrimaryHDU(header=hdr)
-            img = pyfits.ImageHDU(framelist)
-            prev = pyfits.ImageHDU(prev_exptime_list)
-            hdul = pyfits.HDUList([prim, img, prev])
-            hdul.writeto(fileout, overwrite=True)
-
-            if output_model_efield and imager.backend == 'corgihowfsc':
-                # speedup == True: getting the model e-field for the central bandpass (e.g. 1b for band 1)
-                # speedup == False: getting the model e-field for all bandpasses
-                perfect_efield_list.append(imager.get_perfect_efield(abs_dm1=abs_dm1, abs_dm2=abs_dm2, croplist=croplist, nlam=nlam, ndm=ndm, speedup=True))
-            else:
-                perfect_efield_list.append(None)
-
-            ni_score, ni_inner, ni_outer = get_ni(framelistlist[iteration-1], cfg, prev_exptime_list,
-                                                  debugging_dict['peakflux'], normalization_strategy, ndm, nrow, ncol)
-            ni_lists['ni_score'].append(ni_score)
-            ni_lists['ni_inner'].append(ni_inner)
-            ni_lists['ni_outer'].append(ni_outer)
-            _, _ = save_outputs_iter(iteration-1, fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, perfect_efield_list[iteration-1], debugging_dict=debugging_dict)
-
-        
-        print('-----------------------------------')
-        print('Iteration: ' + str(iteration))
-        print('HOWFSC computation time: ' + str(t1-t0))
-        print('Previous contrast: ' + str(prev_c))
-        print('Next contrast: ' + str(next_c))
-        print('scales: ' + str(scale_factor_list))
-
-
-        # new dm1_list, dm2_list
-        dm1_list = []
-        dm2_list = []
-        for index in range(nlam):
-            # DM1 same per wavelength
-            dm1_list.append(abs_dm1)
-            dm1_list.append(abs_dm1 + scale_factor_list[0]*dmrel_list[0])
-            dm1_list.append(abs_dm1 + scale_factor_list[3]*dmrel_list[0])
-            dm1_list.append(abs_dm1 + scale_factor_list[1]*dmrel_list[1])
-            dm1_list.append(abs_dm1 + scale_factor_list[4]*dmrel_list[1])
-            dm1_list.append(abs_dm1 + scale_factor_list[2]*dmrel_list[2])
-            dm1_list.append(abs_dm1 + scale_factor_list[5]*dmrel_list[2])
-            for j in range(ndm):
-                # DM2 always same
-                dm2_list.append(abs_dm2)
+            t0 = time.time()
+            if isprof:
+                pr.enable()
                 pass
-            pass
+            abs_dm1, abs_dm2, scale_factor_list, gain_list, exptime_list, \
+            nframes_list, prev_c, next_c, next_time, status, other, debugging_dict = \
+            howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
+                               croplist, prev_exptime_list,
+                               cstrat, n2clist, hconf, iteration,
+                               estimator, imager, normalization_strategy, probes)
+            if isprof:
+                pr.disable()
+                pass
+            t1 = time.time()
+
+            otherlist.append(other)
+            abs_dm1list.append(abs_dm1)
+            abs_dm2list.append(abs_dm2)
+            framelistlist.append(framelist)
+            scalelistout.append(scale_factor_list)
+            camlist.append([gain_list, exptime_list, nframes_list])
+
+            # New lists compared to original version
+            measured_c.append(prev_c)
+            pred_c.append(next_c)
+
+            log.info('-----------------------------------')
+            log.info('Summary of iteration ' + str(iteration))
+            log.info('HOWFSC computation time: ' + str(t1-t0))
+            log.info('Previous contrast: ' + str(prev_c))
+            log.info('Next contrast: ' + str(next_c))
+            log.info('scales: ' + str(scale_factor_list))
+
+            # Write current iterations files now
+            if fileout is not None and output_every_iter:
+                hdr = pyfits.Header()
+                hdr['NLAM'] = len(cfg.sl_list)
+                prim = pyfits.PrimaryHDU(header=hdr)
+                img = pyfits.ImageHDU(framelist)
+                prev = pyfits.ImageHDU(prev_exptime_list)
+                hdul = pyfits.HDUList([prim, img, prev])
+                hdul.writeto(fileout, overwrite=True)
+
+                if output_model_efield and imager.backend == 'corgihowfsc':
+                    # speedup == True: getting the model e-field for the central bandpass (e.g. 1b for band 1)
+                    # speedup == False: getting the model e-field for all bandpasses
+                    perfect_efield_list.append(imager.get_perfect_efield(abs_dm1=abs_dm1, abs_dm2=abs_dm2, croplist=croplist, nlam=nlam, ndm=ndm, speedup=True))
+                else:
+                    perfect_efield_list.append(None)
+
+                ni_score, ni_inner, ni_outer = get_ni(framelistlist[iteration-1], cfg, prev_exptime_list,
+                                                      debugging_dict['peakflux'], normalization_strategy, ndm, nrow, ncol)
+                ni_lists['ni_score'].append(ni_score)
+                ni_lists['ni_inner'].append(ni_inner)
+                ni_lists['ni_outer'].append(ni_outer)
+                _, _ = save_outputs_iter(iteration-1, fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, perfect_efield_list[iteration-1], debugging_dict=debugging_dict)
+
+            
+            print('-----------------------------------')
+            print('Iteration: ' + str(iteration))
+            print('HOWFSC computation time: ' + str(t1-t0))
+            print('Previous contrast: ' + str(prev_c))
+            print('Next contrast: ' + str(next_c))
+            print('scales: ' + str(scale_factor_list))
+
+
+            # new dm1_list, dm2_list
+            dm1_list = []
+            dm2_list = []
+            for index in range(nlam):
+                # DM1 same per wavelength
+                dm1_list.append(abs_dm1)
+                dm1_list.append(abs_dm1 + scale_factor_list[0]*dmrel_list[0])
+                dm1_list.append(abs_dm1 + scale_factor_list[3]*dmrel_list[0])
+                dm1_list.append(abs_dm1 + scale_factor_list[1]*dmrel_list[1])
+                dm1_list.append(abs_dm1 + scale_factor_list[4]*dmrel_list[1])
+                dm1_list.append(abs_dm1 + scale_factor_list[2]*dmrel_list[2])
+                dm1_list.append(abs_dm1 + scale_factor_list[5]*dmrel_list[2])
+                for j in range(ndm):
+                    # DM2 always same
+                    dm2_list.append(abs_dm2)
+                    pass
+                pass
 
         # Skip the very last Jacobian that never gets used
         if precomp in ['precomp_jacs_always'] and iteration < niter:
