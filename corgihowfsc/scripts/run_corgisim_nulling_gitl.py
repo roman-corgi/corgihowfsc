@@ -91,6 +91,8 @@ def main():
     num_jac_process = runtime['num_jac_process']
     num_imager_worker = runtime['num_imager_worker']
     use_mpi = runtime.get('use_mpi', False)
+    use_mpi_jacobian = runtime.get('use_mpi_jacobian', use_mpi)
+    use_mpi_framelist = runtime.get('use_mpi_framelist', use_mpi)
 
     print(
         backend_type,
@@ -134,6 +136,8 @@ def main():
     args.num_imager_worker = num_imager_worker
     args.num_proper_process = num_proper_process
     args.use_mpi = use_mpi
+    args.use_mpi_jacobian = use_mpi_jacobian
+    args.use_mpi_framelist = use_mpi_framelist
 
     modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps = load_files(args,
                                                                                                            howfscpath)
@@ -218,6 +222,9 @@ def main():
         "num_threads": args.num_threads,
         "num_imager_worker": args.num_imager_worker,
         "num_proper_process": args.num_proper_process,
+        "use_mpi": args.use_mpi,
+        "use_mpi_jacobian": args.use_mpi_jacobian,
+        "use_mpi_framelist": args.use_mpi_framelist,
         # --- crop & overrides ---
         "crop_params": crop_params,
         "corgi_overrides": corgi_overrides,
@@ -254,6 +261,11 @@ def main():
                  cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps,
                  metadata, output_every_iter)
 
+    print('nulling_gitl complete, exiting', flush=True)
+
 
 if __name__ == '__main__':
     main()
+    # Add this here to try to forcefully kill any child processes that might still be alive after the main process finishes, especially when using non-daemonic processes for nested parallelism.
+    # Not ideal ... 
+    os._exit(0)
