@@ -185,9 +185,12 @@ def mpi_precompute_jac(cfg, dmset_list, cstrat, subcroplist,
     ijlist = list(range(ndmact))
     ndhpix = get_ndhpix(cfg)[-1]
 
-    if executor is None and n_workers is None:
-        raise ValueError('either executor or n_workers must be provided')
-    if executor is not None and n_workers is None:
+    if executor is None:
+        raise ValueError(
+            'mpi_precompute_jac requires a caller-owned executor; '
+            'this path no longer creates ad hoc MPIPoolExecutors'
+        )
+    if n_workers is None:
         n_workers = executor._max_workers
 
     # Interleaved split: worker ip gets actuators [ip, ip+n, ip+2n, ...]
@@ -199,12 +202,7 @@ def mpi_precompute_jac(cfg, dmset_list, cstrat, subcroplist,
         for ijproc in list_ijproc
     ]
 
-    if executor is None:
-        from mpi4py.futures import MPIPoolExecutor
-        with MPIPoolExecutor(max_workers=n_workers) as local_executor:
-            results = list(local_executor.starmap(_jac_worker, args_list))
-    else:
-        results = list(executor.starmap(_jac_worker, args_list))
+    results = list(executor.starmap(_jac_worker, args_list))
 
     # Assemble partial jacobians into the full array (same as calcjacs_mp)
     jac = np.zeros((2, ndmact, ndhpix), dtype='double')
