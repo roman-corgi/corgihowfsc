@@ -534,9 +534,9 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
 
             save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, perfect_efield_list)
     finally:
-        if mpi_executor is not None:
-            log.info('Shutting down persistent MPI executor')
-            mpi_executor.shutdown(wait=True)
+        if jac_executor is not None:
+            log.info('Shutting down persistent MPI executor for Jacobian work')
+            jac_executor.shutdown(wait=True)
 
 
 if __name__ == "__main__":
