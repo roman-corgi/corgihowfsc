@@ -72,14 +72,14 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
                                                                                             len(iteration_durations) + 1) * 60
 
             ax_bottom.plot(cumulative_time, measured_c, color='cornflowerblue', marker='o', label='measured')
-            ax_bottom.set_xlabel('Cumulative Time (minutes)')
+            ax_bottom.set_xlabel('Spacecraft Time [minutes]')
             ax_bottom.set_ylabel('Measured Contrast')
             ax_bottom.semilogy()
             ax_bottom.legend(loc='best')
 
             ax_top = ax_bottom.twiny()
             ax_top.set_xlim(cumulative_time_with_overhead[0], cumulative_time_with_overhead[-1])
-            ax_top.set_xlabel('Cumulative Time with Overhead (minutes)')
+            ax_top.set_xlabel('GITL Time (w/comms overhead) [minutes]')
 
             plt.savefig(os.path.join(outpath, "contrast_vs_time.pdf"), bbox_inches='tight')
             plt.close()
