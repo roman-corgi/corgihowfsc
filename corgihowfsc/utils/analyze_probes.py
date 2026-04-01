@@ -582,7 +582,7 @@ def plot_sigma_sweep_mean_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_
 
 
 def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
-                                   metadata, wavelength_indices=[0, 1, 2], probe_indices=[0, 1, 2]):
+                                    metadata, dpv_list_sincs=None, wavelength_indices=[0, 1, 2], probe_indices=[0, 1, 2]):
     """
     Create a plot showing standard deviation of DH intensity as percentage of ni_desired vs sigma.
 
@@ -593,6 +593,7 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
      dmlist: list of DMs for current DM setting
      dh_mask: boolean mask for the dark hole region
      metadata: metadata dictionary containing ni_desired
+     dpv_list_sincs: list of sinc probe voltages to analyze (optional)
      wavelength_indices: list of wavelength indices to analyze (default: [0, 1, 2])
      probe_indices: list of probe indices to plot (default: [0, 1, 2])
 
@@ -629,7 +630,44 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
         except Exception as e:
             print(f"  Warning: Failed to analyze sigma {sigma:.2f}: {e}")
             continue
+############
+    # Analyze sinc probes if provided
+    if dpv_list_sincs is not None:
+        print("\nAnalyzing sinc probes across all three wavelengths...")
 
+        # Analyze sinc probes across all wavelengths
+        _, stddevs_sinc_cube, _, _, _ = analyze_probe_set_wvln_cubes(
+            cfg, dmlist, dpv_list_sincs, dh_mask, indices=wavelength_indices
+        )
+
+        # Get ni_desired for percentage calculation
+        ni_desired = metadata['ni_desired']
+
+        # Print results to terminal
+        print("\n" + "="*60)
+        print("SINC PROBE STANDARD DEVIATION ANALYSIS RESULTS")
+        print("="*60)
+        print(f"Target normalized intensity (ni_desired): {ni_desired:.2e}")
+        print()
+
+        probe_marker_labels = ['positive', 'negative']
+
+        for wvl_idx in range(len(wavelength_indices)):
+            wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wavelength_indices[wvl_idx]}"
+            print(f"Wavelength {wvl_nm} nm (index {wavelength_indices[wvl_idx]}):")
+            print("-" * 40)
+
+            for probe_sequence in range(2):  # 0=positive, 1=negative
+                print(f"  {probe_marker_labels[probe_sequence].capitalize()} probes:")
+                for probe_idx in range(3):  # probe 0, 1, 2
+                    stdev_raw = stddevs_sinc_cube[wvl_idx, probe_sequence, probe_idx]
+                    stdev_percent = (stdev_raw / ni_desired) * 100
+                    print(f"    Probe {probe_idx}: {stdev_raw:.3e} ({stdev_percent:.2f}% of target)")
+            print()
+
+        print("="*60)
+
+############
     # Create the plot
     fig, ax = plt.subplots(figsize=(10, 8))
 
@@ -1172,7 +1210,7 @@ if __name__ == '__main__':
     # # Option 1: Create new Gaussian probe sets with sigma sweep (uncomment to generate new data)
     # sigma_range = (0.5, 2.0)  # Range for sigma values
     # sigma_step = 0.1         # Step size for sigma sweep
-    #
+
     # print("\nCreating Gaussian probe sets with sigma sweep...")
     # dpv_sets_dict, sigma_values, dh_mask, metadata = create_gaussian_probe_sets_sigma_sweep(
     #     modelpath, cfgfile, dmlist, sigma_range, sigma_step,
@@ -1190,23 +1228,23 @@ if __name__ == '__main__':
         output_path, prefix='gaussian_sigma_sweep', mode='nfov_band1', dark_hole='360deg'
     )
 
-    # # Plot sigma sweep analysis
+    # # Plot sigma sweep mean DH intensity analysis
     # print("\nGenerating sigma sweep analysis plot...")
-    # plot_sigma_sweep_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
-    #                          wavelength_indices=[0, 1, 2])
-    # 
-    # # Plot sigma sweep standard deviation analysis
-    # print("\nGenerating sigma sweep standard deviation analysis plot...")
-    # plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
-    #                                 metadata, wavelength_indices=[0, 1, 2])
-    #
+    # plot_sigma_sweep_mean_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
+    #                                wavelength_indices=[0, 1, 2])
+
+    # Plot sigma sweep standard deviation analysis
+    print("\nGenerating sigma sweep standard deviation analysis plot...")
+    plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
+                                    metadata, dpv_list_sincs, wavelength_indices=[0, 1, 2])
+
     # # Plot sigma sweep peak-to-valley analysis
     # print("\nGenerating sigma sweep peak-to-valley analysis plot...")
     # plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
     #                               metadata, wavelength_indices=[0, 1, 2])
 
-    # Plot DM amplitude vs sigma with sinc-sinc-sine overlay
-    print("\nGenerating DM amplitude vs sigma analysis plot with sinc-sinc-sine overlay...")
-    plot_dm_amplitude_vs_sigma(dpv_sets_dict, sigma_values, dpv_list_sincs, cfg, dmlist, dh_mask,
-                               metadata, wavelength_indices=[0, 1, 2])
+    # # Plot DM amplitude vs sigma with sinc-sinc-sine overlay
+    # print("\nGenerating DM amplitude vs sigma analysis plot with sinc-sinc-sine overlay...")
+    # plot_dm_amplitude_vs_sigma(dpv_sets_dict, sigma_values, dpv_list_sincs, cfg, dmlist, dh_mask,
+    #                            metadata, wavelength_indices=[0, 1, 2])
 
