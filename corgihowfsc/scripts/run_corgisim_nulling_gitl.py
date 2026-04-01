@@ -180,9 +180,24 @@ def main(param_file_name='default_param.yml', fullpath=False):
     if num_proper_process is not None:
         corgi_overrides['NCPUS'] = num_proper_process
 
-    if num_proper_process is not None:
-        corgi_overrides['NCPUS'] = num_proper_process
-        
+    # Initialise the workers with the necessary data and configuration to run the howfsc loop, including the model files and any overrides
+    if mpi_comm is not None:
+        from corgihowfsc.utils.mpi_runtime import build_worker_init_config, init_workers
+        init_workers(
+            mpi_comm,
+            build_worker_init_config(
+                cfgfile,
+                cstratfile,
+                hconffile,
+                backend_type,
+                mode,
+                corgi_overrides,
+                args,
+            ),
+        )
+    else:
+        print("MPI not enabled, running in single node.")
+
     imager = GitlImage(
         cfg=cfg,  # Your CoronagraphMode object
         cstrat=cstrat,  # Your ControlStrategy object
