@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import yaml
 
-def plot_experiment_comparison(experiment_names, base_output_path):
+def plot_experiment_comparison(experiment_names, base_data_path, base_output_path=None):
     """
     Load outputs from multiple HOWFSC experiments and produce comparison plots.
 
@@ -27,11 +27,13 @@ def plot_experiment_comparison(experiment_names, base_output_path):
     experiment_names : list of str
         List of experiment folder names, e.g.
         ``['2026-03-26_154159_corgisim_model', '2026-03-31_144413_corgisim_model']``.
-        Each must be a subdirectory of ``base_output_path``.
+        Each must be a subdirectory of ``base_data_path``.
+    base_data_path : str
+        Path to the directory containing all experiment folders.
     base_output_path : str
-        Path to the directory containing all experiment folders. Comparison
-        plots are saved here.
+        Path to the directory to save comparison plots. If not specified, set to base_data_path.
     """
+    base_output_path = base_data_path if base_output_path is None else base_output_path
 
     fig_iter, ax_iter = plt.subplots(layout='constrained')
     fig_time, ax_time = plt.subplots(layout='constrained')
