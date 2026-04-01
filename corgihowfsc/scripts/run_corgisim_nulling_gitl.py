@@ -3,7 +3,7 @@ from pathlib import Path
 import matplotlib
 import argparse
 
-matplotlib.use('TkAgg')
+matplotlib.use('TkAgg') #Agg
 
 import eetc
 from howfsc.control.cs import ControlStrategy
