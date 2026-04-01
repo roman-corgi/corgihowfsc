@@ -285,13 +285,20 @@ def main(param_file_name='default_param.yml', fullpath=False):
         },
     }
 
-    nulling_gitl(cstrat,
-                 estimator,
-                 probes,
-                 normalization_strategy,
-                 imager,
-                 cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps,
-                 metadata, output_every_iter)
+    try:
+        nulling_gitl(cstrat,
+                     estimator,
+                     probes,
+                     normalization_strategy,
+                     imager,
+                     cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps,
+                     metadata, output_every_iter)
+    finally:
+        if mpi_comm is not None:
+            from corgihowfsc.utils.mpi_runtime import shutdown_workers
+            shutdown_workers(mpi_comm)
+
+    print('nulling_gitl complete, exiting', flush=True)
 
 
 if __name__ == '__main__':
