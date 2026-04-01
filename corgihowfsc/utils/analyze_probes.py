@@ -632,6 +632,7 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
             continue
 ############
     # Analyze sinc probes if provided
+    sinc_mean_stddevs = None
     if dpv_list_sincs is not None:
         print("\nAnalyzing sinc probes across all three wavelengths...")
 
@@ -643,6 +644,9 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
         # Get ni_desired for percentage calculation
         ni_desired = metadata['ni_desired']
 
+        # Calculate mean stddev for each wavelength (across all probe sequences and indices)
+        sinc_mean_stddevs = []
+
         # Print results to terminal
         print("\n" + "="*60)
         print("SINC PROBE STANDARD DEVIATION ANALYSIS RESULTS")
@@ -650,22 +654,36 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
         print(f"Target normalized intensity (ni_desired): {ni_desired:.2e}")
         print()
 
-        probe_marker_labels = ['positive', 'negative']
+        probe_sequence_labels = ['positive', 'negative']
 
         for wvl_idx in range(len(wavelength_indices)):
             wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wavelength_indices[wvl_idx]}"
             print(f"Wavelength {wvl_nm} nm (index {wavelength_indices[wvl_idx]}):")
             print("-" * 40)
 
+            wvl_stddevs = []  # Collect all stddevs for this wavelength
+
             for probe_sequence in range(2):  # 0=positive, 1=negative
-                print(f"  {probe_marker_labels[probe_sequence].capitalize()} probes:")
+                print(f"  {probe_sequence_labels[probe_sequence].capitalize()} probes:")
                 for probe_idx in range(3):  # probe 0, 1, 2
                     stdev_raw = stddevs_sinc_cube[wvl_idx, probe_sequence, probe_idx]
                     stdev_percent = (stdev_raw / ni_desired) * 100
+                    wvl_stddevs.append(stdev_percent)  # Store percentage for mean calculation
                     print(f"    Probe {probe_idx}: {stdev_raw:.3e} ({stdev_percent:.2f}% of target)")
+
+            # Calculate mean stddev for this wavelength
+            wvl_mean_stddev = np.mean(wvl_stddevs)
+            sinc_mean_stddevs.append(wvl_mean_stddev)
+            print(f"  MEAN for {wvl_nm}nm: {wvl_mean_stddev:.2f}% of target")
             print()
 
         print("="*60)
+        print("SINC PROBE MEAN STANDARD DEVIATIONS:")
+        for wvl_idx in range(len(wavelength_indices)):
+            wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wavelength_indices[wvl_idx]}"
+            print(f"  {wvl_nm}nm: {sinc_mean_stddevs[wvl_idx]:.2f}% of target")
+        print("="*60)
+
 
 ############
     # Create the plot
@@ -711,6 +729,69 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
                            color=color, linestyle=line_styles[probe_sequence],
                            alpha=0.7, linewidth=1.5, label=label, marker=marker, markersize=4)
 
+    # Calculate and plot mean lines for each wavelength
+    mean_lines_data = {}  # Store for sinc probe intersection calculation
+
+    for wvl_idx, (wvl, color) in enumerate(zip(wavelength_indices, colors)):
+        wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wvl}"
+
+        # Collect all data points for this wavelength across all probe sequences and indices
+        sigma_all = []
+        stdev_all = []
+
+        for probe_sequence in range(2):
+            for probe_idx in probe_indices:
+                for sigma in sigma_values:
+                    if sigma in results:
+                        try:
+                            stdev = results[sigma][wvl_idx, probe_sequence, probe_idx]
+                            stdev_percent = (stdev / ni_desired) * 100
+                            sigma_all.append(sigma)
+                            stdev_all.append(stdev_percent)
+                        except (IndexError, KeyError):
+                            continue
+
+        if len(sigma_all) > 0:
+            # Calculate mean at each sigma value
+            unique_sigmas = sorted(set(sigma_all))
+            mean_stdevs = []
+
+            for sigma in unique_sigmas:
+                # Get all stdev values for this sigma
+                sigma_stdevs = [stdev_all[i] for i, s in enumerate(sigma_all) if s == sigma]
+                mean_stdevs.append(np.mean(sigma_stdevs))
+
+            # Plot mean line with 'x' markers
+            ax.plot(unique_sigmas, mean_stdevs, color=color, linestyle='-', linewidth=3,
+                   marker='x', markersize=8, alpha=0.8,
+                   label=f"{wvl_nm}nm MEAN")
+
+            # Store for sinc probe intersection calculation
+            mean_lines_data[wvl_idx] = (unique_sigmas, mean_stdevs)
+
+    # Plot sinc probe means at intersection points with Gaussian mean lines
+    if sinc_mean_stddevs is not None:
+        for wvl_idx in range(len(wavelength_indices)):
+            if wvl_idx in mean_lines_data:
+                wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wavelength_indices[wvl_idx]}"
+                color = colors[wvl_idx]
+
+                # Find intersection sigma where Gaussian mean line equals sinc mean
+                unique_sigmas, mean_stdevs = mean_lines_data[wvl_idx]
+                sinc_mean = sinc_mean_stddevs[wvl_idx]
+
+                # Find closest intersection point
+                differences = [abs(stdev - sinc_mean) for stdev in mean_stdevs]
+                closest_idx = np.argmin(differences)
+                intersection_sigma = unique_sigmas[closest_idx]
+
+                # Plot sinc probe mean at intersection
+                ax.plot(intersection_sigma, sinc_mean, color=color, marker='D',
+                       markersize=12, markerfacecolor='white', markeredgecolor=color,
+                       markeredgewidth=3, label=f"{wvl_nm}nm SINC MEAN", zorder=10)
+
+                print(f"Sinc probe mean for {wvl_nm}nm plotted at σ={intersection_sigma:.2f}, stddev={sinc_mean:.2f}%")
+
     # Customize the plot
     ax.set_xlabel('Gaussian σ (in actuator pitch)', fontsize=12)
     ax.set_ylabel('Stddev of DH intensity (in % of target NI)', fontsize=12)
@@ -740,17 +821,29 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
         wvl_nm = wavelengths_nm[i] if i < len(wavelengths_nm) else f"λ{wavelength_indices[i]}"
         color_handles.append(Line2D([0], [0], color=color, linewidth=2, label=f"{wvl_nm}nm"))
 
-    # Create three separate legends
-    legend1 = ax.legend(handles=line_style_handles, loc='center left', bbox_to_anchor=(1.02, 0.85),
-                       title='Probe Type', fontsize=9)
-    legend2 = ax.legend(handles=marker_handles, loc='center left', bbox_to_anchor=(1.02, 0.65),
-                       title='Probe Index', fontsize=9)
-    legend3 = ax.legend(handles=color_handles, loc='center left', bbox_to_anchor=(1.02, 0.45),
-                       title='Wavelength', fontsize=9)
+    # Legend for additional plot elements (mean lines and sinc probes)
+    additional_handles = [
+        Line2D([0], [0], color='gray', linewidth=3, marker='x', markersize=8,
+               label='Gaussian Mean'),
+        Line2D([0], [0], color='gray', marker='D', markersize=12,
+               markerfacecolor='white', markeredgecolor='gray', markeredgewidth=3,
+               linestyle='None', label='Sinc Mean')
+    ]
 
-    # Add the first two legends back (matplotlib only keeps the last one by default)
+    # Create four separate legends
+    legend1 = ax.legend(handles=line_style_handles, loc='center left', bbox_to_anchor=(1.02, 0.9),
+                       title='Probe Type', fontsize=9)
+    legend2 = ax.legend(handles=marker_handles, loc='center left', bbox_to_anchor=(1.02, 0.75),
+                       title='Probe Index', fontsize=9)
+    legend3 = ax.legend(handles=color_handles, loc='center left', bbox_to_anchor=(1.02, 0.55),
+                       title='Wavelength', fontsize=9)
+    legend4 = ax.legend(handles=additional_handles, loc='center left', bbox_to_anchor=(1.02, 0.35),
+                       title='Statistics', fontsize=9)
+
+    # Add the first three legends back (matplotlib only keeps the last one by default)
     ax.add_artist(legend1)
     ax.add_artist(legend2)
+    ax.add_artist(legend3)
 
     # Adjust layout to accommodate legend
     plt.tight_layout()
