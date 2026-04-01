@@ -451,84 +451,88 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
                 t1 = time.time()
                 log.info('Jac recalc time: ' + str(t1-t0) + ' seconds')
 
-        # prev_[camparams]_list
-        prev_exptime_list = param_order_to_list(exptime_list)
-        prev_gain_list = param_order_to_list(gain_list)
-        prev_nframes_list = param_order_to_list(nframes_list)
+            # prev_[camparams]_list
+            prev_exptime_list = param_order_to_list(exptime_list)
+            prev_gain_list = param_order_to_list(gain_list)
+            prev_nframes_list = param_order_to_list(nframes_list)
 
-        # new framelist
-        framelist = _collect_framelist(
-            imager, cfg, dm1_list, dm2_list,
-            exptime_list=prev_exptime_list,
-            gain_list=prev_gain_list,
-            nframes_list=prev_nframes_list,
-            croplist=croplist,
-            normalization_strategy=normalization_strategy,
-            get_cgi_eetc=get_cgi_eetc,
-            hconf=hconf,
-            ndm=ndm,
-            cstrat=cstrat,
-            fracbadpix=fracbadpix,
-            n_jobs=safe_cpu_count,
-            use_mpi=use_mpi,
-        )
+            # new framelist
+            t0 = time.time()
+            framelist = _collect_framelist(
+                imager, cfg, dm1_list, dm2_list,
+                exptime_list=prev_exptime_list,
+                gain_list=prev_gain_list,
+                nframes_list=prev_nframes_list,
+                croplist=croplist,
+                normalization_strategy=normalization_strategy,
+                get_cgi_eetc=get_cgi_eetc,
+                hconf=hconf,
+                ndm=ndm,
+                cstrat=cstrat,
+                fracbadpix=fracbadpix,
+                n_jobs=safe_cpu_count,
+                use_mpi=use_mpi_framelist,
+            )
+            t1 = time.time()
+            log.info('Framelist collection time for iteration %d: %s seconds (mpi=%s)',
+                     iteration, t1-t0, use_mpi_framelist)
 
-        # drop packets for testing if requested
-        if nbadpacket > 0:
-            fr = rng.integers(0, len(framelist), (nbadpacket,))
-            pr = rng.integers(0, nrow//nrowperpacket, (nbadpacket,))
-            log.info('Dropping packets ' + str(pr) + ' of frames ' + str(fr))
-            for j in range(nbadpacket):
-                lr = pr[j]*nrowperpacket
-                ur = (pr[j] + 1)*nrowperpacket
-                framelist[fr[j]][lr:ur, :] *= np.nan
+            # drop packets for testing if requested
+            if nbadpacket > 0:
+                fr = rng.integers(0, len(framelist), (nbadpacket,))
+                pr = rng.integers(0, nrow//nrowperpacket, (nbadpacket,))
+                log.info('Dropping packets ' + str(pr) + ' of frames ' + str(fr))
+                for j in range(nbadpacket):
+                    lr = pr[j]*nrowperpacket
+                    ur = (pr[j] + 1)*nrowperpacket
+                    framelist[fr[j]][lr:ur, :] *= np.nan
+                    pass
                 pass
-            pass
 
-        # drop frames for testing if requested
-        if nbadframe > 0:
-            fr = rng.integers(0, len(framelist), (nbadframe,))
-            log.info('Dropping frames ' + str(fr))
-            for j in range(nbadframe):
-                framelist[fr[j]] *= np.nan
+            # drop frames for testing if requested
+            if nbadframe > 0:
+                fr = rng.integers(0, len(framelist), (nbadframe,))
+                log.info('Dropping frames ' + str(fr))
+                for j in range(nbadframe):
+                    framelist[fr[j]] *= np.nan
+                    pass
                 pass
-            pass
 
         # technically new nrow, ncol, croplist too, but these don't actually
         # change (parameters are not updated)
         pass
 
-    if isprof:
-        # cumtime
-        buf = io.StringIO()
-        ps = pstats.Stats(pr, stream=buf)
-        ps.sort_stats("cumtime").print_stats("howfsc", 20)
-        log.info("Profiler stats (cumtime)\n%s", buf.getvalue())
+        if isprof:
+            # cumtime
+            buf = io.StringIO()
+            ps = pstats.Stats(pr, stream=buf)
+            ps.sort_stats("cumtime").print_stats("howfsc", 20)
+            log.info("Profiler stats (cumtime)\n%s", buf.getvalue())
 
-        # tottime
-        buf = io.StringIO()
-        ps = pstats.Stats(pr, stream=buf)
-        ps.sort_stats("tottime").print_stats("howfsc", 20)
-        log.info("Profiler stats (tottime)\n%s", buf.getvalue())
+            # tottime
+            buf = io.StringIO()
+            ps = pstats.Stats(pr, stream=buf)
+            ps.sort_stats("tottime").print_stats("howfsc", 20)
+            log.info("Profiler stats (tottime)\n%s", buf.getvalue())
 
-        pass
+            pass
 
-    if fileout is not None:
-        hdr = pyfits.Header()
-        hdr['NLAM'] = len(cfg.sl_list)
-        prim = pyfits.PrimaryHDU(header=hdr)
-        img = pyfits.ImageHDU(framelist)
-        prev = pyfits.ImageHDU(prev_exptime_list)
-        hdul = pyfits.HDUList([prim, img, prev])
-        hdul.writeto(fileout, overwrite=True)
+        if fileout is not None:
+            hdr = pyfits.Header()
+            hdr['NLAM'] = len(cfg.sl_list)
+            prim = pyfits.PrimaryHDU(header=hdr)
+            img = pyfits.ImageHDU(framelist)
+            prev = pyfits.ImageHDU(prev_exptime_list)
+            hdul = pyfits.HDUList([prim, img, prev])
+            hdul.writeto(fileout, overwrite=True)
 
-        ni_score, ni_inner, ni_outer = get_ni(framelistlist[iteration - 1], cfg, prev_exptime_list,
-                                              debugging_dict['peakflux'], normalization_strategy, ndm, nrow, ncol)
-        ni_lists['ni_score'].append(ni_score)
-        ni_lists['ni_inner'].append(ni_inner)
-        ni_lists['ni_outer'].append(ni_outer)
+            ni_score, ni_inner, ni_outer = get_ni(framelistlist[iteration - 1], cfg, prev_exptime_list,
+                                                  debugging_dict['peakflux'], normalization_strategy, ndm, nrow, ncol)
+            ni_lists['ni_score'].append(ni_score)
+            ni_lists['ni_inner'].append(ni_inner)
+            ni_lists['ni_outer'].append(ni_outer)
 
-        save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, perfect_efield_list)
+            save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, perfect_efield_list)
     finally:
         if mpi_executor is not None:
             log.info('Shutting down persistent MPI executor')
