@@ -928,7 +928,7 @@ def load_gaussian_probe_sets_sigma_sweep(input_path, prefix='gaussian_sigma_swee
     return dpv_sets_dict, sigma_values, dh_mask, metadata
 
 
-def plot_dm_amplitude_vs_sigma(dpv_sets_dict, sigma_values, dpv_list2, cfg, dmlist, dh_mask,
+def plot_dm_amplitude_vs_sigma(dpv_sets_dict, sigma_values, dpv_list_sincs, cfg, dmlist, dh_mask,
                                metadata, wavelength_indices=[0, 1, 2], probe_indices=[0, 1, 2]):
     """
     Create a plot showing probe amplitude on DM in peak-to-valley (volts) vs Gaussian FWHM (sigma)
@@ -937,7 +937,7 @@ def plot_dm_amplitude_vs_sigma(dpv_sets_dict, sigma_values, dpv_list2, cfg, dmli
     Arguments:
      dpv_sets_dict: dictionary from create_gaussian_probe_sets_sigma_sweep
      sigma_values: array of sigma values used for Gaussian probes
-     dpv_list2: list of sinc-sinc-sine probe voltage arrays
+     dpv_list_sincs: list of sinc-sinc-sine probe voltage arrays
      cfg: CoronagraphMode object
      dmlist: list of DMs for current DM setting
      dh_mask: boolean mask for the dark hole region
@@ -993,14 +993,14 @@ def plot_dm_amplitude_vs_sigma(dpv_sets_dict, sigma_values, dpv_list2, cfg, dmli
     sinc_amplitudes = []
     sinc_intensities_by_wvl = []
 
-    for dpv in dpv_list2:
+    for dpv in dpv_list_sincs:
         ptv_volts = np.max(dpv) - np.min(dpv)
         sinc_amplitudes.append(ptv_volts)
 
     # Get sinc probe intensities for each wavelength
     for wvl_idx in wavelength_indices:
         averages, stddevs, ptvs, efields, intensities = analyze_probe_set(
-            cfg, dmlist, dpv_list2, dh_mask, wvl_idx
+            cfg, dmlist, dpv_list_sincs, dh_mask, wvl_idx
         )
         sinc_intensities_by_wvl.append(averages)
 
@@ -1010,7 +1010,7 @@ def plot_dm_amplitude_vs_sigma(dpv_sets_dict, sigma_values, dpv_list2, cfg, dmli
     print("\nCalculating equivalent sigma for sinc-sinc-sine probes...")
     sinc_equivalent_sigmas = []
 
-    for probe_idx in range(len(dpv_list2)):
+    for probe_idx in range(len(dpv_list_sincs)):
         # For each sinc probe, find the Gaussian sigma that gives closest intensity match
         # Use the average intensity from positive and negative sequences at middle wavelength
         wvl_middle_idx = len(wavelength_indices) // 2
@@ -1110,25 +1110,25 @@ if __name__ == '__main__':
     # Load probes and DH mask from the analysis path
     dh_mask = fits.getdata(os.path.join(analysis_path, 'dh_mask.fits')).astype(bool)
 
-    dpv_list1 = []   # Gaussian probes
+    dpv_list_gaussians = []   # Gaussian probes
     ### 1e-5
-    # dpv_list1.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_x13_y8_gauss1.fits')))
-    # dpv_list1.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_x13_y9_gauss2.fits')))
-    # dpv_list1.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_x14_y9_gauss3.fits')))
+    # dpv_list_gaussians.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_x13_y8_gauss1.fits')))
+    # dpv_list_gaussians.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_x13_y9_gauss2.fits')))
+    # dpv_list_gaussians.append(fits.getdata(os.path.join(analysis_path, 'dmrel_nfov_band1_360deg_ni1e-05_x14_y9_gauss3.fits')))
 
     ### 1e-7 with sigma=1 from sigma sweep
-    dpv_list1.append(fits.getdata(os.path.join(analysis_path, 'sigma_sweep_1e-7', 'dmrel_nfov_band1_360deg_ni1e-07_x13_y8_sigma1.00_gauss0.fits')))
-    dpv_list1.append(fits.getdata(os.path.join(analysis_path, 'sigma_sweep_1e-7', 'dmrel_nfov_band1_360deg_ni1e-07_x13_y8_sigma1.00_gauss0.fits')))
-    dpv_list1.append(fits.getdata(os.path.join(analysis_path, 'sigma_sweep_1e-7', 'dmrel_nfov_band1_360deg_ni1e-07_x13_y8_sigma1.00_gauss0.fits')))
+    dpv_list_gaussians.append(fits.getdata(os.path.join(analysis_path, 'sigma_sweep_1e-7', 'dmrel_nfov_band1_360deg_ni1e-07_x13_y8_sigma1.50_gauss0.fits')))
+    dpv_list_gaussians.append(fits.getdata(os.path.join(analysis_path, 'sigma_sweep_1e-7', 'dmrel_nfov_band1_360deg_ni1e-07_x13_y8_sigma1.50_gauss0.fits')))
+    dpv_list_gaussians.append(fits.getdata(os.path.join(analysis_path, 'sigma_sweep_1e-7', 'dmrel_nfov_band1_360deg_ni1e-07_x13_y8_sigma1.50_gauss0.fits')))
 
-    dpv_list2 = []   # Baseline sinc-sinc-sine probes, originally scaled to 1e-5
+    dpv_list_sincs = []   # Baseline sinc-sinc-sine probes, originally scaled to 1e-5
     scale = 0.13
     cos = fits.getdata('/Users/ilaginja/repos/corgihowfsc/corgihowfsc/model/probes/nfov_dm_dmrel_4_1.0e-05_cos.fits') * scale
-    dpv_list2.append(cos)
+    dpv_list_sincs.append(cos)
     sinlr = fits.getdata('/Users/ilaginja/repos/corgihowfsc/corgihowfsc/model/probes/nfov_dm_dmrel_4_1.0e-05_sinlr.fits') * scale
-    dpv_list2.append(sinlr)
+    dpv_list_sincs.append(sinlr)
     sinud = fits.getdata('/Users/ilaginja/repos/corgihowfsc/corgihowfsc/model/probes/nfov_dm_dmrel_4_1.0e-05_sinud.fits') * scale
-    dpv_list2.append(sinud)
+    dpv_list_sincs.append(sinud)
 
     print(f"  Probe voltages (min, max) for cos: {np.min(cos), np.max(cos)} -> PtV = {np.max(cos) - np.min(cos)}")
     print(f"  Probe voltages (min, max) for sinlr: {np.min(sinlr), np.max(sinlr)} -> PtV = {np.max(sinlr) - np.min(sinlr)}")
@@ -1146,25 +1146,25 @@ if __name__ == '__main__':
     ################## BASIC ANALYSIS OF TWO SETS OF PROBES ##################
     # # Analyze probe sets for datacubes across wavelength indices [0, 1, 2]
     # print("Analyzing Gaussian probes...")
-    # averages_cube1, stddevs_cube1, ptvs_cube1, efields_cube1, intensities_cube1 = analyze_probe_set_wvln_cubes(
-    #     cfg, dmlist, dpv_list1, dh_mask, indices=[0, 1, 2]
+    # averages_cube_gaussian, stddevs_cube1, ptvs_cube1, efields_cube1, intensities_cube1 = analyze_probe_set_wvln_cubes(
+    #     cfg, dmlist, dpv_list_gaussians, dh_mask, indices=[0, 1, 2]
     # )
 
     # print("\nAnalyzing Sinusoidal probes...")
-    # averages_cube2, stddevs_cube2, ptvs_cube2, efields_cube2, intensities_cube2 = analyze_probe_set_wvln_cubes(
-    #     cfg, dmlist, dpv_list2, dh_mask, indices=[0, 1, 2]
+    # averages_cube_sines, stddevs_cube2, ptvs_cube2, efields_cube2, intensities_cube2 = analyze_probe_set_wvln_cubes(
+    #     cfg, dmlist, dpv_list_sincs, dh_mask, indices=[0, 1, 2]
     # )
 
     # # Save wvln cubes to disk
     # print(f"\nSaving Gaussian probe datacubes...")
-    # save_wvln_cubes_to_disk(averages_cube1, stddevs_cube1, ptvs_cube1, analysis_path, prefix="gaussian_probes")
-    #
+    # save_wvln_cubes_to_disk(averages_cube_gaussian, stddevs_cube1, ptvs_cube1, analysis_path, prefix="gaussian_probes")
+
     # print(f"\nSaving Sinusoidal probe datacubes...")
-    # save_wvln_cubes_to_disk(averages_cube2, stddevs_cube2, ptvs_cube2, analysis_path, prefix="sinusoidal_probes")
+    # save_wvln_cubes_to_disk(averages_cube_sines, stddevs_cube2, ptvs_cube2, analysis_path, prefix="sinusoidal_probes")
 
     # # Plot comparison of averages across wavelengths
     # print("\nGenerating comparison plots...")
-    # plot_probe_ni_vs_wvln(averages_cube2)
+    # plot_probe_ni_vs_wvln(averages_cube_gaussian)
 
     ################## SIGMA SWEEP ##################
     output_path = os.path.join(analysis_path, 'sigma_sweep_1e-7')  # Path where data is saved
@@ -1207,6 +1207,6 @@ if __name__ == '__main__':
 
     # Plot DM amplitude vs sigma with sinc-sinc-sine overlay
     print("\nGenerating DM amplitude vs sigma analysis plot with sinc-sinc-sine overlay...")
-    plot_dm_amplitude_vs_sigma(dpv_sets_dict, sigma_values, dpv_list2, cfg, dmlist, dh_mask,
+    plot_dm_amplitude_vs_sigma(dpv_sets_dict, sigma_values, dpv_list_sincs, cfg, dmlist, dh_mask,
                                metadata, wavelength_indices=[0, 1, 2])
 
