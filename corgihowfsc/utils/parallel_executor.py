@@ -1,6 +1,5 @@
 import multiprocessing as mp
 import multiprocessing.pool as mpp
-from mpi4py.futures import MPIPoolExecutor
 
 
 class NoDaemonProcess(mp.Process):
@@ -66,7 +65,7 @@ class NestablePool(mpp.Pool):
 
 def run_parallel(
         func, args_list, n_jobs=1, allow_nesting=False,
-        start_method="spawn", use_mpi=False):
+        start_method="spawn", use_mpi=False, executor=None):
     """
     Run func over args_list in parallel using multiprocessing.Pool or MPI.
     Blocks until all jobs finish (barrier).
@@ -85,6 +84,9 @@ def run_parallel(
                        multiprocessing.Pool. Requires launching with:
                          mpiexec -n (n_jobs+1) python -m mpi4py.futures script.py
                        Worker ranks are pre-allocated by mpiexec; rank 0 is master.
+        executor:      an already-open MPIPoolExecutor to reuse. Required when
+                       use_mpi=True so the caller owns the MPI worker lifecycle.
+                       Ignored when use_mpi=False.
 
     Returns:
         list of results in the same order as args_list
@@ -107,28 +109,3 @@ def run_parallel(
     ctx = mp.get_context(start_method)
     with ctx.Pool(processes=n_jobs) as pool:
         return pool.starmap(func, args_list)
-
-# Alternative implementation using joblib, but proper is using multiprocessing.Pool for parallel processing in this case -> not straightforward as it would crash ... due to nested parallelism. 
-
-# from joblib import Parallel, delayed
-
-# def run_parallel(fn, args_list, n_jobs=1):
-#     """
-#     Run fn over args_list in parallel using joblib.
-#     Blocks until ALL jobs finish (barrier).
-    
-#     Args:
-#         fn: callable — must be picklable (free function or static method)
-#         args_list: list of tuples — each tuple is unpacked as fn(*args)
-#         n_jobs: number of workers. 1 = serial, -1 = all cores (avoid when on cluster)
-    
-#     Returns:
-#         list of results in same order as args_list
-#     """
-#     if n_jobs == 1:
-#         return [fn(*a) for a in args_list]
-    
-#     return Parallel(n_jobs=n_jobs, backend='loky')(
-#         delayed(fn)(*a) for a in args_list
-#     )
-
