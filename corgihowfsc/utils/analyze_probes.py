@@ -1343,16 +1343,16 @@ if __name__ == '__main__':
     # plot_sigma_sweep_mean_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
     #                                wavelength_indices=[0, 1, 2])
 
-    # Plot sigma sweep standard deviation analysis
-    print("\nGenerating sigma sweep standard deviation analysis plot...")
-    plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
-                                    metadata, dpv_list_sincs, wavelength_indices=[0, 1, 2],
-                                    data_out=analysis_path)
+    # # Plot sigma sweep standard deviation analysis
+    # print("\nGenerating sigma sweep standard deviation analysis plot...")
+    # plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
+    #                                 metadata, dpv_list_sincs, wavelength_indices=[0, 1, 2],
+    #                                 data_out=analysis_path)
 
-    # # Plot sigma sweep peak-to-valley analysis
-    # print("\nGenerating sigma sweep peak-to-valley analysis plot...")
-    # plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
-    #                               metadata, wavelength_indices=[0, 1, 2])
+    # Plot sigma sweep peak-to-valley analysis
+    print("\nGenerating sigma sweep peak-to-valley analysis plot...")
+    plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
+                                  metadata, wavelength_indices=[0, 1, 2])
 
     # # Plot DM amplitude vs sigma with sinc-sinc-sine overlay
     # print("\nGenerating DM amplitude vs sigma analysis plot with sinc-sinc-sine overlay...")
