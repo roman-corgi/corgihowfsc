@@ -655,7 +655,7 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
 
         # Prepare CSV data
         csv_data = []
-        csv_headers = ['Wavelength_nm', 'Wavelength_Index', 'Probe_Type', 'Probe_Index', 'Stddev_Raw', 'Stddev_Percent']
+        csv_headers = ['Wavelength_nm', 'Wavelength_Index', 'Probe_Sequence', 'Probe_Index', 'Stddev_Raw', 'Stddev_Percent']
         csv_data.append(csv_headers)
 
         for wvl_idx in range(len(wavelength_indices)):
@@ -841,7 +841,7 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
 
     # Create four separate legends
     legend1 = ax.legend(handles=line_style_handles, loc='center left', bbox_to_anchor=(1.02, 0.9),
-                       title='Probe Type', fontsize=9)
+                       title='Probe Sequence', fontsize=9)
     legend2 = ax.legend(handles=marker_handles, loc='center left', bbox_to_anchor=(1.02, 0.75),
                        title='Probe Index', fontsize=9)
     legend3 = ax.legend(handles=color_handles, loc='center left', bbox_to_anchor=(1.02, 0.55),
@@ -875,7 +875,8 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
 
 
 def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
-                                metadata, wavelength_indices=[0, 1, 2], probe_indices=[0, 1, 2]):
+                                 metadata, dpv_list_sincs=None, wavelength_indices=[0, 1, 2],
+                                  probe_indices=[0, 1, 2], data_out=None):
     """
     Create a plot showing peak-to-valley (max-min) of DH intensity as percentage of ni_desired vs sigma.
 
@@ -886,8 +887,10 @@ def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_m
      dmlist: list of DMs for current DM setting
      dh_mask: boolean mask for the dark hole region
      metadata: metadata dictionary containing ni_desired
+     dpv_list_sincs: list of sinc probe voltages to analyze (optional)
      wavelength_indices: list of wavelength indices to analyze (default: [0, 1, 2])
      probe_indices: list of probe indices to plot (default: [0, 1, 2])
+     data_out: path to store analysis results for sinc probes (optional, used if dpv_list_sincs is provided)
 
     Returns:
      fig, ax: matplotlib figure and axes objects
@@ -912,16 +915,84 @@ def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_m
         dpv_list = dpv_sets_dict[sigma]
 
         # Analyze this probe set across all wavelengths
-        try:
-            _, _, ptvs_cube, _, _ = analyze_probe_set_wvln_cubes(
-                cfg, dmlist, dpv_list, dh_mask, indices=wavelength_indices
-            )
+        _, _, ptvs_cube, _, _ = analyze_probe_set_wvln_cubes(
+            cfg, dmlist, dpv_list, dh_mask, indices=wavelength_indices
+        )
 
-            results[sigma] = ptvs_cube
+        results[sigma] = ptvs_cube
 
-        except Exception as e:
-            print(f"  Warning: Failed to analyze sigma {sigma:.2f}: {e}")
-            continue
+    # Analyze sinc probes if provided
+    sinc_mean_ptvs = None
+    if dpv_list_sincs is not None:
+        # Analyze sinc probes across all wavelengths
+        _, _, ptvs_sinc_cube, _, _ = analyze_probe_set_wvln_cubes(
+            cfg, dmlist, dpv_list_sincs, dh_mask, indices=wavelength_indices
+        )
+
+        # Get ni_desired for percentage calculation
+        ni_desired = metadata['ni_desired']
+
+        # Calculate mean ptv for each wavelength (across all probe sequences and indices)
+        sinc_mean_ptvs = []
+
+        probe_sequence_labels = ['positive', 'negative']
+
+        # Prepare data for saving
+        analysis_text = []
+        analysis_text.append("="*60)
+        analysis_text.append("SINC PROBE PEAK-TO-VALLEY ANALYSIS RESULTS")
+        analysis_text.append("="*60)
+        analysis_text.append(f"Target normalized intensity (ni_desired): {ni_desired:.2e}")
+        analysis_text.append("")
+
+        # Prepare CSV data
+        csv_data = []
+        csv_headers = ['Wavelength_nm', 'Wavelength_Index', 'Probe_Sequence', 'Probe_Index', 'PTV_Raw', 'PTV_Percent']
+        csv_data.append(csv_headers)
+
+        for wvl_idx in range(len(wavelength_indices)):
+            wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wavelength_indices[wvl_idx]}"
+            analysis_text.append(f"Wavelength {wvl_nm} nm (index {wavelength_indices[wvl_idx]}):")
+            analysis_text.append("-" * 40)
+
+            wvl_ptvs = []  # Collect all ptvs for this wavelength
+
+            for probe_sequence in range(2):  # 0=positive, 1=negative
+                analysis_text.append(f"  {probe_sequence_labels[probe_sequence].capitalize()} probes:")
+                for probe_idx in range(3):  # probe 0, 1, 2
+                    ptv_raw = ptvs_sinc_cube[wvl_idx, probe_sequence, probe_idx]
+                    ptv_percent = (ptv_raw / ni_desired) * 100
+                    wvl_ptvs.append(ptv_percent)  # Store percentage for mean calculation
+                    analysis_text.append(f"    Probe {probe_idx}: {ptv_raw:.3e} ({ptv_percent:.2f}% of target)")
+
+                    # Add to CSV data
+                    csv_data.append([wvl_nm, wavelength_indices[wvl_idx], probe_sequence_labels[probe_sequence],
+                                   probe_idx, ptv_raw, ptv_percent])
+
+            # Calculate mean ptv for this wavelength
+            wvl_mean_ptv = np.mean(wvl_ptvs)
+            sinc_mean_ptvs.append(wvl_mean_ptv)
+            analysis_text.append(f"  MEAN for {wvl_nm}nm: {wvl_mean_ptv:.2f}% of target")
+            analysis_text.append("")
+
+        analysis_text.append("="*60)
+        analysis_text.append("SINC PROBE MEAN PEAK-TO-VALLEY VALUES:")
+        for wvl_idx in range(len(wavelength_indices)):
+            wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wavelength_indices[wvl_idx]}"
+            analysis_text.append(f"  {wvl_nm}nm: {sinc_mean_ptvs[wvl_idx]:.2f}% of target")
+        analysis_text.append("="*60)
+
+        # Save to txt file
+        with open(os.path.join(data_out, 'sinc_probe_ptv_intensity.txt'), 'w') as f:
+            for line in analysis_text:
+                f.write(line + '\n')
+
+        # Save to CSV file
+        import csv
+        with open(os.path.join(data_out, 'sinc_probe_ptv_intensity.csv'), 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerows(csv_data)
+
 
     # Create the plot
     fig, ax = plt.subplots(figsize=(10, 8))
@@ -946,15 +1017,12 @@ def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_m
 
                 for sigma in sigma_values:
                     if sigma in results:
-                        try:
-                            # Get peak-to-valley for this wavelength, probe sequence, and probe index
-                            ptv = results[sigma][wvl_idx, probe_sequence, probe_idx]
-                            # Convert to percentage of ni_desired
-                            ptv_percent = (ptv / ni_desired) * 100
-                            sigma_plot.append(sigma)
-                            ptv_plot.append(ptv_percent)
-                        except (IndexError, KeyError):
-                            continue
+                        # Get peak-to-valley for this wavelength, probe sequence, and probe index
+                        ptv = results[sigma][wvl_idx, probe_sequence, probe_idx]
+                        # Convert to percentage of ni_desired
+                        ptv_percent = (ptv / ni_desired) * 100
+                        sigma_plot.append(sigma)
+                        ptv_plot.append(ptv_percent)
 
                 if len(sigma_plot) > 0:
                     # Create label
@@ -965,6 +1033,66 @@ def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_m
                     ax.plot(sigma_plot, ptv_plot,
                            color=color, linestyle=line_styles[probe_sequence],
                            alpha=0.7, linewidth=1.5, label=label, marker=marker, markersize=4)
+
+    # Calculate and plot mean lines for each wavelength
+    mean_lines_data = {}  # Store for sinc probe intersection calculation
+
+    for wvl_idx, (wvl, color) in enumerate(zip(wavelength_indices, colors)):
+        wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wvl}"
+
+        # Collect all data points for this wavelength across all probe sequences and indices
+        sigma_all = []
+        ptv_all = []
+
+        for probe_sequence in range(2):
+            for probe_idx in probe_indices:
+                for sigma in sigma_values:
+                    if sigma in results:
+                        ptv = results[sigma][wvl_idx, probe_sequence, probe_idx]
+                        ptv_percent = (ptv / ni_desired) * 100
+                        sigma_all.append(sigma)
+                        ptv_all.append(ptv_percent)
+
+        if len(sigma_all) > 0:
+            # Calculate mean at each sigma value
+            unique_sigmas = sorted(set(sigma_all))
+            mean_ptvs = []
+
+            for sigma in unique_sigmas:
+                # Get all ptv values for this sigma
+                sigma_ptvs = [ptv_all[i] for i, s in enumerate(sigma_all) if s == sigma]
+                mean_ptvs.append(np.mean(sigma_ptvs))
+
+            # Plot mean line with 'x' markers in black
+            ax.plot(unique_sigmas, mean_ptvs, color='black', linestyle='-', linewidth=3,
+                   marker='x', markersize=8, alpha=0.8,
+                   label=f"{wvl_nm}nm MEAN")
+
+            # Store for sinc probe intersection calculation
+            mean_lines_data[wvl_idx] = (unique_sigmas, mean_ptvs)
+
+    # Plot sinc probe means at intersection points with Gaussian mean lines
+    intersection_sigmas = []  # Store sigma values for legend display
+    if sinc_mean_ptvs is not None:
+        for wvl_idx in range(len(wavelength_indices)):
+            if wvl_idx in mean_lines_data:
+                wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wavelength_indices[wvl_idx]}"
+                color = colors[wvl_idx]
+
+                # Find intersection sigma where Gaussian mean line equals sinc mean
+                unique_sigmas, mean_ptvs = mean_lines_data[wvl_idx]
+                sinc_mean = sinc_mean_ptvs[wvl_idx]
+
+                # Find closest intersection point
+                differences = [abs(ptv - sinc_mean) for ptv in mean_ptvs]
+                closest_idx = np.argmin(differences)
+                intersection_sigma = unique_sigmas[closest_idx]
+                intersection_sigmas.append((wvl_nm, intersection_sigma))
+
+                # Plot sinc probe mean at intersection
+                ax.plot(intersection_sigma, sinc_mean, color=color, marker='D',
+                       markersize=12, markerfacecolor='white', markeredgecolor=color,
+                       markeredgewidth=3, label=f"{wvl_nm}nm SINC MEAN", zorder=10)
 
     # Customize the plot
     ax.set_xlabel('Gaussian σ (in actuator pitch)', fontsize=12)
@@ -992,17 +1120,40 @@ def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_m
         wvl_nm = wavelengths_nm[i] if i < len(wavelengths_nm) else f"λ{wavelength_indices[i]}"
         color_handles.append(Line2D([0], [0], color=color, linewidth=2, label=f"{wvl_nm}nm"))
 
-    # Create three separate legends
-    legend1 = ax.legend(handles=line_style_handles, loc='center left', bbox_to_anchor=(1.02, 0.85),
-                       title='Probe sequence', fontsize=9)
-    legend2 = ax.legend(handles=marker_handles, loc='center left', bbox_to_anchor=(1.02, 0.65),
-                       title='Probe index', fontsize=9)
-    legend3 = ax.legend(handles=color_handles, loc='center left', bbox_to_anchor=(1.02, 0.45),
-                       title='Wavelength', fontsize=9)
+    # Legend for additional plot elements (mean lines and sinc probes)
+    additional_handles = [
+        Line2D([0], [0], color='gray', linewidth=3, marker='x', markersize=8,
+               label='Gaussian Mean'),
+        Line2D([0], [0], color='gray', marker='D', markersize=12,
+               markerfacecolor='white', markeredgecolor='gray', markeredgewidth=3,
+               linestyle='None', label='Sinc Mean')
+    ]
 
-    # Add the first two legends back (matplotlib only keeps the last one by default)
+    # Create four separate legends
+    legend1 = ax.legend(handles=line_style_handles, loc='center left', bbox_to_anchor=(1.02, 0.9),
+                       title='Probe Sequence', fontsize=9)
+    legend2 = ax.legend(handles=marker_handles, loc='center left', bbox_to_anchor=(1.02, 0.75),
+                       title='Probe Index', fontsize=9)
+    legend3 = ax.legend(handles=color_handles, loc='center left', bbox_to_anchor=(1.02, 0.55),
+                       title='Wavelength', fontsize=9)
+    legend4 = ax.legend(handles=additional_handles, loc='center left', bbox_to_anchor=(1.02, 0.35),
+                       title='Statistics', fontsize=9)
+
+    # Add the first three legends back (matplotlib only keeps the last one by default)
     ax.add_artist(legend1)
     ax.add_artist(legend2)
+    ax.add_artist(legend3)
+
+    # Add sigma intersection values underneath the legends
+    if sinc_mean_ptvs is not None and intersection_sigmas:
+        sigma_text = "Sinc σ intersections:\n"
+        for wvl_nm, sigma_val in intersection_sigmas:
+            sigma_text += f"{wvl_nm}: σ={sigma_val:.2f}\n"
+
+        # Add text below the legends
+        ax.text(1.02, 0.15, sigma_text, transform=ax.transAxes, fontsize=8,
+                verticalalignment='top', bbox=dict(boxstyle='round,pad=0.3',
+                facecolor='lightgray', alpha=0.8))
 
     # Adjust layout to accommodate legend
     plt.tight_layout()
@@ -1352,7 +1503,8 @@ if __name__ == '__main__':
     # Plot sigma sweep peak-to-valley analysis
     print("\nGenerating sigma sweep peak-to-valley analysis plot...")
     plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
-                                  metadata, wavelength_indices=[0, 1, 2])
+                                  metadata, wavelength_indices=[0, 1, 2],
+                                  data_out=analysis_path)
 
     # # Plot DM amplitude vs sigma with sinc-sinc-sine overlay
     # print("\nGenerating DM amplitude vs sigma analysis plot with sinc-sinc-sine overlay...")
