@@ -190,138 +190,157 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     abs_dm1list.append(dm10)
     abs_dm2list.append(dm20)
 
-    # jac, jtwj_map, n2clist
-    print('Calculating jacobian and jtwj_map...')
+    jac_executor = None
+    try:
+        if use_mpi_jacobian:
+            from mpi4py.futures import MPIPoolExecutor
+            jac_executor = MPIPoolExecutor(max_workers=safe_cpu_count)
+            log.info('Created persistent MPI executor for Jacobian work with %d workers',
+                     safe_cpu_count)
 
-    if precomp in ['precomp_all_once']:
-        t0 = time.time()
-        jac, jtwj_map, n2clist = howfsc_precomputation(
-            cfg=cfg,
-            dmset_list=[dm10, dm20],
-            cstrat=cstrat,
-            subcroplist=subcroplist,
-            jacmethod='fast',
-            do_n2clist=True,
-            num_process=num_process,
-            num_threads=num_threads,
-        )
-        t1 = time.time()
-        log.info('Jac/JTWJ/n2clist computation time: ' + str(t1-t0) + ' seconds')
-        pass
-    elif precomp in ['precomp_jacs_once', 'precomp_jacs_always']:
-        t0 = time.time()
-        jac, jtwj_map, _ = howfsc_precomputation(
-            cfg=cfg,
-            dmset_list=[dm10, dm20],
-            cstrat=cstrat,
-            subcroplist=subcroplist,
-            jacmethod='fast',
-            do_n2clist=False,
-            num_process=num_process,
-            num_threads=num_threads,
-        )
-        t1 = time.time()
-        log.info('Initial jac calc time: ' + str(t1-t0) + ' seconds')
-        n2clist = []
-        for n2cfn in n2clistfiles:
-            n2clist.append(pyfits.getdata(n2cfn))
+        # jac, jtwj_map, n2clist
+        print('Calculating jacobian and jtwj_map...')
+
+        if precomp in ['precomp_all_once']:
+            t0 = time.time()
+            jac, jtwj_map, n2clist = howfsc_precomputation(
+                cfg=cfg,
+                dmset_list=[dm10, dm20],
+                cstrat=cstrat,
+                subcroplist=subcroplist,
+                jacmethod='fast',
+                do_n2clist=True,
+                num_process=num_process,
+                num_threads=num_threads,
+            )
+            t1 = time.time()
+            log.info('Jac/JTWJ/n2clist computation time: ' + str(t1-t0) + ' seconds')
             pass
-        pass
-    else: # load_all
-        jac = pyfits.getdata(jacfile)
-        jtwj_map = JTWJMap(cfg, jac, cstrat, subcroplist)
-        n2clist = []
-        for n2cfn in n2clistfiles:
-            n2clist.append(pyfits.getdata(n2cfn))
+        elif precomp in ['precomp_jacs_once', 'precomp_jacs_always']:
+            t0 = time.time()
+            if use_mpi_jacobian:
+                jac, jtwj_map, _ = mpi_precompute_jac(
+                    cfg, [dm10, dm20], cstrat, subcroplist,
+                    jacmethod='fast', num_threads=num_threads,
+                    do_n2clist=False, executor=jac_executor,
+                )
+            else:
+                jac, jtwj_map, _ = howfsc_precomputation(
+                    cfg=cfg,
+                    dmset_list=[dm10, dm20],
+                    cstrat=cstrat,
+                    subcroplist=subcroplist,
+                    jacmethod='fast',
+                    do_n2clist=False,
+                    num_process=num_process,
+                    num_threads=num_threads,
+                )
+            t1 = time.time()
+            log.info('Initial jac calc time: ' + str(t1-t0) + ' seconds')
+            n2clist = []
+            for n2cfn in n2clistfiles:
+                n2clist.append(pyfits.getdata(n2cfn))
+                pass
             pass
-        pass
+        else: # load_all
+            jac = pyfits.getdata(jacfile)
+            jtwj_map = JTWJMap(cfg, jac, cstrat, subcroplist)
+            n2clist = []
+            for n2cfn in n2clistfiles:
+                n2clist.append(pyfits.getdata(n2cfn))
+                pass
+            pass
 
-    if stellar_vmag is not None:
-        hconf['star']['stellar_vmag'] = stellar_vmag
-    if stellar_type is not None:
-        hconf['star']['stellar_type'] = stellar_type
-    if stellar_vmag_target is not None:
-        hconf['star']['stellar_vmag_target'] = stellar_vmag_target
-    if stellar_type_target is not None:
-        hconf['star']['stellar_type_target'] = stellar_type_target
+        if stellar_vmag is not None:
+            hconf['star']['stellar_vmag'] = stellar_vmag
+        if stellar_type is not None:
+            hconf['star']['stellar_type'] = stellar_type
+        if stellar_vmag_target is not None:
+            hconf['star']['stellar_vmag_target'] = stellar_vmag_target
+        if stellar_type_target is not None:
+            hconf['star']['stellar_type_target'] = stellar_type_target
 
-    # TODO: update this to allow other stars? Not sure why its always v
-    get_cgi_eetc = CGIEETC(mag=hconf['star']['stellar_vmag'],
-                       phot='v', # only using V-band magnitudes as a standard
-                       spt=hconf['star']['stellar_type'],
-                       pointer_path=os.path.join(eetc_path,
-                                                 hconf['hardware']['pointer']),
-    )
+        # TODO: update this to allow other stars? Not sure why its always v
+        get_cgi_eetc = CGIEETC(mag=hconf['star']['stellar_vmag'],
+                           phot='v', # only using V-band magnitudes as a standard
+                           spt=hconf['star']['stellar_type'],
+                           pointer_path=os.path.join(eetc_path,
+                                                     hconf['hardware']['pointer']),
+        )
 
 
-    print('Calculating initial eetc exp time')
+        print('Calculating initial eetc exp time')
 
-    # Initialize things
-    unprobed_snr = cstrat.get_unprobedsnr(1, contrast)
-    probeheight = cstrat.get_probeheight(1, contrast)
-    probed_snr = cstrat.get_probedsnr(1, contrast)
-    pscale = contrast + probeheight
-    pscale_bright = 1.5*contrast + probeheight + \
-                    2 * np.sqrt(probeheight) * np.sqrt(1.5*contrast)
+        # Initialize things
+        unprobed_snr = cstrat.get_unprobedsnr(1, contrast)
+        probeheight = cstrat.get_probeheight(1, contrast)
+        probed_snr = cstrat.get_probedsnr(1, contrast)
+        pscale = contrast + probeheight
+        pscale_bright = 1.5*contrast + probeheight + \
+                        2 * np.sqrt(probeheight) * np.sqrt(1.5*contrast)
                     
-    nframes, exptime, gain, snr_out, optflag = \
-        get_cgi_eetc.calc_exp_time(
-            sequence_name=hconf['hardware']['sequence_list'][0],
-            snr=probed_snr,
-            scale=pscale,
-            scale_bright=pscale_bright,
-        )
+        nframes, exptime, gain, snr_out, optflag = \
+            get_cgi_eetc.calc_exp_time(
+                sequence_name=hconf['hardware']['sequence_list'][0],
+                snr=probed_snr,
+                scale=pscale,
+                scale_bright=pscale_bright,
+            )
 
-    # prev_exptime_list
-    prev_exptime_list = [exptime] * (nlam * ndm)
+        # prev_exptime_list
+        prev_exptime_list = [exptime] * (nlam * ndm)
 
-    # framelist
-    # do last, needs peak flux
-    rng = np.random.default_rng(12345)
+        # framelist
+        # do last, needs peak flux
+        rng = np.random.default_rng(12345)
     
-    num_imager_worker = args.num_imager_worker 
-    print('Using num_imager_worker = ', num_imager_worker)
+        num_imager_worker = args.num_imager_worker 
+        print('Using num_imager_worker = ', num_imager_worker)
 
-    # normalisation strategy first then imager, since normalisation strategy is needed to calculate peak flux for framelist collection
+        # normalisation strategy first then imager, since normalisation strategy is needed to calculate peak flux for framelist collection
 
-    # this step is to apply probe images
-    framelist = _collect_framelist(
-        imager, cfg, dm1_list, dm2_list,
-        exptime_list=[exptime] * (nlam * ndm),
-        gain_list=[gain] * (nlam * ndm),
-        nframes_list=[nframes] * (nlam * ndm),
-        croplist=croplist,
-        normalization_strategy=normalization_strategy,
-        get_cgi_eetc=get_cgi_eetc,
-        hconf=hconf,
-        ndm=ndm,
-        cstrat=cstrat,
-        fracbadpix=fracbadpix,
-        n_jobs=safe_cpu_count,
-        use_mpi=use_mpi,
-    )
+        # this step is to apply probe images
+        t0 = time.time()
+        framelist = _collect_framelist(
+            imager, cfg, dm1_list, dm2_list,
+            exptime_list=[exptime] * (nlam * ndm),
+            gain_list=[gain] * (nlam * ndm),
+            nframes_list=[nframes] * (nlam * ndm),
+            croplist=croplist,
+            normalization_strategy=normalization_strategy,
+            get_cgi_eetc=get_cgi_eetc,
+            hconf=hconf,
+            ndm=ndm,
+            cstrat=cstrat,
+            fracbadpix=fracbadpix,
+            n_jobs=safe_cpu_count,
+            use_mpi=use_mpi_framelist,
+        )
+        t1 = time.time()
+        log.info('Initial framelist collection time: %s seconds (mpi=%s)',
+                 t1-t0, use_mpi_framelist)
 
-    # drop packets for testing if requested
-    if nbadpacket > 0:
-        fr = rng.integers(0, len(framelist), (nbadpacket,))
-        pr = rng.integers(0, nrow//nrowperpacket, (nbadpacket,))
-        log.info('Dropping packets ' + str(pr) + ' of frames ' + str(fr))
-        for j in range(nbadpacket):
-            lr = pr[j]*nrowperpacket
-            ur = (pr[j] + 1)*nrowperpacket
-            framelist[fr[j]][lr:ur, :] *= np.nan
+        # drop packets for testing if requested
+        if nbadpacket > 0:
+            fr = rng.integers(0, len(framelist), (nbadpacket,))
+            pr = rng.integers(0, nrow//nrowperpacket, (nbadpacket,))
+            log.info('Dropping packets ' + str(pr) + ' of frames ' + str(fr))
+            for j in range(nbadpacket):
+                lr = pr[j]*nrowperpacket
+                ur = (pr[j] + 1)*nrowperpacket
+                framelist[fr[j]][lr:ur, :] *= np.nan
+                pass
             pass
-        pass
 
 
-    # drop frames for testing if requested
-    if nbadframe > 0:
-        fr = rng.integers(0, len(framelist), (nbadframe,))
-        log.info('Dropping frames ' + str(fr))
-        for j in range(nbadframe):
-            framelist[fr[j]] *= np.nan
+        # drop frames for testing if requested
+        if nbadframe > 0:
+            fr = rng.integers(0, len(framelist), (nbadframe,))
+            log.info('Dropping frames ' + str(fr))
+            for j in range(nbadframe):
+                framelist[fr[j]] *= np.nan
+                pass
             pass
-        pass
 
     for iteration in range(1, niter+1): # var is number of next iteration
 
@@ -503,6 +522,10 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         ni_lists['ni_outer'].append(ni_outer)
 
         save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, perfect_efield_list)
+    finally:
+        if mpi_executor is not None:
+            log.info('Shutting down persistent MPI executor')
+            mpi_executor.shutdown(wait=True)
 
 
 if __name__ == "__main__":
