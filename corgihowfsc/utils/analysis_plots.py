@@ -62,7 +62,7 @@ def plot_experiment_comparison(experiment_names, base_data_path, base_output_pat
         # Beta: one value per iteration (same across wavelengths), take lam_index == 0
         beta_per_iter = debug_df[debug_df['lam_index'] == 0]['beta'].values
         beta_iter1 = beta_per_iter[0] if len(beta_per_iter) > 0 else float('nan')
-        beta_max = np.max(beta_per_iter) if len(beta_per_iter) > 0 else float('nan')
+        beta_max = np.min(beta_per_iter) if len(beta_per_iter) > 0 else float('nan')
 
         label = (
                 f'estimator={estimator}\nnoise_free={is_noise_free}\n'
