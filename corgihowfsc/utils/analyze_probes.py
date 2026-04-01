@@ -1065,7 +1065,7 @@ def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_m
 
             # Plot mean line with 'x' markers in black
             ax.plot(unique_sigmas, mean_ptvs, color='black', linestyle='-', linewidth=3,
-                   marker='x', markersize=8, alpha=0.8,
+                   marker='x', markersize=8, alpha=0.6,
                    label=f"{wvl_nm}nm MEAN")
 
             # Store for sinc probe intersection calculation
@@ -1503,7 +1503,7 @@ if __name__ == '__main__':
     # Plot sigma sweep peak-to-valley analysis
     print("\nGenerating sigma sweep peak-to-valley analysis plot...")
     plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
-                                  metadata, wavelength_indices=[0, 1, 2],
+                                  metadata, dpv_list_sincs, wavelength_indices=[0, 1, 2],
                                   data_out=analysis_path)
 
     # # Plot DM amplitude vs sigma with sinc-sinc-sine overlay
