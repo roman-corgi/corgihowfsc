@@ -626,7 +626,7 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
         )
 
         results[sigma] = stddevs_cube
-############
+
     # Analyze sinc probes if provided
     sinc_mean_stddevs = None
     if dpv_list_sincs is not None:
@@ -643,8 +643,7 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
         # Calculate mean stddev for each wavelength (across all probe sequences and indices)
         sinc_mean_stddevs = []
 
-        wavelengths_nm = [546, 575, 604]
-        probe_types = ['positive', 'negative']
+        probe_sequence_labels = ['positive', 'negative']
 
         # Prepare data for saving
         analysis_text = []
@@ -667,7 +666,7 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
             wvl_stddevs = []  # Collect all stddevs for this wavelength
 
             for probe_sequence in range(2):  # 0=positive, 1=negative
-                analysis_text.append(f"  {probe_types[probe_sequence].capitalize()} probes:")
+                analysis_text.append(f"  {probe_sequence_labels[probe_sequence].capitalize()} probes:")
                 for probe_idx in range(3):  # probe 0, 1, 2
                     stdev_raw = stddevs_sinc_cube[wvl_idx, probe_sequence, probe_idx]
                     stdev_percent = (stdev_raw / ni_desired) * 100
@@ -675,7 +674,7 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
                     analysis_text.append(f"    Probe {probe_idx}: {stdev_raw:.3e} ({stdev_percent:.2f}% of target)")
 
                     # Add to CSV data
-                    csv_data.append([wvl_nm, wavelength_indices[wvl_idx], probe_types[probe_sequence],
+                    csv_data.append([wvl_nm, wavelength_indices[wvl_idx], probe_sequence_labels[probe_sequence],
                                    probe_idx, stdev_raw, stdev_percent])
 
             # Calculate mean stddev for this wavelength
@@ -701,8 +700,6 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
             writer = csv.writer(f)
             writer.writerows(csv_data)
 
-
-############
     # Create the plot
     fig, ax = plt.subplots(figsize=(10, 8))
 
