@@ -119,6 +119,7 @@ def main(param_file_name='default_param.yml', fullpath=False):
         num_proper_process
     )
 
+    # Set up arguments for the howfsc initialization 
     args = get_args(
         niter=niter,
         mode=mode,
@@ -257,6 +258,7 @@ def main(param_file_name='default_param.yml', fullpath=False):
         "num_threads": args.num_threads,
         "num_imager_worker": args.num_imager_worker,
         "num_proper_process": args.num_proper_process,
+        "use_mpi": args.use_mpi,
         # --- crop & overrides ---
         "crop_params": crop_params,
         "corgi_overrides": corgi_overrides,
