@@ -119,11 +119,12 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         os.makedirs(os.path.dirname(args.fileout), exist_ok=True)
 
     # Set up logging
+    _log_fmt = '%(asctime)s %(levelname)s %(name)s: %(message)s'
     if logfile is not None:
-        logging.basicConfig(filename=logfile, level=logging.INFO)
+        logging.basicConfig(filename=logfile, level=logging.INFO, format=_log_fmt)
         pass
     else:
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level=logging.INFO, format=_log_fmt)
         pass
 
     log = logging.getLogger(__name__)
@@ -156,11 +157,12 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         pass
 
     # Set up logging
+    _log_fmt = '%(asctime)s %(levelname)s %(name)s: %(message)s'
     if logfile is not None:
-        logging.basicConfig(filename=logfile, level=logging.INFO)
+        logging.basicConfig(filename=logfile, level=logging.INFO, format=_log_fmt)
         pass
     else:
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level=logging.INFO, format=_log_fmt)
         pass
     log = logging.getLogger(__name__)
 
