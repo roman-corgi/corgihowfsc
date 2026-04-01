@@ -37,7 +37,7 @@ from corgihowfsc.gitl.modular_gitl import howfsc_computation
 from howfsc.precomp import howfsc_precomputation
 from corgihowfsc.utils.saving_output import save_outputs, save_outputs_iter
 from corgihowfsc.utils.output_management import save_run_config, update_yml
-from corgihowfsc.utils.gitl_worker import _collect_framelist
+from corgihowfsc.utils.gitl_worker import _collect_framelist, mpi_precompute_jac
 from corgihowfsc.utils.metrics import get_ni
 
 
@@ -108,6 +108,9 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     safe_cpu_count = args.num_imager_worker # TODO - hard coding
     print('Using num_imager_worker = ', safe_cpu_count)
     use_mpi = getattr(args, 'use_mpi', False)
+    use_mpi_jacobian = getattr(args, 'use_mpi_jacobian', use_mpi)
+    use_mpi_framelist = getattr(args, 'use_mpi_framelist', use_mpi)
+    num_proper_process = getattr(args, 'num_proper_process', None)
 
     # TODO - move this out from here and change it to os.sched_getaffinity
     if safe_cpu_count == None:
