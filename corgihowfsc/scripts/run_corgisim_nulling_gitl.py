@@ -12,9 +12,6 @@ from howfsc.util.loadyaml import loadyaml
 
 import roman_preflight_proper
 
-### Then, run the following command to copy the default prescription file
-roman_preflight_proper.copy_here()
-
 import corgihowfsc
 from corgihowfsc.utils.howfsc_initialization import get_args, load_files, get_cpu_allocation
 from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
@@ -141,6 +138,20 @@ def main(param_file_name='default_param.yml', fullpath=False):
     args.num_imager_worker = num_imager_worker
     args.num_proper_process = num_proper_process
     args.use_mpi = use_mpi
+
+    # Initialize MPI if needed, and add the mpi_comm to args for use in howfsc initialization and later passing to workers; 
+    # If not using MPI, mpi_comm will be None and should be handled as such in the code
+    mpi_comm = None
+
+    if use_mpi:
+        from corgihowfsc.utils.mpi_runtime import initialize_mpi_comm
+        mpi_comm = initialize_mpi_comm()
+    
+    # make sure each worker has access to the roman preflight model for mpi 
+    roman_preflight_proper.copy_here()
+
+    # Add mpi_comm to args for use in howfsc initialization and later passing to workers
+    args.mpi_comm = mpi_comm
 
     modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps = load_files(args,
                                                                                                            howfscpath)
