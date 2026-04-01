@@ -8,6 +8,8 @@ from corgihowfsc.utils.howfsc_initialization import get_args, load_files
 from corgihowfsc.utils.cgi_prop_tools import make_dmrel_probe_gaussian
 
 from astropy.io import fits
+import csv
+from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import numpy as np
 import json
@@ -539,9 +541,6 @@ def plot_sigma_sweep_mean_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_
     # Format y-axis to show scientific notation if needed
     ax.ticklabel_format(style='scientific', axis='y', scilimits=(0,0))
 
-    # Add legends to explain the plot elements
-    from matplotlib.lines import Line2D
-
     # Legend for line styles (probe sequence)
     line_style_handles = []
     for i, (style, label) in enumerate(zip(line_styles, probe_sequence_labels)):
@@ -582,7 +581,8 @@ def plot_sigma_sweep_mean_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_
 
 
 def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
-                                    metadata, dpv_list_sincs=None, wavelength_indices=[0, 1, 2], probe_indices=[0, 1, 2]):
+                                    metadata, dpv_list_sincs=None, wavelength_indices=[0, 1, 2],
+                                    probe_indices=[0, 1, 2], data_out=None):
     """
     Create a plot showing standard deviation of DH intensity as percentage of ni_desired vs sigma.
 
@@ -596,6 +596,7 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
      dpv_list_sincs: list of sinc probe voltages to analyze (optional)
      wavelength_indices: list of wavelength indices to analyze (default: [0, 1, 2])
      probe_indices: list of probe indices to plot (default: [0, 1, 2])
+     data_out: path to store analysis results for sinc probes (optional, used if dpv_list_sincs is provided)
 
     Returns:
      fig, ax: matplotlib figure and axes objects
@@ -620,16 +621,11 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
         dpv_list = dpv_sets_dict[sigma]
 
         # Analyze this probe set across all wavelengths
-        try:
-            _, stddevs_cube, _, _, _ = analyze_probe_set_wvln_cubes(
-                cfg, dmlist, dpv_list, dh_mask, indices=wavelength_indices
-            )
+        _, stddevs_cube, _, _, _ = analyze_probe_set_wvln_cubes(
+            cfg, dmlist, dpv_list, dh_mask, indices=wavelength_indices
+        )
 
-            results[sigma] = stddevs_cube
-
-        except Exception as e:
-            print(f"  Warning: Failed to analyze sigma {sigma:.2f}: {e}")
-            continue
+        results[sigma] = stddevs_cube
 ############
     # Analyze sinc probes if provided
     sinc_mean_stddevs = None
@@ -647,42 +643,63 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
         # Calculate mean stddev for each wavelength (across all probe sequences and indices)
         sinc_mean_stddevs = []
 
-        # Print results to terminal
-        print("\n" + "="*60)
-        print("SINC PROBE STANDARD DEVIATION ANALYSIS RESULTS")
-        print("="*60)
-        print(f"Target normalized intensity (ni_desired): {ni_desired:.2e}")
-        print()
+        wavelengths_nm = [546, 575, 604]
+        probe_types = ['positive', 'negative']
 
-        probe_sequence_labels = ['positive', 'negative']
+        # Prepare data for saving
+        analysis_text = []
+        analysis_text.append("="*60)
+        analysis_text.append("SINC PROBE STANDARD DEVIATION ANALYSIS RESULTS")
+        analysis_text.append("="*60)
+        analysis_text.append(f"Target normalized intensity (ni_desired): {ni_desired:.2e}")
+        analysis_text.append("")
+
+        # Prepare CSV data
+        csv_data = []
+        csv_headers = ['Wavelength_nm', 'Wavelength_Index', 'Probe_Type', 'Probe_Index', 'Stddev_Raw', 'Stddev_Percent']
+        csv_data.append(csv_headers)
 
         for wvl_idx in range(len(wavelength_indices)):
             wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wavelength_indices[wvl_idx]}"
-            print(f"Wavelength {wvl_nm} nm (index {wavelength_indices[wvl_idx]}):")
-            print("-" * 40)
+            analysis_text.append(f"Wavelength {wvl_nm} nm (index {wavelength_indices[wvl_idx]}):")
+            analysis_text.append("-" * 40)
 
             wvl_stddevs = []  # Collect all stddevs for this wavelength
 
             for probe_sequence in range(2):  # 0=positive, 1=negative
-                print(f"  {probe_sequence_labels[probe_sequence].capitalize()} probes:")
+                analysis_text.append(f"  {probe_types[probe_sequence].capitalize()} probes:")
                 for probe_idx in range(3):  # probe 0, 1, 2
                     stdev_raw = stddevs_sinc_cube[wvl_idx, probe_sequence, probe_idx]
                     stdev_percent = (stdev_raw / ni_desired) * 100
                     wvl_stddevs.append(stdev_percent)  # Store percentage for mean calculation
-                    print(f"    Probe {probe_idx}: {stdev_raw:.3e} ({stdev_percent:.2f}% of target)")
+                    analysis_text.append(f"    Probe {probe_idx}: {stdev_raw:.3e} ({stdev_percent:.2f}% of target)")
+
+                    # Add to CSV data
+                    csv_data.append([wvl_nm, wavelength_indices[wvl_idx], probe_types[probe_sequence],
+                                   probe_idx, stdev_raw, stdev_percent])
 
             # Calculate mean stddev for this wavelength
             wvl_mean_stddev = np.mean(wvl_stddevs)
             sinc_mean_stddevs.append(wvl_mean_stddev)
-            print(f"  MEAN for {wvl_nm}nm: {wvl_mean_stddev:.2f}% of target")
-            print()
+            analysis_text.append(f"  MEAN for {wvl_nm}nm: {wvl_mean_stddev:.2f}% of target")
+            analysis_text.append("")
 
-        print("="*60)
-        print("SINC PROBE MEAN STANDARD DEVIATIONS:")
+        analysis_text.append("="*60)
+        analysis_text.append("SINC PROBE MEAN STANDARD DEVIATIONS:")
         for wvl_idx in range(len(wavelength_indices)):
             wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wavelength_indices[wvl_idx]}"
-            print(f"  {wvl_nm}nm: {sinc_mean_stddevs[wvl_idx]:.2f}% of target")
-        print("="*60)
+            analysis_text.append(f"  {wvl_nm}nm: {sinc_mean_stddevs[wvl_idx]:.2f}% of target")
+        analysis_text.append("="*60)
+
+        # Save to txt file
+        with open(os.path.join(data_out, 'sinc_probe_stddev_intensity.txt'), 'w') as f:
+            for line in analysis_text:
+                f.write(line + '\n')
+
+        # Save to CSV file
+        with open(os.path.join(data_out, 'sinc_probe_stddev_intensity.csv'), 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerows(csv_data)
 
 
 ############
@@ -709,15 +726,12 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
 
                 for sigma in sigma_values:
                     if sigma in results:
-                        try:
-                            # Get standard deviation for this wavelength, probe sequence, and probe index
-                            stdev = results[sigma][wvl_idx, probe_sequence, probe_idx]
-                            # Convert to percentage of ni_desired
-                            stdev_percent = (stdev / ni_desired) * 100
-                            sigma_plot.append(sigma)
-                            stdev_plot.append(stdev_percent)
-                        except (IndexError, KeyError):
-                            continue
+                        # Get standard deviation for this wavelength, probe sequence, and probe index
+                        stdev = results[sigma][wvl_idx, probe_sequence, probe_idx]
+                        # Convert to percentage of ni_desired
+                        stdev_percent = (stdev / ni_desired) * 100
+                        sigma_plot.append(sigma)
+                        stdev_plot.append(stdev_percent)
 
                 if len(sigma_plot) > 0:
                     # Create label
@@ -743,13 +757,10 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
             for probe_idx in probe_indices:
                 for sigma in sigma_values:
                     if sigma in results:
-                        try:
-                            stdev = results[sigma][wvl_idx, probe_sequence, probe_idx]
-                            stdev_percent = (stdev / ni_desired) * 100
-                            sigma_all.append(sigma)
-                            stdev_all.append(stdev_percent)
-                        except (IndexError, KeyError):
-                            continue
+                        stdev = results[sigma][wvl_idx, probe_sequence, probe_idx]
+                        stdev_percent = (stdev / ni_desired) * 100
+                        sigma_all.append(sigma)
+                        stdev_all.append(stdev_percent)
 
         if len(sigma_all) > 0:
             # Calculate mean at each sigma value
@@ -761,9 +772,9 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
                 sigma_stdevs = [stdev_all[i] for i, s in enumerate(sigma_all) if s == sigma]
                 mean_stdevs.append(np.mean(sigma_stdevs))
 
-            # Plot mean line with 'x' markers
-            ax.plot(unique_sigmas, mean_stdevs, color=color, linestyle='-', linewidth=3,
-                   marker='x', markersize=8, alpha=0.8,
+            # Plot mean line with 'x' markers in grey
+            ax.plot(unique_sigmas, mean_stdevs, color='black', linestyle='-', linewidth=3,
+                   marker='x', markersize=8, alpha=0.6,
                    label=f"{wvl_nm}nm MEAN")
 
             # Store for sinc probe intersection calculation
@@ -801,7 +812,6 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
     ax.grid(True, alpha=0.3)
 
     # Add legends to explain the plot elements (same structure as original function)
-    from matplotlib.lines import Line2D
 
     # Legend for line styles (probe sequence)
     line_style_handles = []
@@ -953,9 +963,6 @@ def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_m
 
     # Add grid
     ax.grid(True, alpha=0.3)
-
-    # Add legends to explain the plot elements (same structure as original function)
-    from matplotlib.lines import Line2D
 
     # Legend for line styles (probe sequence)
     line_style_handles = []
@@ -1329,7 +1336,8 @@ if __name__ == '__main__':
     # Plot sigma sweep standard deviation analysis
     print("\nGenerating sigma sweep standard deviation analysis plot...")
     plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
-                                    metadata, dpv_list_sincs, wavelength_indices=[0, 1, 2])
+                                    metadata, dpv_list_sincs, wavelength_indices=[0, 1, 2],
+                                    data_out=analysis_path)
 
     # # Plot sigma sweep peak-to-valley analysis
     # print("\nGenerating sigma sweep peak-to-valley analysis plot...")
