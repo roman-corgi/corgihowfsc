@@ -190,13 +190,13 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     abs_dm1list.append(dm10)
     abs_dm2list.append(dm20)
 
-    jac_executor = None
+    mpi_executor = None
     try:
-        if use_mpi_jacobian:
+        if use_mpi_jacobian or use_mpi_framelist:
             from mpi4py.futures import MPIPoolExecutor
-            jac_executor = MPIPoolExecutor(max_workers=safe_cpu_count)
-            log.info('Created persistent MPI executor for Jacobian work with %d workers',
-                     safe_cpu_count)
+            mpi_executor = MPIPoolExecutor(max_workers=safe_cpu_count)
+            log.info('Created persistent MPI executor with %d workers (jacobian=%s, framelist=%s)',
+                     safe_cpu_count, use_mpi_jacobian, use_mpi_framelist)
 
         # jac, jtwj_map, n2clist
         print('Calculating jacobian and jtwj_map...')
@@ -222,7 +222,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
                 jac, jtwj_map, _ = mpi_precompute_jac(
                     cfg, [dm10, dm20], cstrat, subcroplist,
                     jacmethod='fast', num_threads=num_threads,
-                    do_n2clist=False, executor=jac_executor,
+                    do_n2clist=False, executor=mpi_executor,
                 )
             else:
                 jac, jtwj_map, _ = howfsc_precomputation(
@@ -315,6 +315,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             fracbadpix=fracbadpix,
             n_jobs=safe_cpu_count,
             use_mpi=use_mpi_framelist,
+            executor=mpi_executor if use_mpi_framelist else None,
         )
         t1 = time.time()
         log.info('Initial framelist collection time: %s seconds (mpi=%s)',
@@ -435,7 +436,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
                     jac, jtwj_map, _ = mpi_precompute_jac(
                         cfg, [abs_dm1, abs_dm2], cstrat, subcroplist,
                         jacmethod='fast', num_threads=num_threads,
-                        do_n2clist=False, executor=jac_executor,
+                        do_n2clist=False, executor=mpi_executor,
                     )
                 else:
                     jac, jtwj_map, _ = howfsc_precomputation(
@@ -472,6 +473,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
                 fracbadpix=fracbadpix,
                 n_jobs=safe_cpu_count,
                 use_mpi=use_mpi_framelist,
+                executor=mpi_executor if use_mpi_framelist else None,
             )
             t1 = time.time()
             log.info('Framelist collection time for iteration %d: %s seconds (mpi=%s)',
@@ -534,9 +536,9 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
 
             save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, perfect_efield_list)
     finally:
-        if jac_executor is not None:
-            log.info('Shutting down persistent MPI executor for Jacobian work')
-            jac_executor.shutdown(wait=True)
+        if mpi_executor is not None:
+            log.info('Shutting down persistent MPI executor')
+            mpi_executor.shutdown(wait=True)
 
 
 if __name__ == "__main__":
