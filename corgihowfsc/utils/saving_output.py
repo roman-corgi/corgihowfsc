@@ -42,7 +42,7 @@ def compute_xticks(n, max_ticks=15, threshold=25, values=None):
         ticks = np.append(ticks, n)
     return ticks
 
-def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list, debugging_dict=None):
+def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list, iteration_durations=None, debugging_dict=None):
 
     outpath = os.path.dirname(fileout)
 
@@ -63,6 +63,26 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
         plt.legend(loc='best')
         plt.savefig(os.path.join(outpath, "contrast_vs_iteration.pdf"), bbox_inches='tight')
         plt.close()
+
+        # Plot measured_c vs cumulative iteration duration
+        if iteration_durations is not None and len(iteration_durations) > 0:
+            fig, ax_bottom = plt.subplots(layout="constrained")
+            cumulative_time = np.cumsum(iteration_durations) / 60  # convert seconds to minutes
+            cumulative_time_with_overhead = np.cumsum(iteration_durations) / 60 + np.arange(1,
+                                                                                            len(iteration_durations) + 1) * 60
+
+            ax_bottom.plot(cumulative_time, measured_c, color='cornflowerblue', marker='o', label='measured')
+            ax_bottom.set_xlabel('Cumulative Time (minutes)')
+            ax_bottom.set_ylabel('Measured Contrast')
+            ax_bottom.semilogy()
+            ax_bottom.legend(loc='best')
+
+            ax_top = ax_bottom.twiny()
+            ax_top.set_xlim(cumulative_time_with_overhead[0], cumulative_time_with_overhead[-1])
+            ax_top.set_xlabel('Cumulative Time with Overhead (minutes)')
+
+            plt.savefig(os.path.join(outpath, "contrast_vs_time.pdf"), bbox_inches='tight')
+            plt.close()
 
         # NI plot
         plt.figure(layout="constrained")

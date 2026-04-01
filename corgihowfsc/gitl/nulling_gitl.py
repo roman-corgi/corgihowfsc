@@ -266,6 +266,8 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     prev_exptime_list = orig_exptime_list.copy()
     prev_gain_list = orig_gain_list.copy()
     prev_nframes_list = orig_nframes_list.copy()
+    iteration_durations = []
+    iteration_durations.append(this_iter_time)
 
     # framelist
     # do last, needs peak flux
@@ -394,11 +396,12 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             ni_lists['ni_inner'].append(ni_inner)
             ni_lists['ni_outer'].append(ni_outer)
 
-            debugging_dict['this_iter_time'] = this_iter_time
-            _, _ = save_outputs_iter(iteration-1, fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, perfect_efield_list[iteration-1], debugging_dict=debugging_dict)
+            debugging_dict['this_iter_time'] = iteration_durations[iteration-1]
+            _, _ = save_outputs_iter(iteration-1, fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, perfect_efield_list[iteration-1], iteration_durations=iteration_durations, debugging_dict=debugging_dict)
 
-            # Set this iteration time to the next iter value
-            this_iter_time = debugging_dict['next_iter_dur']
+            # Append iteration duration for next iteration
+            iteration_durations.append(debugging_dict['next_iter_dur'])
+
         
         print('-----------------------------------')
         print('Iteration: ' + str(iteration))
