@@ -23,8 +23,6 @@ TASK_STOP = "STOP"
 
 def initialize_mpi_comm(): 
     """
-    --> change the name to initialize_mpi_runtime_roles()
-
     Enter the direct MPI runtime and assign rank roles. 
 
     Rank 0 returns ``MPI.COMM_WORLD`` and continues through the launcher. 
@@ -50,7 +48,7 @@ def initialize_mpi_comm():
 
 def build_worker_init_config(cfgfile, cstratfile, hconffile, backend_type,
                               mode, corgi_overrides, args):
-    """ old name: build_worker_init_payload
+    """
 
     Build the one-time serialisable payload to initialise MPI workers. 
 
@@ -420,7 +418,6 @@ def _run_manager_task_queue(comm, task_type, task_list, max_workers=None):
 
     completed_task_count = 0
     status = MPI.Status()
-
 
     # Get results and keep refilling workers with pending tasks as they finish.
     # This is the steady-state queueing phase.
