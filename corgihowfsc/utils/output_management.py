@@ -39,6 +39,9 @@ def save_run_config(args, fileout):
     """
     # convert args → dict safely
     cfg = vars(args).copy() if not isinstance(args, dict) else args.copy()
+    
+    # Runtime-only objects like MPI communicators are not YAML-serializable.
+    cfg.pop("mpi_comm", None)
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
 
