@@ -28,7 +28,11 @@ from howfsc.precomp import howfsc_precomputation
 from corgihowfsc.utils.saving_output import save_outputs, save_outputs_iter
 from corgihowfsc.utils.output_management import save_run_config, update_yml
 
+from scipy import sparse
+
 from corgihowfsc.utils.parallel_executor import run_parallel
+from howfsc.control.calcjacs import get_ndhpix, calcjacs_sp
+from howfsc.control.calcn2c import calcn2c
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
