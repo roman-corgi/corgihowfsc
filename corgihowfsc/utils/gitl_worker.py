@@ -80,7 +80,7 @@ def _collect_framelist(imager, cfg, dm1_list, dm2_list, exptime_list,
     )
 
 def _get_image_worker(imager, dm1v, dm2v, exptime, gain, nframes, crop, lind,
-                      peakflux, fixedbp, fracbadpix, seed_offset):
+                      peakflux, fixedbp, fracbadpix, seed_offset, use_mpi=False):
     """
     Worker function for parallel image collection.
     Must be a top-level function (not nested) to be picklable by joblib.
@@ -103,6 +103,11 @@ def _get_image_worker(imager, dm1v, dm2v, exptime, gain, nframes, crop, lind,
     Returns:
         ndarray: simulated detector frame with bad pixels set to NaN
     """
+    if use_mpi:
+        import multiprocessing as mp
+        if mp.get_start_method(allow_none=True) != 'forkserver':
+            mp.set_start_method('forkserver', force=True)
+
     f = imager.get_image(
         dm1v, dm2v, exptime,
         gain=gain,
