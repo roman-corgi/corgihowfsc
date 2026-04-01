@@ -387,6 +387,58 @@ def check_inputs(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
 
 
 def get_initial_cam_params(cstrat, contrast, hconf, get_cgi_eetc, nprobepair, ndm, nlam):
+    """
+    Compute initial EXCAM camera parameters for the first HOWFSC iteration.
+
+    Uses the starting contrast estimate and the control strategy to determine
+    the appropriate SNR targets and probe height, then calls the exposure time
+    calculator to derive per-frame exposure times, gains, and frame counts for
+    both the unprobed and probed DM settings across all wavelength channels.
+    Also computes the expected wall-clock time for the first iteration.
+
+    Parameters
+    ----------
+    cstrat : ControlStrategy
+        Control strategy object. Used to retrieve the unprobed SNR target,
+        probed SNR target, and probe height at iteration 1 for the given
+        starting contrast.
+    contrast : float
+        Starting contrast estimate used to bootstrap the exposure time
+        calculation. Typically set by ``args.starting_contrast``.
+    hconf : dict
+        Hardware configuration dictionary. Must contain ``hardware.sequence_list``
+        (one sequence name per wavelength) and all ``overhead`` keys
+        (``overdm``, ``overfilt``, ``overboth``, ``overfixed``, ``overframe``).
+    get_cgi_eetc : CGIEETC
+        Initialized exposure time calculator object used to compute
+        ``(nframes, exptime, gain, snr_out, optflag)`` for each DM setting
+        and wavelength.
+    nprobepair : int
+        Number of probe pairs. Determines how many probed exposure time entries
+        are appended per wavelength channel.
+    ndm : int
+        Total number of DM settings per wavelength (``2 * nprobepair + 1``).
+        Passed to ``expected_time`` to compute the iteration duration.
+    nlam : int
+        Number of wavelength channels. Must match the length of
+        ``hconf['hardware']['sequence_list']``.
+
+    Returns
+    -------
+    orig_exptime_list : list of float
+        Flattened list of exposure times in seconds for all ``nlam * ndm``
+        frames, ordered as ``[lam0 unprobed, lam0 probe0, ..., lam1 unprobed,
+        ...]``. Produced by ``param_order_to_list``.
+    orig_gain_list : list of float
+        Flattened list of EXCAM gain values, in the same order as
+        ``orig_exptime_list``.
+    orig_nframes_list : list of int
+        Flattened list of frame counts, in the same order as
+        ``orig_exptime_list``.
+    next_time : float
+        Expected wall-clock time to complete the first iteration, in seconds,
+        computed by ``expected_time`` using the overhead values from ``hconf``.
+    """
 
     # Initialize things
     unprobed_snr = cstrat.get_unprobedsnr(1, contrast)
@@ -443,8 +495,8 @@ def get_initial_cam_params(cstrat, contrast, hconf, get_cgi_eetc, nprobepair, nd
 
     next_time = expected_time(ndm,
                               nlam,
-                              param_order_to_list(orig_exptime_list),
-                              param_order_to_list(orig_nframes_list),
+                              orig_exptime_list,
+                              orig_nframes_list,
                               hconf['overhead']['overdm'],
                               hconf['overhead']['overfilt'],
                               hconf['overhead']['overboth'],
