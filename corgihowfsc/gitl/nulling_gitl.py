@@ -428,21 +428,28 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
                     pass
                 pass
 
-        # Skip the very last Jacobian that never gets used
-        if precomp in ['precomp_jacs_always'] and iteration < niter:
-            t0 = time.time()
-            jac, jtwj_map, _ = howfsc_precomputation(
-                cfg=cfg,
-                dmset_list=[abs_dm1, abs_dm2],
-                cstrat=cstrat,
-                subcroplist=subcroplist,
-                jacmethod='fast',
-                do_n2clist=False,
-                num_process=num_process,
-                num_threads=num_threads,
-            )
-            t1 = time.time()
-            log.info('Jac recalc time: ' + str(t1-t0) + ' seconds')
+            # Skip the very last Jacobian that never gets used
+            if precomp in ['precomp_jacs_always'] and iteration < niter:
+                t0 = time.time()
+                if use_mpi_jacobian:
+                    jac, jtwj_map, _ = mpi_precompute_jac(
+                        cfg, [abs_dm1, abs_dm2], cstrat, subcroplist,
+                        jacmethod='fast', num_threads=num_threads,
+                        do_n2clist=False, executor=jac_executor,
+                    )
+                else:
+                    jac, jtwj_map, _ = howfsc_precomputation(
+                        cfg=cfg,
+                        dmset_list=[abs_dm1, abs_dm2],
+                        cstrat=cstrat,
+                        subcroplist=subcroplist,
+                        jacmethod='fast',
+                        do_n2clist=False,
+                        num_process=num_process,
+                        num_threads=num_threads,
+                    )
+                t1 = time.time()
+                log.info('Jac recalc time: ' + str(t1-t0) + ' seconds')
 
         # prev_[camparams]_list
         prev_exptime_list = param_order_to_list(exptime_list)
