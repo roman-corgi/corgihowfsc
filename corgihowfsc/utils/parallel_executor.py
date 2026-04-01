@@ -94,12 +94,16 @@ def run_parallel(
     if not args_list:
         return []
 
+    if use_mpi:
+        if executor is None:
+            raise ValueError(
+                "run_parallel(use_mpi=True) requires a caller-owned executor; "
+                "this path no longer creates ad hoc MPIPoolExecutors"
+            )
+        return list(executor.starmap(func, args_list))
+
     if n_jobs == 1:
         return [func(*a) for a in args_list]
-
-    if use_mpi:
-        with MPIPoolExecutor(max_workers=n_jobs) as executor:
-            return list(executor.starmap(func, args_list))
 
     if allow_nesting:
         with NestablePool(processes=n_jobs) as pool:
