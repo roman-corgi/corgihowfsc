@@ -1412,28 +1412,27 @@ def plot_dm_amplitude_vs_sigma(dpv_sets_dict, sigma_values, dpv_list_sincs, cfg,
 
     sinc_intensities_by_wvl = np.array(sinc_intensities_by_wvl)  # shape: (n_wvl, 2, n_probes)
 
-    # Calculate equivalent sigma for sinc-sinc-sine probes based on intensity matching
-    print("\nCalculating equivalent sigma for sinc-sinc-sine probes...")
+    # Calculate equivalent sigma for sinc probes based on DM amplitude matching
+    print("\nCalculating equivalent sigma for sinc probes based on DM amplitude matching...")
     sinc_equivalent_sigmas = []
 
     for probe_idx in range(len(dpv_list_sincs)):
-        # For each sinc probe, find the Gaussian sigma that gives closest intensity match
-        # Use the average intensity from positive and negative sequences at middle wavelength
-        wvl_middle_idx = len(wavelength_indices) // 2
-        sinc_avg_intensity = np.mean(sinc_intensities_by_wvl[wvl_middle_idx, :, probe_idx])
+        # For each sinc probe, find the Gaussian sigma that gives closest DM amplitude match
+        sinc_amplitude = sinc_amplitudes[probe_idx]  # Peak-to-valley DM voltage of sinc probe
 
         best_sigma = None
         min_diff = float('inf')
 
         for sigma in sigma_values:
-            gauss_avg_intensity = np.mean(gaussian_results[sigma]['intensities'][wvl_middle_idx, :, probe_idx])
-            diff = abs(gauss_avg_intensity - sinc_avg_intensity)
+            # Get DM amplitude for this Gaussian probe at this sigma
+            gauss_amplitude = gaussian_results[sigma]['amplitudes'][probe_idx]
+            diff = abs(gauss_amplitude - sinc_amplitude)
             if diff < min_diff:
                 min_diff = diff
                 best_sigma = sigma
 
         sinc_equivalent_sigmas.append(best_sigma)
-        print(f"  Sinc probe {probe_idx}: equivalent sigma = {best_sigma:.2f}")
+        print(f"  Sinc probe {probe_idx}: DM amplitude = {sinc_amplitude:.4f}V, equivalent sigma = {best_sigma:.2f}")
 
     # Create the plot
     fig, ax = plt.subplots(figsize=(12, 8))
@@ -1472,7 +1471,7 @@ def plot_dm_amplitude_vs_sigma(dpv_sets_dict, sigma_values, dpv_list_sincs, cfg,
                        color=color, linestyle='-', alpha=0.7, linewidth=2,
                        marker=marker, markersize=6, label=label)
 
-    # Overlay sinc-sinc-sine probe data
+    # Overlay sinc probe data at equivalent sigma positions based on DM amplitude matching
     for probe_idx in probe_indices:
         if probe_idx >= len(sinc_amplitudes):
             continue
@@ -1493,7 +1492,7 @@ def plot_dm_amplitude_vs_sigma(dpv_sets_dict, sigma_values, dpv_list_sincs, cfg,
     # Customize the plot
     ax.set_xlabel('Gaussian FWHM (σ) [actuator pitch]', fontsize=12)
     ax.set_ylabel('DM Probe Amplitude Peak-to-Valley [V]', fontsize=12)
-    ax.set_title('DM Probe Amplitude vs Gaussian Sigma with Sinc-Sinc-Sine Overlay', fontsize=14)
+    ax.set_title('DM Probe Amplitude vs Gaussian Sigma with Sinc Probes at Equivalent σ', fontsize=14)
     ax.grid(True, alpha=0.3)
     ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=10)
 
