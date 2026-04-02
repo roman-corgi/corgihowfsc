@@ -82,9 +82,9 @@ def init_workers(comm, worker_config):
     Each worker rank receives the same ``worker_config`` payload, which it uses to reconstruct its local runtime state inside the worker loop. This step prepares workers for later FRAME adn JAC_CHUNK tasks but does not execute any tasks itself.
     
     """
-    log.info("MPI manager initializing %d worker ranks", comm.Get_size() - 1)
+    print("MPI manager initializing %d worker ranks", comm.Get_size() - 1)
     for rank in range(1, comm.Get_size()):
-        log.info("MPI manager sending INIT to rank %d", rank)
+        print("MPI manager sending INIT to rank %d", rank)
         comm.send({'message_type': TASK_INIT, 'worker_config': worker_config}, dest=rank)
 
 
