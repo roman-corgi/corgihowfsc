@@ -28,6 +28,9 @@ howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
 
 def main(param_file_name='default_param.yml', fullpath=False):
 
+    # make sure each worker has access to the roman preflight model for mpi 
+    roman_preflight_proper.copy_here()
+    
     # Set the path to the default parameter file relative to this script
     default_param_file = param_file_name if fullpath else os.path.join(os.path.dirname(__file__), param_file_name)
 
@@ -153,9 +156,6 @@ def main(param_file_name='default_param.yml', fullpath=False):
         from corgihowfsc.mpi.mpi_runtime import initialize_mpi_comm
         mpi_comm = initialize_mpi_comm()
     
-    # make sure each worker has access to the roman preflight model for mpi 
-    roman_preflight_proper.copy_here()
-
     # Add mpi_comm to args for use in howfsc initialization and later passing to workers
     args.mpi_comm = mpi_comm
 
