@@ -1,14 +1,11 @@
 import time
 import os
-import logging
+import csv
 
 import numpy as np
 
 from corgihowfsc.utils.parallel_executor import run_parallel
 from howfsc.control.calcjacs import calcjacs_sp
-
-
-log = logging.getLogger(__name__)
 
 
 def _collect_framelist(imager, cfg, dm1_list, dm2_list, exptime_list,
@@ -136,24 +133,32 @@ def _get_image_worker(imager, dm1v, dm2v, exptime, gain, nframes, crop, lind,
     Returns:
         ndarray: Simulated detector frame with injected bad pixels set to ``NaN``.
     """
+    def _worker_rank():
+        for env_name in ('OMPI_COMM_WORLD_RANK', 'PMI_RANK', 'PMIX_RANK', 'SLURM_PROCID'):
+            value = os.environ.get(env_name)
+            if value is not None:
+                return value
+        return 'local'
+
+    def _append_debug_row(row):
+        debug_path = os.environ.get('CORGIHOWFSC_IMAGE_DEBUG_CSV', 'image_worker_debug.csv')
+        file_exists = os.path.exists(debug_path)
+        with open(debug_path, 'a', newline='') as fobj:
+            writer = csv.DictWriter(
+                fobj,
+                fieldnames=[
+                    'pid', 'rank', 'backend', 'seed_offset', 'lind', 'lam',
+                    'exptime', 'gain', 'nframes', 'crop', 'peakflux',
+                    'fracbadpix', 'shape', 'min', 'max', 'sum', 'finite_pixels',
+                ],
+            )
+            if not file_exists:
+                writer.writeheader()
+            writer.writerow(row)
+
     lam_value = None
     if hasattr(imager, 'cfg') and hasattr(imager.cfg, 'sl_list') and lind < len(imager.cfg.sl_list):
         lam_value = getattr(imager.cfg.sl_list[lind], 'lam', None)
-
-    log.info(
-        "Generating image backend=%s seed_offset=%s lind=%s lam=%s exptime=%s gain=%s "
-        "nframes=%s crop=%s peakflux=%s fracbadpix=%s",
-        getattr(imager, 'backend', None),
-        seed_offset,
-        lind,
-        lam_value,
-        exptime,
-        gain,
-        nframes,
-        crop,
-        peakflux,
-        fracbadpix,
-    )
 
     f = imager.get_image(
         dm1v, dm2v, exptime,
@@ -169,25 +174,36 @@ def _get_image_worker(imager, dm1v, dm2v, exptime, gain, nframes, crop, lind,
     )
 
     finite_mask = np.isfinite(f)
+    debug_row = {
+        'pid': os.getpid(),
+        'rank': _worker_rank(),
+        'backend': getattr(imager, 'backend', None),
+        'seed_offset': seed_offset,
+        'lind': lind,
+        'lam': lam_value,
+        'exptime': exptime,
+        'gain': gain,
+        'nframes': nframes,
+        'crop': tuple(crop) if crop is not None else None,
+        'peakflux': peakflux,
+        'fracbadpix': fracbadpix,
+        'shape': tuple(f.shape),
+        'min': '',
+        'max': '',
+        'sum': '',
+        'finite_pixels': 0,
+    }
+
     if np.any(finite_mask):
         finite_values = f[finite_mask]
-        log.info(
-            "Generated image backend=%s seed_offset=%s shape=%s min=%s max=%s sum=%s finite_pixels=%s",
-            getattr(imager, 'backend', None),
-            seed_offset,
-            f.shape,
-            np.nanmin(finite_values),
-            np.nanmax(finite_values),
-            np.nansum(finite_values),
-            int(finite_mask.sum()),
-        )
-    else:
-        log.info(
-            "Generated image backend=%s seed_offset=%s shape=%s with no finite pixels",
-            getattr(imager, 'backend', None),
-            seed_offset,
-            f.shape,
-        )
+        debug_row.update({
+            'min': np.nanmin(finite_values),
+            'max': np.nanmax(finite_values),
+            'sum': np.nansum(finite_values),
+            'finite_pixels': int(finite_mask.sum()),
+        })
+
+    _append_debug_row(debug_row)
 
     # Build a reproducible per frame random bad pixel mask.
     rng = np.random.default_rng(12345 + seed_offset)
