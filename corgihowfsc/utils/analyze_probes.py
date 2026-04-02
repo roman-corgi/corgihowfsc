@@ -814,24 +814,22 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
                                                          kind='linear', bounds_error=False)
                         intersection_sigma = float(interp_func(sinc_mean))
                         intersection_stdev = sinc_mean  # Y-coordinate is the sinc value itself
+                        boundary_indicator = ""  # No boundary indicator needed
 
                     else:
-                        # Sinc performance is outside Gaussian range - extrapolate
-                        # Use linear extrapolation based on nearest segment
+                        # Sinc performance is outside Gaussian range - place at boundary
                         if sinc_mean < min_gauss_stdev:
-                            # Extrapolate below minimum
-                            idx1, idx2 = 0, 1
+                            # Place at minimum sigma (lowest performance boundary)
+                            intersection_sigma = min(unique_sigmas)
+                            intersection_stdev = sinc_mean
+                            boundary_indicator = " <"  # Indicates below range
                         else:
-                            # Extrapolate above maximum
-                            idx1, idx2 = -2, -1
+                            # Place at maximum sigma (highest performance boundary)
+                            intersection_sigma = max(unique_sigmas)
+                            intersection_stdev = sinc_mean
+                            boundary_indicator = " >"  # Indicates above range
 
-                        # Linear extrapolation: sigma = sigma1 + (sigma2-sigma1)*(stdev-stdev1)/(stdev2-stdev1)
-                        sigma1, sigma2 = unique_sigmas[idx1], unique_sigmas[idx2]
-                        stdev1, stdev2 = mean_stdevs[idx1], mean_stdevs[idx2]
-                        intersection_sigma = sigma1 + (sigma2 - sigma1) * (sinc_mean - stdev1) / (stdev2 - stdev1)
-                        intersection_stdev = sinc_mean  # Y-coordinate is the sinc value itself
-
-                    intersection_sigmas.append((wvl_nm, probe_idx, intersection_sigma))
+                    intersection_sigmas.append((wvl_nm, probe_idx, intersection_sigma, boundary_indicator))
 
                     # Plot sinc probe mean at equivalent sigma position
                     marker = probe_markers[probe_idx]
@@ -906,10 +904,14 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
             wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wavelength_indices[wvl_idx]}"
             sigma_text += f"{wvl_nm}: "
             probe_sigmas = []
-            for wvl_name, probe_idx, sigma_val in intersection_sigmas:
+            for wvl_name, probe_idx, sigma_val, boundary_indicator in intersection_sigmas:
                 if wvl_name == wvl_nm:
-                    probe_sigmas.append(f"P{probe_idx}={sigma_val:.2f}")
+                    probe_sigmas.append(f"P{probe_idx}={boundary_indicator}{sigma_val:.2f}")
             sigma_text += ", ".join(probe_sigmas) + "\n"
+
+        # Add legend for boundary indicators
+        if any(len(item) > 3 and item[3] for item in intersection_sigmas):
+            sigma_text += "\n< = below range, > = above range"
 
         # Add text below the legends
         ax.text(1.02, 0.15, sigma_text, transform=ax.transAxes, fontsize=8,
@@ -1155,27 +1157,25 @@ def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_m
                         # Sinc performance is within Gaussian range - interpolate
                         # Create interpolation function: f(ptv) -> sigma
                         interp_func = interpolate.interp1d(mean_ptvs, unique_sigmas,
-                                                         kind='linear', bounds_error=False)
+                                                           kind='linear', bounds_error=False)
                         intersection_sigma = float(interp_func(sinc_mean))
                         intersection_ptv = sinc_mean  # Y-coordinate is the sinc value itself
+                        boundary_indicator = ""  # No boundary indicator needed
 
                     else:
-                        # Sinc performance is outside Gaussian range - extrapolate
-                        # Use linear extrapolation based on nearest segment
+                        # Sinc performance is outside Gaussian range - place at boundary
                         if sinc_mean < min_gauss_ptv:
-                            # Extrapolate below minimum
-                            idx1, idx2 = 0, 1
+                            # Place at minimum sigma (lowest performance boundary)
+                            intersection_sigma = min(unique_sigmas)
+                            intersection_ptv = sinc_mean
+                            boundary_indicator = " <"  # Indicates below range
                         else:
-                            # Extrapolate above maximum
-                            idx1, idx2 = -2, -1
+                            # Place at maximum sigma (highest performance boundary)
+                            intersection_sigma = max(unique_sigmas)
+                            intersection_ptv = sinc_mean
+                            boundary_indicator = " >"  # Indicates above range
 
-                        # Linear extrapolation: sigma = sigma1 + (sigma2-sigma1)*(ptv-ptv1)/(ptv2-ptv1)
-                        sigma1, sigma2 = unique_sigmas[idx1], unique_sigmas[idx2]
-                        ptv1, ptv2 = mean_ptvs[idx1], mean_ptvs[idx2]
-                        intersection_sigma = sigma1 + (sigma2 - sigma1) * (sinc_mean - ptv1) / (ptv2 - ptv1)
-                        intersection_ptv = sinc_mean  # Y-coordinate is the sinc value itself
-
-                    intersection_sigmas.append((wvl_nm, probe_idx, intersection_sigma))
+                    intersection_sigmas.append((wvl_nm, probe_idx, intersection_sigma, boundary_indicator))
 
                     # Plot sinc probe mean at equivalent sigma position
                     marker = probe_markers[probe_idx]
@@ -1248,10 +1248,14 @@ def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_m
             wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wavelength_indices[wvl_idx]}"
             sigma_text += f"{wvl_nm}: "
             probe_sigmas = []
-            for wvl_name, probe_idx, sigma_val in intersection_sigmas:
+            for wvl_name, probe_idx, sigma_val, boundary_indicator in intersection_sigmas:
                 if wvl_name == wvl_nm:
-                    probe_sigmas.append(f"P{probe_idx}={sigma_val:.2f}")
+                    probe_sigmas.append(f"P{probe_idx}={boundary_indicator}{sigma_val:.2f}{boundary_indicator}")
             sigma_text += ", ".join(probe_sigmas) + "\n"
+
+        # Add legend for boundary indicators
+        if any(len(item) > 3 and item[3] for item in intersection_sigmas):
+            sigma_text += "\n< = below range, > = above range"
 
         # Add text below the legends
         ax.text(1.02, 0.15, sigma_text, transform=ax.transAxes, fontsize=8,
@@ -1268,7 +1272,7 @@ def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_m
 
 
 def load_gaussian_probe_sets_sigma_sweep(input_path, prefix='gaussian_sigma_sweep',
-                                        mode='nfov_band1', dark_hole='360deg'):
+                                         mode='nfov_band1', dark_hole='360deg'):
     """
     Load Gaussian probe sets from sigma sweep saved on disk.
 
