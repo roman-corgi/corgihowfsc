@@ -628,7 +628,7 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
         results[sigma] = stddevs_cube
 
     # Analyze sinc probes if provided
-    sinc_mean_stddevs = None
+    sinc_probe_means = None  # Will store means for each probe individually [wavelength_idx, probe_idx]
     if dpv_list_sincs is not None:
         print("\nAnalyzing sinc probes across all three wavelengths...")
 
@@ -640,8 +640,8 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
         # Get ni_desired for percentage calculation
         ni_desired = metadata['ni_desired']
 
-        # Calculate mean stddev for each wavelength (across all probe sequences and indices)
-        sinc_mean_stddevs = []
+        # Calculate mean stddev for each probe individually, averaged over probe sequences
+        sinc_probe_means = []
 
         probe_sequence_labels = ['positive', 'negative']
 
@@ -663,31 +663,36 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
             analysis_text.append(f"Wavelength {wvl_nm} nm (index {wavelength_indices[wvl_idx]}):")
             analysis_text.append("-" * 40)
 
-            wvl_stddevs = []  # Collect all stddevs for this wavelength
+            # Calculate means for each probe individually at this wavelength
+            probe_means_this_wvl = []
 
-            for probe_sequence in range(2):  # 0=positive, 1=negative
-                analysis_text.append(f"  {probe_sequence_labels[probe_sequence].capitalize()} probes:")
-                for probe_idx in range(3):  # probe 0, 1, 2
+            for probe_idx in range(3):  # For each probe
+                # Get stddevs for this probe across both sequences (pos and neg)
+                probe_stddevs = []
+                for probe_sequence in range(2):  # 0=positive, 1=negative
                     stdev_raw = stddevs_sinc_cube[wvl_idx, probe_sequence, probe_idx]
                     stdev_percent = (stdev_raw / ni_desired) * 100
-                    wvl_stddevs.append(stdev_percent)  # Store percentage for mean calculation
-                    analysis_text.append(f"    Probe {probe_idx}: {stdev_raw:.3e} ({stdev_percent:.2f}% of target)")
+                    probe_stddevs.append(stdev_percent)
 
                     # Add to CSV data
                     csv_data.append([wvl_nm, wavelength_indices[wvl_idx], probe_sequence_labels[probe_sequence],
                                    probe_idx, stdev_raw, stdev_percent])
 
-            # Calculate mean stddev for this wavelength
-            wvl_mean_stddev = np.mean(wvl_stddevs)
-            sinc_mean_stddevs.append(wvl_mean_stddev)
-            analysis_text.append(f"  MEAN for {wvl_nm}nm: {wvl_mean_stddev:.2f}% of target")
+                # Calculate mean for this probe (averaged over positive/negative)
+                probe_mean = np.mean(probe_stddevs)
+                probe_means_this_wvl.append(probe_mean)
+                analysis_text.append(f"  Probe {probe_idx} (avg over pos/neg): {probe_mean:.2f}% of target")
+
+            sinc_probe_means.append(probe_means_this_wvl)
             analysis_text.append("")
 
         analysis_text.append("="*60)
-        analysis_text.append("SINC PROBE MEAN STANDARD DEVIATIONS:")
+        analysis_text.append("SINC PROBE INDIVIDUAL MEANS (averaged over probe sequences):")
         for wvl_idx in range(len(wavelength_indices)):
             wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wavelength_indices[wvl_idx]}"
-            analysis_text.append(f"  {wvl_nm}nm: {sinc_mean_stddevs[wvl_idx]:.2f}% of target")
+            analysis_text.append(f"  {wvl_nm}nm:")
+            for probe_idx in range(3):
+                analysis_text.append(f"    Probe {probe_idx}: {sinc_probe_means[wvl_idx][probe_idx]:.2f}% of target")
         analysis_text.append("="*60)
 
         # Save to txt file
@@ -778,29 +783,43 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
             mean_lines_data[wvl_idx] = (unique_sigmas, mean_stdevs)
 
     # Plot sinc probe means at intersection points with Gaussian mean lines
-    intersection_sigmas = []  # Store sigma values for legend display
-    if sinc_mean_stddevs is not None:
+    intersection_sigmas = []  # Store sigma values for legend display [(wvl_nm, probe_idx, sigma_val), ...]
+    if sinc_probe_means is not None and len(sinc_probe_means) > 0:
+        # Diamond marker styles: solid line for probe 0, dashed for probes 1 and 2
+        diamond_line_styles = ['-', '--', '--']  # solid for probe 0, dashed for others
+
         for wvl_idx in range(len(wavelength_indices)):
             if wvl_idx in mean_lines_data:
                 wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wavelength_indices[wvl_idx]}"
                 color = colors[wvl_idx]
 
-                # Find intersection sigma where Gaussian mean line equals sinc mean
+                # Get Gaussian mean line data for intersection calculation
                 unique_sigmas, mean_stdevs = mean_lines_data[wvl_idx]
-                sinc_mean = sinc_mean_stddevs[wvl_idx]
 
-                # Find closest intersection point
-                differences = [abs(stdev - sinc_mean) for stdev in mean_stdevs]
-                closest_idx = np.argmin(differences)
-                intersection_sigma = unique_sigmas[closest_idx]
-                intersection_sigmas.append((wvl_nm, intersection_sigma))
+                # Plot each probe individually
+                for probe_idx in range(3):
+                    sinc_mean = sinc_probe_means[wvl_idx][probe_idx]
 
-                # Plot sinc probe mean at intersection
-                ax.plot(intersection_sigma, sinc_mean, color=color, marker='D',
-                       markersize=12, markerfacecolor='white', markeredgecolor=color,
-                       markeredgewidth=3, label=f"{wvl_nm}nm SINC MEAN", zorder=10)
+                    # Find closest intersection point
+                    differences = [abs(stdev - sinc_mean) for stdev in mean_stdevs]
+                    closest_idx = np.argmin(differences)
+                    intersection_sigma = unique_sigmas[closest_idx]
+                    intersection_stdev = mean_stdevs[closest_idx]  # Y-value ON the Gaussian curve
+                    intersection_sigmas.append((wvl_nm, probe_idx, intersection_sigma))
 
-                print(f"Sinc probe mean for {wvl_nm}nm plotted at σ={intersection_sigma:.2f}, stddev={sinc_mean:.2f}%")
+                    # Plot sinc probe mean at intersection with different diamond styles
+                    # Use intersection_stdev (Gaussian curve Y-value) instead of sinc_mean
+                    line_style = diamond_line_styles[probe_idx]
+                    if line_style == '-':  # solid diamond
+                        ax.plot(intersection_sigma, intersection_stdev, color=color, marker='D',
+                               markersize=12, markerfacecolor='white', markeredgecolor=color,
+                               markeredgewidth=3, linestyle='None',
+                               label=f"{wvl_nm}nm P{probe_idx} SINC", zorder=10)
+                    else:  # dashed diamond - simulate with markeredgewidth and alpha
+                        ax.plot(intersection_sigma, intersection_stdev, color=color, marker='D',
+                               markersize=12, markerfacecolor='white', markeredgecolor=color,
+                               markeredgewidth=2, linestyle='None', alpha=0.7,
+                               label=f"{wvl_nm}nm P{probe_idx} SINC", zorder=10)
 
     # Customize the plot
     ax.set_xlabel('Gaussian σ (in actuator pitch)', fontsize=12)
@@ -855,10 +874,17 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
     ax.add_artist(legend3)
 
     # Add sigma intersection values underneath the legends
-    if sinc_mean_stddevs is not None and intersection_sigmas:
+    if sinc_probe_means is not None and intersection_sigmas:
         sigma_text = "Sinc σ intersections:\n"
-        for wvl_nm, sigma_val in intersection_sigmas:
-            sigma_text += f"{wvl_nm}: σ={sigma_val:.2f}\n"
+        # Group by wavelength and probe for organized display
+        for wvl_idx in range(len(wavelength_indices)):
+            wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wavelength_indices[wvl_idx]}"
+            sigma_text += f"{wvl_nm}: "
+            probe_sigmas = []
+            for wvl_name, probe_idx, sigma_val in intersection_sigmas:
+                if wvl_name == wvl_nm:
+                    probe_sigmas.append(f"P{probe_idx}={sigma_val:.2f}")
+            sigma_text += ", ".join(probe_sigmas) + "\n"
 
         # Add text below the legends
         ax.text(1.02, 0.15, sigma_text, transform=ax.transAxes, fontsize=8,
@@ -875,7 +901,7 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
 
 
 def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
-                                 metadata, dpv_list_sincs=None, wavelength_indices=[0, 1, 2],
+                                  metadata, dpv_list_sincs=None, wavelength_indices=[0, 1, 2],
                                   probe_indices=[0, 1, 2], data_out=None):
     """
     Create a plot showing peak-to-valley (max-min) of DH intensity as percentage of ni_desired vs sigma.
@@ -922,7 +948,7 @@ def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_m
         results[sigma] = ptvs_cube
 
     # Analyze sinc probes if provided
-    sinc_mean_ptvs = None
+    sinc_probe_means = None  # Will store means for each probe individually [wavelength_idx, probe_idx]
     if dpv_list_sincs is not None:
         # Analyze sinc probes across all wavelengths
         _, _, ptvs_sinc_cube, _, _ = analyze_probe_set_wvln_cubes(
@@ -932,8 +958,8 @@ def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_m
         # Get ni_desired for percentage calculation
         ni_desired = metadata['ni_desired']
 
-        # Calculate mean ptv for each wavelength (across all probe sequences and indices)
-        sinc_mean_ptvs = []
+        # Calculate mean ptv for each probe individually, averaged over probe sequences
+        sinc_probe_means = []
 
         probe_sequence_labels = ['positive', 'negative']
 
@@ -955,31 +981,36 @@ def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_m
             analysis_text.append(f"Wavelength {wvl_nm} nm (index {wavelength_indices[wvl_idx]}):")
             analysis_text.append("-" * 40)
 
-            wvl_ptvs = []  # Collect all ptvs for this wavelength
+            # Calculate means for each probe individually at this wavelength
+            probe_means_this_wvl = []
 
-            for probe_sequence in range(2):  # 0=positive, 1=negative
-                analysis_text.append(f"  {probe_sequence_labels[probe_sequence].capitalize()} probes:")
-                for probe_idx in range(3):  # probe 0, 1, 2
+            for probe_idx in range(3):  # For each probe
+                # Get ptvs for this probe across both sequences (pos and neg)
+                probe_ptvs = []
+                for probe_sequence in range(2):  # 0=positive, 1=negative
                     ptv_raw = ptvs_sinc_cube[wvl_idx, probe_sequence, probe_idx]
                     ptv_percent = (ptv_raw / ni_desired) * 100
-                    wvl_ptvs.append(ptv_percent)  # Store percentage for mean calculation
-                    analysis_text.append(f"    Probe {probe_idx}: {ptv_raw:.3e} ({ptv_percent:.2f}% of target)")
+                    probe_ptvs.append(ptv_percent)
 
                     # Add to CSV data
                     csv_data.append([wvl_nm, wavelength_indices[wvl_idx], probe_sequence_labels[probe_sequence],
                                    probe_idx, ptv_raw, ptv_percent])
 
-            # Calculate mean ptv for this wavelength
-            wvl_mean_ptv = np.mean(wvl_ptvs)
-            sinc_mean_ptvs.append(wvl_mean_ptv)
-            analysis_text.append(f"  MEAN for {wvl_nm}nm: {wvl_mean_ptv:.2f}% of target")
+                # Calculate mean for this probe (averaged over positive/negative)
+                probe_mean = np.mean(probe_ptvs)
+                probe_means_this_wvl.append(probe_mean)
+                analysis_text.append(f"  Probe {probe_idx} (avg over pos/neg): {probe_mean:.2f}% of target")
+
+            sinc_probe_means.append(probe_means_this_wvl)
             analysis_text.append("")
 
         analysis_text.append("="*60)
-        analysis_text.append("SINC PROBE MEAN PEAK-TO-VALLEY VALUES:")
+        analysis_text.append("SINC PROBE INDIVIDUAL MEANS (averaged over probe sequences):")
         for wvl_idx in range(len(wavelength_indices)):
             wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wavelength_indices[wvl_idx]}"
-            analysis_text.append(f"  {wvl_nm}nm: {sinc_mean_ptvs[wvl_idx]:.2f}% of target")
+            analysis_text.append(f"  {wvl_nm}nm:")
+            for probe_idx in range(3):
+                analysis_text.append(f"    Probe {probe_idx}: {sinc_probe_means[wvl_idx][probe_idx]:.2f}% of target")
         analysis_text.append("="*60)
 
         # Save to txt file
@@ -1072,27 +1103,43 @@ def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_m
             mean_lines_data[wvl_idx] = (unique_sigmas, mean_ptvs)
 
     # Plot sinc probe means at intersection points with Gaussian mean lines
-    intersection_sigmas = []  # Store sigma values for legend display
-    if sinc_mean_ptvs is not None:
+    intersection_sigmas = []  # Store sigma values for legend display [(wvl_nm, probe_idx, sigma_val), ...]
+    if sinc_probe_means is not None and len(sinc_probe_means) > 0:
+        # Diamond marker styles: solid line for probe 0, dashed for probes 1 and 2
+        diamond_line_styles = ['-', '--', '--']  # solid for probe 0, dashed for others
+
         for wvl_idx in range(len(wavelength_indices)):
             if wvl_idx in mean_lines_data:
                 wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wavelength_indices[wvl_idx]}"
                 color = colors[wvl_idx]
 
-                # Find intersection sigma where Gaussian mean line equals sinc mean
+                # Get Gaussian mean line data for intersection calculation
                 unique_sigmas, mean_ptvs = mean_lines_data[wvl_idx]
-                sinc_mean = sinc_mean_ptvs[wvl_idx]
 
-                # Find closest intersection point
-                differences = [abs(ptv - sinc_mean) for ptv in mean_ptvs]
-                closest_idx = np.argmin(differences)
-                intersection_sigma = unique_sigmas[closest_idx]
-                intersection_sigmas.append((wvl_nm, intersection_sigma))
+                # Plot each probe individually
+                for probe_idx in range(3):
+                    sinc_mean = sinc_probe_means[wvl_idx][probe_idx]
 
-                # Plot sinc probe mean at intersection
-                ax.plot(intersection_sigma, sinc_mean, color=color, marker='D',
-                       markersize=12, markerfacecolor='white', markeredgecolor=color,
-                       markeredgewidth=3, label=f"{wvl_nm}nm SINC MEAN", zorder=10)
+                    # Find closest intersection point
+                    differences = [abs(ptv - sinc_mean) for ptv in mean_ptvs]
+                    closest_idx = np.argmin(differences)
+                    intersection_sigma = unique_sigmas[closest_idx]
+                    intersection_ptv = mean_ptvs[closest_idx]  # Y-value ON the Gaussian curve
+                    intersection_sigmas.append((wvl_nm, probe_idx, intersection_sigma))
+
+                    # Plot sinc probe mean at intersection with different diamond styles
+                    # Use intersection_ptv (Gaussian curve Y-value) instead of sinc_mean
+                    line_style = diamond_line_styles[probe_idx]
+                    if line_style == '-':  # solid diamond
+                        ax.plot(intersection_sigma, intersection_ptv, color=color, marker='D',
+                               markersize=12, markerfacecolor='white', markeredgecolor=color,
+                               markeredgewidth=3, linestyle='None',
+                               label=f"{wvl_nm}nm P{probe_idx} SINC", zorder=10)
+                    else:  # dashed diamond - simulate with markeredgewidth and alpha
+                        ax.plot(intersection_sigma, intersection_ptv, color=color, marker='D',
+                               markersize=12, markerfacecolor='white', markeredgecolor=color,
+                               markeredgewidth=2, linestyle='None', alpha=0.7,
+                               label=f"{wvl_nm}nm P{probe_idx} SINC", zorder=10)
 
     # Customize the plot
     ax.set_xlabel('Gaussian σ (in actuator pitch)', fontsize=12)
@@ -1145,10 +1192,17 @@ def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_m
     ax.add_artist(legend3)
 
     # Add sigma intersection values underneath the legends
-    if sinc_mean_ptvs is not None and intersection_sigmas:
+    if sinc_probe_means is not None and intersection_sigmas:
         sigma_text = "Sinc σ intersections:\n"
-        for wvl_nm, sigma_val in intersection_sigmas:
-            sigma_text += f"{wvl_nm}: σ={sigma_val:.2f}\n"
+        # Group by wavelength and probe for organized display
+        for wvl_idx in range(len(wavelength_indices)):
+            wvl_nm = wavelengths_nm[wvl_idx] if wvl_idx < len(wavelengths_nm) else f"λ{wavelength_indices[wvl_idx]}"
+            sigma_text += f"{wvl_nm}: "
+            probe_sigmas = []
+            for wvl_name, probe_idx, sigma_val in intersection_sigmas:
+                if wvl_name == wvl_nm:
+                    probe_sigmas.append(f"P{probe_idx}={sigma_val:.2f}")
+            sigma_text += ", ".join(probe_sigmas) + "\n"
 
         # Add text below the legends
         ax.text(1.02, 0.15, sigma_text, transform=ax.transAxes, fontsize=8,
