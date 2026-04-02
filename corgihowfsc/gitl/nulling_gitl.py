@@ -285,6 +285,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             ndm=ndm,
             cstrat=cstrat,
             fracbadpix=fracbadpix,
+            iteration=0,
             max_workers=safe_cpu_count,
         )
     else:
@@ -300,6 +301,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             ndm=ndm,
             cstrat=cstrat,
             fracbadpix=fracbadpix,
+            iteration=0,
             n_jobs=safe_cpu_count,
         )
     t1 = time.time()
@@ -501,6 +503,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
                 ndm=ndm,
                 cstrat=cstrat,
                 fracbadpix=fracbadpix,
+                iteration=iteration,
                 max_workers=safe_cpu_count,
             )
         else:
@@ -516,6 +519,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
                 ndm=ndm,
                 cstrat=cstrat,
                 fracbadpix=fracbadpix,
+                iteration=iteration,
                 n_jobs=safe_cpu_count,
             )
 

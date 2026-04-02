@@ -11,6 +11,7 @@ from howfsc.control.calcjacs import calcjacs_sp
 def _collect_framelist(imager, cfg, dm1_list, dm2_list, exptime_list,
                        gain_list, nframes_list, croplist, normalization_strategy,
                        get_cgi_eetc, hconf, ndm, cstrat, fracbadpix,
+                       iteration=0,
                        n_jobs=1):
     """
     Generate and collect the full framelist using local multiprocessing. 
@@ -79,6 +80,7 @@ def _collect_framelist(imager, cfg, dm1_list, dm2_list, exptime_list,
          peakflux_list[indj],
          cstrat.fixedbp,
          fracbadpix,
+         iteration,
          indj * ndm + indk,   # seed_offset
         )
         for indj in range(len(cfg.sl_list))
@@ -94,7 +96,7 @@ def _collect_framelist(imager, cfg, dm1_list, dm2_list, exptime_list,
     )
 
 def _get_image_worker(imager, dm1v, dm2v, exptime, gain, nframes, crop, lind,
-                      peakflux, fixedbp, fracbadpix, seed_offset):
+                      peakflux, fixedbp, fracbadpix, iteration, seed_offset):
     """
     Generate a frame for a single wavelength and DM setting.
 
@@ -147,7 +149,7 @@ def _get_image_worker(imager, dm1v, dm2v, exptime, gain, nframes, crop, lind,
             writer = csv.DictWriter(
                 fobj,
                 fieldnames=[
-                    'pid', 'rank', 'backend', 'seed_offset', 'lind', 'lam',
+                    'pid', 'rank', 'backend', 'iteration', 'seed_offset', 'lind', 'lam',
                     'exptime', 'gain', 'nframes', 'crop', 'peakflux',
                     'fracbadpix', 'shape', 'min', 'max', 'sum', 'finite_pixels',
                 ],
@@ -178,6 +180,7 @@ def _get_image_worker(imager, dm1v, dm2v, exptime, gain, nframes, crop, lind,
         'pid': os.getpid(),
         'rank': _worker_rank(),
         'backend': getattr(imager, 'backend', None),
+        'iteration': iteration,
         'seed_offset': seed_offset,
         'lind': lind,
         'lam': lam_value,
