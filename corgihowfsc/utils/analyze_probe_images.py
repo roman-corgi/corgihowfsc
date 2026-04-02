@@ -152,7 +152,7 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired):
         probe_ni_maps.append(probe_ni_row)
         dpv_maps.append(dpv_row)
 
-    # Create combined grid: 3 rows (probes) x 4 columns (3 bands + 1 DPV)
+    # Create combined grid: 3 rows (probes) x 4 columns (1 DPV + 3 bands)
     fig, axes = plt.subplots(len(deltax_act_list), len(band_indices) + 1, figsize=(20, 12))
 
     if len(deltax_act_list) == 1:
@@ -162,28 +162,25 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired):
     im_dpv = None
 
     for i in range(len(deltax_act_list)):
-        # Plot normalized intensity maps for each band (first 3 columns)
+        # Plot DPV map for this probe (first column - far left)
+        im_dpv = axes[i, 0].imshow(dpv_maps[i][0], cmap='viridis')
+        axes[i, 0].set_title(f'DPV (Volts)')
+        axes[i, 0].invert_yaxis()
+
+        # Add rotated probe label on the left side of DPV boxes
+        axes[i, 0].text(-0.15, 0.5, f'Probe {i}', transform=axes[i, 0].transAxes,
+                       rotation=90, verticalalignment='center', horizontalalignment='center',
+                       fontsize=14, fontweight='bold')
+
+        # Plot normalized intensity maps for each band (columns 1-3)
         for j in range(len(band_indices)):
-            im_ni = axes[i, j].imshow(probe_ni_maps[i][j],
-                                     norm=LogNorm(vmin=ni_desired/10, vmax=ni_desired*1.5),
-                                     cmap='inferno')
-            axes[i, j].set_title(f'Probe {i}, Band {band_indices[j]}\nNormalized Intensity')
-            axes[i, j].invert_yaxis()
+            im_ni = axes[i, j+1].imshow(probe_ni_maps[i][j],
+                                       norm=LogNorm(vmin=ni_desired/10, vmax=ni_desired*1.5),
+                                       cmap='inferno')
+            axes[i, j+1].set_title(f'Band {band_indices[j]}')
+            axes[i, j+1].invert_yaxis()
 
-        # Plot DPV map for this probe (last column)
-        im_dpv = axes[i, -1].imshow(dpv_maps[i][0], cmap='viridis')  # Use first band's DPV (they're all the same)
-        axes[i, -1].set_title(f'Probe {i}\nDPV (Volts)')
-        axes[i, -1].invert_yaxis()
-
-    # Add colorbars
-    if im_ni is not None:
-        # Colorbar for normalized intensity (spans first 3 columns)
-        cbar_ni = fig.colorbar(im_ni, ax=axes[:, :3].ravel().tolist(), shrink=0.6, label='Normalized Intensity')
-    if im_dpv is not None:
-        # Colorbar for DPV (spans last column)
-        cbar_dpv = fig.colorbar(im_dpv, ax=axes[:, -1].ravel().tolist(), shrink=0.6, label='DPV (Volts)')
-
-    fig.suptitle('Probe Analysis: Normalized Intensity Across Wavelength Bands and Corresponding DPV Maps', fontsize=16)
+    fig.suptitle('Probe Analysis: DPV Maps and Normalized Intensity Across Wavelength Bands', fontsize=16)
 
     plt.tight_layout()
     plt.show()
