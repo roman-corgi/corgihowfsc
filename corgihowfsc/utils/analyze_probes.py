@@ -1444,13 +1444,13 @@ def plot_dm_amplitude_vs_sigma(dpv_sets_dict, sigma_values, dpv_list_sincs, cfg,
         else:
             # Sinc amplitude is outside Gaussian range - place at boundary
             if sinc_amplitude < min_gauss_amplitude:
-                # Place at minimum sigma (lowest amplitude boundary)
-                equivalent_sigma = min(sigma_list)
-                boundary_indicator = " <"
-            else:
-                # Place at maximum sigma (highest amplitude boundary)
+                # Sinc amplitude too LOW (less voltage than any Gaussian) -> place at HIGH sigma boundary
                 equivalent_sigma = max(sigma_list)
                 boundary_indicator = " >"
+            else:
+                # Sinc amplitude too HIGH (more voltage than any Gaussian) -> place at LOW sigma boundary
+                equivalent_sigma = min(sigma_list)
+                boundary_indicator = " <"
 
         sinc_equivalent_data.append((equivalent_sigma, boundary_indicator))
         print(f"  Sinc probe {probe_idx}: DM amplitude = {sinc_amplitude:.4f}V, equivalent sigma = {boundary_indicator}{equivalent_sigma:.3f}")
