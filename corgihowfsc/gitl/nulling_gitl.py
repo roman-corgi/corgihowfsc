@@ -266,28 +266,48 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
 
     # set the initial seed
     rng = np.random.default_rng(12345)
-    
-    num_imager_worker = args.num_imager_worker 
-    print('Using num_imager_worker = ', num_imager_worker)
+
 
     # normalisation strategy first then imager, since normalisation strategy is needed to calculate peak flux for framelist collection
 
+    # get the time for framelist collection
+    t0 = time.time()
     # this step is to apply probe images
-    framelist = _collect_framelist(
-        imager, cfg, dm1_list, dm2_list,
-        exptime_list=orig_exptime_list,
-        gain_list=orig_gain_list,
-        nframes_list=orig_nframes_list,
-        croplist=croplist,
-        normalization_strategy=normalization_strategy,
-        get_cgi_eetc=get_cgi_eetc,
-        hconf=hconf,
-        ndm=ndm,
-        cstrat=cstrat,
-        fracbadpix=fracbadpix,
-        n_jobs=safe_cpu_count,
-        use_mpi=use_mpi,
-    )
+    if use_mpi:
+        framelist = collect_framelist_mpi(
+            mpi_comm,
+            imager, cfg, dm1_list, dm2_list,
+            exptime_list=orig_exptime_list,
+            gain_list=orig_gain_list,
+            nframes_list=orig_nframes_list,
+            croplist=croplist,
+            normalization_strategy=normalization_strategy,
+            get_cgi_eetc=get_cgi_eetc,
+            hconf=hconf,
+            ndm=ndm,
+            cstrat=cstrat,
+            fracbadpix=fracbadpix,
+            max_workers=safe_cpu_count,
+        )
+    else:
+        framelist = _collect_framelist(
+            imager, cfg, dm1_list, dm2_list,
+            exptime_list=orig_exptime_list,
+            gain_list=orig_gain_list,
+            nframes_list=orig_nframes_list,
+            croplist=croplist,
+            normalization_strategy=normalization_strategy,
+            get_cgi_eetc=get_cgi_eetc,
+            hconf=hconf,
+            ndm=ndm,
+            cstrat=cstrat,
+            fracbadpix=fracbadpix,
+            n_jobs=safe_cpu_count,
+        )
+    t1 = time.time()
+
+    log.info('Initial framelist collection time: %s seconds (mpi=%s)',
+                t1-t0, use_mpi)
 
     # drop packets for testing if requested
     if nbadpacket > 0:
@@ -469,21 +489,44 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         prev_nframes_list = param_order_to_list(nframes_list)
 
         # new framelist
-        framelist = _collect_framelist(
-            imager, cfg, dm1_list, dm2_list,
-            exptime_list=prev_exptime_list,
-            gain_list=prev_gain_list,
-            nframes_list=prev_nframes_list,
-            croplist=croplist,
-            normalization_strategy=normalization_strategy,
-            get_cgi_eetc=get_cgi_eetc,
-            hconf=hconf,
-            ndm=ndm,
-            cstrat=cstrat,
-            fracbadpix=fracbadpix,
-            n_jobs=safe_cpu_count,
-            use_mpi=use_mpi,
-        )
+        # get the time for framelist collection
+        t0 = time.time()
+
+        if use_mpi:
+            framelist = collect_framelist_mpi(
+                mpi_comm,
+                imager, cfg, dm1_list, dm2_list,
+                exptime_list=prev_exptime_list,
+                gain_list=prev_gain_list,
+                nframes_list=prev_nframes_list,
+                croplist=croplist,
+                normalization_strategy=normalization_strategy,
+                get_cgi_eetc=get_cgi_eetc,
+                hconf=hconf,
+                ndm=ndm,
+                cstrat=cstrat,
+                fracbadpix=fracbadpix,
+                max_workers=safe_cpu_count,
+            )
+        else:
+            framelist = _collect_framelist(
+                imager, cfg, dm1_list, dm2_list,
+                exptime_list=prev_exptime_list,
+                gain_list=prev_gain_list,
+                nframes_list=prev_nframes_list,
+                croplist=croplist,
+                normalization_strategy=normalization_strategy,
+                get_cgi_eetc=get_cgi_eetc,
+                hconf=hconf,
+                ndm=ndm,
+                cstrat=cstrat,
+                fracbadpix=fracbadpix,
+                n_jobs=safe_cpu_count,
+            )
+
+        t1 = time.time()
+        log.info('Framelist collection time for iteration %d: %s seconds (mpi=%s)',
+                    iteration, t1-t0, use_mpi)
 
         # drop packets for testing if requested
         if nbadpacket > 0:
