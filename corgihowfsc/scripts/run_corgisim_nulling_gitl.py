@@ -145,7 +145,7 @@ def main(param_file_name='default_param.yml', fullpath=False):
     mpi_comm = None
 
     if use_mpi:
-        from corgihowfsc.utils.mpi_runtime import initialize_mpi_comm
+        from corgihowfsc.mpi.mpi_runtime import initialize_mpi_comm
         mpi_comm = initialize_mpi_comm()
     
     # make sure each worker has access to the roman preflight model for mpi 
@@ -183,17 +183,17 @@ def main(param_file_name='default_param.yml', fullpath=False):
 
     # Initialise the workers with the necessary data and configuration to run the howfsc loop, including the model files and any overrides
     if mpi_comm is not None:
-        from corgihowfsc.utils.mpi_runtime import build_worker_init_config, init_workers
-        init_workers(
+        from corgihowfsc.mpi.mpi_runtime import build_worker_init_config, initialize_workers
+        initialize_workers(
             mpi_comm,
             build_worker_init_config(
+                args, 
                 cfgfile,
                 cstratfile,
                 hconffile,
                 backend_type,
                 mode,
                 corgi_overrides,
-                args,
             ),
         )
     else:
@@ -297,7 +297,7 @@ def main(param_file_name='default_param.yml', fullpath=False):
                      metadata, output_every_iter)
     finally:
         if mpi_comm is not None:
-            from corgihowfsc.utils.mpi_runtime import shutdown_workers
+            from corgihowfsc.mpi.mpi_runtime import shutdown_workers
             shutdown_workers(mpi_comm)
 
     print('nulling_gitl complete, exiting', flush=True)
