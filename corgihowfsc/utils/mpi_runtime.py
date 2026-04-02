@@ -30,12 +30,9 @@ def initialize_mpi_comm():
 
     This function must run before constrcuting any heavyweight runtime objects so worker ranks do not execute manager-only setup code. 
 
-    Raises
-    ------
-    ValueError
-        If MPI mode is started with fewer than two ranks.
-    SystemExit
-        On worker ranks after the worker service loop terminates.
+    Raises: 
+        ValueError: If MPI mode is started with fewer than two ranks.
+        SystemExit: On worker ranks after the worker service loop terminates.
     """
     comm = MPI.COMM_WORLD
     if comm.Get_rank() != 0:
@@ -49,17 +46,14 @@ def initialize_mpi_comm():
 def build_worker_init_config(cfgfile, cstratfile, hconffile, backend_type,
                               mode, corgi_overrides, args):
     """
-
     Build the one-time serialisable payload to initialise MPI workers. 
 
     The payload contains only lightweight configuration values, such as file paths, backend and mode selections, corgisim overrides and optional stellar-properties overrides. Each worker rank uses this payload to reconstruct its own local runtime state during the initial ``INIT`` step. 
 
     This avoids repeatedly sending heavyweights live Python objects, such as GITLImage or loaded howfsc configuration objects, across MPI task messages. 
 
-    Returns
-    -------
-    dict
-        Dictionary containing all the necessary information for workers to reconstruct their local runtime state.
+    Returns:
+        dict: Dictionary containing all the necessary information for workers to reconstruct their local runtime state.
     """
     return {
         'cfgfile': cfgfile,
@@ -122,7 +116,7 @@ def worker_loop(comm):
     worker_state = None
 
     while True:
-        message = comm.recv(source=0)
+        message = comm.recv(source=0) # wait for message from rank 0 (main process)
         message_type = message['message_type']
 
         if message_type == TASK_INIT:
@@ -170,7 +164,7 @@ def worker_loop(comm):
         comm.send(
             {'message_type': 'RESULT', 'job_id': task['job_id'], 'result': result},
             dest=0,
-        )
+        ) # send result back to rank 0 (main process)
 
 
 def collect_framelist_mpi(comm, imager, cfg, dm1_list, dm2_list, exptime_list,
@@ -195,17 +189,13 @@ def collect_framelist_mpi(comm, imager, cfg, dm1_list, dm2_list, exptime_list,
     In practice this is how ``num_imager_worker`` is enforced when the job is
     launched with more MPI ranks than the application wants to use.
 
-    Parameters
-    ----------
-    max_workers : int or None, optional
-        Maximum number of MPI worker ranks to use for this queue. This caps the
-        active worker count even if the MPI job was launched with more ranks.
+    Args: 
+        max_workers : int or None, optional
+            Maximum number of MPI worker ranks to use for this queue. This caps the
+            active worker count even if the MPI job was launched with more ranks.
 
-    Returns
-    -------
-    list
-        Ordered list of generated detector frames, one element per requested
-        frame task.
+    Returns: 
+        list: Ordered list of generated detector frames, one element per requested frame task.
     """
     if comm is None:
         raise ValueError('collect_framelist_mpi requires an MPI communicator')
@@ -219,7 +209,7 @@ def collect_framelist_mpi(comm, imager, cfg, dm1_list, dm2_list, exptime_list,
         for indj in range(len(cfg.sl_list))
     ]
 
-    # Build one explicit FRAME task per output frame.
+    # Build one FRAME task per output frame --> same as the _collect_framelist
     frame_tasks = [
         {
             'job_id': indj * ndm + indk,
@@ -260,18 +250,14 @@ def precompute_jac_mpi(comm, cfg, dmset_list, cstrat, subcroplist,
 
     where ``ndmact`` is the number of actuator indices to process.
 
-    Parameters
-    ----------
-    max_workers : int or None, optional
-        Maximum number of MPI worker ranks to use. The active worker count is
-        limited by both this value and the number of actuator chunks.
+    Args: 
+        max_workers : int or None, optional
+            Maximum number of MPI worker ranks to use. The active worker count is
+            limited by both this value and the number of actuator chunks.
 
-    Returns
-    -------
-    tuple
-        ``(jac, jtwj_map, n2clist)`` where ``jac`` is the assembled Jacobian,
-        ``jtwj_map`` is the rank-0 ``JTWJMap`` object, and ``n2clist`` is
-        either the computed list or ``None`` if ``do_n2clist`` is false.
+    Returns:
+        tuple: ``(jac, jtwj_map, n2clist)`` where ``jac`` is the assembled Jacobian, 
+            ``jtwj_map`` is the rank-0 ``JTWJMap`` object, and ``n2clist`` is either the computed list or ``None`` if ``do_n2clist`` is false.
 
 
     """
@@ -363,28 +349,17 @@ def _run_manager_task_queue(comm, task_type, task_list, max_workers=None):
     - continue until all tasks have completed
     - return results in job_id order, even if workers finish out of order
 
-    Parameters
-    ----------
-    comm
-        The MPI communicator, typically ``MPI.COMM_WORLD``.
-    message_type
-        The task type to send to workers, for example ``FRAME`` or
-        ``JAC_CHUNK``.
-    task_list
-        A list of explicit task dictionaries. Each task must contain a
-        ``job_id`` field.
-    max_workers
-        Optional cap on how many worker ranks rank 0 should actively use.
+    Args: 
+        comm: The MPI communicator, typically ``MPI.COMM_WORLD``.
+        message_type: The task type to send to workers, for example ``FRAME`` or ``JAC_CHUNK``.
+        task_list: A list of explicit task dictionaries. Each task must contain a ``job_id`` field.
+        max_workers: Optional cap on how many worker ranks rank 0 should actively use.
 
-    Returns
-    -------
-    list
-        Task results ordered by ``job_id``.
+    Returns:
+        list: Task results ordered by ``job_id``.
 
-    Raises
-    ------
-    ValueError
-        If no worker ranks are available.
+    Raises:
+        ValueError: If no worker ranks are available.
     """
     if not task_list:
         return []
