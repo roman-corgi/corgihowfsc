@@ -68,8 +68,8 @@ def write_gaussian_probes(
 
     if 'nfov' in mode:  # nfov_band1, nfov_band2, nfov_band3, nfov_band4
         if '360' in dark_hole:  # 360-degree dark zone
-            sigma = 1.5
-            deltax_act_list = [13, 13, 14]
+            sigma = 1.
+            deltax_act_list = [13, 13, 12]
             deltay_act_list = [8, 9, 9]
         else:  # half dark zone
             sigma = 1.5
