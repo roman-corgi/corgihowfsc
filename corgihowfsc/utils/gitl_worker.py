@@ -10,7 +10,50 @@ from howfsc.control.calcjacs import calcjacs_sp
 def _collect_framelist(imager, cfg, dm1_list, dm2_list, exptime_list,
                        gain_list, nframes_list, croplist, normalization_strategy,
                        get_cgi_eetc, hconf, ndm, cstrat, fracbadpix,
-                       n_jobs=1, use_mpi=False):
+                       n_jobs=1):
+    """
+    Generate and collect the full framelist using local multiprocessing. 
+    This helper is the local, non MPI version of framelist collection.
+
+    Compute the peakflux per wavelength channel, build a flat list of arguments for each requested frame, and then
+    execute the frame generation in parallel using ``run_parallel(...)`` with the low-level worker function
+    ``_get_image_worker(...)``.
+
+    Args: 
+        imager : GitlImage
+            Image generation object used to simulate detector frames.
+        cfg : CoronagraphMode
+            Optical model configuration. Only ``cfg.sl_list`` is used here to infer
+            the number of wavelength channels.
+        dm1_list, dm2_list : list
+            Lists of absolute DM1 and DM2 settings for every frame in the probing
+            sequence, ordered consistently with the requested framelist.
+        exptime_list, gain_list, nframes_list : list
+            Per frame camera settings passed through to the image worker.
+        croplist : list
+            Per wavelength crop definitions. The element at index ``indj`` is reused
+            for all DM settings at that wavelength.
+        normalization_strategy : object
+            Normalisation helper used to compute the peak flux per wavelength.
+        get_cgi_eetc : object
+            Exposure time calculator instance used by
+            ``normalization_strategy.calc_flux_rate(...)``.
+        hconf : dict
+            Hardware and stellar configuration dictionary passed to the
+            normalisation logic.
+        ndm : int
+            Number of DM settings per wavelength in the probing sequence.
+        cstrat : ControlStrategy
+            Control strategy object. Only ``cstrat.fixedbp`` is used here.
+        fracbadpix : float
+            Fraction of additional random bad pixels to inject into each generated
+            frame.
+        n_jobs : int, optional
+            Number of local worker processes to use. ``n_jobs=1`` runs serially.
+
+    Returns: 
+        list: Ordered list of simulated detector frames, one element per requested frame in the probing sequence.
+    """
 
     # pre-compute peakflux per wavelength before parallelising
     peakflux_list = [
@@ -25,7 +68,7 @@ def _collect_framelist(imager, cfg, dm1_list, dm2_list, exptime_list,
 
     args_list = [
         (imager,
-         dm1_list[indj * ndm + indk], 
+         dm1_list[indj * ndm + indk],
          dm2_list[indj * ndm + indk],
          exptime_list[indj * ndm + indk],
          gain_list[indj * ndm + indk],
@@ -46,7 +89,7 @@ def _collect_framelist(imager, cfg, dm1_list, dm2_list, exptime_list,
         args_list,
         n_jobs=n_jobs,
         allow_nesting=True,
-        use_mpi=use_mpi,
+        start_method="spawn",
     )
 
 def _get_image_worker(imager, dm1v, dm2v, exptime, gain, nframes, crop, lind,
