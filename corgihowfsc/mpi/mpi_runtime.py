@@ -7,8 +7,8 @@ from howfsc.control.calcjtwj import JTWJMap
 from howfsc.control.calcjacs import get_ndhpix
 from howfsc.control.calcn2c import calcn2c
 
-from corgihowfsc.utils.gitl_worker import (
-    init_mpi_worker_state,
+from corgihowfsc.mpi.mpi_worker import (
+    initialize_mpi_worker_state,
     run_mpi_frame_task,
     run_mpi_jac_task,
 )
@@ -43,8 +43,7 @@ def initialize_mpi_comm():
     return comm
 
 
-def build_worker_init_config(cfgfile, cstratfile, hconffile, backend_type,
-                              mode, corgi_overrides, args):
+def build_worker_init_config(args, cfgfile, cstratfile, hconffile, backend_type, mode, corgi_overrides):
     """
     Build the one-time serialisable payload to initialise MPI workers. 
 
@@ -69,7 +68,7 @@ def build_worker_init_config(cfgfile, cstratfile, hconffile, backend_type,
     }
 
 
-def init_workers(comm, worker_config):
+def initialize_workers(comm, worker_config):
     """
     Send the one-time INIT message to all worker ranks.
 
@@ -101,10 +100,10 @@ def worker_loop(comm):
     """
     Run the persistent MPI worker loop for nonzero ranks. 
 
-    The worker waits for messages from rank 0 (main process) over ``comm``. Each message contains a ``message_type`` field that determines what the worker should do.
+    The worker waits for messages from rank 0 (main process) over ``comm``. 
+    Each message contains a ``message_type`` field that determines what the worker should do.
 
     The worker handles four message types:
-
     - ``INIT``: build local worker state once from the provided configuration
     - ``FRAME``: execute one frame-generation task and send the result back
     - ``JAC_CHUNK``: execute one Jacobian chunk task and send the result back
@@ -121,7 +120,7 @@ def worker_loop(comm):
 
         if message_type == TASK_INIT:
             log.info("MPI worker rank %d received INIT", comm.Get_rank())
-            worker_state = init_mpi_worker_state(message['worker_config'])
+            worker_state = initialize_mpi_worker_state(message['worker_config'])
             log.info("MPI worker rank %d finished INIT", comm.Get_rank())
             continue
 
@@ -174,9 +173,10 @@ def collect_framelist_mpi(comm, imager, cfg, dm1_list, dm2_list, exptime_list,
     """
     Collect detector frames for the full framelist by distributing explicit frame tasks over MPI workers.
 
-    This is the manager-side entry point for framelist generation. Rank 0 computes any shared per-wavelength values (e.g. peak flux) once, builds one explicit ``FRAME`` task per requested output frame, then sends those tasks through the shared MPI task queue, and gather results back in logical frame order. 
+    This is the manager-side entry point for framelist generation. Rank 0 computes any shared per-wavelength values 
+    (e.g. peak flux) once, builds one ``FRAME`` task per requested output frame, then sends those tasks through the shared MPI task queue, and gather results back in logical frame order. 
 
-    The workers do not receive heavyweight live objects with each task. They reuse the cached worker state built earlier during ``INIT`` and combine that state with the lightweight per-frame task inputs.
+    The workers do not receive heavyweight live objects with each task. They reuse the cached worker state built earlier during ``INIT`` and combine that state with the per-frame task inputs.
 
     Notes
     -----
@@ -340,7 +340,7 @@ def precompute_jac_mpi(comm, cfg, dmset_list, cstrat, subcroplist,
 
 def _run_manager_task_queue(comm, task_type, task_list, max_workers=None):
     """
-    Run a manager-side MPI task qeueu and return results in logical task order.
+    Run a manager-side MPI task queue and return results in logical task order.
 
     Rank 0 uses it to:
     - send one initial task to each active worker rank
