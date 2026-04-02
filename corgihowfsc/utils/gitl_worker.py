@@ -95,26 +95,42 @@ def _collect_framelist(imager, cfg, dm1_list, dm2_list, exptime_list,
 def _get_image_worker(imager, dm1v, dm2v, exptime, gain, nframes, crop, lind,
                       peakflux, fixedbp, fracbadpix, seed_offset):
     """
-    Worker function for parallel image collection.
-    Must be a top-level function (not nested) to be picklable by joblib.
+    Generate a frame for a single wavelength and DM setting.
+
+    This is the low-level frame generation function shared by the local multiprocessing and MPI runtime. 
+
+    The worker performs three steps: it calls ``imager.get_image(...)`` to
+    generate the detector frame, builds a reproducible random bad pixel mask
+    using ``seed_offset``, and replaces the selected pixels with ``NaN``.
 
     Args:
-        imager: GitlImage instance
-        dm1v: ndarray, absolute voltage map for DM1
-        dm2v: ndarray, absolute voltage map for DM2
-        exptime: float, exposure time in seconds
-        gain: float, EM gain
-        nframes: int, number of frames 
-        crop: 4-tuple of (lower row, lower col, nrows, ncols)
-        lind: int, wavelength channel index
-        peakflux: float, pre-computed peak flux for this wavelength
-        fixedbp: ndarray of bool, fixed bad pixel map
-        fracbadpix: float, fraction of pixels to randomly mask
-        seed_offset: int, unique per frame to ensure distinct but
-                     reproducible bad pixel patterns across frames
+        imager : GitlImage
+            Image generation object used to simulate the detector frame.
+        dm1v, dm2v : ndarray
+            Absolute voltage maps for DM1 and DM2 for this frame.
+        exptime : float
+            Exposure time in seconds.
+        gain : float
+            EM gain used for this frame.
+        nframes : int
+            Number of detector frames to average in the image simulation.
+        crop : tuple
+            Four element crop definition ``(lower_row, lower_col, nrows, ncols)``.
+        lind : int
+            Wavelength channel index.
+        peakflux : float
+            Precomputed peak flux for this wavelength channel.
+        fixedbp : ndarray of bool
+            Fixed bad pixel map passed to the image generator.
+        fracbadpix : float
+            Fraction of additional random bad pixels to inject into the generated
+            frame.
+        seed_offset : int
+            Per frame seed offset used to make the random bad pixel pattern distinct
+            but reproducible across frames.
 
     Returns:
-        ndarray: simulated detector frame with bad pixels set to NaN
+        ndarray: Simulated detector frame with injected bad pixels set to ``NaN``.
     """
     f = imager.get_image(
         dm1v, dm2v, exptime,
@@ -128,7 +144,10 @@ def _get_image_worker(imager, dm1v, dm2v, exptime, gain, nframes, crop, lind,
         fixedbp=fixedbp,
         wfe=None,
     )
+
+    # Build a reproducible per frame random bad pixel mask.
     rng = np.random.default_rng(12345 + seed_offset)
     bpmeas = rng.random(f.shape) > (1 - fracbadpix)
     f[bpmeas] = np.nan
+
     return f
