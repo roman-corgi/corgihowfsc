@@ -170,7 +170,7 @@ def worker_loop(comm):
 def collect_framelist_mpi(comm, imager, cfg, dm1_list, dm2_list, exptime_list,
                           gain_list, nframes_list, croplist,
                           normalization_strategy, get_cgi_eetc, hconf, ndm,
-                          cstrat, fracbadpix, max_workers=None):
+                          cstrat, fracbadpix, iteration=0, max_workers=None):
     """
     Collect detector frames for the full framelist by distributing explicit frame tasks over MPI workers.
 
@@ -223,6 +223,7 @@ def collect_framelist_mpi(comm, imager, cfg, dm1_list, dm2_list, exptime_list,
             'lind': indj,
             'peakflux': peakflux_list[indj],
             'fracbadpix': fracbadpix,
+            'iteration': iteration,
             'seed_offset': indj * ndm + indk,
         }
         for indj in range(len(cfg.sl_list))
