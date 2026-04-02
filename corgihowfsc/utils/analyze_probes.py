@@ -1250,7 +1250,7 @@ def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_m
             probe_sigmas = []
             for wvl_name, probe_idx, sigma_val, boundary_indicator in intersection_sigmas:
                 if wvl_name == wvl_nm:
-                    probe_sigmas.append(f"P{probe_idx}={boundary_indicator}{sigma_val:.2f}{boundary_indicator}")
+                    probe_sigmas.append(f"P{probe_idx}={boundary_indicator}{sigma_val:.2f}")
             sigma_text += ", ".join(probe_sigmas) + "\n"
 
         # Add legend for boundary indicators
@@ -1412,81 +1412,97 @@ def plot_dm_amplitude_vs_sigma(dpv_sets_dict, sigma_values, dpv_list_sincs, cfg,
 
     sinc_intensities_by_wvl = np.array(sinc_intensities_by_wvl)  # shape: (n_wvl, 2, n_probes)
 
-    # Calculate equivalent sigma for sinc probes based on DM amplitude matching
+    # Calculate equivalent sigma for sinc probes based on DM amplitude matching with interpolation
     print("\nCalculating equivalent sigma for sinc probes based on DM amplitude matching...")
-    sinc_equivalent_sigmas = []
+    sinc_equivalent_data = []  # Store (sigma, boundary_indicator) tuples
 
     for probe_idx in range(len(dpv_list_sincs)):
-        # For each sinc probe, find the Gaussian sigma that gives closest DM amplitude match
+        # For each sinc probe, interpolate to find precise equivalent sigma
         sinc_amplitude = sinc_amplitudes[probe_idx]  # Peak-to-valley DM voltage of sinc probe
 
-        best_sigma = None
-        min_diff = float('inf')
+        # Extract sigma values and corresponding DM amplitudes for this probe
+        sigma_list = []
+        amplitude_list = []
 
-        for sigma in sigma_values:
-            # Get DM amplitude for this Gaussian probe at this sigma
+        for sigma in sorted(sigma_values):
             gauss_amplitude = gaussian_results[sigma]['amplitudes'][probe_idx]
-            diff = abs(gauss_amplitude - sinc_amplitude)
-            if diff < min_diff:
-                min_diff = diff
-                best_sigma = sigma
+            sigma_list.append(sigma)
+            amplitude_list.append(gauss_amplitude)
 
-        sinc_equivalent_sigmas.append(best_sigma)
-        print(f"  Sinc probe {probe_idx}: DM amplitude = {sinc_amplitude:.4f}V, equivalent sigma = {best_sigma:.2f}")
+        # Check if sinc amplitude is within the range of Gaussian amplitudes
+        min_gauss_amplitude = min(amplitude_list)
+        max_gauss_amplitude = max(amplitude_list)
+
+        if min_gauss_amplitude <= sinc_amplitude <= max_gauss_amplitude:
+            # Sinc amplitude is within Gaussian range - interpolate
+            # Create interpolation function: f(amplitude) -> sigma
+            interp_func = interpolate.interp1d(amplitude_list, sigma_list,
+                                             kind='linear', bounds_error=False)
+            equivalent_sigma = float(interp_func(sinc_amplitude))
+            boundary_indicator = ""
+
+        else:
+            # Sinc amplitude is outside Gaussian range - place at boundary
+            if sinc_amplitude < min_gauss_amplitude:
+                # Place at minimum sigma (lowest amplitude boundary)
+                equivalent_sigma = min(sigma_list)
+                boundary_indicator = " <"
+            else:
+                # Place at maximum sigma (highest amplitude boundary)
+                equivalent_sigma = max(sigma_list)
+                boundary_indicator = " >"
+
+        sinc_equivalent_data.append((equivalent_sigma, boundary_indicator))
+        print(f"  Sinc probe {probe_idx}: DM amplitude = {sinc_amplitude:.4f}V, equivalent sigma = {boundary_indicator}{equivalent_sigma:.3f}")
 
     # Create the plot
     fig, ax = plt.subplots(figsize=(12, 8))
 
-    # Plot Gaussian probe data
-    for wvl_idx, wvl_nm in enumerate(wavelengths_nm):
-        if wvl_idx not in wavelength_indices:
+    # Plot Gaussian probe data (DM amplitude is wavelength-independent)
+    for probe_idx in probe_indices:
+        if probe_idx >= len(probe_markers):
             continue
 
-        color = colors[wvl_idx]
+        # Extract data for this probe across all sigma values
+        sigma_plot = []
+        amplitude_plot = []
 
-        for probe_idx in probe_indices:
-            if probe_idx >= len(probe_markers):
-                continue
+        for sigma in sigma_values:
+            if sigma in gaussian_results:
+                try:
+                    amplitude = gaussian_results[sigma]['amplitudes'][probe_idx]
+                    sigma_plot.append(sigma)
+                    amplitude_plot.append(amplitude)
+                except (IndexError, KeyError):
+                    continue
 
-            # Extract data for this configuration
-            sigma_plot = []
-            amplitude_plot = []
+        if len(sigma_plot) > 0:
+            # Create label for Gaussian data (no wavelength since DM amplitude is wavelength-independent)
+            label = f"Gaussian probe {probe_idx}"
 
-            for sigma in sigma_values:
-                if sigma in gaussian_results:
-                    try:
-                        amplitude = gaussian_results[sigma]['amplitudes'][probe_idx]
-                        sigma_plot.append(sigma)
-                        amplitude_plot.append(amplitude)
-                    except (IndexError, KeyError):
-                        continue
-
-            if len(sigma_plot) > 0:
-                # Create label for Gaussian data
-                label = f"Gaussian {wvl_nm}nm, probe {probe_idx}"
-
-                # Plot the Gaussian curve
-                marker = probe_markers[probe_idx]
-                ax.plot(sigma_plot, amplitude_plot,
-                       color=color, linestyle='-', alpha=0.7, linewidth=2,
-                       marker=marker, markersize=6, label=label)
+            # Plot the Gaussian curve
+            marker = probe_markers[probe_idx]
+            color = colors[probe_idx] if probe_idx < len(colors) else 'gray'
+            ax.plot(sigma_plot, amplitude_plot,
+                   color=color, linestyle='-', alpha=0.7, linewidth=2,
+                   marker=marker, markersize=8, label=label)
 
     # Overlay sinc probe data at equivalent sigma positions based on DM amplitude matching
     for probe_idx in probe_indices:
         if probe_idx >= len(sinc_amplitudes):
             continue
 
-        equivalent_sigma = sinc_equivalent_sigmas[probe_idx]
+        equivalent_sigma, boundary_indicator = sinc_equivalent_data[probe_idx]
         amplitude = sinc_amplitudes[probe_idx]
 
         # Plot sinc probe as a single point with distinct styling
         marker = probe_markers[probe_idx]
         # Make star marker three times bigger since it appears smaller than circle/square
-        marker_size = 300 if marker == '*' else 100
+        marker_size = 500 if marker == '*' else 200
         ax.scatter(equivalent_sigma, amplitude,
                   color='black', s=marker_size, marker=marker,
                   edgecolors='white', linewidth=2,
-                  label=f"Sinc probe {probe_idx} (σ≈{equivalent_sigma:.2f})",
+                  label=f"Sinc probe {probe_idx} (σ≈{boundary_indicator}{equivalent_sigma:.3f})",
                   zorder=10)
 
     # Customize the plot
@@ -1577,7 +1593,7 @@ if __name__ == '__main__':
     # # Option 1: Create new Gaussian probe sets with sigma sweep (uncomment to generate new data)
     # sigma_range = (0.5, 2.0)  # Range for sigma values
     # sigma_step = 0.1         # Step size for sigma sweep
-
+    #
     # print("\nCreating Gaussian probe sets with sigma sweep...")
     # dpv_sets_dict, sigma_values, dh_mask, metadata = create_gaussian_probe_sets_sigma_sweep(
     #     modelpath, cfgfile, dmlist, sigma_range, sigma_step,
@@ -1606,14 +1622,14 @@ if __name__ == '__main__':
     #                                 metadata, dpv_list_sincs, wavelength_indices=[0, 1, 2],
     #                                 data_out=analysis_path)
 
-    # Plot sigma sweep peak-to-valley analysis
-    print("\nGenerating sigma sweep peak-to-valley analysis plot...")
-    plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
-                                  metadata, dpv_list_sincs, wavelength_indices=[0, 1, 2],
-                                  data_out=analysis_path)
+    # # Plot sigma sweep peak-to-valley analysis
+    # print("\nGenerating sigma sweep peak-to-valley analysis plot...")
+    # plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_mask,
+    #                               metadata, dpv_list_sincs, wavelength_indices=[0, 1, 2],
+    #                               data_out=analysis_path)
 
-    # # Plot DM amplitude vs sigma with sinc-sinc-sine overlay
-    # print("\nGenerating DM amplitude vs sigma analysis plot with sinc-sinc-sine overlay...")
-    # plot_dm_amplitude_vs_sigma(dpv_sets_dict, sigma_values, dpv_list_sincs, cfg, dmlist, dh_mask,
-    #                            metadata, wavelength_indices=[0, 1, 2])
+    # Plot DM amplitude vs sigma with sinc-sinc-sine overlay
+    print("\nGenerating DM amplitude vs sigma analysis plot with sinc-sinc-sine overlay...")
+    plot_dm_amplitude_vs_sigma(dpv_sets_dict, sigma_values, dpv_list_sincs, cfg, dmlist, dh_mask,
+                               metadata, wavelength_indices=[0, 1, 2])
 
