@@ -105,6 +105,7 @@ def run_mpi_frame_task(worker_state, task):
         task['peakflux'],
         worker_state['cstrat'].fixedbp,
         task['fracbadpix'],
+        task['iteration'],
         task['seed_offset']
         )
 
