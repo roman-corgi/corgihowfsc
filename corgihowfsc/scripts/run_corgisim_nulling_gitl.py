@@ -140,6 +140,11 @@ def main(param_file_name='default_param.yml', fullpath=False):
     args.num_proper_process = num_proper_process
     args.use_mpi = use_mpi
 
+    os.environ.setdefault(
+        'CORGIHOWFSC_IMAGE_DEBUG_CSV',
+        os.path.join(os.path.dirname(args.logfile), 'image_worker_debug.csv'),
+    )
+
     # Initialize MPI if needed, and add the mpi_comm to args for use in howfsc initialization and later passing to workers; 
     # If not using MPI, mpi_comm will be None and should be handled as such in the code
     mpi_comm = None

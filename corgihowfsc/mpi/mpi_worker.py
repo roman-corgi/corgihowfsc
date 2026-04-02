@@ -1,3 +1,5 @@
+import os
+
 from howfsc.control.cs import ControlStrategy
 from howfsc.model.mode import CoronagraphMode
 from howfsc.util.loadyaml import loadyaml
@@ -34,6 +36,13 @@ def initialize_mpi_worker_state(worker_config):
         dict: Persistent worker state containing ``'cfg'``, ``'hconf'``,
         ``'cstrat'``, and ``'imager'``.
     """
+
+    logfile = worker_config.get('logfile')
+    if logfile:
+        os.environ.setdefault(
+            'CORGIHOWFSC_IMAGE_DEBUG_CSV',
+            os.path.join(os.path.dirname(logfile), 'image_worker_debug.csv'),
+        )
 
     cfg = CoronagraphMode(worker_config['cfgfile'])
     hconf = loadyaml(worker_config['hconffile'], custom_exception=TypeError)
