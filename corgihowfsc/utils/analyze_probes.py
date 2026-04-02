@@ -299,7 +299,7 @@ def plot_probe_ni_vs_wvln(averages_cube):
 
 
 def create_gaussian_probe_sets_sigma_sweep(modelpath, cfgfile, dmlist, sigma_range, sigma_step,
-                                         deltax_act_list=[13, 13, 14], deltay_act_list=[8, 9, 9],
+                                         deltax_act_list=[13, 13, 12], deltay_act_list=[8, 9, 9],
                                          ni_desired=1e-5, lod_min=2.8, lod_max=209.7, ind=1):
     """
     Create multiple Gaussian probe sets with different sigma parameters.
@@ -1527,7 +1527,7 @@ if __name__ == '__main__':
     # print("\nCreating Gaussian probe sets with sigma sweep...")
     # dpv_sets_dict, sigma_values, dh_mask, metadata = create_gaussian_probe_sets_sigma_sweep(
     #     modelpath, cfgfile, dmlist, sigma_range, sigma_step,
-    #     deltax_act_list=[13, 13, 14], deltay_act_list=[8, 9, 9],
+    #     deltax_act_list=[13, 13, 12], deltay_act_list=[8, 9, 9],
     #     ni_desired=1e-7, lod_min=2.8, lod_max=209.7, ind=1
     # )
     #
