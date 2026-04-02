@@ -1,38 +1,10 @@
 import time
 import os
-import argparse
-import cProfile
-import pstats
-import io
-
-import logging
-log = logging.getLogger(__name__)
 
 import numpy as np
-import astropy.io.fits as pyfits
-
-import eetc
-from eetc.cgi_eetc import CGIEETC
-
-import howfsc
-from howfsc.control.cs import ControlStrategy
-from howfsc.control.calcjtwj import JTWJMap
-
-from howfsc.model.mode import CoronagraphMode
-
-from howfsc.util.loadyaml import loadyaml
-from howfsc.util.gitl_tools import param_order_to_list
-
-from corgihowfsc.gitl.modular_gitl import howfsc_computation
-from howfsc.precomp import howfsc_precomputation
-from corgihowfsc.utils.saving_output import save_outputs, save_outputs_iter
-from corgihowfsc.utils.output_management import save_run_config, update_yml
 
 from corgihowfsc.utils.parallel_executor import run_parallel
-
-eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
-howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
-defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
+from howfsc.control.calcjacs import calcjacs_sp
 
 
 def _collect_framelist(imager, cfg, dm1_list, dm2_list, exptime_list,
