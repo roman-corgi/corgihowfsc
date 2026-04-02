@@ -157,26 +157,14 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         pr = cProfile.Profile()
         pass
 
-    # Set up logging
-    if logfile is not None:
-        logging.basicConfig(filename=logfile, level=logging.INFO)
-        pass
-    else:
-        logging.basicConfig(level=logging.INFO)
-        pass
-    log = logging.getLogger(__name__)
-
     contrast = float(args.starting_contrast) # "starting" value to bootstrap getting we0
 
-    # dm1_list, dm2
+    # dm1_list, dm2_list
     # Get DM lists
     dm1_list, dm2_list, dmrel_list, dm10, dm20 = probes.get_dm_probes(cfg, probefiles, dmstartmaps)
     nlam = len(cfg.sl_list)
     ndm = 2 * len(dmrel_list) + 1
     nprobepair = len(dmrel_list)
-
-    # cstratfile
-    # cstrat = ControlStrategy(cstratfile)
 
     # nrow, ncol, croplist
     nrow = crop_params['nrow']
@@ -247,10 +235,10 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
 
     # TODO: update this to allow other stars? Not sure why its always v
     get_cgi_eetc = CGIEETC(mag=hconf['star']['stellar_vmag'],
-                       phot='v', # only using V-band magnitudes as a standard
-                       spt=hconf['star']['stellar_type'],
-                       pointer_path=os.path.join(eetc_path,
-                                                 hconf['hardware']['pointer']),
+                        phot='v', # only using V-band magnitudes as a standard
+                        spt=hconf['star']['stellar_type'],
+                        pointer_path=os.path.join(eetc_path,
+                                                    hconf['hardware']['pointer']),
     )
 
 
@@ -264,8 +252,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     iteration_durations = []
     iteration_durations.append(this_iter_time)
 
-    # framelist
-    # do last, needs peak flux
+    # set the initial seed
     rng = np.random.default_rng(12345)
     
     num_imager_worker = args.num_imager_worker 
@@ -321,9 +308,9 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         abs_dm1, abs_dm2, scale_factor_list, gain_list, exptime_list, \
         nframes_list, prev_c, next_c, next_time, status, other, debugging_dict = \
         howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
-                           croplist, prev_exptime_list,
-                           cstrat, n2clist, hconf, iteration,
-                           estimator, imager, normalization_strategy, probes)
+                            croplist, prev_exptime_list,
+                            cstrat, n2clist, hconf, iteration,
+                            estimator, imager, normalization_strategy, probes)
         if isprof:
             pr.disable()
             pass
@@ -386,6 +373,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             else:
                 perfect_efield_list.append(None)
 
+            # get the NI metric for this iteration
             ni_score, ni_inner, ni_outer = get_ni(framelistlist[iteration-1], cfg, prev_exptime_list,
                                                   debugging_dict['peakflux'], normalization_strategy, ndm, nrow, ncol)
             ni_lists['ni_score'].append(ni_score)
@@ -495,9 +483,9 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
                 pass
             pass
 
-        # technically new nrow, ncol, croplist too, but these don't actually
-        # change (parameters are not updated)
-        pass
+    # technically new nrow, ncol, croplist too, but these don't actually
+    # change (parameters are not updated)
+    pass
 
     if isprof:
         # cumtime
@@ -524,7 +512,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         hdul.writeto(fileout, overwrite=True)
 
         ni_score, ni_inner, ni_outer = get_ni(framelistlist[iteration - 1], cfg, prev_exptime_list,
-                                              debugging_dict['peakflux'], normalization_strategy, ndm, nrow, ncol)
+                                                debugging_dict['peakflux'], normalization_strategy, ndm, nrow, ncol)
         ni_lists['ni_score'].append(ni_score)
         ni_lists['ni_inner'].append(ni_inner)
         ni_lists['ni_outer'].append(ni_outer)
