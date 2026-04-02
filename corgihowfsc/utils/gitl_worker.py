@@ -1,10 +1,14 @@
 import time
 import os
+import logging
 
 import numpy as np
 
 from corgihowfsc.utils.parallel_executor import run_parallel
 from howfsc.control.calcjacs import calcjacs_sp
+
+
+log = logging.getLogger(__name__)
 
 
 def _collect_framelist(imager, cfg, dm1_list, dm2_list, exptime_list,
@@ -132,6 +136,25 @@ def _get_image_worker(imager, dm1v, dm2v, exptime, gain, nframes, crop, lind,
     Returns:
         ndarray: Simulated detector frame with injected bad pixels set to ``NaN``.
     """
+    lam_value = None
+    if hasattr(imager, 'cfg') and hasattr(imager.cfg, 'sl_list') and lind < len(imager.cfg.sl_list):
+        lam_value = getattr(imager.cfg.sl_list[lind], 'lam', None)
+
+    log.info(
+        "Generating image backend=%s seed_offset=%s lind=%s lam=%s exptime=%s gain=%s "
+        "nframes=%s crop=%s peakflux=%s fracbadpix=%s",
+        getattr(imager, 'backend', None),
+        seed_offset,
+        lind,
+        lam_value,
+        exptime,
+        gain,
+        nframes,
+        crop,
+        peakflux,
+        fracbadpix,
+    )
+
     f = imager.get_image(
         dm1v, dm2v, exptime,
         gain=gain,
@@ -144,6 +167,27 @@ def _get_image_worker(imager, dm1v, dm2v, exptime, gain, nframes, crop, lind,
         fixedbp=fixedbp,
         wfe=None,
     )
+
+    finite_mask = np.isfinite(f)
+    if np.any(finite_mask):
+        finite_values = f[finite_mask]
+        log.info(
+            "Generated image backend=%s seed_offset=%s shape=%s min=%s max=%s sum=%s finite_pixels=%s",
+            getattr(imager, 'backend', None),
+            seed_offset,
+            f.shape,
+            np.nanmin(finite_values),
+            np.nanmax(finite_values),
+            np.nansum(finite_values),
+            int(finite_mask.sum()),
+        )
+    else:
+        log.info(
+            "Generated image backend=%s seed_offset=%s shape=%s with no finite pixels",
+            getattr(imager, 'backend', None),
+            seed_offset,
+            f.shape,
+        )
 
     # Build a reproducible per frame random bad pixel mask.
     rng = np.random.default_rng(12345 + seed_offset)
@@ -177,4 +221,3 @@ def _jac_worker(cfg, ijproc, dm0list, jacmethod, num_threads):
     if num_threads is not None:
         os.environ['MKL_NUM_THREADS'] = str(num_threads)
     return ijproc, calcjacs_sp(cfg, ijproc, dm0list, jacmethod)
-
