@@ -198,19 +198,31 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         pass
     elif precomp in ['precomp_jacs_once', 'precomp_jacs_always']:
         t0 = time.time()
-        jac, jtwj_map, _ = howfsc_precomputation(
-            cfg=cfg,
-            dmset_list=[dm10, dm20],
-            cstrat=cstrat,
-            subcroplist=subcroplist,
-            jacmethod='fast',
-            do_n2clist=False,
-            num_process=num_process,
-            num_threads=num_threads,
-        )
+        
+        if use_mpi:
+            jac, jtwj_map, _ = precompute_jac_mpi(
+                mpi_comm,
+                cfg, [dm10, dm20], cstrat, subcroplist,
+                jacmethod='fast', num_threads=num_threads,
+                do_n2clist=False,
+                max_workers=safe_cpu_count,
+            )
+        else:
+            jac, jtwj_map, _ = howfsc_precomputation(
+                cfg=cfg,
+                dmset_list=[dm10, dm20],
+                cstrat=cstrat,
+                subcroplist=subcroplist,
+                jacmethod='fast',
+                do_n2clist=False,
+                num_process=num_process,
+                num_threads=num_threads,
+            )
+        
         t1 = time.time()
         log.info('Initial jac calc time: ' + str(t1-t0) + ' seconds')
         n2clist = []
+        
         for n2cfn in n2clistfiles:
             n2clist.append(pyfits.getdata(n2cfn))
             pass
@@ -422,16 +434,27 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         # Skip the very last Jacobian that never gets used
         if precomp in ['precomp_jacs_always'] and iteration < niter:
             t0 = time.time()
-            jac, jtwj_map, _ = howfsc_precomputation(
-                cfg=cfg,
-                dmset_list=[abs_dm1, abs_dm2],
-                cstrat=cstrat,
-                subcroplist=subcroplist,
-                jacmethod='fast',
-                do_n2clist=False,
-                num_process=num_process,
-                num_threads=num_threads,
-            )
+
+            if use_mpi:
+                jac, jtwj_map, _ = precompute_jac_mpi(
+                    mpi_comm,
+                    cfg, [abs_dm1, abs_dm2], cstrat, subcroplist,
+                    jacmethod='fast', num_threads=num_threads,
+                    do_n2clist=False,
+                    max_workers=safe_cpu_count,
+                )
+            else:
+                jac, jtwj_map, _ = howfsc_precomputation(
+                    cfg=cfg,
+                    dmset_list=[abs_dm1, abs_dm2],
+                    cstrat=cstrat,
+                    subcroplist=subcroplist,
+                    jacmethod='fast',
+                    do_n2clist=False,
+                    num_process=num_process,
+                    num_threads=num_threads,
+                )
+
             t1 = time.time()
             log.info('Jac recalc time: ' + str(t1-t0) + ' seconds')
 
