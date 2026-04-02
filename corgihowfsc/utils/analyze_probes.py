@@ -12,6 +12,7 @@ import csv
 from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy import interpolate
 import json
 
 import os
@@ -800,14 +801,39 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
                 for probe_idx in range(3):
                     sinc_mean = sinc_probe_means[wvl_idx][probe_idx]
 
-                    # Find closest intersection point
-                    differences = [abs(stdev - sinc_mean) for stdev in mean_stdevs]
-                    closest_idx = np.argmin(differences)
-                    intersection_sigma = unique_sigmas[closest_idx]
-                    intersection_stdev = mean_stdevs[closest_idx]  # Y-value ON the Gaussian curve
+                    # Interpolate along the Gaussian mean curve to find equivalent sigma
+
+                    # Check if sinc_mean is within the range of the Gaussian curve
+                    min_gauss_stdev = min(mean_stdevs)
+                    max_gauss_stdev = max(mean_stdevs)
+
+                    if min_gauss_stdev <= sinc_mean <= max_gauss_stdev:
+                        # Sinc performance is within Gaussian range - interpolate
+                        # Create interpolation function: f(stddev) -> sigma
+                        interp_func = interpolate.interp1d(mean_stdevs, unique_sigmas,
+                                                         kind='linear', bounds_error=False)
+                        intersection_sigma = float(interp_func(sinc_mean))
+                        intersection_stdev = sinc_mean  # Y-coordinate is the sinc value itself
+
+                    else:
+                        # Sinc performance is outside Gaussian range - extrapolate
+                        # Use linear extrapolation based on nearest segment
+                        if sinc_mean < min_gauss_stdev:
+                            # Extrapolate below minimum
+                            idx1, idx2 = 0, 1
+                        else:
+                            # Extrapolate above maximum
+                            idx1, idx2 = -2, -1
+
+                        # Linear extrapolation: sigma = sigma1 + (sigma2-sigma1)*(stdev-stdev1)/(stdev2-stdev1)
+                        sigma1, sigma2 = unique_sigmas[idx1], unique_sigmas[idx2]
+                        stdev1, stdev2 = mean_stdevs[idx1], mean_stdevs[idx2]
+                        intersection_sigma = sigma1 + (sigma2 - sigma1) * (sinc_mean - stdev1) / (stdev2 - stdev1)
+                        intersection_stdev = sinc_mean  # Y-coordinate is the sinc value itself
+
                     intersection_sigmas.append((wvl_nm, probe_idx, intersection_sigma))
 
-                    # Plot sinc probe mean at intersection with different marker shapes
+                    # Plot sinc probe mean at equivalent sigma position
                     marker = probe_markers[probe_idx]
                     ax.plot(intersection_sigma, intersection_stdev, color=color, marker=marker,
                            markersize=12, markerfacecolor='white', markeredgecolor=color,
@@ -1119,14 +1145,39 @@ def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_m
                 for probe_idx in range(3):
                     sinc_mean = sinc_probe_means[wvl_idx][probe_idx]
 
-                    # Find closest intersection point
-                    differences = [abs(ptv - sinc_mean) for ptv in mean_ptvs]
-                    closest_idx = np.argmin(differences)
-                    intersection_sigma = unique_sigmas[closest_idx]
-                    intersection_ptv = mean_ptvs[closest_idx]  # Y-value ON the Gaussian curve
+                    # Interpolate along the Gaussian mean curve to find equivalent sigma
+
+                    # Check if sinc_mean is within the range of the Gaussian curve
+                    min_gauss_ptv = min(mean_ptvs)
+                    max_gauss_ptv = max(mean_ptvs)
+
+                    if min_gauss_ptv <= sinc_mean <= max_gauss_ptv:
+                        # Sinc performance is within Gaussian range - interpolate
+                        # Create interpolation function: f(ptv) -> sigma
+                        interp_func = interpolate.interp1d(mean_ptvs, unique_sigmas,
+                                                         kind='linear', bounds_error=False)
+                        intersection_sigma = float(interp_func(sinc_mean))
+                        intersection_ptv = sinc_mean  # Y-coordinate is the sinc value itself
+
+                    else:
+                        # Sinc performance is outside Gaussian range - extrapolate
+                        # Use linear extrapolation based on nearest segment
+                        if sinc_mean < min_gauss_ptv:
+                            # Extrapolate below minimum
+                            idx1, idx2 = 0, 1
+                        else:
+                            # Extrapolate above maximum
+                            idx1, idx2 = -2, -1
+
+                        # Linear extrapolation: sigma = sigma1 + (sigma2-sigma1)*(ptv-ptv1)/(ptv2-ptv1)
+                        sigma1, sigma2 = unique_sigmas[idx1], unique_sigmas[idx2]
+                        ptv1, ptv2 = mean_ptvs[idx1], mean_ptvs[idx2]
+                        intersection_sigma = sigma1 + (sigma2 - sigma1) * (sinc_mean - ptv1) / (ptv2 - ptv1)
+                        intersection_ptv = sinc_mean  # Y-coordinate is the sinc value itself
+
                     intersection_sigmas.append((wvl_nm, probe_idx, intersection_sigma))
 
-                    # Plot sinc probe mean at intersection with different marker shapes
+                    # Plot sinc probe mean at equivalent sigma position
                     marker = probe_markers[probe_idx]
                     ax.plot(intersection_sigma, intersection_ptv, color=color, marker=marker,
                            markersize=12, markerfacecolor='white', markeredgecolor=color,
