@@ -785,8 +785,8 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
     # Plot sinc probe means at intersection points with Gaussian mean lines
     intersection_sigmas = []  # Store sigma values for legend display [(wvl_nm, probe_idx, sigma_val), ...]
     if sinc_probe_means is not None and len(sinc_probe_means) > 0:
-        # Diamond marker styles: solid line for probe 0, dashed for probes 1 and 2
-        diamond_line_styles = ['-', '--', '--']  # solid for probe 0, dashed for others
+        # Different marker shapes for each probe
+        probe_markers = ['D', 's', '^']  # Diamond for probe 0, Square for probe 1, Triangle for probe 2
 
         for wvl_idx in range(len(wavelength_indices)):
             if wvl_idx in mean_lines_data:
@@ -807,19 +807,12 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
                     intersection_stdev = mean_stdevs[closest_idx]  # Y-value ON the Gaussian curve
                     intersection_sigmas.append((wvl_nm, probe_idx, intersection_sigma))
 
-                    # Plot sinc probe mean at intersection with different diamond styles
-                    # Use intersection_stdev (Gaussian curve Y-value) instead of sinc_mean
-                    line_style = diamond_line_styles[probe_idx]
-                    if line_style == '-':  # solid diamond
-                        ax.plot(intersection_sigma, intersection_stdev, color=color, marker='D',
-                               markersize=12, markerfacecolor='white', markeredgecolor=color,
-                               markeredgewidth=3, linestyle='None',
-                               label=f"{wvl_nm}nm P{probe_idx} SINC", zorder=10)
-                    else:  # dashed diamond - simulate with markeredgewidth and alpha
-                        ax.plot(intersection_sigma, intersection_stdev, color=color, marker='D',
-                               markersize=12, markerfacecolor='white', markeredgecolor=color,
-                               markeredgewidth=2, linestyle='None', alpha=0.7,
-                               label=f"{wvl_nm}nm P{probe_idx} SINC", zorder=10)
+                    # Plot sinc probe mean at intersection with different marker shapes
+                    marker = probe_markers[probe_idx]
+                    ax.plot(intersection_sigma, intersection_stdev, color=color, marker=marker,
+                           markersize=12, markerfacecolor='white', markeredgecolor=color,
+                           markeredgewidth=3, linestyle='None',
+                           label=f"{wvl_nm}nm P{probe_idx} SINC", zorder=10)
 
     # Customize the plot
     ax.set_xlabel('Gaussian σ (in actuator pitch)', fontsize=12)
@@ -855,7 +848,13 @@ def plot_sigma_sweep_stdev_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh
                label='Gaussian Mean'),
         Line2D([0], [0], color='gray', marker='D', markersize=12,
                markerfacecolor='white', markeredgecolor='gray', markeredgewidth=3,
-               linestyle='None', label='Sinc Mean')
+               linestyle='None', label='Sinc P0'),
+        Line2D([0], [0], color='gray', marker='s', markersize=12,
+               markerfacecolor='white', markeredgecolor='gray', markeredgewidth=3,
+               linestyle='None', label='Sinc P1'),
+        Line2D([0], [0], color='gray', marker='^', markersize=12,
+               markerfacecolor='white', markeredgecolor='gray', markeredgewidth=3,
+               linestyle='None', label='Sinc P2')
     ]
 
     # Create four separate legends
@@ -1105,8 +1104,8 @@ def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_m
     # Plot sinc probe means at intersection points with Gaussian mean lines
     intersection_sigmas = []  # Store sigma values for legend display [(wvl_nm, probe_idx, sigma_val), ...]
     if sinc_probe_means is not None and len(sinc_probe_means) > 0:
-        # Diamond marker styles: solid line for probe 0, dashed for probes 1 and 2
-        diamond_line_styles = ['-', '--', '--']  # solid for probe 0, dashed for others
+        # Different marker shapes for each probe
+        probe_markers = ['D', 's', '^']  # Diamond for probe 0, Square for probe 1, Triangle for probe 2
 
         for wvl_idx in range(len(wavelength_indices)):
             if wvl_idx in mean_lines_data:
@@ -1127,19 +1126,12 @@ def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_m
                     intersection_ptv = mean_ptvs[closest_idx]  # Y-value ON the Gaussian curve
                     intersection_sigmas.append((wvl_nm, probe_idx, intersection_sigma))
 
-                    # Plot sinc probe mean at intersection with different diamond styles
-                    # Use intersection_ptv (Gaussian curve Y-value) instead of sinc_mean
-                    line_style = diamond_line_styles[probe_idx]
-                    if line_style == '-':  # solid diamond
-                        ax.plot(intersection_sigma, intersection_ptv, color=color, marker='D',
-                               markersize=12, markerfacecolor='white', markeredgecolor=color,
-                               markeredgewidth=3, linestyle='None',
-                               label=f"{wvl_nm}nm P{probe_idx} SINC", zorder=10)
-                    else:  # dashed diamond - simulate with markeredgewidth and alpha
-                        ax.plot(intersection_sigma, intersection_ptv, color=color, marker='D',
-                               markersize=12, markerfacecolor='white', markeredgecolor=color,
-                               markeredgewidth=2, linestyle='None', alpha=0.7,
-                               label=f"{wvl_nm}nm P{probe_idx} SINC", zorder=10)
+                    # Plot sinc probe mean at intersection with different marker shapes
+                    marker = probe_markers[probe_idx]
+                    ax.plot(intersection_sigma, intersection_ptv, color=color, marker=marker,
+                           markersize=12, markerfacecolor='white', markeredgecolor=color,
+                           markeredgewidth=3, linestyle='None',
+                           label=f"{wvl_nm}nm P{probe_idx} SINC", zorder=10)
 
     # Customize the plot
     ax.set_xlabel('Gaussian σ (in actuator pitch)', fontsize=12)
@@ -1173,7 +1165,13 @@ def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_m
                label='Gaussian Mean'),
         Line2D([0], [0], color='gray', marker='D', markersize=12,
                markerfacecolor='white', markeredgecolor='gray', markeredgewidth=3,
-               linestyle='None', label='Sinc Mean')
+               linestyle='None', label='Sinc P0'),
+        Line2D([0], [0], color='gray', marker='s', markersize=12,
+               markerfacecolor='white', markeredgecolor='gray', markeredgewidth=3,
+               linestyle='None', label='Sinc P1'),
+        Line2D([0], [0], color='gray', marker='^', markersize=12,
+               markerfacecolor='white', markeredgecolor='gray', markeredgewidth=3,
+               linestyle='None', label='Sinc P2')
     ]
 
     # Create four separate legends
