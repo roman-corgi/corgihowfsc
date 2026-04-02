@@ -285,6 +285,8 @@ def write_gaussian_probes(
         if write:
             print('Saving graphic to: ', fn_probe_png)
             plt.savefig(fn_probe_png, bbox_inches='tight', pad_inches=0.1)
+            fnout = os.path.join(probepath, fn_probe_base + '_actuator_in_pupil.fits')
+            fits.writeto(fnout, overlay1)
 
         ft_dm_surf = inin(fft2(inin(lyot * dm_surf, (1024, 1024))), (200, 200))
 
