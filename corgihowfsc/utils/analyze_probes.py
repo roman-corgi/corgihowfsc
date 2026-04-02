@@ -1524,8 +1524,8 @@ if __name__ == '__main__':
 
     ### 1e-7 with sigma=1 from sigma sweep
     dpv_list_gaussians.append(fits.getdata(os.path.join(analysis_path, 'sigma_sweep_1e-7', 'dmrel_nfov_band1_360deg_ni1e-07_x13_y8_sigma1.50_gauss0.fits')))
-    dpv_list_gaussians.append(fits.getdata(os.path.join(analysis_path, 'sigma_sweep_1e-7', 'dmrel_nfov_band1_360deg_ni1e-07_x13_y8_sigma1.50_gauss0.fits')))
-    dpv_list_gaussians.append(fits.getdata(os.path.join(analysis_path, 'sigma_sweep_1e-7', 'dmrel_nfov_band1_360deg_ni1e-07_x13_y8_sigma1.50_gauss0.fits')))
+    dpv_list_gaussians.append(fits.getdata(os.path.join(analysis_path, 'sigma_sweep_1e-7', 'dmrel_nfov_band1_360deg_ni1e-07_x13_y9_sigma1.50_gauss1.fits')))
+    dpv_list_gaussians.append(fits.getdata(os.path.join(analysis_path, 'sigma_sweep_1e-7', 'dmrel_nfov_band1_360deg_ni1e-07_x12_y9_sigma1.50_gauss2.fits')))
 
     dpv_list_sincs = []   # Baseline sinc-sinc-sine probes, originally scaled to 1e-5
     scale = 0.13
