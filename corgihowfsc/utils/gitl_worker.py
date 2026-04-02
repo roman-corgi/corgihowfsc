@@ -151,3 +151,30 @@ def _get_image_worker(imager, dm1v, dm2v, exptime, gain, nframes, crop, lind,
     f[bpmeas] = np.nan
 
     return f
+
+
+def _jac_worker(cfg, ijproc, dm0list, jacmethod, num_threads):
+    """
+    Compute the partial Jacobian for one chunk of actuators.
+
+    This is the low-level Jacobian kernel shared by MPI-facing helpers. It
+    mirrors the chunk-level logic used by the HOWFSC Jacobian multiprocessing
+    path but returns ``(ijproc, partial_jac)`` explicitly so the caller can
+    reassemble results without relying on completion order.
+
+    Args:
+        cfg:        CoronagraphMode object already available to the caller
+        ijproc:     list of actuator indices assigned to this worker
+        dm0list:    list of 2D DM voltage arrays (current DM setting)
+        jacmethod:  'fast' or 'normal'
+        num_threads: int or None — sets MKL_NUM_THREADS on the worker to
+                     prevent MKL from spawning excess threads inside each
+                     MPI worker (mirrors howfsc_precomputation's handling)
+
+    Returns:
+        (ijproc, partial_jac) where partial_jac has shape (2, len(ijproc), ndhpix)
+    """
+    if num_threads is not None:
+        os.environ['MKL_NUM_THREADS'] = str(num_threads)
+    return ijproc, calcjacs_sp(cfg, ijproc, dm0list, jacmethod)
+
