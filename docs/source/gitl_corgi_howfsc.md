@@ -62,6 +62,8 @@ python scripts/run_corgisim_nulling_gitl.py --param_file /path/to/my_params.yml
 ```
 If `--param_file` is not provided, the script falls back to `default_param.yml` located in the same directory as the script.
 
+For a field-by-field description of the YAML file, see [Parameter Reference](parameter_reference.md).
+
 You can run the `scripts/run_corgisim_nulling_gitl.py` script as follows by passing the path to your Jacobian (optional),
 in which case you need to set the `precomp` variable to `load_all`:
 ```yaml
@@ -120,6 +122,8 @@ num_jac_process: 6
 num_imager_worker: null
 ```
 If running on a powerful desktop or cluster, the user can set `num_imager_worker` to an integer >1 such that multiple probe images are simulated in parallel.
+
+For the current MPI and local multiprocessing execution model, including which modules own runtime orchestration versus worker task execution, see [MPI and Multiprocessing](mpi_multiprocessing.md).
 
 
 From here the script can be run as-is! The result will be some iteration-specific information printed to stdout, and a
