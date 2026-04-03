@@ -460,7 +460,7 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None, show_dm_
         plt.close(anim_fig)
 
 
-def plot_sinc_probes(dpv_list_sincs, mode, dark_hole, ni_desired, output_path=None):
+def plot_sinc_probes(dpv_list_sincs, mode, dark_hole, ni_desired, output_path=None, show_dm_surface=False):
     """
     Plot sinc-based probes in a grid similar to Gaussian probes, but only showing DPV maps.
 
@@ -476,6 +476,12 @@ def plot_sinc_probes(dpv_list_sincs, mode, dark_hole, ni_desired, output_path=No
         Desired normalized intensity for scaling NI plots
     output_path : str, optional
         Path to save PDF plots. If None, plots are displayed interactively.
+    show_dm_surface : bool, optional
+        If True, show DM surface overlays with pupil masks in the first column instead of DPV maps.
+        Default is False (show DPV maps).
+
+        The DM surface overlay is calculated as:
+        overlay = 3 * dm_surf / np.max(dm_surf) + pupil_masks / np.max(pupil_masks)
 
     Returns:
     --------
@@ -538,12 +544,31 @@ def plot_sinc_probes(dpv_list_sincs, mode, dark_hole, ni_desired, output_path=No
 
     # Propagate sinc probes through all wavelength bands
     probe_ni_maps = []  # Shape: [n_probes, n_bands]
+    dm_surfaces = []    # Store DM surfaces for each probe
 
     for index_probe, dpv in enumerate(dpv_list_sincs):
         print(f'*** Propagating Sinc Probe {index_probe} through all wavelength bands ***')
 
         probe_ni_per_wvln = []
-        dm_surfaces = []
+
+        # Calculate DM surface for this probe (same for all bands)
+        dind = 0  # Only using DM1 to probe
+        nrow, ncol = dh_mask.shape
+        dm_surf = dmhtoph(
+            nrow=nrow,
+            ncol=ncol,
+            dmin=dpv,
+            nact=cfg.dmlist[dind].registration['nact'],
+            inf_func=cfg.dmlist[dind].registration['inf_func'],
+            ppact_d=cfg.dmlist[dind].registration['ppact_d'],
+            ppact_cx=cfg.dmlist[dind].registration['ppact_cx'],
+            ppact_cy=cfg.dmlist[dind].registration['ppact_cy'],
+            dx=cfg.dmlist[dind].registration['dx'],
+            dy=cfg.dmlist[dind].registration['dy'],
+            thact=cfg.dmlist[dind].registration['thact'],
+            flipx=cfg.dmlist[dind].registration['flipx'],
+        )
+        dm_surfaces.append(dm_surf)
 
         for band_ind in band_indices:
             print(f'  Band {band_ind}')
@@ -558,25 +583,7 @@ def plot_sinc_probes(dpv_list_sincs, mode, dark_hole, ni_desired, output_path=No
             probe_ni_map = np.abs(probed_efield - eref)**2 / ipeak
             probe_ni_per_wvln.append(probe_ni_map)
 
-            dind = 0  # Only using DM1 to probe
-            nrow, ncol = dh_mask.shape
-            dm_surf = dmhtoph(
-                nrow=nrow,
-                ncol=ncol,
-                dmin=dpv,
-                nact=cfg.dmlist[dind].registration['nact'],
-                inf_func=cfg.dmlist[dind].registration['inf_func'],
-                ppact_d=cfg.dmlist[dind].registration['ppact_d'],
-                ppact_cx=cfg.dmlist[dind].registration['ppact_cx'],
-                ppact_cy=cfg.dmlist[dind].registration['ppact_cy'],
-                dx=cfg.dmlist[dind].registration['dx'],
-                dy=cfg.dmlist[dind].registration['dy'],
-                thact=cfg.dmlist[dind].registration['thact'],
-                flipx=cfg.dmlist[dind].registration['flipx'],
-            )
-
         probe_ni_maps.append(probe_ni_per_wvln)
-        dm_surfaces.append(dm_surf)
 
     # Create figure with manual subplot positioning (similar to Gaussian probes)
     fig = plt.figure(figsize=(20, 12))
@@ -650,9 +657,15 @@ def plot_sinc_probes(dpv_list_sincs, mode, dark_hole, ni_desired, output_path=No
 
     # Plot the probes
     for i in range(len(dpv_list_sincs)):
-        # Plot DPV map for this probe (first column)
-        im_dpv = axes[i][0].imshow(dpv_list_sincs[i], cmap='Greys_r')
-        axes[i][0].set_title(f'Sinc probe (Volts)')
+        # Plot DPV map or DM surface overlay for this probe (first column)
+        if show_dm_surface:
+            overlay = 3 * dm_surfaces[i] / np.max(dm_surfaces[i]) + pupil_masks / np.max(pupil_masks)
+            im_dpv = axes[i][0].imshow(overlay, cmap='Greys_r')
+            axes[i][0].set_title(f'DM Surface + Pupil')
+        else:
+            im_dpv = axes[i][0].imshow(dpv_list_sincs[i], cmap='Greys_r')
+            axes[i][0].set_title(f'Sinc probe (Volts)')
+
         axes[i][0].invert_yaxis()
 
         # Add rotated probe label on the left side of DPV boxes
@@ -689,7 +702,10 @@ def plot_sinc_probes(dpv_list_sincs, mode, dark_hole, ni_desired, output_path=No
         # For DPV - create colorbar close to the right edge of DPV column
         cbar_ax_dpv = fig.add_axes([0.24, 0.15, 0.01, 0.7])
         cbar_dpv = fig.colorbar(im_dpv, cax=cbar_ax_dpv)
-        cbar_ax_dpv.set_title('Volts', fontsize=16, pad=10)
+        if show_dm_surface:
+            cbar_ax_dpv.set_title('Overlay', fontsize=16, pad=10)
+        else:
+            cbar_ax_dpv.set_title('Volts', fontsize=16, pad=10)
         cbar_ax_dpv.tick_params(labelsize=20)
 
         # For normalized intensity - create colorbar on the right side of intensity plots
@@ -749,4 +765,10 @@ if __name__ == '__main__':
     sinud = fits.getdata('/Users/ilaginja/repos/corgihowfsc/corgihowfsc/model/probes/nfov_dm_dmrel_4_1.0e-05_sinud.fits') * scale
     dpv_list_sincs.append(sinud)
 
-    plot_sinc_probes(dpv_list_sincs, mode, dark_hole, ni_desired=ni, output_path=analysis_path)
+    # Example 1: Show DPV maps for sinc probes (default behavior)
+    # print("Creating sinc probe plots with DPV maps...")
+    # plot_sinc_probes(dpv_list_sincs, mode, dark_hole, ni_desired=ni, output_path=analysis_path, show_dm_surface=False)
+
+    # Example 2: Show DM surface overlays with pupil masks for sinc probes
+    print("Creating sinc probe plots with DM surface overlays...")
+    plot_sinc_probes(dpv_list_sincs, mode, dark_hole, ni_desired=ni, output_path=analysis_path, show_dm_surface=True)
