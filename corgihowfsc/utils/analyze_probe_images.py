@@ -95,8 +95,27 @@ def draw_circle_on_axis(ax, center_row, center_col, radius, **kwargs):
     ax.add_patch(circle)
 
 
-def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None):
-    # Plot Gaussian probes, creating them in the same way as from write_gaussian_probes.py
+def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None, show_dm_surface=False):
+    """
+    Plot Gaussian probes, creating them in the same way as from write_gaussian_probes.py
+
+    Parameters:
+    -----------
+    mode : str
+        Coronagraph mode (e.g., 'nfov_band1')
+    dark_hole : str
+        Dark hole specification (e.g., '360deg')
+    ni_desired : float
+        Desired normalized intensity
+    output_path : str, optional
+        Path to save PDF plots and animation. If None, plots are displayed interactively.
+    show_dm_surface : bool, optional
+        If True, show DM surface overlays with pupil masks in the first column instead of DPV maps.
+        Default is False (show DPV maps).
+
+        The DM surface overlay is calculated as:
+        overlay = 3 * dm_surf / np.max(dm_surf) + pupil_masks / np.max(pupil_masks)
+    """
 
     if 'nfov' in mode:  # nfov_band1, nfov_band2, nfov_band3, nfov_band4
         if '360' in dark_hole:  # 360-degree dark zone
@@ -131,20 +150,6 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None):
 
     diam_pupil_pix = homf_dict['sls'][1]['epup']['pdp']
     dact = diam_pupil_pix / dmreg_dm1['ppact_cx']
-
-    fn_amp = os.path.join(modelpath, homf_dict['sls'][1]['epup']['afn'])
-    fn_ph = os.path.join(modelpath, homf_dict['sls'][1]['epup']['pfn'])
-    fn_lyot = os.path.join(modelpath, homf_dict['sls'][1]['lyot']['afn'])
-    fn_spm = os.path.join(modelpath, homf_dict['sls'][1]['sp']['afn'])
-    fn_fpm = os.path.join(modelpath, homf_dict['sls'][1]['fpm']['afn'])
-    fn_dh = os.path.join(modelpath, homf_dict['sls'][1]['dh'])
-
-    amp = fits.getdata(fn_amp)
-    ph = fits.getdata(fn_ph)
-    lyot = fits.getdata(fn_lyot)
-    spm = fits.getdata(fn_spm)
-    fpm = fits.getdata(fn_fpm)
-    dh = fits.getdata(fn_dh)
 
     # Read in tie map
     NACT = homf_dict['dms']['DM1']['registration']['nact']
@@ -187,6 +192,7 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None):
 
         # First, create the probes using band 1 (as in original code)
         dpv_list = []
+        dm_surfaces = []
         for index_probe, _ in enumerate(deltax_act_list):
             print('*** Creating Probe %d ***' % index_probe)
 
@@ -202,6 +208,9 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None):
             dpv = probe_tuple[0]
             dpv = usable_act_map * dpv
             dpv_list.append(dpv)
+
+            dm_surf = probe_tuple[3]
+            dm_surfaces.append(dm_surf)
 
         # Now propagate each probe through all three wavelength bands
         for index_probe, dpv in enumerate(dpv_list):
@@ -293,9 +302,16 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None):
         r_outer_crop = r_outer_full
 
         for i in range(len(deltax_act_list)):
-            # Plot DPV map for this probe (first column - far left)
-            im_dpv = axes[i][0].imshow(dpv_list[i], cmap='Greys_r')
-            axes[i][0].set_title(f'$\Delta$ probe (Volts)')
+            # Plot DPV map or DM surface overlay for this probe (first column - far left)
+            if show_dm_surface:
+                # Create overlay: 3 * dm_surf / np.max(dm_surf) + pupil_masks / np.max(pupil_masks)
+                overlay = 3 * dm_surfaces[i] / np.max(dm_surfaces[i]) + pupil_masks / np.max(pupil_masks)
+                im_dpv = axes[i][0].imshow(overlay, cmap='Greys_r')
+                axes[i][0].set_title(f'DM Surface + Pupil')
+            else:
+                im_dpv = axes[i][0].imshow(dpv_list[i], cmap='Greys_r')
+                axes[i][0].set_title(f'$\Delta$ probe (Volts)')
+
             axes[i][0].invert_yaxis()
 
             # Add rotated probe label on the left side of DPV boxes
@@ -327,7 +343,10 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None):
             # For DPV - create colorbar close to the right edge of DPV column
             cbar_ax_dpv = fig.add_axes([0.24, 0.15, 0.01, 0.7])  # [left, bottom, width, height]
             cbar_dpv = fig.colorbar(im_dpv, cax=cbar_ax_dpv)
-            cbar_ax_dpv.set_title('Volts', fontsize=16, pad=10)
+            if show_dm_surface:
+                cbar_ax_dpv.set_title('nm', fontsize=16, pad=10)
+            else:
+                cbar_ax_dpv.set_title('Volts', fontsize=16, pad=10)
             cbar_ax_dpv.tick_params(labelsize=20)  # Double the default tick label size
 
             # For normalized intensity - create colorbar on the right side of intensity plots
@@ -384,7 +403,6 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None):
                     plt.imshow(img, origin='upper')  # Fix orientation
                     plt.axis('off')
                     plt.tight_layout()
-                    return []
 
                 anim = animation.FuncAnimation(anim_fig, animate_frame, frames=len(temp_frames),
                                              interval=2000, repeat=True)
@@ -410,7 +428,6 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None):
                     plt.imshow(img, origin='upper')  # Fix orientation
                     plt.axis('off')
                     plt.tight_layout()
-                    return []
 
                 anim = animation.FuncAnimation(anim_fig, animate_frame, frames=len(temp_frames),
                                              interval=2000, repeat=True)
@@ -442,8 +459,6 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None):
 
         plt.close(anim_fig)
 
-    return sigma_probe_ni_data
-
 
 if __name__ == '__main__':
 
@@ -452,4 +467,10 @@ if __name__ == '__main__':
     dark_hole = '360deg'
     ni = 1e-7
 
-    plot_gaussian_probes(mode, dark_hole, ni_desired=ni, output_path=analysis_path)
+    # Example 1: Show DPV maps (default behavior)
+    # print("Creating plots with DPV maps...")
+    # plot_gaussian_probes(mode, dark_hole, ni_desired=ni, output_path=analysis_path, show_dm_surface=False)
+
+    # Example 2: Show DM surface overlays with pupil masks
+    print("Creating plots with DM surface overlays...")
+    plot_gaussian_probes(mode, dark_hole, ni_desired=ni, output_path=analysis_path, show_dm_surface=True)
