@@ -543,6 +543,7 @@ def plot_sinc_probes(dpv_list_sincs, mode, dark_hole, ni_desired, output_path=No
         print(f'*** Propagating Sinc Probe {index_probe} through all wavelength bands ***')
 
         probe_ni_per_wvln = []
+        dm_surfaces = []
 
         for band_ind in band_indices:
             print(f'  Band {band_ind}')
@@ -555,10 +556,27 @@ def plot_sinc_probes(dpv_list_sincs, mode, dark_hole, ni_desired, output_path=No
             # Create probe tuple for this wavelength band
             probed_efield = efield(cfg, [dmlist[0] - dpv, dmlist[1]], band_ind)
             probe_ni_map = np.abs(probed_efield - eref)**2 / ipeak
-
             probe_ni_per_wvln.append(probe_ni_map)
 
+            dind = 0  # Only using DM1 to probe
+            nrow, ncol = dh_mask.shape
+            dm_surf = dmhtoph(
+                nrow=nrow,
+                ncol=ncol,
+                dmin=dpv,
+                nact=cfg.dmlist[dind].registration['nact'],
+                inf_func=cfg.dmlist[dind].registration['inf_func'],
+                ppact_d=cfg.dmlist[dind].registration['ppact_d'],
+                ppact_cx=cfg.dmlist[dind].registration['ppact_cx'],
+                ppact_cy=cfg.dmlist[dind].registration['ppact_cy'],
+                dx=cfg.dmlist[dind].registration['dx'],
+                dy=cfg.dmlist[dind].registration['dy'],
+                thact=cfg.dmlist[dind].registration['thact'],
+                flipx=cfg.dmlist[dind].registration['flipx'],
+            )
+
         probe_ni_maps.append(probe_ni_per_wvln)
+        dm_surfaces.append(dm_surf)
 
     # Create figure with manual subplot positioning (similar to Gaussian probes)
     fig = plt.figure(figsize=(20, 12))
