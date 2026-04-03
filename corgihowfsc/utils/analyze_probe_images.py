@@ -18,9 +18,7 @@ python write_gaussian_probes.py --mode 'spec_band3' --dark_hole 'both_sides' --w
 python write_gaussian_probes.py --mode 'wfov_band4' --dark_hole '360deg' --write
 
 """
-import argparse
 import os
-import sys
 
 from astropy.io import fits
 import matplotlib.pyplot as plt
@@ -38,14 +36,12 @@ from corgihowfsc.utils.cgi_prop_tools import make_dmrel_probe_gaussian
 from howfsc.util.prop_tools import efield, open_efield
 
 # PATHS
-HERE = os.path.dirname(os.path.abspath(__file__))
-thisFolder = os.path.basename(HERE)
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
 probepath = os.path.join(howfscpath, 'model', 'probes')
 
 
 def plot_gaussian_probes(mode, dark_hole, ni_desired):
-    # Plot Gaussian probes, creating them in the same way like from write_gaussian_probes.py
+    # Plot Gaussian probes, creating them in the same way as from write_gaussian_probes.py
 
     if 'nfov' in mode:  # nfov_band1, nfov_band2, nfov_band3, nfov_band4
         if '360' in dark_hole:  # 360-degree dark zone
@@ -131,8 +127,7 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired):
     for index_probe, dpv in enumerate(dpv_list):
         print('*** Propagating Probe %d through all wavelength bands ***' % index_probe)
 
-        probe_ni_row = []
-        dpv_row = []
+        probe_ni_per_wvln = []
 
         for band_ind in band_indices:
             print(f'  Band {band_ind}')
@@ -146,11 +141,9 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired):
             probed_efield = efield(cfg, [dmlist[0] - dpv, dmlist[1]], band_ind)
             probe_ni_map = np.abs(probed_efield - eref)**2 / ipeak
 
-            probe_ni_row.append(probe_ni_map)
-            dpv_row.append(dpv)
+            probe_ni_per_wvln.append(probe_ni_map)
 
-        probe_ni_maps.append(probe_ni_row)
-        dpv_maps.append(dpv_row)
+        probe_ni_maps.append(probe_ni_per_wvln)
 
     # Create combined grid: 3 rows (probes) x 4 columns (1 DPV + 3 bands)
     fig, axes = plt.subplots(len(deltax_act_list), len(band_indices) + 1, figsize=(20, 12))
@@ -163,8 +156,8 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired):
 
     for i in range(len(deltax_act_list)):
         # Plot DPV map for this probe (first column - far left)
-        im_dpv = axes[i, 0].imshow(dpv_maps[i][0], cmap='viridis')
-        axes[i, 0].set_title(f'DPV (Volts)')
+        im_dpv = axes[i, 0].imshow(dpv_list[i], cmap='viridis')
+        axes[i, 0].set_title(f'dpv (Volts)')
         axes[i, 0].invert_yaxis()
 
         # Add rotated probe label on the left side of DPV boxes
