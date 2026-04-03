@@ -97,6 +97,7 @@ def main(param_file_name='default_param.yml', fullpath=False):
     num_jac_process = runtime['num_jac_process']
     num_imager_worker = runtime['num_imager_worker']
     use_mpi = runtime.get('use_mpi', False)
+    debug = runtime.get('debug', False)
 
     print(
         backend_type,
@@ -142,6 +143,7 @@ def main(param_file_name='default_param.yml', fullpath=False):
     args.num_imager_worker = num_imager_worker
     args.num_proper_process = num_proper_process
     args.use_mpi = use_mpi
+    args.debug = debug
 
     os.environ.setdefault(
         'CORGIHOWFSC_IMAGE_DEBUG_CSV',
