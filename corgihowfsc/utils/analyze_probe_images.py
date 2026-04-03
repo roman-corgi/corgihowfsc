@@ -96,7 +96,7 @@ def draw_circle_on_axis(ax, center_row, center_col, radius, **kwargs):
     ax.add_patch(circle)
 
 
-def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None, show_dm_surface=False):
+def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None, show_dm_surface=False, dpv_list_gaussians=None):
     """
     Plot Gaussian probes, creating them in the same way as from write_gaussian_probes.py
 
@@ -182,6 +182,11 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None, show_dm_
     dh_mask_center_col = dh_mask.shape[1] // 2
     r_inner_full, r_outer_full = extract_annulus_radii_pixels(dh_mask, dh_mask_center_row, dh_mask_center_col)
     print(f'Dark hole mask radii: inner = {r_inner_full:.1f} pixels, outer = {r_outer_full:.1f} pixels')
+
+    if dpv_list_gaussians:
+        plot_sinc_probes(dpv_list_gaussians, mode, dark_hole, ni_desired, output_path, show_dm_surface=show_dm_surface)
+
+        return
 
     # Loop over sigma values
     for sigma in sigma_values:
@@ -749,8 +754,8 @@ if __name__ == '__main__':
     # plot_gaussian_probes(mode, dark_hole, ni_desired=ni, output_path=analysis_path, show_dm_surface=False)
 
     # Example 2: Show DM surface overlays with pupil masks for Gaussian probes
-    # print("Creating plots with DM surface overlays...")
-    # plot_gaussian_probes(mode, dark_hole, ni_desired=ni, output_path=analysis_path, show_dm_surface=True)
+    print("Creating plots with DM surface overlays...")
+    plot_gaussian_probes(mode, dark_hole, ni_desired=ni, output_path=analysis_path, show_dm_surface=True, dpv_list_gaussians=dpv_list_gaussians)
 
     ### Default probes
 
