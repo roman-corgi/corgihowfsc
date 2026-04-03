@@ -199,6 +199,18 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired):
         im_ni = None
         im_dpv = None
 
+        # Calculate dynamic cropping boundaries for NI images - 30 pixels from center in each direction
+        # Get the image dimensions from the first probe to determine center
+        sample_image_shape = probe_ni_maps[0][0].shape
+        center_row = sample_image_shape[0] // 2
+        center_col = sample_image_shape[1] // 2
+        crop_radius = 26
+
+        crop_min_row = center_row - crop_radius
+        crop_max_row = center_row + crop_radius
+        crop_min_col = center_col - crop_radius
+        crop_max_col = center_col + crop_radius
+
         for i in range(len(deltax_act_list)):
             # Plot DPV map for this probe (first column - far left)
             im_dpv = axes[i][0].imshow(dpv_list[i], cmap='Greys_r')
@@ -212,7 +224,9 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired):
 
             # Plot normalized intensity maps for each band (columns 1-3)
             for j in range(len(band_indices)):
-                im_ni = axes[i][j+1].imshow(probe_ni_maps[i][j],
+                # Crop the NI image to show only the central square with valid log data
+                cropped_ni = probe_ni_maps[i][j][crop_min_row:crop_max_row, crop_min_col:crop_max_col]
+                im_ni = axes[i][j+1].imshow(cropped_ni,
                                            norm=LogNorm(vmin=ni_desired/10, vmax=ni_desired*1.5),
                                            cmap='inferno')
                 axes[i][j+1].set_title(f'Band {band_indices[j]}')
