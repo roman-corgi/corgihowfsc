@@ -184,17 +184,21 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired):
                 axes[i, j+1].set_title(f'Band {band_indices[j]}')
                 axes[i, j+1].invert_yaxis()
 
-        # Add colorbars
-        if im_ni is not None:
-            # Colorbar for normalized intensity (spans columns 1-3)
-            cbar_ni = fig.colorbar(im_ni, ax=axes[:, 1:].ravel().tolist(), shrink=0.6, label='Normalized Intensity')
-        if im_dpv is not None:
-            # Colorbar for DPV (spans first column)
-            cbar_dpv = fig.colorbar(im_dpv, ax=axes[:, 0].ravel().tolist(), shrink=0.6, label='DPV (Volts)')
+        # Adjust layout first to make room for colorbars
+        plt.subplots_adjust(left=0.08, right=0.85, wspace=0.6, hspace=0.3)
+
+        # Add colorbars with precise positioning and consistent sizing
+        if im_ni is not None and im_dpv is not None:
+            # For DPV - create colorbar close to the right edge of DPV column
+            cbar_ax_dpv = fig.add_axes([0.24, 0.15, 0.01, 0.7])  # [left, bottom, width, height]
+            cbar_dpv = fig.colorbar(im_dpv, cax=cbar_ax_dpv, label='DPV (Volts)')
+
+            # For normalized intensity - create colorbar on the right side of intensity plots
+            cbar_ax_ni = fig.add_axes([0.87, 0.15, 0.01, 0.7])   # [left, bottom, width, height]
+            cbar_ni = fig.colorbar(im_ni, cax=cbar_ax_ni, label='Normalized Intensity')
 
         fig.suptitle(f'Probe Analysis (σ = {sigma:.1f}): DPV Maps and Normalized Intensity Across Wavelength Bands', fontsize=16)
 
-        plt.tight_layout()
         plt.show()
 
     return sigma_probe_ni_data
