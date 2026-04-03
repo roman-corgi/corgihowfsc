@@ -1,8 +1,25 @@
 import os
 from datetime import datetime
 from pathlib import Path
+import logging
 import yaml
 import sys
+
+
+def setup_logging(debug=False, logfile=None):
+    """Configure root logging for the current process."""
+    level = logging.DEBUG if debug else logging.INFO
+
+    config = {
+        "level": level,
+        "format": "%(asctime)s %(levelname)s %(name)s: %(message)s",
+        "force": True,
+    }
+
+    if logfile is not None:
+        config["filename"] = logfile
+
+    logging.basicConfig(**config)
 
 
 def make_output_file_structure(loop_framework, backend_type, base_path, base_corgiloop_path, final_filename, tag=None):
