@@ -5,6 +5,7 @@
 # pylint: disable=line-too-long
 """
 Functions to build a relative DM probe and other propagation manipulation
+--> In adaptation from "prop_tools.py" from cgi-howfsc.
 """
 
 import numpy as np
