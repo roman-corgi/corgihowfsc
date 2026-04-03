@@ -22,6 +22,7 @@ import os
 
 from astropy.io import fits
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 import numpy as np
 from matplotlib.colors import LogNorm
 
@@ -40,7 +41,7 @@ howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
 probepath = os.path.join(howfscpath, 'model', 'probes')
 
 
-def plot_gaussian_probes(mode, dark_hole, ni_desired):
+def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None):
     # Plot Gaussian probes, creating them in the same way as from write_gaussian_probes.py
 
     if 'nfov' in mode:  # nfov_band1, nfov_band2, nfov_band3, nfov_band4
@@ -101,10 +102,13 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired):
     band_indices = [0, 1, 2]
 
     # Define sigma range
-    sigma_values = np.arange(0.5, 2.1, 0.1)
+    sigma_values = np.arange(0.1, 2.0, 0.1)
 
     # Dictionary to store probe ni data for each sigma value
     sigma_probe_ni_data = {}
+
+    # List to store figures for animation
+    animation_figures = []
 
     # Loop over sigma values
     for sigma in sigma_values:
@@ -251,15 +255,118 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired):
 
         fig.suptitle(f'Gaussian probes (σ = {sigma:.1f}): Normalized intensity across imaging bands', fontsize=20)
 
-        plt.show()
+        # Save individual plot as PDF if output path is provided
+        if output_path:
+            os.makedirs(output_path, exist_ok=True)
+            pdf_filename = os.path.join(output_path, f'gaussian_probes_sigma_{sigma:.1f}.pdf')
+            fig.savefig(pdf_filename, format='pdf', dpi=300, bbox_inches='tight')
+            print(f'Saved PDF: {pdf_filename}')
+
+        # Store figure for animation
+        animation_figures.append(fig)
+
+        # Close figure to save memory if not displaying
+        if output_path:
+            plt.close(fig)
+        else:
+            plt.show()
+
+    # Create MP4 animation if output path is provided
+    if output_path and animation_figures:
+        print('\nCreating animation...')
+
+        # Create a new figure for animation
+        anim_fig = plt.figure(figsize=(20, 12))
+
+        # Use a simpler approach: save frames as temporary images and create video
+        temp_frames = []
+        for i, fig in enumerate(animation_figures):
+            temp_filename = os.path.join(output_path, f'temp_frame_{i:03d}.png')
+            fig.savefig(temp_filename, format='png', dpi=150, bbox_inches='tight')
+            temp_frames.append(temp_filename)
+
+        # Try to create MP4 using matplotlib animation
+        mp4_filename = os.path.join(output_path, 'gaussian_probes_sigma_sweep.mp4')
+        gif_filename = os.path.join(output_path, 'gaussian_probes_sigma_sweep.gif')
+
+        animation_created = False
+
+        # Try FFmpeg for MP4 first
+        if 'ffmpeg' in animation.writers.list():
+            try:
+                # Create animation by reading back the saved frames
+                def animate_frame(frame_num):
+                    plt.clf()
+                    img = plt.imread(temp_frames[frame_num])
+                    plt.imshow(img, origin='upper')  # Fix orientation
+                    plt.axis('off')
+                    plt.tight_layout()
+                    return []
+
+                anim = animation.FuncAnimation(anim_fig, animate_frame, frames=len(temp_frames),
+                                             interval=2000, repeat=True)
+
+                # Save animation with 2 seconds per frame (0.5 fps)
+                Writer = animation.writers['ffmpeg']
+                writer = Writer(fps=0.5, metadata=dict(artist='CORGIHOWFSC'), bitrate=1800)
+                anim.save(mp4_filename, writer=writer)
+
+                print(f'Saved MP4 animation: {mp4_filename}')
+                animation_created = True
+
+            except Exception as e:
+                print(f'Could not create MP4 animation: {e}')
+
+        # Try Pillow for GIF as fallback
+        if not animation_created and 'pillow' in animation.writers.list():
+            try:
+                # Create animation by reading back the saved frames
+                def animate_frame(frame_num):
+                    plt.clf()
+                    img = plt.imread(temp_frames[frame_num])
+                    plt.imshow(img, origin='upper')  # Fix orientation
+                    plt.axis('off')
+                    plt.tight_layout()
+                    return []
+
+                anim = animation.FuncAnimation(anim_fig, animate_frame, frames=len(temp_frames),
+                                             interval=2000, repeat=True)
+
+                # Save animation as GIF with 2 seconds per frame
+                Writer = animation.writers['pillow']
+                writer = Writer(fps=0.5, metadata=dict(artist='CORGIHOWFSC'))
+                anim.save(gif_filename, writer=writer)
+
+                print(f'Saved GIF animation: {gif_filename}')
+                animation_created = True
+
+            except Exception as e:
+                print(f'Could not create GIF animation: {e}')
+
+        if not animation_created:
+            print('Could not create animation file.')
+            print(f'Individual frames have been saved as PNG files in: {output_path}')
+            print('Frame filenames: temp_frame_000.png, temp_frame_001.png, etc.')
+            # Keep the temporary frame files if no animation was created
+            temp_frames = []
+
+        # Clean up temporary frame files (only if animation was successfully created)
+        for temp_file in temp_frames:
+            try:
+                os.remove(temp_file)
+            except:
+                pass
+
+        plt.close(anim_fig)
 
     return sigma_probe_ni_data
 
 
 if __name__ == '__main__':
 
+    analysis_path = '/Users/ilaginja/Nextcloud/Areas/RomanCPP/alternate_probes/probe_comparison/active_analysis/sigma_sweep_1e-7_analysis'
     mode = 'nfov_band1'
     dark_hole = '360deg'
     ni = 1e-7
 
-    plot_gaussian_probes(mode, dark_hole, ni_desired=ni)
+    plot_gaussian_probes(mode, dark_hole, ni_desired=ni, output_path=analysis_path)
