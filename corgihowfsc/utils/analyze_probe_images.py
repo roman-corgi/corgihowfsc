@@ -191,7 +191,8 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired):
         if im_ni is not None and im_dpv is not None:
             # For DPV - create colorbar close to the right edge of DPV column
             cbar_ax_dpv = fig.add_axes([0.24, 0.15, 0.01, 0.7])  # [left, bottom, width, height]
-            cbar_dpv = fig.colorbar(im_dpv, cax=cbar_ax_dpv, label='DPV (Volts)')
+            cbar_dpv = fig.colorbar(im_dpv, cax=cbar_ax_dpv)
+            cbar_ax_dpv.set_title('DPV (Volts)', fontsize=12, pad=10)
 
             # For normalized intensity - create colorbar on the right side of intensity plots
             cbar_ax_ni = fig.add_axes([0.87, 0.15, 0.01, 0.7])   # [left, bottom, width, height]
