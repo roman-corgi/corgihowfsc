@@ -84,8 +84,10 @@ def run_mpi_frame_task(worker_state, task):
     parameters and forwards them to ``_get_image_worker`` for frame generation. 
 
     Args:
-        worker_state : dict, Persistent worker state containing ``'cfg'``, ``'hconf'``, ``'cstrat'``, and ``'imager'`` 
-        for frame generation.
+        worker_state : dict
+            Persistent worker state containing frame and Jacobian cfg
+            objects, plus ``'hconf'``, ``'cstrat'``, and ``'imager'`` for
+            frame generation.
 
         task : dict, Dictionary containing the per-frame parameters needed for frame generation, including:
             - 'dm1v', 'dm2v': DM settings for the frame.
@@ -138,7 +140,7 @@ def run_mpi_jac_task(worker_state, task):
                 where ``partial_jac`` has shape ``(2, len(ijproc), ndhpix)``.    
     """
     return _jac_worker(
-        worker_state['cfg'],
+        worker_state['jac_cfg'],
         task['ijproc'],
         task['dmset_list'],
         task['jacmethod'],
