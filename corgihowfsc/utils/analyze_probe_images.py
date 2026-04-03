@@ -518,12 +518,18 @@ def plot_sinc_probes(dpv_list_sincs, mode, dark_hole, ni_desired, output_path=No
     dact = diam_pupil_pix/dmreg_dm1['ppact_cx']
 
     # Get the dark hole mask to extract radii, and pupil masks from a temporary probe
-    temp_probe_tuple = make_dmrel_probe(
-        cfg=cfg, dmlist=dmlist, dact=dact, xcenter=deltax_act, ycenter=deltay_act, clock=rot_list[0],
-        ximin=ximin, ximax=ximax,
-        etamin=etamin, etamax=etamax,
-        phase=phase_list[0], target=ni_desired, lod_min=lod_min, lod_max=lod_max,
-        ind=1, maxiter=5)
+    # temp_probe_tuple = make_dmrel_probe(
+    #     cfg=cfg, dmlist=dmlist, dact=dact, xcenter=deltax_act, ycenter=deltay_act, clock=rot_list[0],
+    #     ximin=ximin, ximax=ximax,
+    #     etamin=etamin, etamax=etamax,
+    #     phase=phase_list[0], target=ni_desired, lod_min=lod_min, lod_max=lod_max,
+    #     ind=1, maxiter=5)
+
+    # Use make_dmrel_probe_gaussian to ensure consistent dimensions with dm_surfaces
+    temp_probe_tuple = make_dmrel_probe_gaussian(
+        cfg=cfg, dmlist=dmlist, dact=dact, xcenter=deltax_act, ycenter=deltay_act, sigma=1.0,
+        target=ni_desired, lod_min=lod_min, lod_max=lod_max,
+        ind=1, maxiter=1)
     dh_mask = temp_probe_tuple[2]
     pupil_masks = temp_probe_tuple[4]
 
@@ -546,8 +552,16 @@ def plot_sinc_probes(dpv_list_sincs, mode, dark_hole, ni_desired, output_path=No
         probe_ni_per_wvln = []
 
         # Calculate DM surface for this probe (same for all bands)
+        # Use the same approach as Gaussian probes for consistent dimensions
         dind = 0  # Only using DM1 to probe
-        nrow, ncol = dh_mask.shape
+
+        # Get dimensions from the pupil masks to ensure consistency
+        epups = cfg.sl_list[1].epup.e.shape
+        sps = cfg.sl_list[1].pupil.e.shape
+        lys = cfg.sl_list[1].lyot.e.shape
+        nrow = max(epups[0], sps[0], lys[0])
+        ncol = max(epups[1], sps[1], lys[1])
+
         dm_surf = dmhtoph(
             nrow=nrow,
             ncol=ncol,
@@ -697,7 +711,7 @@ def plot_sinc_probes(dpv_list_sincs, mode, dark_hole, ni_desired, output_path=No
         cbar_ax_dpv = fig.add_axes([0.24, 0.15, 0.01, 0.7])
         cbar_dpv = fig.colorbar(im_dpv, cax=cbar_ax_dpv)
         if show_dm_surface:
-            cbar_ax_dpv.set_title('Overlay', fontsize=16, pad=10)
+            cbar_ax_dpv.set_title('nm', fontsize=16, pad=10)
         else:
             cbar_ax_dpv.set_title('Volts', fontsize=16, pad=10)
         cbar_ax_dpv.tick_params(labelsize=20)
