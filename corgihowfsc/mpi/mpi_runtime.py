@@ -21,6 +21,36 @@ TASK_FRAME = "FRAME"
 TASK_JAC_CHUNK = "JAC_CHUNK"
 TASK_STOP = "STOP"
 
+
+def _configure_worker_logging(worker_config, rank):
+    """
+    Configure a rank-specific logfile for an MPI worker rank.
+
+    Rank 0 already configures the main ``gitl.log`` through the normal launcher
+    path. Worker ranks branch into the MPI worker loop before they ever reach
+    that logger setup, so they need their own explicit ``basicConfig`` call.
+    """
+    if not worker_config.get('debug', False):
+        return
+
+    logfile = worker_config.get('logfile')
+    if not logfile:
+        return
+
+    log_dir = os.path.dirname(logfile)
+    os.makedirs(log_dir, exist_ok=True)
+    worker_logfile = os.path.join(log_dir, f'gitl_rank{rank}.log')
+    setup_logging(
+        debug=worker_config.get('debug', False),
+        logfile=worker_logfile,
+    )
+    log.info(
+        "MPI worker logging configured: rank=%d pid=%d logfile=%s",
+        rank,
+        os.getpid(),
+        worker_logfile,
+    )
+
 def initialize_mpi_comm(): 
     """
     Enter the direct MPI runtime and assign rank roles. 
