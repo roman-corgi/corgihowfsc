@@ -41,6 +41,60 @@ howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
 probepath = os.path.join(howfscpath, 'model', 'probes')
 
 
+def extract_annulus_radii_pixels(mask, center_row, center_col):
+    """
+    Extract the inner and outer radii of an annular mask in pixels.
+
+    Parameters:
+    -----------
+    mask : np.ndarray
+        Boolean annular mask
+    center_row, center_col : float
+        Center coordinates of the annulus
+
+    Returns:
+    --------
+    r_inner, r_outer : float
+        Inner and outer radii in pixels
+    """
+    # Create coordinate arrays
+    rows, cols = np.ogrid[:mask.shape[0], :mask.shape[1]]
+    r = np.sqrt((rows - center_row)**2 + (cols - center_col)**2)
+
+    # Find radii where mask transitions from False to True (inner edge) and True to False (outer edge)
+    mask_radii = r[mask]
+
+    if len(mask_radii) == 0:
+        return 0, 0
+
+    r_inner = np.min(mask_radii)
+    r_outer = np.max(mask_radii)
+
+    return r_inner, r_outer
+
+
+def draw_circle_on_axis(ax, center_row, center_col, radius, **kwargs):
+    """
+    Draw a circle on a matplotlib axis.
+
+    Parameters:
+    -----------
+    ax : matplotlib.axes.Axes
+        The axis to draw on
+    center_row, center_col : float
+        Center coordinates
+    radius : float
+        Radius in pixels
+    **kwargs : dict
+        Additional arguments passed to matplotlib Circle
+    """
+    from matplotlib.patches import Circle
+
+    # Note: matplotlib uses (x, y) = (col, row) convention
+    circle = Circle((center_col, center_row), radius, fill=False, **kwargs)
+    ax.add_patch(circle)
+
+
 def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None):
     # Plot Gaussian probes, creating them in the same way as from write_gaussian_probes.py
 
@@ -102,13 +156,26 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None):
     band_indices = [0, 1, 2]
 
     # Define sigma range
-    sigma_values = np.arange(0.1, 2.0, 0.1)
+    sigma_values = np.arange(0.1, 2.1, 0.1)
 
     # Dictionary to store probe ni data for each sigma value
     sigma_probe_ni_data = {}
 
     # List to store figures for animation
     animation_figures = []
+
+    # Get the dark hole mask to extract radii (create a temporary probe to get the mask)
+    temp_probe_tuple = make_dmrel_probe_gaussian(
+        cfg=cfg, dmlist=dmlist, dact=dact, xcenter=deltax_act_list[0], ycenter=deltay_act_list[0], sigma=1.0,
+        target=ni_desired, lod_min=lod_min, lod_max=lod_max,
+        ind=1, maxiter=1)
+    dh_mask = temp_probe_tuple[2]
+
+    # Extract radii from dh_mask for circle overlays
+    dh_mask_center_row = dh_mask.shape[0] // 2
+    dh_mask_center_col = dh_mask.shape[1] // 2
+    r_inner_full, r_outer_full = extract_annulus_radii_pixels(dh_mask, dh_mask_center_row, dh_mask_center_col)
+    print(f'Dark hole mask radii: inner = {r_inner_full:.1f} pixels, outer = {r_outer_full:.1f} pixels')
 
     # Loop over sigma values
     for sigma in sigma_values:
@@ -215,6 +282,15 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None):
         crop_min_col = center_col - crop_radius
         crop_max_col = center_col + crop_radius
 
+        # Convert radii to cropped coordinates
+        # The crop shifts the center, so the center in cropped coordinates is at the crop_radius
+        crop_center_row = crop_radius
+        crop_center_col = crop_radius
+
+        # The radii should be the same scale since we're just cropping, not rescaling
+        r_inner_crop = r_inner_full
+        r_outer_crop = r_outer_full
+
         for i in range(len(deltax_act_list)):
             # Plot DPV map for this probe (first column - far left)
             im_dpv = axes[i][0].imshow(dpv_list[i], cmap='Greys_r')
@@ -235,6 +311,12 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None):
                                            cmap='inferno')
                 axes[i][j+1].set_title(f'Band {band_indices[j]}')
                 axes[i][j+1].invert_yaxis()
+
+                # Add white dashed circles for dark hole mask boundaries
+                draw_circle_on_axis(axes[i][j+1], crop_center_row, crop_center_col,
+                                   r_inner_crop, color='white', linestyle='--', linewidth=1.5, alpha=0.8)
+                draw_circle_on_axis(axes[i][j+1], crop_center_row, crop_center_col,
+                                   r_outer_crop, color='white', linestyle='--', linewidth=1.5, alpha=0.8)
 
         # Adjust layout - no longer needed since we manually positioned everything
         # plt.subplots_adjust(left=0.08, right=0.85, wspace=0.6, hspace=0.3)
