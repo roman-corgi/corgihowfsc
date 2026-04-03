@@ -41,7 +41,7 @@ thisFolder = os.path.basename(HERE)
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
 probepath = os.path.join(howfscpath, 'model', 'probes')
 
-NI_DESIRED_DEFAULT = 1e-5
+NI_DESIRED_DEFAULT = 1e-7
 DELTAX_ACT_DEFAULT = None  # 0
 DELTAY_ACT_DEFAULT = None  # 16
 
