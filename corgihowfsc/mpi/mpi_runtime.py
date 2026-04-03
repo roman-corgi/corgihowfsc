@@ -2,6 +2,7 @@ import numpy as np
 from mpi4py import MPI
 from scipy import sparse
 import logging
+import os
 
 from howfsc.control.calcjtwj import JTWJMap
 from howfsc.control.calcjacs import get_ndhpix
@@ -150,13 +151,14 @@ def worker_loop(comm):
         message_type = message['message_type']
 
         if message_type == TASK_INIT:
-            log.info("MPI worker rank %d received INIT", comm.Get_rank())
+            _configure_worker_logging(message['worker_config'], comm.Get_rank())
+            log.info("MPI worker rank %d pid=%d received INIT", comm.Get_rank(), os.getpid())
             worker_state = initialize_mpi_worker_state(message['worker_config'])
-            log.info("MPI worker rank %d finished INIT", comm.Get_rank())
+            log.info("MPI worker rank %d pid=%d finished INIT", comm.Get_rank(), os.getpid())
             continue
 
         if message_type == TASK_STOP:
-            log.info("MPI worker rank %d received STOP", comm.Get_rank())
+            log.info("MPI worker rank %d pid=%d received STOP", comm.Get_rank(), os.getpid())
             break
 
         if worker_state is None:
@@ -166,26 +168,30 @@ def worker_loop(comm):
 
         if message_type == TASK_FRAME:
             log.info(
-                "MPI worker rank %d starting FRAME job_id=%s",
+                "MPI worker rank %d pid=%d starting FRAME job_id=%s",
                 comm.Get_rank(),
+                os.getpid(),
                 task['job_id'],
             )
             result = run_mpi_frame_task(worker_state, task)
             log.info(
-                "MPI worker rank %d finished FRAME job_id=%s",
+                "MPI worker rank %d pid=%d finished FRAME job_id=%s",
                 comm.Get_rank(),
+                os.getpid(),
                 task['job_id'],
             )
         elif message_type == TASK_JAC_CHUNK:
             log.info(
-                "MPI worker rank %d starting JAC_CHUNK job_id=%s",
+                "MPI worker rank %d pid=%d starting JAC_CHUNK job_id=%s",
                 comm.Get_rank(),
+                os.getpid(),
                 task['job_id'],
             )
             result = run_mpi_jac_task(worker_state, task)
             log.info(
-                "MPI worker rank %d finished JAC_CHUNK job_id=%s",
+                "MPI worker rank %d pid=%d finished JAC_CHUNK job_id=%s",
                 comm.Get_rank(),
+                os.getpid(),
                 task['job_id'],
             )
         else:
