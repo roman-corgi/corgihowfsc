@@ -29,6 +29,12 @@ def initialize_mpi_worker_state(worker_config):
     configuration dictionary received during the initial ``INIT`` step. The
     returned state is reused for later frame and Jacobian tasks on that worker.
 
+    The local multiprocessing path used without MPI effectively keeps frame
+    generation isolated from any in-place Jacobian mutations to ``cfg.sl_list``
+    because the Jacobian work happens in separate child processes. Mirror that
+    behavior here by keeping distinct cfg objects for frame generation and
+    Jacobian tasks.
+
     Args:
         worker_config : dict, Dictionary containing the information needed to reconstruct the worker local objects.
 
