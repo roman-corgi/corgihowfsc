@@ -36,7 +36,11 @@ from howfsc.precomp import howfsc_precomputation
 
 from corgihowfsc.gitl.modular_gitl import howfsc_computation
 from corgihowfsc.utils.saving_output import save_outputs, save_outputs_iter
-from corgihowfsc.utils.output_management import save_run_config, update_yml
+from corgihowfsc.utils.output_management import (
+    save_run_config,
+    setup_logging,
+    update_yml,
+)
 from corgihowfsc.utils.gitl_worker import _collect_framelist
 from corgihowfsc.gitl.gitl_funcs import get_initial_cam_params
 from corgihowfsc.utils.metrics import get_ni
@@ -105,6 +109,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     num_process = args.num_process
     num_threads = args.num_threads
     contrast = float(args.starting_contrast) # "starting" value to bootstrap getting we0
+    debug = args.debug
 
     safe_cpu_count = args.num_imager_worker 
     print('Using num_imager_worker = ', safe_cpu_count)
@@ -122,13 +127,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         os.makedirs(os.path.dirname(args.fileout), exist_ok=True)
 
     # Set up logging
-    _log_fmt = '%(asctime)s %(levelname)s %(name)s: %(message)s'
-    if logfile is not None:
-        logging.basicConfig(filename=logfile, level=logging.INFO, format=_log_fmt)
-        pass
-    else:
-        logging.basicConfig(level=logging.INFO, format=_log_fmt)
-        pass
+    setup_logging(debug=debug, logfile=logfile)
 
     config_path = save_run_config(args, args.fileout)
     log.info(f"Saved run configuration to {config_path}")
