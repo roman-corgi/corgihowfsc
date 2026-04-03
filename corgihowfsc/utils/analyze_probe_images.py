@@ -259,7 +259,7 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None):
         if output_path:
             os.makedirs(output_path, exist_ok=True)
             pdf_filename = os.path.join(output_path, f'gaussian_probes_sigma_{sigma:.1f}.pdf')
-            fig.savefig(pdf_filename, format='pdf', dpi=300, bbox_inches='tight')
+            fig.savefig(pdf_filename, format='pdf', dpi=300)
             print(f'Saved PDF: {pdf_filename}')
 
         # Store figure for animation
@@ -282,7 +282,7 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None):
         temp_frames = []
         for i, fig in enumerate(animation_figures):
             temp_filename = os.path.join(output_path, f'temp_frame_{i:03d}.png')
-            fig.savefig(temp_filename, format='png', dpi=150, bbox_inches='tight')
+            fig.savefig(temp_filename, format='png', dpi=150)
             temp_frames.append(temp_filename)
 
         # Try to create MP4 using matplotlib animation
