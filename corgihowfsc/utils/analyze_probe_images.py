@@ -45,7 +45,6 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired):
 
     if 'nfov' in mode:  # nfov_band1, nfov_band2, nfov_band3, nfov_band4
         if '360' in dark_hole:  # 360-degree dark zone
-            sigma = 1.
             deltax_act_list = [13, 13, 12]
             deltay_act_list = [8, 9, 9]
         else:
@@ -101,82 +100,104 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired):
     probe_name_list = ['gauss0', 'gauss1', 'gauss2']
     band_indices = [0, 1, 2]
 
-    # Initialize arrays to store results for all probes and wavelengths
-    probe_ni_maps = []  # Shape: [n_probes, n_bands]
-    dpv_maps = []      # Shape: [n_probes, n_bands]
+    # Define sigma range
+    sigma_values = np.arange(0.5, 2.1, 0.1)
 
-    # First, create the probes using band 1 (as in original code)
-    dpv_list = []
-    for index_probe, _ in enumerate(deltax_act_list):
-        print('*** Creating Probe %d ***' % index_probe)
+    # Dictionary to store probe ni data for each sigma value
+    sigma_probe_ni_data = {}
 
-        deltax_act = deltax_act_list[index_probe]
-        deltay_act = deltay_act_list[index_probe]
-        probe_name = probe_name_list[index_probe]
+    # Loop over sigma values
+    for sigma in sigma_values:
+        print(f'\n*** Processing sigma = {sigma:.1f} ***')
 
-        probe_tuple = make_dmrel_probe_gaussian(
-            cfg=cfg, dmlist=dmlist, dact=dact, xcenter=deltax_act, ycenter=deltay_act, sigma=sigma,
-            target=ni_desired, lod_min=lod_min, lod_max=lod_max,
-            ind=1, maxiter=5)
+        # Initialize arrays to store results for all probes and wavelengths
+        probe_ni_maps = []  # Shape: [n_probes, n_bands]
 
-        dpv = probe_tuple[0]
-        dpv = usable_act_map * dpv
-        dpv_list.append(dpv)
+        # First, create the probes using band 1 (as in original code)
+        dpv_list = []
+        for index_probe, _ in enumerate(deltax_act_list):
+            print('*** Creating Probe %d ***' % index_probe)
 
-    # Now propagate each probe through all three wavelength bands
-    for index_probe, dpv in enumerate(dpv_list):
-        print('*** Propagating Probe %d through all wavelength bands ***' % index_probe)
+            deltax_act = deltax_act_list[index_probe]
+            deltay_act = deltay_act_list[index_probe]
+            probe_name = probe_name_list[index_probe]
 
-        probe_ni_per_wvln = []
+            probe_tuple = make_dmrel_probe_gaussian(
+                cfg=cfg, dmlist=dmlist, dact=dact, xcenter=deltax_act, ycenter=deltay_act, sigma=sigma,
+                target=ni_desired, lod_min=lod_min, lod_max=lod_max,
+                ind=1, maxiter=5)
 
-        for band_ind in band_indices:
-            print(f'  Band {band_ind}')
+            dpv = probe_tuple[0]
+            dpv = usable_act_map * dpv
+            dpv_list.append(dpv)
 
-            # Calculate unocculted electric field for normalization factor in intensity
-            iopen = np.abs(open_efield(cfg, dmlist, band_ind)) ** 2
-            ipeak = np.max(iopen)
-            eref = efield(cfg, dmlist, band_ind)
+        # Now propagate each probe through all three wavelength bands
+        for index_probe, dpv in enumerate(dpv_list):
+            print('*** Propagating Probe %d through all wavelength bands ***' % index_probe)
 
-            # Create probe tuple for this wavelength band
-            probed_efield = efield(cfg, [dmlist[0] - dpv, dmlist[1]], band_ind)
-            probe_ni_map = np.abs(probed_efield - eref)**2 / ipeak
+            probe_ni_per_wvln = []
 
-            probe_ni_per_wvln.append(probe_ni_map)
+            for band_ind in band_indices:
+                print(f'  Band {band_ind}')
 
-        probe_ni_maps.append(probe_ni_per_wvln)
+                # Calculate unocculted electric field for normalization factor in intensity
+                iopen = np.abs(open_efield(cfg, dmlist, band_ind)) ** 2
+                ipeak = np.max(iopen)
+                eref = efield(cfg, dmlist, band_ind)
 
-    # Create combined grid: 3 rows (probes) x 4 columns (1 DPV + 3 bands)
-    fig, axes = plt.subplots(len(deltax_act_list), len(band_indices) + 1, figsize=(20, 12))
+                # Create probe tuple for this wavelength band
+                probed_efield = efield(cfg, [dmlist[0] - dpv, dmlist[1]], band_ind)
+                probe_ni_map = np.abs(probed_efield - eref)**2 / ipeak
 
-    if len(deltax_act_list) == 1:
-        axes = axes.reshape(1, -1)
+                probe_ni_per_wvln.append(probe_ni_map)
 
-    im_ni = None
-    im_dpv = None
+            probe_ni_maps.append(probe_ni_per_wvln)
 
-    for i in range(len(deltax_act_list)):
-        # Plot DPV map for this probe (first column - far left)
-        im_dpv = axes[i, 0].imshow(dpv_list[i], cmap='viridis')
-        axes[i, 0].set_title(f'dpv (Volts)')
-        axes[i, 0].invert_yaxis()
+        # Store the probe ni data for this sigma
+        sigma_probe_ni_data[sigma] = probe_ni_maps
 
-        # Add rotated probe label on the left side of DPV boxes
-        axes[i, 0].text(-0.15, 0.5, f'Probe {i}', transform=axes[i, 0].transAxes,
-                       rotation=90, verticalalignment='center', horizontalalignment='center',
-                       fontsize=14, fontweight='bold')
+        # Create combined grid: 3 rows (probes) x 4 columns (1 DPV + 3 bands)
+        fig, axes = plt.subplots(len(deltax_act_list), len(band_indices) + 1, figsize=(20, 12))
 
-        # Plot normalized intensity maps for each band (columns 1-3)
-        for j in range(len(band_indices)):
-            im_ni = axes[i, j+1].imshow(probe_ni_maps[i][j],
-                                       norm=LogNorm(vmin=ni_desired/10, vmax=ni_desired*1.5),
-                                       cmap='inferno')
-            axes[i, j+1].set_title(f'Band {band_indices[j]}')
-            axes[i, j+1].invert_yaxis()
+        if len(deltax_act_list) == 1:
+            axes = axes.reshape(1, -1)
 
-    fig.suptitle('Probe Analysis: DPV Maps and Normalized Intensity Across Wavelength Bands', fontsize=16)
+        im_ni = None
+        im_dpv = None
 
-    plt.tight_layout()
-    plt.show()
+        for i in range(len(deltax_act_list)):
+            # Plot DPV map for this probe (first column - far left)
+            im_dpv = axes[i, 0].imshow(dpv_list[i], cmap='viridis')
+            axes[i, 0].set_title(f'dpv (Volts)')
+            axes[i, 0].invert_yaxis()
+
+            # Add rotated probe label on the left side of DPV boxes
+            axes[i, 0].text(-0.15, 0.5, f'Probe {i}', transform=axes[i, 0].transAxes,
+                           rotation=90, verticalalignment='center', horizontalalignment='center',
+                           fontsize=14, fontweight='bold')
+
+            # Plot normalized intensity maps for each band (columns 1-3)
+            for j in range(len(band_indices)):
+                im_ni = axes[i, j+1].imshow(probe_ni_maps[i][j],
+                                           norm=LogNorm(vmin=ni_desired/10, vmax=ni_desired*1.5),
+                                           cmap='inferno')
+                axes[i, j+1].set_title(f'Band {band_indices[j]}')
+                axes[i, j+1].invert_yaxis()
+
+        # Add colorbars
+        if im_ni is not None:
+            # Colorbar for normalized intensity (spans columns 1-3)
+            cbar_ni = fig.colorbar(im_ni, ax=axes[:, 1:].ravel().tolist(), shrink=0.6, label='Normalized Intensity')
+        if im_dpv is not None:
+            # Colorbar for DPV (spans first column)
+            cbar_dpv = fig.colorbar(im_dpv, ax=axes[:, 0].ravel().tolist(), shrink=0.6, label='DPV (Volts)')
+
+        fig.suptitle(f'Probe Analysis (σ = {sigma:.1f}): DPV Maps and Normalized Intensity Across Wavelength Bands', fontsize=16)
+
+        plt.tight_layout()
+        plt.show()
+
+    return sigma_probe_ni_data
 
 
 if __name__ == '__main__':
