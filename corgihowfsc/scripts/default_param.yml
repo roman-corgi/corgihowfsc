@@ -5,6 +5,7 @@ runtime:
   num_jac_process: 6 # default to 2
   num_imager_worker: null # default to null for no parallelization, otherwise set to an integer number of workers
   use_mpi: false # or null if mpi is false. Set to true to use MPI for parallelization.
+  debug: false # set to true to run in debug mode, which will print additional information and save intermediate outputs. Not recommended for large runs due to increased runtime and storage usage.
 
 sim_settings:
   loop_framework: "corgi-howfsc" # do not modify 
