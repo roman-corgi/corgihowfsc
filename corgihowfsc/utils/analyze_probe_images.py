@@ -119,8 +119,8 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None, show_dm_
     """
     if 'nfov' in mode:  # nfov_band1, nfov_band2, nfov_band3, nfov_band4
         if '360' in dark_hole:  # 360-degree dark zone
-            deltax_act_list = [13, 13, 12]
-            deltay_act_list = [8, 9, 9]
+            deltax_act_list = [13.5, 12.5, 13.5]   # x.5 to be centered on a single actuator
+            deltay_act_list = [8.5, 8.5, 7.5]
         else:
             raise NotImplementedError('Passed dark hole not implemented')
 
