@@ -164,12 +164,13 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None):
     # List to store figures for animation
     animation_figures = []
 
-    # Get the dark hole mask to extract radii (create a temporary probe to get the mask)
+    # Get the dark hole mask to extract radii, and pupil masks from a temporary probe
     temp_probe_tuple = make_dmrel_probe_gaussian(
         cfg=cfg, dmlist=dmlist, dact=dact, xcenter=deltax_act_list[0], ycenter=deltay_act_list[0], sigma=1.0,
         target=ni_desired, lod_min=lod_min, lod_max=lod_max,
         ind=1, maxiter=1)
     dh_mask = temp_probe_tuple[2]
+    pupil_masks = temp_probe_tuple[4]
 
     # Extract radii from dh_mask for circle overlays
     dh_mask_center_row = dh_mask.shape[0] // 2
