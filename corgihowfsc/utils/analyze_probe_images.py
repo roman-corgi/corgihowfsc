@@ -304,7 +304,6 @@ def plot_gaussian_probes(mode, dark_hole, ni_desired, output_path=None, show_dm_
         for i in range(len(deltax_act_list)):
             # Plot DPV map or DM surface overlay for this probe (first column - far left)
             if show_dm_surface:
-                # Create overlay: 3 * dm_surf / np.max(dm_surf) + pupil_masks / np.max(pupil_masks)
                 overlay = 3 * dm_surfaces[i] / np.max(dm_surfaces[i]) + pupil_masks / np.max(pupil_masks)
                 im_dpv = axes[i][0].imshow(overlay, cmap='Greys_r')
                 axes[i][0].set_title(f'DM Surface + Pupil')
@@ -482,11 +481,6 @@ def plot_sinc_probes(dpv_list_sincs, mode, dark_hole, ni_desired, output_path=No
 
         The DM surface overlay is calculated as:
         overlay = 3 * dm_surf / np.max(dm_surf) + pupil_masks / np.max(pupil_masks)
-
-    Returns:
-    --------
-    probe_ni_data : dict
-        Dictionary containing probe normalized intensity data for all wavelength bands
     """
     if len(dpv_list_sincs) != 3:
         raise ValueError("dpv_list_sincs must contain exactly 3 sinc probes")
@@ -725,16 +719,6 @@ def plot_sinc_probes(dpv_list_sincs, mode, dark_hole, ni_desired, output_path=No
         plt.close(fig)
     else:
         plt.show()
-
-    # Prepare return data
-    probe_ni_data = {
-        'probe_ni_maps': probe_ni_maps,
-        'dpv_list': dpv_list_sincs,
-        'band_indices': band_indices,
-        'probe_names': probe_name_list
-    }
-
-    return probe_ni_data
 
 
 if __name__ == '__main__':
