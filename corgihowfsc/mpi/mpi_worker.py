@@ -39,8 +39,8 @@ def initialize_mpi_worker_state(worker_config):
         worker_config : dict, Dictionary containing the information needed to reconstruct the worker local objects.
 
     Returns:
-        dict: Persistent worker state containing ``'cfg'``, ``'hconf'``,
-        ``'cstrat'``, and ``'imager'``.
+        dict: Persistent worker state containing separate frame and Jacobian
+        cfg objects, plus ``'hconf'``, ``'cstrat'``, and ``'imager'``.
     """
 
     logfile = worker_config.get('logfile')
@@ -50,13 +50,14 @@ def initialize_mpi_worker_state(worker_config):
             os.path.join(os.path.dirname(logfile), 'image_worker_debug.csv'),
         )
 
-    cfg = CoronagraphMode(worker_config['cfgfile'])
+    frame_cfg = CoronagraphMode(worker_config['cfgfile'])
+    jac_cfg = CoronagraphMode(worker_config['cfgfile'])
     hconf = loadyaml(worker_config['hconffile'], custom_exception=TypeError)
     _apply_hconf_overrides(hconf, worker_config)
     cstrat = ControlStrategy(worker_config['cstratfile'])
-    
+
     imager = GitlImage(
-        cfg=cfg,
+        cfg=frame_cfg,
         cstrat=cstrat,
         hconf=hconf,
         backend=worker_config['backend_type'],
@@ -64,7 +65,8 @@ def initialize_mpi_worker_state(worker_config):
         corgi_overrides=worker_config['corgi_overrides'],
     )
     return {
-        'cfg': cfg,
+        'frame_cfg': frame_cfg,
+        'jac_cfg': jac_cfg,
         'hconf': hconf,
         'cstrat': cstrat,
         'imager': imager,
