@@ -749,13 +749,21 @@ if __name__ == '__main__':
 
     ### Gaussian probes
 
+    # If reading single probe set from files:
+    read_gaussians = True
+
+    gauss0 = fits.getdata('/Users/ilaginja/Pictures/probe_tests/dmrel_nfov_band1_360deg_ni1e-07_x13_y8_gauss0_R.fits')
+    gauss1 = fits.getdata('/Users/ilaginja/Pictures/probe_tests/dmrel_nfov_band1_360deg_ni1e-07_x12_y8_gauss1_R.fits')
+    gauss2 = fits.getdata('/Users/ilaginja/Pictures/probe_tests/dmrel_nfov_band1_360deg_ni1e-07_x13_y7_gauss2_R.fits')
+    dpv_list_gaussians = [gauss0, gauss1, gauss2]
+
     # Example 1: Show DPV maps for Gaussian probes
     # print("Creating plots with DPV maps...")
     # plot_gaussian_probes(mode, dark_hole, ni_desired=ni, output_path=analysis_path, show_dm_surface=False)
 
     # Example 2: Show DM surface overlays with pupil masks for Gaussian probes
     print("Creating plots with DM surface overlays...")
-    plot_gaussian_probes(mode, dark_hole, ni_desired=ni, output_path=analysis_path, show_dm_surface=True, dpv_list_gaussians=dpv_list_gaussians)
+    plot_gaussian_probes(mode, dark_hole, ni_desired=ni, output_path=analysis_path, show_dm_surface=True, dpv_list_gaussians=None)
 
     ### Default probes
 
