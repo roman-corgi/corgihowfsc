@@ -380,7 +380,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         other[j]['lam'] = cfg.sl_list[j].lam
 
         intlist.append(np.zeros((ndm, nrow, ncol))) # int storage for whole lam
-        log.info('Wavelength %d of %d', j+1, nlam)
+        log.debug('Wavelength %d of %d', j+1, nlam)
         log.debug('Get flux for this CFAM filter')
         # _, peakflux = normalization.calc_flux_rate(
         #     sequence_name=hconf['hardware']['sequence_list'][j],
@@ -393,7 +393,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         debugging_dict['peakflux'][j] = peakflux
         log.info('Expect %g photons/sec', peakflux)
         for k in range(ndm):
-            log.info('DM setting %d of %d', k+1, ndm)
+            log.debug('DM setting %d of %d', k+1, ndm)
             ind = j*ndm + k
             im = framelist[ind]
 
@@ -458,7 +458,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
     bpmeas = np.zeros((ndhpix[-1],)).astype('bool')
     destlist = [] # list of measured - model 2D arrays, for next iter contrast
     for j in range(nlam):
-        log.info('Wavelength %d of %d', j+1, nlam)
+        log.debug('Wavelength %d of %d', j+1, nlam)
 
         # Measured e-field at this setting
         log.info('Measured e-field at this setting')
@@ -596,7 +596,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
     debugging_dict['cam_params_probing'] = np.zeros((nlam, 3))
                                
     for index, sequence in enumerate(hconf['hardware']['sequence_list']):
-        log.info('Sequence = %s', sequence)
+        log.debug('Sequence = %s', sequence)
         innerg = []
         innere = []
         innern = []
@@ -712,9 +712,9 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         stat = status_codes['nominal']
         pass
     else: # still succeeded with 2nd optimizer; failure raises exception
+        stat = status_codes['LowerThanExpectedSNR']
         log.warning('Returning status %s because camera optimization used fallback settings (optflag=%d)',
                     status_codes['LowerThanExpectedSNR'], final_optflag)
-        stat = status_codes['LowerThanExpectedSNR']
         pass
     log.debug('Return data tuple')
     return (abs_dm1,
