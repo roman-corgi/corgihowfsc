@@ -381,7 +381,8 @@ def check_inputs(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         raise TypeError('Number of provided seqs in sequence_list not ' +
                         'consistent with number of model wavelengths')
 
-    log.info('Input checks complete')
+    log.info('Validated inputs: nlam=%d, ndm=%d, nprobepair=%d, frame_shape=(%d, %d)',
+         nlam, ndm, nprobepair, nrow, ncol)
 
     return lenflist, nlam, ndm, nprobepair, lendm1list, lendm2list, dm1nact, dm2nact, allpix, lencroplist, nrow, ncol, subcroplist, lenpelist
 
@@ -396,6 +397,10 @@ def get_initial_cam_params(cstrat, contrast, hconf, get_cgi_eetc, nprobepair):
     pscale = contrast + probeheight
     pscale_bright = 1.5 * contrast + probeheight + \
                     2 * np.sqrt(probeheight) * np.sqrt(1.5 * contrast)
+
+    log.debug('Initial camera params for %s: unprobed(gain=%g, exptime=%g, nframes=%d), '
+          'probed(gain=%g, exptime=%g, nframes=%d)',
+          sequence, innerg[0], innere[0], innern[0], gain, exptime, nframes)
 
     orig_exptime_list = []
     orig_gain_list = []
