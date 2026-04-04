@@ -517,8 +517,15 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         dest = insertinto(efield - model_efield, cfg.sl_list[j].dh.e.shape)
         destlist.append(dest)
         pass
-    log.info('Number of bad e-field elements: %d out of %d',
-                 np.sum(bpmeas), bpmeas.size)
+
+    bad_efield_count = np.sum(bpmeas)
+    bad_efield_fraction = bad_efield_count / bpmeas.size
+    if bad_efield_count == 0:
+        log.info('Number of bad e-field elements: %d out of %d (%.2f%%)',
+                 bad_efield_count, bpmeas.size, 100 * bad_efield_fraction)
+    else:
+        log.warning('Number of bad e-field elements: %d out of %d (%.2f%%)',
+                    bad_efield_count, bpmeas.size, 100 * bad_efield_fraction)
 
     # 1133642 also requires mean mod/unmod across all filters
     other['mean_modul_dh_all'] = modulsum/npixmod
