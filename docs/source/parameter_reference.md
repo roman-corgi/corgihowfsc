@@ -22,8 +22,7 @@ runtime:
   num_jac_process: 6 # used for local Jacobian computation when use_mpi is false
   num_imager_worker: null # set to an integer > 1 to parallelize image generation
   use_mpi: false # set true to use the MPI manager-worker runtime instead of local multiprocessing
-  debug: false # enable more verbose logging and extra debug outputs; with MPI, also writes one log file per worker rank
-  debug: false # set true to enable debug logging and extra debug outputs. Not recommended for large runs due to increased runtime, storage usage, and log volume. If use_mpi is true, this also writes one log file per worker rank.
+  debug: false # enable debug logging and extra debug outputs; with MPI, also writes one log file per worker rank
 
 sim_settings:
   loop_framework: "corgi-howfsc" # do not modify
