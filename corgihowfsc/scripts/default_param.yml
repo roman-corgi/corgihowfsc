@@ -1,11 +1,11 @@
 active_model: "cgi-howfsc" # choose from "cgi-howfsc" or "corgihowfsc". This will determine which imager model is used and which settings are applied to the imager initialization.
 
 runtime:
-  num_proper_process: 5 # default to 5 
-  num_jac_process: 6 # default to 2
-  num_imager_worker: null # default to null for no parallelization, otherwise set to an integer number of workers
-  use_mpi: false # or null if mpi is false. Set to true to use MPI for parallelization.
-  debug: false # set to true to run in debug mode, which will print additional information and save intermediate outputs. Not recommended for large runs due to increased runtime and storage usage.
+  num_proper_process: 5 # typical value for HLC band 1 runs
+  num_jac_process: 6 # used for local Jacobian computation when use_mpi is false
+  num_imager_worker: null # set to an integer > 1 to parallelize image generation
+  use_mpi: false # set true to use the MPI manager-worker runtime instead of local multiprocessing
+  debug: false # enable debug logging and extra debug outputs; with MPI, also writes one log file per worker rank
 
 sim_settings:
   loop_framework: "corgi-howfsc" # do not modify 

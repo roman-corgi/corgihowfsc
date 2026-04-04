@@ -110,8 +110,7 @@ Controls parallel execution.
 | `num_jac_process` | `6` | Number of local processes used for Jacobian computation when MPI is off |
 | `num_imager_worker` | `null` | Number of outer image workers; `null` disables explicit outer parallelism; an integer caps active MPI worker ranks |
 | `use_mpi` | `false` | Set `true` to enable MPI mode: rank 0 runs the main loop, all other ranks wait for work |
-| `debug` | `false` | Enable debug logging and extra debug outputs. If `use_mpi` is `true`, this also writes one log file per worker rank. |
-| `debug` | `false` | Enable debug logging and extra debug outputs. Not recommended for large runs because it increases log volume and may write additional debug artifacts. If use_mpi is true, rank-specific worker log files are also written. |
+| `debug` | `false` | Enable debug logging and extra debug outputs. Not recommended for large runs because it increases log volume and may write additional debug artifacts. If `use_mpi` is `true`, rank-specific worker log files are also written. |
 
 See [MPI and Multiprocessing](mpi_multiprocessing.md) for more detail.
 
