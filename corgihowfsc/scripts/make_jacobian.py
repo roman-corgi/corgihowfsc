@@ -1,16 +1,19 @@
-import os
-from pathlib import Path
+import argparse
+import logging
 import multiprocessing
+import os
 import time
 from datetime import datetime
+from pathlib import Path
 
-import numpy as np
-import astropy.io.fits as fits
+from astropy.io import fits
 
-from howfsc.model.mode import CoronagraphMode
-from howfsc.control.calcjacs import calcjacs
-import howfsc.util.check as check
 import corgihowfsc
+from corgihowfsc.utils.howfsc_initialization import get_args, load_files
+from howfsc.control.calcjacs import calcjacs
+from howfsc.control.cs import ControlStrategy
+from howfsc.model.mode import CoronagraphMode
+import howfsc.util.check as check
 
 VALID_JACMETHODS = ['normal', 'fast']
 
