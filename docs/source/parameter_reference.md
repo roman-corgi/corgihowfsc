@@ -18,10 +18,11 @@ If `--param_file` is not provided, the script falls back to `default_param.yml` 
 active_model: "cgi-howfsc" # choose from "cgi-howfsc" or "corgihowfsc". This will determine which imager model is used and which settings are applied to the imager initialization.
 
 runtime:
-  num_proper_process: 5 # default to 5
-  num_jac_process: 6 # default to 2
-  num_imager_worker: null # default to null for no parallelization, otherwise set to an integer number of workers
-  use_mpi: false # or null if mpi is false. Set to true to use MPI for parallelization.
+  num_proper_process: 5 # typical value for HLC band 1 runs
+  num_jac_process: 6 # used for local Jacobian computation when use_mpi is false
+  num_imager_worker: null # set to an integer > 1 to parallelize image generation
+  use_mpi: false # set true to use the MPI manager-worker runtime instead of local multiprocessing
+  debug: false # enable more verbose logging and extra debug outputs; with MPI, also writes one log file per worker rank
   debug: false # set true to enable debug logging and extra debug outputs. Not recommended for large runs due to increased runtime, storage usage, and log volume. If use_mpi is true, this also writes one log file per worker rank.
 
 sim_settings:
@@ -110,6 +111,7 @@ Controls parallel execution.
 | `num_jac_process` | `6` | Number of local processes used for Jacobian computation when MPI is off |
 | `num_imager_worker` | `null` | Number of outer image workers; `null` disables explicit outer parallelism; an integer caps active MPI worker ranks |
 | `use_mpi` | `false` | Set `true` to enable MPI mode: rank 0 runs the main loop, all other ranks wait for work |
+| `debug` | `false` | Enable debug logging and extra debug outputs. If `use_mpi` is `true`, this also writes one log file per worker rank. |
 | `debug` | `false` | Enable debug logging and extra debug outputs. Not recommended for large runs because it increases log volume and may write additional debug artifacts. If use_mpi is true, rank-specific worker log files are also written. |
 
 See [MPI and Multiprocessing](mpi_multiprocessing.md) for more detail.
