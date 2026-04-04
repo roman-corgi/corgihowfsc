@@ -92,24 +92,29 @@ def set_num_threads(num_process, num_threads):
 
     return num_threads
 
-def calculate_jacobian(cfgfile, output, jacmethod,
-                       num_process=None, num_threads=None):
-    """
 
-    A wrapper function around `caljacs` to handle input validation, parallelism settings, and output file writing for Jacobian calculation. It will calculate a Jacobian and write it to a FITS file.
+def default_output_path(base_path, mode, dark_hole):
+    outdir = Path(base_path) / DEFAULT_OUTPUT_SUBDIR
+    outdir.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H%M%S')
+    return str(outdir / f'jacobian_{mode}_{dark_hole}_{timestamp}.fits')
 
-    The number of actuators is derived automatically from the model — all
-    actuators across every DM defined in the config file are included.
 
-    Args:
-        cfgfile (str): Path to ``howfsc_optical_model.yaml``.
-        output (str): Destination path for the output FITS file.
-        jacmethod (str): Calculation method — 'normal' or 'fast'.
-        num_process (int or None): Worker processes (see
-            :func:`set_num_processes` for rules).
-        num_threads (int or None): MKL threads per process (see
-            :func:`set_num_threads` for rules).
-    """
+def build_cfg_and_dmset(mode, dark_hole, dmstartmap_filenames):
+    howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
+    args = get_args(
+        mode=mode,
+        dark_hole=dark_hole,
+        dmstartmap_filenames=dmstartmap_filenames,
+    )
+    _modelpath, cfgfile, _jacfile, _cstratfile, _probefiles, _hconffile, _n2clistfiles, dmstartmaps = load_files(args, howfscpath)
+
+    cfg = CoronagraphMode(cfgfile)
+    dm10, dm20 = dmstartmaps
+    return cfg, [dm10, dm20]
+
+
+def calculate_jacobian(cfg, dmset_list, jacmethod, num_process=None, num_threads=None):
     check.string(jacmethod, 'jacmethod', TypeError)
     if jacmethod not in VALID_JACMETHODS:
         raise ValueError(
