@@ -21,7 +21,20 @@ DEFAULT_OUTPUT_SUBDIR = 'corgiloop_data/jacobians'
 def parse_args():
     ap = argparse.ArgumentParser(
         prog='python make_jacobian.py',
-        description='Generate and save a Jacobian FITS file using the local corgihowfsc model setup.',
+        description=(
+            'Generate and save a Jacobian FITS file using the local '
+            'corgihowfsc model setup.\n\n'
+            'Example:\n'
+            '  python make_jacobian.py --mode nfov_band1 --dark_hole 360deg '
+            '--jacmethod fast --num_process 0 --num_threads 1\n\n'
+            'By default, output is written under ~/corgiloop_data/jacobians/.\n'
+            'By default, the script uses the mode-specific DM start maps returned '
+            'by corgihowfsc.utils.howfsc_initialization.load_files(...).\n'
+            'Use --dm1_start and --dm2_start together to override that default '
+            'starting point when you want to linearize the Jacobian around a '
+            'different DM state.'
+        ),
+        formatter_class=argparse.RawTextHelpFormatter,
     )
     ap.add_argument('--mode', default='nfov_band1', type=str,
                     help='Corgihowfsc model family, e.g. nfov_band1, spec_band2, spec_band3, wfov_band4.')
