@@ -16,55 +16,35 @@ from howfsc.model.mode import CoronagraphMode
 import howfsc.util.check as check
 
 VALID_JACMETHODS = ['normal', 'fast']
-
-def main():
-    base_path = Path.home()  # default root — change if saving elsewhere
-    mode = 'nfov_band1' # example mode — change as needed
-    dark_hole = '360deg' # example mode for the dark hole — change as needed
-    jacmethod = 'normal' 
-
-    cfgfile = get_cfgfile(mode, dark_hole)
-    output = get_jacobian_output_path(base_path, mode, dark_hole)
-
-    # num_process=0 auto-selects half the machine's CPUs (see set_num_processes)
-    calculate_jacobian(cfgfile, output, jacmethod=jacmethod,
-                       num_process=0, num_threads=None)
-
-def get_jacobian_output_path(base_path, mode, dark_hole):
-    """Return a timestamped output path for a new Jacobian FITS file.
-
-    Args:
-        base_path (str or Path): Root directory under which
-            ``corgiloop_data/jacobians/`` will be created if it does not
-            already exist.
-        mode (str): Coronagraph mode.
-        dark_hole (str): Dark hole configuration.
-
-    Returns:
-        str: Full file path for the new Jacobian FITS file.
-    """
-    jacobian_dir = Path(base_path) / 'corgiloop_data' / 'jacobians'
-    jacobian_dir.mkdir(parents=True, exist_ok=True)
-
-    timestamp = datetime.now().strftime('%Y-%m-%d_%H%M%S')
-    return str(jacobian_dir / f'jacobian_{mode}_{dark_hole}_{timestamp}.fits')
+DEFAULT_OUTPUT_SUBDIR = 'corgiloop_data/jacobians'
 
 
-def get_cfgfile(mode, dark_hole):
-    """Return the path to the optical model config file for a given mode.
-
-    Args:
-        mode (str): Coronagraph mode.
-        dark_hole (str): Dark hole configuration.
-
-    Returns:
-        str: Full file path to `howfsc_optical_model.yaml`.
-    """
-    return os.path.join(
-        os.path.dirname(os.path.abspath(corgihowfsc.__file__)),
-        'model', mode, f'{mode}_{dark_hole}',
-        'howfsc_optical_model.yaml',
+def parse_args():
+    ap = argparse.ArgumentParser(
+        prog='python make_jacobian.py',
+        description='Generate and save a Jacobian FITS file using the local corgihowfsc model setup.',
     )
+    ap.add_argument('--mode', default='nfov_band1', type=str,
+                    help='Corgihowfsc model family, e.g. nfov_band1, spec_band2, spec_band3, wfov_band4.')
+    ap.add_argument('--dark_hole', default='360deg', type=str,
+                    help='Dark-hole configuration inside the selected mode.')
+    ap.add_argument('--jacmethod', default='fast', type=str,
+                    choices=VALID_JACMETHODS,
+                    help='Jacobian calculation method.')
+    ap.add_argument('--num_process', default=0, type=int,
+                    help='Number of Jacobian worker processes. Use 0 for half the available CPUs.')
+    ap.add_argument('--num_threads', default=None, type=int,
+                    help='MKL threads per process. If omitted, follows HOWFSC defaults.')
+    ap.add_argument('--base_path', default=str(Path.home()), type=str,
+                    help='Root path under which Jacobians will be saved.')
+    ap.add_argument('--output', default=None, type=str,
+                    help='Explicit output FITS path. Overrides the timestamped default location.')
+    ap.add_argument('--dm1_start', default=None, type=str,
+                    help='Optional DM1 start-map filename relative to the selected model path, or an absolute path.')
+    ap.add_argument('--dm2_start', default=None, type=str,
+                    help='Optional DM2 start-map filename relative to the selected model path, or an absolute path.')
+    return ap.parse_args()
+
 
 def set_num_processes(num_process):
     """Resolve the number of worker processes to use for the Jacobian calculation.
