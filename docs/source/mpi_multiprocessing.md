@@ -34,9 +34,11 @@ The switch between them is a single YAML field:
 runtime:
   use_mpi: false   # local multiprocessing
   use_mpi: true    # MPI
+  debug: false     # optional verbose logging and extra debug outputs
 ```
 
-Both modes can run the same loop — MPI is not required for correctness, only for scaling beyond one machine or for workloads that saturate a single node.
+Both modes can run the same loop. MPI is not required for correctness, only for scaling beyond one machine or for workloads that saturate a single node.
+When `debug: true`, the run writes more verbose logs and may create extra debug artifacts. In MPI mode, this includes rank-specific worker log files.
 
 ---
 
