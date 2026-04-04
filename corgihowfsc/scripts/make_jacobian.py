@@ -52,9 +52,19 @@ def parse_args():
     ap.add_argument('--output', default=None, type=str,
                     help='Explicit output FITS path. Overrides the timestamped default location.')
     ap.add_argument('--dm1_start', default=None, type=str,
-                    help='Optional DM1 start-map filename relative to the selected model path, or an absolute path.')
+                    help=(
+                        'Optional DM1 start-map override. Must be used together '
+                        'with --dm2_start. May be either a filename relative to '
+                        'the selected model directory or an absolute path. '
+                        'Use this when you want the Jacobian computed about a '
+                        'different DM operating point than the default start map.'
+                    ))
     ap.add_argument('--dm2_start', default=None, type=str,
-                    help='Optional DM2 start-map filename relative to the selected model path, or an absolute path.')
+                    help=(
+                        'Optional DM2 start-map override. Must be used together '
+                        'with --dm1_start. May be either a filename relative to '
+                        'the selected model directory or an absolute path.'
+                    ))
     return ap.parse_args()
 
 
