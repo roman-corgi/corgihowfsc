@@ -1,0 +1,4 @@
+/* Increase content width beyond RTD default (800px) but avoid full-bleed on wide screens */
+.wy-nav-content {
+    max-width: 1200px !important;
+}

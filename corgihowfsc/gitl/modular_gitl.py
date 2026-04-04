@@ -355,7 +355,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
     # Will contain things like electric-field estimates, etc.
     other = dict()
 
-    log.info('Building exposure-time calculator class')
+    log.debug('Building exposure-time calculator class')
     get_cgi_eetc = CGIEETC(mag=hconf['star']['stellar_vmag'],
                        phot='v', # only using V-band magnitudes as a standard
                        spt=hconf['star']['stellar_type'],
@@ -380,8 +380,8 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         other[j]['lam'] = cfg.sl_list[j].lam
 
         intlist.append(np.zeros((ndm, nrow, ncol))) # int storage for whole lam
-        log.info('Wavelength %d of %d', j+1, nlam)
-        log.info('Get flux for this CFAM filter')
+        log.debug('Wavelength %d of %d', j+1, nlam)
+        log.debug('Get flux for this CFAM filter')
         # _, peakflux = normalization.calc_flux_rate(
         #     sequence_name=hconf['hardware']['sequence_list'][j],
         # )
@@ -393,7 +393,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         debugging_dict['peakflux'][j] = peakflux
         log.info('Expect %g photons/sec', peakflux)
         for k in range(ndm):
-            log.info('DM setting %d of %d', k+1, ndm)
+            log.debug('DM setting %d of %d', k+1, ndm)
             ind = j*ndm + k
             im = framelist[ind]
 
@@ -458,7 +458,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
     bpmeas = np.zeros((ndhpix[-1],)).astype('bool')
     destlist = [] # list of measured - model 2D arrays, for next iter contrast
     for j in range(nlam):
-        log.info('Wavelength %d of %d', j+1, nlam)
+        log.debug('Wavelength %d of %d', j+1, nlam)
 
         # Measured e-field at this setting
         log.info('Measured e-field at this setting')
@@ -486,7 +486,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
 
         # Stash computed products for later analysis (reqts 1133640, 1133641,
         # and 1133642)
-        log.info('Stash computed products for monitoring and metrics')
+        log.debug('Stash computed products for monitoring and metrics')
         other[j]['meas_efield'] = efield
         other[j]['modul_intensity'] = np.abs(efield)**2
         other[j]['unmodul_intensity'] = other[j]['meas_intensity'] - \
@@ -502,7 +502,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         unmodulsum += np.sum(dhunmod[~badef])
 
         # Model e-field at this DM setting
-        log.info('Model e-field at this setting')
+        log.debug('Model e-field at this setting')
 
         # Get e-field from the imager, which will be either the compact model or corigisim model
         # Old legacy code to keep just in case we need future reference
@@ -513,12 +513,19 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
 
         other[j]['model_efield'] = model_efield  # for reqt 1133640
 
-        log.info('Compute difference to use to predict next iteration')
+        log.debug('Compute difference to use to predict next iteration')
         dest = insertinto(efield - model_efield, cfg.sl_list[j].dh.e.shape)
         destlist.append(dest)
         pass
-    log.info('Number of bad e-field elements: %d out of %d',
-                 np.sum(bpmeas), bpmeas.size)
+
+    bad_efield_count = np.sum(bpmeas)
+    bad_efield_fraction = bad_efield_count / bpmeas.size
+    if bad_efield_count == 0:
+        log.info('Number of bad e-field elements: %d out of %d (%.2f%%)',
+                 bad_efield_count, bpmeas.size, 100 * bad_efield_fraction)
+    else:
+        log.warning('Number of bad e-field elements: %d out of %d (%.2f%%)',
+                    bad_efield_count, bpmeas.size, 100 * bad_efield_fraction)
 
     # 1133642 also requires mean mod/unmod across all filters
     other['mean_modul_dh_all'] = modulsum/npixmod
@@ -527,11 +534,11 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
     # 5. Compute control strategy parameters
     log.info('5. Compute control strategy parameters')
     beta = cstrat.get_regularization(iteration, prev_c)
-    log.info('beta = %g', beta)
+    log.debug('beta = %g', beta)
     wdm = get_wdm(cfg, dmlistmeas, tielist)
     we0 = get_we0(cfg, cstrat, subcroplist, iteration, prev_c)
     dmmultgain = cstrat.get_dmmultgain(iteration, prev_c)
-    log.info('dmmultgain = %g', dmmultgain)
+    log.debug('dmmultgain = %g', dmmultgain)
     jtwj = jtwj_map.retrieve_jtwj(cstrat, iteration, prev_c)
 
     debugging_dict['beta'] = beta
@@ -589,7 +596,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
     debugging_dict['cam_params_probing'] = np.zeros((nlam, 3))
                                
     for index, sequence in enumerate(hconf['hardware']['sequence_list']):
-        log.info('Sequence = %s', sequence)
+        log.debug('Sequence = %s', sequence)
         innerg = []
         innere = []
         innern = []
@@ -706,8 +713,10 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         pass
     else: # still succeeded with 2nd optimizer; failure raises exception
         stat = status_codes['LowerThanExpectedSNR']
+        log.warning('Returning status %s because camera optimization used fallback settings (optflag=%d)',
+                    status_codes['LowerThanExpectedSNR'], final_optflag)
         pass
-    log.info('Return data tuple')
+    log.debug('Return data tuple')
     return (abs_dm1,
             abs_dm2,
             scale_factor_list,

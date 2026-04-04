@@ -1,9 +1,9 @@
-# Plotting
+# HOWFSC Initialization
 
 ## Description
 
 ```{eval-rst}
-.. automodule:: corgihowfsc.utils.plotting
+.. automodule:: corgihowfsc.utils.howfsc_initialization
    :members:
    :show-inheritance:
    :member-order: bysource
