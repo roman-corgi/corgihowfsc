@@ -53,19 +53,63 @@ precomp : str, optional
 
 ## Precomputing a Jacobian
 
-To calculate a Jacobian outside of the loop, you can use the `script/make_jacobian.py` script.
-
+To calculate a Jacobian outside of the loop, use `corgihowfsc/scripts/make_jacobian.py`.
 :::{note}
-The Jacobian is always computed using the **compact model**.
+The Jacobian is computed using the compact HOWFSC model configured for the
+selected `corgihowfsc` mode and dark-hole setting.
 :::
 
-The resulting file has a size of 2.2 GB inside the `jacobians` folder under the `corgi_loop` base folder,
-located in your home directory.
+### Basic usage
 
-You will need to rename your Jacobian for the respective coronagraph mode you want to run a loop on. For the narrow FOV mode
-with the HLC, rename the Jacobian to `narrowfov_jac_full.fits`.
+```bash
+python corgihowfsc/scripts/make_jacobian.py \
+  --mode nfov_band1 \
+  --dark_hole 360deg \
+  --jacmethod fast \
+  --num_process 0 \
+  --num_threads 1
+```
 
-The `calculate_jacobian_multiprocessed()` function docstring contains more information about the input parameters.
+By default, output is written under:
+
+```text
+~/corgiloop_data/jacobians/
+```
+
+`--num_process 0` means "use half of the available CPU cores."
+
+### Overriding the DM operating point
+
+By default, `make_jacobian.py` uses the mode-specific DM start maps returned by
+`load_files(...)`. You can override that operating point with `--dm1_start` and
+`--dm2_start` if you want to linearize the Jacobian around a different DM state.
+
+This is useful, for example, when regenerating a Jacobian after a GITL run for
+a specific iteration using the DM commands from that iteration.
+
+```bash
+python corgihowfsc/scripts/make_jacobian.py \
+  --mode nfov_band1 \
+  --dark_hole 360deg \
+  --jacmethod fast \
+  --dm1_start /path/to/dm1.fits \
+  --dm2_start /path/to/dm2.fits
+```
+
+:::{important}
+`--dm1_start` and `--dm2_start` must be provided together, since they define
+the DM operating point used for Jacobian linearization.
+:::
+
+Each override may be either:
+- an absolute path, or
+- a filename relative to the selected model directory
+
+### Output files
+
+The generated FITS file contains the Jacobian matrix only. If you want the
+associated JTWJ map or n2clist, those are still handled separately by the loop
+precomputation logic.
 
 ## Implementation details
 
