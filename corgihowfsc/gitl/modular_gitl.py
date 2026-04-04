@@ -699,6 +699,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
                               hconf['overhead']['overframe'],
                               )
     log.info('Expected time to complete next iteration = %g', next_time)
+    debugging_dict['next_iter_dur'] = next_time
 
     # 10. End
     if final_optflag == 0: # first optimizer succeeded every time
