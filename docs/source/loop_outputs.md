@@ -10,6 +10,12 @@ These are:
 - `gitl.log`
     Log file containing runtime information, warnings and diagnostic messages generated during execution.
 
+- `image_worker_debug.csv`
+    Optional debug CSV written when debug mode is enabled.
+
+- `gitl_rank<rank>.log`
+    Optional MPI worker log files written when both debug mode and MPI are enabled.
+
 ## Per iteration outputs
 
 The per-iteration outputs are saved to a folder named `iteration_XXXX` where `XXXX` is the iteration number, starting at 1.
