@@ -116,7 +116,3 @@ its saved Jacobian files are correspondingly larger.
 The generated FITS file contains the Jacobian matrix only. If you want the
 associated JTWJ map or n2clist, those are still handled separately by the loop
 precomputation logic.
-
-## Implementation details
-
-A bunch of implementation caveats for the `corgihowfsc` repo (TBD).
