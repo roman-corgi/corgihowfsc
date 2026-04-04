@@ -47,37 +47,12 @@ def parse_args():
 
 
 def set_num_processes(num_process):
-    """Resolve the number of worker processes to use for the Jacobian calculation.
-
-    Each worker process handles a subset of actuators independently, so more
-    processes shortens wall-clock time at the cost of memory. The resolved
-    value follows this precedence (highest to lowest):
-
-      1. Explicit `num_process` argument
-      2. `HOWFS_CALCJAC_NUM_PROCESS` environment variable
-      3. Default of 1 (single-process, no parallelism)
-
-    Passing `num_process=0` is a special case that automatically uses half of the
-    machine's logical CPU count, which is a reasonable starting point for most
-    workstations without starving other processes.
-
-    Args:
-        num_process (int or None): Requested process count, or `None` to defer to
-            the environment variable / default.
-
-    Returns:
-        int: Resolved process count (always >= 1).
-    """
     if num_process is None:
-        # Fall back to environment variable, then hard default of 1
         num_process = int(os.environ.get('HOWFS_CALCJAC_NUM_PROCESS', 1))
 
     check.nonnegative_scalar_integer(num_process, 'num_process', TypeError)
-
-    # 0 is a sentinel meaning "use half the available CPUs automatically"
     if num_process == 0:
         num_process = multiprocessing.cpu_count() // 2
-
     return num_process
 
 
