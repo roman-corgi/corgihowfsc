@@ -57,45 +57,13 @@ def set_num_processes(num_process):
 
 
 def set_num_threads(num_process, num_threads):
-    """Resolve the number of MKL threads each worker process may use.
-
-    MKL (Math Kernel Library) is the linear algebra backend used internally by
-    NumPy/SciPy. By default MKL will try to use all available cores, which
-    causes severe over-subscription when multiple worker *processes* are also
-    running — each process would spawn its own full thread pool and the cores
-    would be fighting each other. Pinning threads to 1 per process avoids this.
-
-    The resolved value follows this precedence (highest to lowest):
-
-      1. Explicit ``num_threads`` argument
-      2. ``HOWFS_CALCJAC_NUM_THREADS`` environment variable
-      3. ``MKL_NUM_THREADS`` environment variable (already set externally)
-      4. If ``num_process > 1`` and nothing else is set, default to 1
-         to prevent over-subscription
-
-    Args:
-        num_process (int): Resolved process count from :func:`set_num_processes`.
-            Used only to decide whether to apply the over-subscription default.
-        num_threads (int or None): Requested thread count, or ``None`` to defer
-            to the environment variable / default.
-
-    Returns:
-        int or None: Resolved thread count, or ``None`` if the caller should
-        leave MKL's own defaults untouched.
-    """
     if num_threads is None:
-        # Check dedicated env var first, then fall through to over-subscription guard
         num_threads = os.environ.get('HOWFS_CALCJAC_NUM_THREADS')
-
-        if (num_threads is None
-                and os.environ.get('MKL_NUM_THREADS') is None
-                and num_process > 1):
-            # Multiple processes with unconstrained MKL threads would
-            # over-subscribe the CPU: default to 1 thread per process
+        if num_threads is None and os.environ.get('MKL_NUM_THREADS') is None \
+           and num_process > 1:
             num_threads = 1
 
     if num_threads is not None:
-        # Environment variables arrive as strings (e.g. '4'), so cast to int
         if isinstance(num_threads, str):
             num_threads = int(num_threads)
         check.positive_scalar_integer(num_threads, 'num_threads', TypeError)
