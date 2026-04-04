@@ -14,6 +14,8 @@ from corgihowfsc.mpi.mpi_worker import (
     run_mpi_jac_task,
 )
 
+from corgihowfsc.utils.output_management import setup_logging
+
 log = logging.getLogger(__name__)
 
 
