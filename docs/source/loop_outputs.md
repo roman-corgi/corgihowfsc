@@ -22,17 +22,20 @@ The per-iteration outputs are saved to a folder named `iteration_XXXX` where `XX
 
 The outputs within an iteration are:
 - `efield_estimations.fits`
-    Data cube of 2x3 frames containing the estimated electric field in the focal plane for each of the 3 wavelengths, real and imaginary. Sorting: R-W1, I-W1, R-W2, I-W2, R-W3, I-W3.
+    Data cube containing the estimated electric field in the focal plane for each wavelength channel, stored as real and imaginary. The total number of planes is `2 * nlam`.
+    Example: in NFOV band 1 with `nlam = 3`, the file contains 6 planes ordered as `R-W1, I-W1, R-W2, I-W2, R-W3, I-W3`.
 - `images.fits`
-    All focal-plane images taken during the iteration. 21 images total: the first image is unprobed in wavelength 1, followed by 3 probe pairs (6 images total); then repeated for wavelength 2 and 3.
+    All focal-plane images taken during the iteration. The total number of images is `nlam * ndm`, where `ndm = 1 + 2 * nprobepair` for one unprobed image plus positive/negative probe pairs at each wavelength.
+    Example: in NFOV band 1 with `nlam = 3` and `nprobepair = 3`, `ndm = 7` and the file contains `3 * 7 = 21` images.
 - `intensity_coherent.fits`
-    Cube of 3 frames, per wavelength, containing the coherent intensity in the focal plane.
+    Cube of `nlam` frames, one per wavelength, containing the coherent intensity in the focal plane.
 - `intensity_incoherent.fits`
-    Cube of 3 frames, per wavelength, containing the incoherent intensity in the focal plane.
+    Cube of `nlam` frames, one per wavelength, containing the incoherent intensity in the focal plane.
 - `intensity_total.fits`
-    Cube of 3 frames, per wavelength, containing the total intensity in the focal plane.
+    Cube of `nlam` frames, one per wavelength, containing the total intensity in the focal plane.
 - `perfect_efields.fits`
-    Data cube of 2x3 frames containing the perfect/model electric field in the focal plane for each of the 3 wavelengths, real and imaginary. Sorting: R-W1, I-W1, R-W2, I-W2, R-W3, I-W3.
+    Data cube containing the perfect/model electric field in the focal plane for each wavelength channel, stored as real and imaginary. When model e-fields are available for all wavelengths, the total number of planes is `2 * nlam`.
+    Example: in NFOV band 1 with `nlam = 3`, the file contains 6 planes ordered as `R-W1, I-W1, R-W2, I-W2, R-W3, I-W3`.
 - `svd_snorm.fits`
     Singular values squared, normalized by the maximum, ordered from largest to smallest.
 - `svd_iri.fits`
@@ -55,7 +58,7 @@ These are:
 - `efield_variance.pdf`
     Plot of electric field variance per wavelength vs iteration number.
 - `estimation_variance_per_pixel.fits`
-    Estimation variance per pixel across all iterations, per wavelength, as a fits cube of 3 frames.
+    Estimation variance per pixel across all iterations, per wavelength, stored as a fits cube with one frame per wavelength.
 - `measured_contrast.csv`
     Measured broadband contrast per iteration as a csv table.
 - `predicted_contrast.csv`
@@ -63,7 +66,8 @@ These are:
 - `debugging_history.csv`
     Per-wavelength debugging scalars appended each iteration. Only written if debugging data is available.
 - `final_frames.fits`
-    Final images taken after loop completion. 21 images total: the first image is unprobed in wavelength 1, followed by 3 probe pairs (6 images total); then repeated for wavelength 2 and 3.
+    Final images taken after loop completion. The total number of images is `nlam * ndm`, where `ndm = 1 + 2 * nprobepair`.
+    Example: in NFOV band 1 with `nlam = 3` and `nprobepair = 3`, this is 21 images.
 
 ## Example output directory structure
 
