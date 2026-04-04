@@ -121,58 +121,72 @@ def calculate_jacobian(cfg, dmset_list, jacmethod, num_process=None, num_threads
             f"Invalid jacmethod '{jacmethod}'. Valid options: {VALID_JACMETHODS}"
         )
 
-    cfg = CoronagraphMode(cfgfile)
+    ndmact = sum(d.registration['nact'] ** 2 for d in cfg.dmlist)
+    ijlist = range(ndmact)
 
-    # Derive the total actuator count by summing nact^2 across all DMs.
-    # nact is the number of actuators along one axis of a square DM grid,
-    # so the total per DM is nact^2, and we sum over all DMs in cfg.dmlist.
-    nact = int(np.cumsum(
-        [0] + [d.registration['nact'] ** 2 for d in cfg.dmlist]
-    )[-1])
-    ijlist = range(nact)  # one entry per actuator, iterated by calcjacs
-
-    # dm0list=None tells calcjacs to use the initial DM map built into the cfg
-    # rather than a custom starting state
-    dm0list = None
-
-    # Resolve parallelism settings from arguments / environment / defaults
     num_process = set_num_processes(num_process)
     num_threads = set_num_threads(num_process, num_threads)
 
-    # Pin MKL thread count if needed, saving any pre-existing value so we can
-    # restore it exactly after the calculation (important when this function is
-    # called from within a larger script that may have its own MKL settings)
     saved_mkl = None
     if num_threads is not None:
         saved_mkl = os.environ.get('MKL_NUM_THREADS')
         os.environ['MKL_NUM_THREADS'] = str(num_threads)
-        print(f'Set MKL_NUM_THREADS = {num_threads}')
+        logging.info('Set MKL_NUM_THREADS=%s', num_threads)
     elif 'MKL_NUM_THREADS' in os.environ:
-        # Already set externally. Leave it alone and just report it
-        print(f"MKL_NUM_THREADS = {os.environ['MKL_NUM_THREADS']} (from environment)")
+        logging.info('Using existing MKL_NUM_THREADS=%s',
+                     os.environ['MKL_NUM_THREADS'])
 
-    print(f'Beginning Jacobian calculation: {num_process} process(es), method={jacmethod}')
-    print(f'Total actuators: {nact}')
+    logging.info('Beginning Jacobian calculation')
+    logging.info('jacmethod=%s, num_process=%s, total_actuators=%s',
+                 jacmethod, num_process, ndmact)
     t0 = time.time()
 
     try:
-        jac = calcjacs(cfg, ijlist, dm0list, jacmethod=jacmethod,
+        jac = calcjacs(cfg, ijlist, dmset_list, jacmethod=jacmethod,
                        num_process=num_process)
     finally:
-        # Always restore MKL_NUM_THREADS even if calcjacs raises, so the
-        # calling environment is not left in an unexpected state
         if num_threads is not None:
-            if saved_mkl is not None:
-                os.environ['MKL_NUM_THREADS'] = saved_mkl
-            else:
+            if saved_mkl is None:
                 del os.environ['MKL_NUM_THREADS']
-            print('Restored MKL_NUM_THREADS to previous value')
+            else:
+                os.environ['MKL_NUM_THREADS'] = saved_mkl
 
-    print(f'Jacobian calculation complete: {time.time() - t0:.2f} seconds')
+    logging.info('Jacobian calculation complete in %.2f s', time.time() - t0)
+    return jac
 
-    if output is not None:
-        print(f'Writing Jacobian to: {output}')
-        fits.writeto(output, jac)
+
+def main():
+    logging.basicConfig(level=logging.INFO)
+    args = parse_args()
+
+    dmstartmap_filenames = None
+    if args.dm1_start or args.dm2_start:
+        if not (args.dm1_start and args.dm2_start):
+            raise ValueError('Both --dm1_start and --dm2_start must be provided together.')
+        dmstartmap_filenames = [args.dm1_start, args.dm2_start]
+
+    cfg, dmset_list = build_cfg_and_dmset(
+        mode=args.mode,
+        dark_hole=args.dark_hole,
+        dmstartmap_filenames=dmstartmap_filenames,
+    )
+
+    output = args.output or default_output_path(
+        args.base_path, args.mode, args.dark_hole
+    )
+    output_parent = Path(output).expanduser().resolve().parent
+    output_parent.mkdir(parents=True, exist_ok=True)
+
+    jac = calculate_jacobian(
+        cfg=cfg,
+        dmset_list=dmset_list,
+        jacmethod=args.jacmethod,
+        num_process=args.num_process,
+        num_threads=args.num_threads,
+    )
+    fits.writeto(output, jac, overwrite=True)
+    logging.info('Wrote Jacobian to %s', output)
+
 
 if __name__ == '__main__':
     main()
