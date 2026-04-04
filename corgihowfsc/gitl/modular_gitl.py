@@ -712,6 +712,8 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         stat = status_codes['nominal']
         pass
     else: # still succeeded with 2nd optimizer; failure raises exception
+        log.warning('Returning status %s because camera optimization used fallback settings (optflag=%d)',
+                    status_codes['LowerThanExpectedSNR'], final_optflag)
         stat = status_codes['LowerThanExpectedSNR']
         pass
     log.debug('Return data tuple')
