@@ -22,6 +22,7 @@ runtime:
   num_jac_process: 6 # default to 2
   num_imager_worker: null # default to null for no parallelization, otherwise set to an integer number of workers
   use_mpi: false # or null if mpi is false. Set to true to use MPI for parallelization.
+  debug: false # set true to enable debug logging and extra debug outputs. Not recommended for large runs due to increased runtime, storage usage, and log volume. If use_mpi is true, this also writes one log file per worker rank.
 
 sim_settings:
   loop_framework: "corgi-howfsc" # do not modify
@@ -109,6 +110,7 @@ Controls parallel execution.
 | `num_jac_process` | `6` | Number of local processes used for Jacobian computation when MPI is off |
 | `num_imager_worker` | `null` | Number of outer image workers; `null` disables explicit outer parallelism; an integer caps active MPI worker ranks |
 | `use_mpi` | `false` | Set `true` to enable MPI mode: rank 0 runs the main loop, all other ranks wait for work |
+| `debug` | `false` | Enable debug logging and extra debug outputs. Not recommended for large runs because it increases log volume and may write additional debug artifacts. If use_mpi is true, rank-specific worker log files are also written. |
 
 See [MPI and Multiprocessing](mpi_multiprocessing.md) for more detail.
 
@@ -216,7 +218,7 @@ Any `proper` keyword can be added here as long as the key matches the relevant `
 
 ## Common mistakes
 
-- Launching with `use_mpi: true` without `mpiexec`, `mpirun`, or `srun`
+- Launching with `use_mpi: true` without `mpiexec`, `mpirun`. 
 - Setting too many workers for the available CPUs
 - Mixing relative and absolute DM-map paths in `dmstartmap_filenames`
 - Setting `precomp: load_all` without providing the needed Jacobian files at `defjacpath`
