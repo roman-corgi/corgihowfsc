@@ -107,6 +107,12 @@ Each override may be either:
 
 ### Output files
 
+The output file size is model-dependent and is determined primarily by the
+number of dark-hole pixels included in the selected model.
+Compared with the current `corgihowfsc` `nfov_band1` setup, the legacy
+`cgi-howfsc` `narrowfov` model uses dark-hole masks with many more pixels, so
+its saved Jacobian files are correspondingly larger.
+
 The generated FITS file contains the Jacobian matrix only. If you want the
 associated JTWJ map or n2clist, those are still handled separately by the loop
 precomputation logic.
