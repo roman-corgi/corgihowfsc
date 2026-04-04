@@ -11,7 +11,6 @@ from astropy.io import fits
 import corgihowfsc
 from corgihowfsc.utils.howfsc_initialization import get_args, load_files
 from howfsc.control.calcjacs import calcjacs
-from howfsc.control.cs import ControlStrategy
 from howfsc.model.mode import CoronagraphMode
 import howfsc.util.check as check
 
