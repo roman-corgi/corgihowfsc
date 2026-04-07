@@ -11,6 +11,7 @@ Functions to build a relative DM probe and other propagation manipulation
 import numpy as np
 
 from howfsc.model.mode import CoronagraphMode
+from howfsc.util.constrain_dm import tie_with_matrix
 from howfsc.util.dmshapes import probe
 from howfsc.util.dmhtoph import dmhtoph
 from howfsc.util.insertinto import insertinto
@@ -137,7 +138,8 @@ def make_dmrel_probe_gaussian(cfg, dmlist, dact, xcenter, ycenter, sigma, target
                              sigma,
                              np.sqrt(scale)
                              )
-        dpv = cfg.dmlist[dind].dmvobj.dmh_to_volts(dp0, cfg.sl_list[ind].lam)
+        dp1 = tie_with_matrix(dp0, cfg.dmlist[dind].dmvobj.tiemap)
+        dpv = cfg.dmlist[dind].dmvobj.dmh_to_volts(dp1, cfg.sl_list[ind].lam)
 
         eplus = efield(cfg, [dmlist[0]+dpv, dmlist[1]], ind)
         eminus = efield(cfg, [dmlist[0]-dpv, dmlist[1]], ind)
@@ -161,8 +163,8 @@ def make_dmrel_probe_gaussian(cfg, dmlist, dact, xcenter, ycenter, sigma, target
                          sigma,
                          np.sqrt(scale)
                          )
-
-    dpv = cfg.dmlist[dind].dmvobj.dmh_to_volts(dp0, cfg.sl_list[ind].lam)
+    dp1 = tie_with_matrix(dp0, cfg.dmlist[dind].dmvobj.tiemap)
+    dpv = cfg.dmlist[dind].dmvobj.dmh_to_volts(dp1, cfg.sl_list[ind].lam)
 
     # create additional data products to help users
     epups = cfg.sl_list[ind].epup.e.shape
