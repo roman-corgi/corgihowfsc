@@ -18,7 +18,7 @@ Each DM entry (e.g. `DM1`, `DM2`) contains two subsections: `registration` and `
 
 | Parameter | Description |
 |-----------|-------------|
-| `dx`, `dy` | DM center offset from nominal, in meters |
+| `dx`, `dy` | DM center offset from nominal, in pixels |
 | `inffn` | Path to FITS file containing the actuator influence function |
 | `nact` | Number of actuators along one axis (e.g. 48 for a 48x48 DM) |
 | `ppact_cx`, `ppact_cy` | Pixels per actuator in x and y |
