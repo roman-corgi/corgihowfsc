@@ -47,7 +47,7 @@ howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
 
 
-def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps, metadata=None, output_every_iter=True, output_model_efield=True):
+def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps, metadata=None, output_every_iter=True, output_model_efield=True,parallel_approach=='robust'):
     """Run a nulling sequence, using the compact optical model as the data source.
 
     Parameters:
@@ -462,20 +462,24 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         prev_nframes_list = param_order_to_list(nframes_list)
 
         # new framelist
-        framelist = _collect_framelist(
-            imager, cfg, dm1_list, dm2_list,
-            exptime_list=prev_exptime_list,
-            gain_list=prev_gain_list,
-            nframes_list=prev_nframes_list,
-            croplist=croplist,
-            normalization_strategy=normalization_strategy,
-            get_cgi_eetc=get_cgi_eetc,
-            hconf=hconf,
-            ndm=ndm,
-            cstrat=cstrat,
-            fracbadpix=fracbadpix,
-            n_jobs=safe_cpu_count,
-        )
+        if parallel_approach == 'intuitive':
+          framelist =  imager.get_images(dm1_list, dm2_list, prev_exptime_list, prev_gain_list, croplist, cstrat, hconf,
+                                          normalization_strategy, get_cgi_eetc, ndm, cfg, fracbadpix)
+        elif parallel_approach == 'robust':
+          framelist = _collect_framelist(
+              imager, cfg, dm1_list, dm2_list,
+              exptime_list=prev_exptime_list,
+              gain_list=prev_gain_list,
+              nframes_list=prev_nframes_list,
+              croplist=croplist,
+              normalization_strategy=normalization_strategy,
+              get_cgi_eetc=get_cgi_eetc,
+              hconf=hconf,
+              ndm=ndm,
+              cstrat=cstrat,
+              fracbadpix=fracbadpix,
+              n_jobs=safe_cpu_count,
+          )
 
         # drop packets for testing if requested
         if nbadpacket > 0:
