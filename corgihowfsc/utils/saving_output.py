@@ -43,7 +43,7 @@ def compute_xticks(n, max_ticks=15, threshold=25, values=None):
         ticks = np.append(ticks, n)
     return ticks
 
-def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list, jac, debugging_dict=None):
+def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list, jac, iteration_durations=None, debugging_dict=None):
     """
     Save all outputs for a single HOWFSC iteration and update cumulative summary plots.
 
@@ -167,6 +167,26 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
         plt.legend(loc='best')
         plt.savefig(os.path.join(outpath, "contrast_vs_iteration.pdf"), bbox_inches='tight')
         plt.close()
+
+        # Plot measured_c vs cumulative iteration duration
+        if iteration_durations is not None and len(iteration_durations) > 0:
+            fig, ax_bottom = plt.subplots(layout="constrained")
+            cumulative_time = np.cumsum(iteration_durations) / 60  # convert seconds to minutes
+            cumulative_time_with_overhead = np.cumsum(iteration_durations) / 60 + np.arange(1,
+                                                                                            len(iteration_durations) + 1) * 60
+
+            ax_bottom.plot(cumulative_time, measured_c, color='cornflowerblue', marker='o', label='measured')
+            ax_bottom.set_xlabel('Spacecraft Time [minutes]')
+            ax_bottom.set_ylabel('Measured Contrast')
+            ax_bottom.semilogy()
+            ax_bottom.legend(loc='best')
+
+            ax_top = ax_bottom.twiny()
+            ax_top.set_xlim(cumulative_time_with_overhead[0], cumulative_time_with_overhead[-1])
+            ax_top.set_xlabel('GITL Time (w/comms overhead) [minutes]')
+
+            plt.savefig(os.path.join(outpath, "contrast_vs_time.pdf"), bbox_inches='tight')
+            plt.close()
 
         # NI plot
         plt.figure(layout="constrained")
@@ -509,7 +529,7 @@ def save_debugging_iteration(debugging_dict, iteration, outpath,
 
     fieldnames = [
         'iteration', 'lam_index', 'beta',
-        'peakflux', 'next_c',
+        'peakflux', 'next_c', 'this_iter_dur', 'this_iter_dur_gitl',
         'cam_nom_gain',    'cam_nom_exptime',    'cam_nom_nframes',
         'cam_probe_gain',  'cam_probe_exptime',  'cam_probe_nframes',
         'pred_mean_contrast',         'pred_bright_contrast',
@@ -530,6 +550,8 @@ def save_debugging_iteration(debugging_dict, iteration, outpath,
                 'beta': debugging_dict['beta'],
                 'peakflux':  debugging_dict['peakflux'][j, 0],
                 'next_c':    debugging_dict['next_c'],
+                'this_iter_dur': debugging_dict['this_iter_time'],
+                'this_iter_dur_gitl': debugging_dict['this_iter_time'] + 60*60,
                 'cam_nom_gain':      debugging_dict['cam_params']['nom'][j, 0],
                 'cam_nom_exptime':   debugging_dict['cam_params']['nom'][j, 1],
                 'cam_nom_nframes':   debugging_dict['cam_params']['nom'][j, 2],
