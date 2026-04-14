@@ -18,15 +18,15 @@ Using the theoretical model, we obtain the phase of the probe's electric field b
 To obtain the field amplitude, we do not use the model but an empirical measurement: we show that 
 $$|\Delta p| \approx \sqrt{\frac{I_{+} + I_{-}}{2} - I_0}$$
 
-To estimate the stellar speckles, we take the difference of the paired images to isolate the interference cross-terms. This fundamental step removes the static unmodulated terms, including the incoherent planetary signal:
+To estimate the stellar speckles, we take for the probe number $n$ the difference of the paired images to isolate the interference cross-terms. This fundamental step removes the static unmodulated terms, including the incoherent planetary signal:
 $$\delta_n = \frac{I_{+,n} - I_{-,n}}{2} \approx -2\Re(C[E_0])\Im(\Delta p_n) + 2\Im(C[E_0])\Re(\Delta p_n)$$
 
-By applying multiple independent probes (in the code it's 3 pairs to increase measurement robustness so 6 probes), we can construct an invertible linear system for every pixel:
+By applying multiple independent probes (in the code it's 3 pairs $\Delta p_1$, $\Delta p_2$ and $\Delta p_3$ to increase measurement robustness so 6 probes), we can construct an invertible linear system for every pixel:
 $$
 \begin{bmatrix}
 -2\Im(\Delta p_1) & 2\Re(\Delta p_1) \\
 -2\Im(\Delta p_2) & 2\Re(\Delta p_2) \\
-\vdots & \vdots
+-2\Im(\Delta p_3) & 2\Re(\Delta p_3)
 \end{bmatrix}
 \begin{bmatrix}
 \Re(C[E_0]) \\
@@ -36,6 +36,14 @@ $$
 \begin{bmatrix}
 \delta_1 \\
 \delta_2 \\
-\vdots
+\delta_3
 \end{bmatrix}
 $$
+### 
+
+
+### References
+* CADY, Eric, BOWMAN, Nicholas, GREENBAUM, Alexandra Z., et al. High-order wavefront sensing and control for the Roman Coronagraph Instrument (CGI): architecture and measured performance. Journal of Astronomical Telescopes, Instruments, and Systems, 2025, vol. 11, no 2, p. 021408-021408.
+
+
+* KRIST, John E., STEEVES, John B., DUBE, Brandon D., et al. End-to-end numerical modeling of the Roman Space Telescope coronagraph. Journal of Astronomical Telescopes, Instruments, and Systems, 2023, vol. 9, no 4, p. 045002-045002.
