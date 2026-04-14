@@ -91,7 +91,7 @@ sim_settings:
   dark_hole: "360deg"  # options: see models
   probe_shape: "gaussian"
  ```
-Please note: if you want to control the amplitude of your probe, you should be aware that the code automatically applies a multiplier factor 'scale_factor_list' depending, in particular, on the current contrast level.
+Please note: if you want to control the amplitude of your probe, you should be aware that the code automatically applies a multiplier factor `scale_factor_list` depending, in particular, on the current contrast level.
 ### References
 * CADY, Eric, BOWMAN, Nicholas, GREENBAUM, Alexandra Z., et al. High-order wavefront sensing and control for the Roman Coronagraph Instrument (CGI): architecture and measured performance. Journal of Astronomical Telescopes, Instruments, and Systems, 2025, vol. 11, no 2, p. 021408-021408.
 
