@@ -47,7 +47,24 @@ With corgihowfsc, you can select from several types of probes as soon as you sta
 This file defines the `Probes` class. It establishes the basic methods required for the simulation:
 * `get_dm_probes()`: Returns the voltage {$V_{+}, V_{-}$} corresponding to the requested probe {$I_{+}, I_{-}$} 
 * `get_probe_ap()`: Computes the analytical complex electric field ($\Delta p$) of the probe in the focal plane. To see the images, go find the result of your simulation to `corgiloop_data/corgi-howfsc_gitl`. For each iterations, you will find `images.fits` which contains, for each subband, one image without a probe and six with a probe.
-
+```
+├── config.yml
+├── ...
+├── iteration_0001
+│   ├── dm1_command.fits
+│   ├── dm2_command.fits
+│   ├── efield_estimations.fits
+│   ├── images.fits
+│   ├── intensity_coherent.fits
+│   ├── intensity_incoherent.fits
+│   ├── intensity_total.fits
+│   └── perfect_efields.fits
+├── iteration_0002
+│   └── ...
+├── ...
+└── iteration_XXXX
+    └── ...
+```
 #### `GettingProbes.py`
 This file defines the `ProbesShapes` class. It's a class that inherits from `Probes`. 
 It's responsible for reading the pre-computed probe shapes. These are stored as `.fits` files in `corgihowfsc/model/probes"`.
