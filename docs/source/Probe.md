@@ -1,7 +1,7 @@
 # Probe
-## Focal Plane Wavefront Sensing: Pairwise Probing (PWP)
+## Focal plane wavefront sensing: pairwise probing (PWP)
 
-### Theoretical Framework
+### Theoretical framework
 
 In the code, the focal plane wavefront sensing uses Pairwise Probing (PWP) to estimate the complex electric field of the coherent starlight speckles. By applying known phase perturbations ( = probes) to the DM, we modulate the coherent stellar flux to extract the speckles electric field.
 
@@ -39,8 +39,27 @@ $$
 \delta_3
 \end{bmatrix}
 $$
-### 
+## Software implementation 
+With corgihowfsc, you can select from several types of probes as soon as you start your simulation. 
+### Core sensing interface (`corgihowfsc/sensing/`)
 
+#### `Probes.py`
+This file defines the probe class. It establishes the basic methods required for the simulation:
+* `get_dm_probes()`: Returns the voltage {$V_{+}, V_{-}$} corresponding to the requested probe {$I_{+}, I_{-}$} 
+* `get_probe_ap()`: Computes the analytical complex electric field ($\Delta p$) of the probe in the focal plane. To see the images, go find the result of your simulation to `...corgiloop_data/corgi-howfsc_gitl`. For each iterations, you will find `images.fits` which contains, for each subband, one image without a probe and six with a probe.
+
+#### `GettingProbes.py`
+This file is responsible for reading the pre-computed probe shapes. These are stored as `.fits` files in `.../corgihowfsc/corgihowfsc/model/probes"`.
+
+### Generation scripts (`corgihowfsc/scripts/`)
+
+The complex spatial geometries of the probes are synthesized offline before running a loop. These scripts generate the 2D voltage maps that will be loaded by `GettingProbes.py`.
+
+#### `write_sinc_probes.py`
+Generates the classical "Sinc-Sinc-Sine" probing maps. It computes the specific spatial frequencies required to bound the probe's energy strictly within a predefined rectangular Dark Hole.
+
+#### `write_gaussian_probes.py`
+An alternative generator that produces Gaussian probes on the DM. They should be the preferred choice of alternative probes for the actual instrument
 
 ### References
 * CADY, Eric, BOWMAN, Nicholas, GREENBAUM, Alexandra Z., et al. High-order wavefront sensing and control for the Roman Coronagraph Instrument (CGI): architecture and measured performance. Journal of Astronomical Telescopes, Instruments, and Systems, 2025, vol. 11, no 2, p. 021408-021408.
