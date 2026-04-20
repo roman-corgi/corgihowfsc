@@ -10,7 +10,7 @@ With corgihowfsc, you can select from several types of probes as soon as you sta
 #### `Probes.py`
 This file defines the `Probes` class. It establishes the basic methods required for the simulation:
 * `get_dm_probes()`: Returns the voltage {$V_{+}, V_{-}$} corresponding to the requested probe {$I_{+}, I_{-}$} 
-* `get_probe_ap()`: Computes the analytical complex electric field ($\Delta p$) of the probe in the focal plane. To see the images, go find the result of your simulation to `corgiloop_data/corgi-howfsc_gitl`. For each iterations, you will find `images.fits` which contains, for each subband, one image without a probe and six with a probe.
+* `get_probe_ap()`: Computes the analytical complex electric field of the probe in the focal plane. To see the images, go find the result of your simulation to `corgiloop_data/corgi-howfsc_gitl`. For each iterations, you will find `images.fits` which contains, for each subband, one image without a probe and six with a probe.
 ```
 ├── config.yml
 ├── ...
