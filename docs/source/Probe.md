@@ -18,7 +18,7 @@ This file defines the `Probes` class. It establishes the basic methods required 
 │   ├── dm1_command.fits
 │   ├── dm2_command.fits
 │   ├── efield_estimations.fits
-│   ├── images.fits
+│   ├── images.fits <--| Contain probed images
 │   ├── intensity_coherent.fits
 │   ├── intensity_incoherent.fits
 │   ├── intensity_total.fits
