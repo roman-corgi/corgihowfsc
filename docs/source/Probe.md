@@ -1,8 +1,6 @@
 # Probe
 ## Focal plane wavefront sensing: pairwise probing (PWP)
 
-### Theoretical framework
-
 In the code, the focal plane wavefront sensing uses Pairwise Probing (PWP) to estimate the complex electric field of the coherent starlight speckles. By applying known phase perturbations ( = probes) to the DM, we modulate the coherent stellar flux to extract the speckles electric field.
 
 ## Software implementation 
