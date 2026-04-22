@@ -8,10 +8,10 @@ overhead:
 
 # Stellar properties for HOWFSC target
 star:
-  stellar_vmag: 2.25
-  stellar_type: G0V
-  stellar_vmag_target: 5.0
-  stellar_type_target: F5V  # G0V
+  stellar_vmag: 1.69
+  stellar_type: A1V
+  stellar_vmag_target: 1.69
+  stellar_type_target: A1V  # G0V
 
 # EXCAM detector parameters and manual camera setting constraints
 excam:
