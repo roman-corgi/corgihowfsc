@@ -43,7 +43,7 @@ def compute_xticks(n, max_ticks=15, threshold=25, values=None):
         ticks = np.append(ticks, n)
     return ticks
 
-def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list, jac, iteration_durations=None, debugging_dict=None, normalizer = None):
+def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list, jac, iteration_durations=None, debugging_dict=None, normalizer = None, true_exptime_list=None):
     """
     Save all outputs for a single HOWFSC iteration and update cumulative summary plots.
 
@@ -256,6 +256,7 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
         stack_coh.append(coh_int)
         stack_incoh.append(incoh_int)
 
+    actual_exptime = true_exptime_list if true_exptime_list is not None else param_order_to_list(camlist[i][1])
     hdr = pyfits.Header()
     hdr['NLAM'] = len(cfg.sl_list)
     hdr['ITER'] = i + 1
@@ -263,7 +264,7 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
     # Saving data of images
     prim = pyfits.PrimaryHDU(header=hdr)
     img_raw = pyfits.ImageHDU(flist, name='RAW_IMAGES')
-    prev = pyfits.ImageHDU(param_order_to_list(camlist[i][1]), name='CAM_PARAMS')
+    prev = pyfits.ImageHDU(actual_exptime, name='CAM_PARAMS')
 
     hdul_main = pyfits.HDUList([prim, img_raw, prev])
     hdul_main.writeto(os.path.join(iterpath, "images.fits"), overwrite=True)
@@ -273,7 +274,7 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
     save_normalized_images_cube(
         iterpath=iterpath,
         flist=flist,
-        cam_params=camlist[i],
+        true_exptime_list=actual_exptime,
         debugging_dict=debugging_dict,
         nlam=len(cfg.sl_list),
         hdr=hdr,
@@ -369,7 +370,7 @@ def refactor_efields(cfg, oitem, perfect_efield_list=None):
     return efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array
 
 
-def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list, jac, normalizer = None):
+def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list, jac, normalizer=None, debug_list=None, true_exptime_history=None):
 
     outpath = os.path.dirname(fileout)
 
@@ -378,10 +379,18 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     all_perfect_efields_complex = []  # Will collect perfect complex e-fields per iteration
 
     # Create one subdirectory per iteration
-    iters = [len(framelistlist)-1] if output_every_iter else range(len(framelistlist))
+    iters = [len(framelistlist) - 1] if output_every_iter else range(len(framelistlist))
     for i in iters:
-        efields_complex_array, perfect_efields_complex_array = save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list[i], jac, normalizer = normalizer)
-        # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
+        current_debug = debug_list[i] if debug_list is not None else None
+        current_exptime = true_exptime_history[i] if true_exptime_history is not None else None
+
+        efields_complex_array, perfect_efields_complex_array = save_outputs_iter(
+            i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list,
+            output_every_iter, pred_c, ni_lists, perfect_efield_list[i], jac,
+            debugging_dict=current_debug,
+            normalizer=normalizer,
+            true_exptime_list=current_exptime
+        )
         efields_complex_array = np.stack(efields_complex_array, axis=0)
         all_efields_complex.append(efields_complex_array)
 
@@ -585,7 +594,7 @@ def save_debugging_iteration(debugging_dict, iteration, outpath,
             })
 
 
-def save_normalized_images_cube(iterpath, flist, cam_params, debugging_dict, nlam, hdr, cam_params_hdu, normalizer):
+def save_normalized_images_cube(iterpath, flist, true_exptime_list, debugging_dict, nlam, hdr, cam_params_hdu, normalizer):
     """
     Converts a raw detector data cube into a Normalized Intensity (NI) FITS cube.
 
@@ -619,45 +628,39 @@ def save_normalized_images_cube(iterpath, flist, cam_params, debugging_dict, nla
     -------
     None
     """
-    if normalizer is None:
-        log.warning("No normalizer provided. Bypassing images_contrast.fits generation.")
-        return
-
-    if debugging_dict is None or 'peakflux' not in debugging_dict:
-        log.error("Missing 'peakflux' in debugging_dict. Cannot normalize cube.")
-        return
-
-    # Extract the full array of exposure times for the sequence (the conversion will depend of the exposure time)
-    try:
-        exptime_list = param_order_to_list(cam_params[1])
-    except Exception as e:
-        log.error(f"Failed to extract exposure times from cam_params: {e}")
+    if normalizer is None or debugging_dict is None:
+        log.warning("Missing normalization tools. Bypassing images_contrast.fits generation.")
         return
 
     nframes = len(flist)
     nframes_per_lam = nframes // nlam
     normalized_flist = []
 
+    img_ctr = pyfits.ImageHDU(name='NORMALIZED_IMAGES')
+
     for idx, raw_im in enumerate(flist):
         lam_idx = idx // nframes_per_lam
 
         try:
             peakflux = float(debugging_dict['peakflux'][lam_idx, 0])
-            # Isolate the exposure time for this specific frame
-            exptime = float(exptime_list[idx])
+            exptime = float(true_exptime_list[idx])
         except IndexError:
-            log.error(f"Telemetry index {idx} out of bounds. Cannot normalize frame.")
+            log.error(f"Index {idx} out of bounds. Cannot normalize frame.")
             return
 
         # Normalise to contrast units the images
         norm_im = normalizer.normalize(raw_im, peakflux, exptime)
         normalized_flist.append(norm_im)
 
+        img_ctr.header[f'EXP{idx:03d}'] = (exptime, f'Exptime (s) frame {idx}')
+        img_ctr.header[f'PFL{idx:03d}'] = (peakflux, f'Peakflux frame {idx}')
+        img_ctr.header[f'LAM{idx:03d}'] = (lam_idx, f'Lambda idx frame {idx}')
+
     # Saving the data in the iteration folder
+    img_ctr.data = np.array(normalized_flist)
     prim = pyfits.PrimaryHDU(header=hdr)
-    img_ni = pyfits.ImageHDU(normalized_flist, name='NORMALIZED_IMAGES')
-    hdul_ni = pyfits.HDUList([prim, img_ni, cam_params_hdu])
+    hdul_ctr = pyfits.HDUList([prim, img_ctr, cam_params_hdu])
 
     out_file = os.path.join(iterpath, "images_contrast.fits")
-    hdul_ni.writeto(out_file, overwrite=True)
+    hdul_ctr.writeto(out_file, overwrite=True)
     log.info(f"Normalized contrast cube saved to {out_file}")
