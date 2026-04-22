@@ -359,7 +359,6 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         scalelistout.append(scale_factor_list)
         camlist.append([gain_list, exptime_list, nframes_list])
         true_exptime_history.append(copy.deepcopy(prev_exptime_list))
-        debugging_history_list.append(copy.deepcopy(debugging_dict))
 
         # New lists compared to original version
         measured_c.append(prev_c)
@@ -381,6 +380,8 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
                 prev_exptime_list[probe_idx],
                 prev_nframes_list[probe_idx],
             ]
+        debugging_dict['this_iter_time'] = iteration_durations[iteration - 1]
+        debugging_history_list.append(copy.deepcopy(debugging_dict))
 
         log.info('-----------------------------------')
         log.info('Summary of iteration ' + str(iteration))
@@ -418,7 +419,6 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             ni_lists['ni_inner'].append(ni_inner)
             ni_lists['ni_outer'].append(ni_outer)
 
-            debugging_dict['this_iter_time'] = iteration_durations[iteration-1]
             _, _ = save_outputs_iter(
                 iteration - 1, fileout, cfg, camlist, framelistlist, otherlist, measured_c,
                 abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists,
