@@ -414,7 +414,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             ni_lists['ni_outer'].append(ni_outer)
 
             debugging_dict['this_iter_time'] = iteration_durations[iteration-1]
-            _, _ = save_outputs_iter(iteration-1, fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, perfect_efield_list[iteration-1], jac, iteration_durations=iteration_durations, debugging_dict=debugging_dict)
+            _, _ = save_outputs_iter(iteration-1, fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, perfect_efield_list[iteration-1], jac, iteration_durations=iteration_durations, debugging_dict=debugging_dict, normalizer=normalization_strategy)
 
             # Append iteration duration for next iteration
             iteration_durations.append(debugging_dict['next_iter_dur'])
@@ -586,7 +586,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         ni_lists['ni_inner'].append(ni_inner)
         ni_lists['ni_outer'].append(ni_outer)
 
-        save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, perfect_efield_list, jac)
+        save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, perfect_efield_list, jac, normalizer=normalization_strategy)
 
 
 if __name__ == "__main__":
