@@ -28,7 +28,7 @@ sim_settings:
   probe_shape: "default" 
 
 paths:
-  base_path: "~" # default to home directory, but user can change to a different path
+  base_path: "/Users/ilaginja/data_repos/" # default to home directory, but user can change to a differennt path
   base_corgiloop_path: "corgiloop_data" # this is the proposed default but can be changed
   defjacpath: "temp" # this is the proposed default but can be changed, should be somewhere outside the repo if used
   final_filename: "final_frames.fits" # this is the proposed default but can be changed
@@ -69,8 +69,8 @@ models:
     estimator: "default" # options are "perfect" and "default"; perfect estimator uses the model e-field for estimation, while default estimator uses the standard pairwise probing method  
     starting_contrast: 3.5e-8 # starting contrast value for dmstartmap_filenames; if changing starting DM maps update this value
     dmstartmap_filenames:
-      - "gitl_start_compact_dm1.fits"  # can provide full path including filename or just a filename if the file is located in the modelpath
-      - "gitl_start_compact_dm2.fits"  # can provide full path including filename or just a filename if the file is located in the modelpath
+      - "/Users/ilaginja/data_repos/cgi_installations/cgi_extracted/roman_preflight_proper_public_v2.0.2_python/roman_preflight_proper/examples/hlc_ni_3e-8_dm1_v.fits"  # can provide full path including filename or just a filename if the file is located in the modelpath
+      - "/Users/ilaginja/data_repos/cgi_installations/cgi_extracted/roman_preflight_proper_public_v2.0.2_python/roman_preflight_proper/examples/hlc_ni_3e-8_dm2_v.fits"  # can provide full path including filename or just a filename if the file is located in the modelpath
     lrow: 0 # Do not modify
     lcol: 0 # Do not modify
     corgi_overrides: 
