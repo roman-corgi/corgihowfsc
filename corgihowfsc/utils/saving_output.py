@@ -600,12 +600,10 @@ def save_debugging_iteration(debugging_dict, iteration, outpath,
 
 def save_normalized_images_cube(iterpath, flist, true_exptime_list, debugging_dict, nlam, hdr, cam_params_hdu, normalizer):
     """
-    Converts a raw detector data cube into a Normalized Intensity (NI) FITS cube.
+    Converts the images.fits cube in contrast unit.
 
-    Iterates through each frame of the raw sequence (flist), extracts the specific
-    exposure time strictly associated with that frame, and applies the pipeline's
-    official normalization object. This guarantees radiometric consistency with
-    the Jacobian inversion process.
+    Iterates through each frame of the raw sequence (flist) which contains images probed and unprobed, extracts the specific
+    exposure time strictly associated with that frame, and applies the normalization.
 
     Parameters
     ----------
@@ -615,10 +613,10 @@ def save_normalized_images_cube(iterpath, flist, true_exptime_list, debugging_di
         List of 2D raw detector images. Total size must be nlam * nframes_per_lam.
     true_exptime_list : list or 1D array, optional
         List of exact exposure times corresponding to each frame in `flist` for the
-        current iteration. Used for the normalization of probed images in contrast unit, bypassing
+        current iteration. Used for the normalization of images in contrast unit, bypassing
         the offset `camlist`. Defaults to None.
     debugging_dict : dict
-        Dictionary from the main loop containing 'peakflux' per wavelength.
+        Dictionary from the main loop containing 'peakflux' per wavelength (necessary for the conversion).
     nlam : int
         Number of spectral channels.
     hdr : astropy.io.fits.Header
@@ -626,7 +624,7 @@ def save_normalized_images_cube(iterpath, flist, true_exptime_list, debugging_di
     cam_params_hdu : astropy.io.fits.ImageHDU
         Camera parameters HDU to append for scientific traceability.
     normalizer : object
-        The instantiated normalization object (e.g., CorgiNormalization) handling
+        The instantiated normalization object handling
         the specific noise regime logic and scaling factors.
 
     Returns
