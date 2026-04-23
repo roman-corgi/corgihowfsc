@@ -121,7 +121,7 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
         Propagated to `save_normalized_images_cube`. Defaults to None.
     true_exptime_list : list or 1D array, optional
         List of exact exposure times corresponding to each frame in `flist` for the
-        current iteration. Used for the normalization of probed images in contrast unit, bypassing
+        current iteration. Used for the normalization of images in contrast unit, bypassing
         the offset `camlist`. Defaults to None.
     Returns
     -------
