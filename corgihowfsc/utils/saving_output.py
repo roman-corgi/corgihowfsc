@@ -119,6 +119,10 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
         The instantiated normalization engine (e.g., CorgiNormalization) used
         to accurately convert raw detector frames into Normalized Intensity (NI).
         Propagated to `save_normalized_images_cube`. Defaults to None.
+    true_exptime_list : list or 1D array, optional
+        List of exact exposure times corresponding to each frame in `flist` for the
+        current iteration. Used for the normalization of probed images in contrast unit, bypassing
+        the offset `camlist`. Defaults to None.
     Returns
     -------
     efields_complex_array : ndarray
@@ -609,9 +613,10 @@ def save_normalized_images_cube(iterpath, flist, true_exptime_list, debugging_di
         Absolute path to the current iteration output directory.
     flist : list of np.ndarray
         List of 2D raw detector images. Total size must be nlam * nframes_per_lam.
-    cam_params : list or tuple
-        Camera parameters for the current iteration. Expected to contain the
-        exposure time parameters at index 1.
+    true_exptime_list : list or 1D array, optional
+        List of exact exposure times corresponding to each frame in `flist` for the
+        current iteration. Used for the normalization of probed images in contrast unit, bypassing
+        the offset `camlist`. Defaults to None.
     debugging_dict : dict
         Dictionary from the main loop containing 'peakflux' per wavelength.
     nlam : int
