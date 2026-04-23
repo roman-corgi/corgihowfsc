@@ -116,8 +116,8 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
         are appended to ``debugging_history.csv`` via
         ``save_debugging_iteration``. Defaults to None.
     normalizer : object or None, optional
-        The instantiated normalization engine (e.g., CorgiNormalization) used
-        to accurately convert raw detector frames into Normalized Intensity (NI).
+        The instantiated normalization process used
+        to accurately convert raw detector frames into contrast unit.
         Propagated to `save_normalized_images_cube`. Defaults to None.
     true_exptime_list : list or 1D array, optional
         List of exact exposure times corresponding to each frame in `flist` for the
