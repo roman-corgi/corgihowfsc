@@ -381,7 +381,7 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     # Create one subdirectory per iteration
     iters = [len(framelistlist) - 1] if output_every_iter else range(len(framelistlist))
     for i in iters:
-        current_debug = debug_list[i] if debug_list is not None else None
+        current_debug = debug_list[i] if not output_every_iter and debug_list is not None else None
         current_exptime = true_exptime_history[i] if true_exptime_history is not None else None
 
         efields_complex_array, perfect_efields_complex_array = save_outputs_iter(
