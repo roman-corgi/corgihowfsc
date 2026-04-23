@@ -659,7 +659,7 @@ def save_normalized_images_cube(iterpath, flist, true_exptime_list, debugging_di
 
         img_ctr.header[f'EXP{idx:03d}'] = (exptime, f'Exptime (s) frame {idx}')
         img_ctr.header[f'PFL{idx:03d}'] = (peakflux, f'Peakflux frame {idx}')
-        img_ctr.header[f'LAM{idx:03d}'] = (lam_idx, f'Lambda idx frame {idx}')
+        img_ctr.header[f'LAM{idx:03d}'] = (lam_idx, f'Lambda index frame {idx}')
 
     # Saving the data in the iteration folder
     img_ctr.data = np.array(normalized_flist)
