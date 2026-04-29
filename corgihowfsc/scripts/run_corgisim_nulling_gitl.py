@@ -116,12 +116,13 @@ def main(param_file_name='default_param.yml', fullpath=False):
         tag=folder_tag
     )
 
-    # Validate CPU allocation
-    num_jac_process, num_imager_worker, num_proper_process = get_cpu_allocation(
-        num_jac_process,
-        num_imager_worker,
-        num_proper_process
-    )
+    # Validate local CPU allocation. MPI allocation is checked after initializing MPI.
+    if not use_mpi:
+        num_jac_process, num_imager_worker, num_proper_process = get_cpu_allocation(
+            num_jac_process,
+            num_imager_worker,
+            num_proper_process,
+        )
 
     # Set up arguments for the howfsc initialization 
     args = get_args(
@@ -155,8 +156,15 @@ def main(param_file_name='default_param.yml', fullpath=False):
     mpi_comm = None
 
     if use_mpi:
-        from corgihowfsc.mpi.mpi_runtime import initialize_mpi_comm
+        from corgihowfsc.mpi.mpi_runtime import initialize_mpi_comm, validate_mpi_allocation
         mpi_comm = initialize_mpi_comm()
+
+        # checking the MPI allocation here.
+        validate_mpi_allocation(
+            mpi_comm,
+            num_imager_worker=num_imager_worker,
+            num_proper_process=num_proper_process,
+        )
     
     # Add mpi_comm to args for use in howfsc initialization and later passing to workers
     args.mpi_comm = mpi_comm
