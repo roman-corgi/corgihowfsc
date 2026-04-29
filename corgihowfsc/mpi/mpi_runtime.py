@@ -91,7 +91,7 @@ def validate_mpi_allocation(comm, num_imager_worker=None, num_proper_process=Non
             raise ValueError(f"{name} must be a positive integer or None, got {val!r}")
 
     available_workers = comm.Get_size() - 1
-    requested_workers = num_imager_worker 
+    requested_workers = num_imager_worker
     proper_processes = num_proper_process 
 
     if requested_workers > available_workers:
@@ -109,15 +109,12 @@ def validate_mpi_allocation(comm, num_imager_worker=None, num_proper_process=Non
 
     if hasattr(os, 'sched_getaffinity'):
         allocated_cpus = len(os.sched_getaffinity(0))
-        active_workers = min(requested_workers, available_workers)
-        peak_worker_processes = active_workers * proper_processes
 
-        if peak_worker_processes > allocated_cpus:
+        if proper_processes > allocated_cpus:
             warnings.warn(
                 f"MPI worker load may oversubscribe this CPU affinity set "
-                f"({active_workers} active workers x {proper_processes} "
-                f"PROPER processes = {peak_worker_processes}; available CPUs "
-                f"reported for this rank: {allocated_cpus})."
+                f"({proper_processes} PROPER processes per worker rank; "
+                f"available CPUs reported for this rank: {allocated_cpus})."
             )
 
 
