@@ -28,7 +28,7 @@ The values below are examples. Choose `num_imager_worker`, `num_proper_process`,
 runtime:
   use_mpi: false
   num_imager_worker: 3  # null: serial image generation; set > 1 for local image workers
-  num_proper_process: 5    # PROPER/CorgiSim processes inside each image worker
+  num_proper_process: 5    # PROPER processes inside each image worker
   num_jac_process: 6       # local Jacobian processes
 ```
 
@@ -53,7 +53,7 @@ MPI documentation often calls these processes "ranks". This page uses "manager p
 runtime:
   use_mpi: true
   num_imager_worker: 21    # MPI worker processes
-  num_proper_process: 5    # PROPER/CorgiSim processes per worker process
+  num_proper_process: 5    # PROPER processes per worker process
   num_jac_process: 6       # ignored in MPI mode
 ```
 
@@ -221,7 +221,7 @@ This means:
 5 CPUs available to each MPI process
 ```
 
-Each worker process may spawn up to `num_proper_process` PROPER/CorgiSim subprocesses.
+Each worker process may spawn up to `num_proper_process` PROPER subprocesses.
 
 ---
 
