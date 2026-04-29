@@ -1,25 +1,22 @@
 active_model: "cgi-howfsc" # choose from "cgi-howfsc" or "corgihowfsc". This will determine which imager model is used and which settings are applied to the imager initialization.
 
 runtime:
-  # Number of PROPER/corgisim processe used inside each imager worker.
-  # For MPI runs, this should usually match --cpus-per-task in the job submission script. 
-  num_proper_process: 5 # typical value for HLC band 1 runs, but can be changed as needed.
+  # PROPER processes inside each image worker.
+  # MPI: match this to --cpus-per-task.
+  num_proper_process: 5 
 
-  # Local mode only: number of processes for Jacobian computation when use_mpi is false. 
-  # MPI mode: ignored; Jacobian computation uses the active MPI workers capped by num_imager_worker.
+  # Local only: Jacobian worker processes. Ignored in MPI mode.
   num_jac_process: 6 
 
-  # Local mode: local imager worker processes; null means serial.  
-  # Set to an integer > 1 to parallelize image generation on a single machine.
-  # MPI mode: active MPI workers; should be equal to n_tasks - 1 in the MPI allocation (one master process, rest are workers).
-  # Useful image-generation max: n_wvl * (2 * n_probe_pairs + 1).
+  # Local: image worker processes; null means serial image generation.
+  # MPI: active worker ranks; usually total MPI ranks minus 1 manager.
   num_imager_worker: null
 
-  # false = local serial or multiprocessing execution (depending on num_imager_worker and num_jac_process settings)
-  # true = MPI manager-worker execution (should be used for multi-node runs)
+  # false: local run; true: MPI manager-worker run.
   use_mpi: false 
 
-  debug: false # enable debug logging and extra debug outputs; with MPI, also writes one log file per worker rank
+  # Extra logs/debug outputs; MPI also writes per-rank worker logs.
+  debug: false
 
 sim_settings:
   loop_framework: "corgi-howfsc" # do not modify 
