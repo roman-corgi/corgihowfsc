@@ -38,7 +38,7 @@ runtime:
 ```
 
 Both modes can run the same loop. MPI is not required for correctness, only for scaling beyond one machine or for workloads that saturate a single node.
-When `debug: true`, the run writes more verbose logs and may create extra debug artifacts. In MPI mode, this includes rank-specific worker log files.
+When `debug: true`, the run writes more verbose logs and create extra debug artifacts. In MPI mode, this includes rank-specific worker log files.
 
 ---
 
@@ -57,7 +57,7 @@ Each imager worker may itself spawn a `multiprocessing.Pool` internally for PROP
 To allow this nesting, `corgihowfsc` uses `NestablePool` (see `utils/parallel_executor.py`), which overrides the default behaviour that prevents daemonic processes from spawning children.
 
 **Jacobian parallelism** (`num_jac_process`)  
-Jacobian computation uses a separate pool that is independent from the imager workers. It only applies in local mode, in MPI mode the Jacobian is distributed across ranks instead.
+Jacobian computation uses a separate pool that is independent from the imager workers. It only applies in local mode, in MPI mode the Jacobian is distributed across ranks instead (e.g. divided into 5 jobs when `num_imager_worker = 5`)
 
 ### CPU sizing
 
