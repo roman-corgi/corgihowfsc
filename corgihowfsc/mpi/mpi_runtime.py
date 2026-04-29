@@ -3,6 +3,7 @@ from mpi4py import MPI
 from scipy import sparse
 import logging
 import os
+import warnings
 
 from howfsc.control.calcjtwj import JTWJMap
 from howfsc.control.calcjacs import get_ndhpix
@@ -74,6 +75,50 @@ def initialize_mpi_comm():
     if comm.Get_size() < 2:
         raise ValueError("MPI mode requires at least 2 ranks")
     return comm
+
+
+def validate_mpi_allocation(comm, num_imager_worker=None, num_proper_process=None):
+    """
+    Warn about MPI launch sizes that do not match the configured worker count.
+
+    Rank 0 is the manager, so only ``comm.Get_size() - 1`` ranks can execute
+    frame or Jacobian tasks. In MPI mode, ``num_imager_worker`` caps the
+    number of active worker ranks used for both task queues.
+    """
+    for name, val in [('num_imager_worker', num_imager_worker),
+                      ('num_proper_process', num_proper_process)]:
+        if val is not None and (not isinstance(val, int) or val < 1):
+            raise ValueError(f"{name} must be a positive integer or None, got {val!r}")
+
+    available_workers = comm.Get_size() - 1
+    requested_workers = num_imager_worker 
+    proper_processes = num_proper_process 
+
+    if requested_workers > available_workers:
+        warnings.warn(
+            f"MPI requested {requested_workers} active worker ranks, but only "
+            f"{available_workers} worker ranks were launched. The MPI task "
+            f"queues will use {available_workers} workers."
+        )
+    elif requested_workers < available_workers:
+        warnings.warn(
+            f"MPI launched {available_workers} worker ranks, but "
+            f"num_imager_worker={requested_workers}. Extra worker ranks will "
+            f"be initialized but remain idle."
+        )
+
+    if hasattr(os, 'sched_getaffinity'):
+        allocated_cpus = len(os.sched_getaffinity(0))
+        active_workers = min(requested_workers, available_workers)
+        peak_worker_processes = active_workers * proper_processes
+
+        if peak_worker_processes > allocated_cpus:
+            warnings.warn(
+                f"MPI worker load may oversubscribe this CPU affinity set "
+                f"({active_workers} active workers x {proper_processes} "
+                f"PROPER processes = {peak_worker_processes}; available CPUs "
+                f"reported for this rank: {allocated_cpus})."
+            )
 
 
 def build_worker_init_config(args, cfgfile, cstratfile, hconffile, backend_type, mode, corgi_overrides):
