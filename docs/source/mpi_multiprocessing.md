@@ -1,183 +1,379 @@
-# MPI and Multiprocessing
+# Parallel Runs: Local and Multi-Node MPI
 
-This page explains how parallelism works in `corgihowfsc`, when to use each mode, and how to size a run correctly.
+This page explains how to choose and size parallel runs in `corgihowfsc`.
 
-For the YAML field descriptions, see [Parameter Reference](parameter_reference.md).
+`corgihowfsc` supports two ways to run in parallel: 
 
----
+- **Local run**: run on one machine using multiprocessing. 
+- **Multi-node (MPI) run**: runs with MPI ranks, usually on a cluster, across multiple nodes. 
 
-## What is MPI and why do we need it?
+For the full YAML field descriptions, see [Parameter Reference](parameter_reference.md).
+For details on how the local multiprocessing and MPI setups are arranged, see [Parallel Setup Details](parallel_setup_details.md).
 
-**MPI (Message Passing Interface)** is a standard communication protocol for parallel programs. Unlike Python's built-in `multiprocessing`, which is limited to one machine, MPI can coordinate processes across many nodes in a cluster, each with its own memory, by passing messages over a high-speed network.
-
-`corgihowfsc` needs MPI because a single simulation iteration (one set of probe frames + a Jacobian update) can be computationally expensive. On a cluster with many nodes, MPI lets you distribute the work across them so that more frames and Jacobian chunks are computed simultaneously, reducing wall-clock time.
-
-In practice:
-
-- `multiprocessing` is simpler and sufficient for development, debugging, or single-machine runs
-- MPI is the right tool when a single node is a bottleneck and you have access to a multi-node allocation (e.g. via SLURM)
 
 ---
 
-## Overview
+### Quick Start
 
-`corgihowfsc` has two parallel execution modes. They differ in **where the workers live** and **how work is dispatched** to them:
 
-| Mode | When to use | How to launch |
-| --- | --- | --- |
-| **Local multiprocessing** | Single machine, laptop, debugging | `python scripts/run_corgisim_nulling_gitl.py` |
-| **MPI** | Multi-node cluster, or when you want strict rank-level control | `mpiexec -n N python scripts/run_corgisim_nulling_gitl.py` |
+### Local Run
 
-The switch between them is a single YAML field:
+Use local mode on a laptop, workstation, or single cluster node.
+
+:::{note}
+The values below are examples. Choose `num_imager_worker`, `num_proper_process`, and `num_jac_process` based on the CPUs available on your machine. See [Sizing a Local Run](#sizing-a-local-run).
+:::
 
 ```yaml
 runtime:
-  use_mpi: false   # local multiprocessing
-  use_mpi: true    # MPI
-  debug: false     # optional verbose logging and extra debug outputs
+  use_mpi: false
+  num_imager_worker: 3  # null: serial image generation; set > 1 for local image workers
+  num_proper_process: 5    # PROPER/CorgiSim processes inside each image worker
+  num_jac_process: 6       # local Jacobian processes
 ```
 
-Both modes can run the same loop. MPI is not required for correctness, only for scaling beyond one machine or for workloads that saturate a single node.
-When `debug: true`, the run writes more verbose logs and create extra debug artifacts. In MPI mode, this includes rank-specific worker log files.
+
+Run:
+
+```bash
+python run_corgisim_nulling_gitl.py --param_file default_param.yml
+```
+
+### Multi-node (MPI) Run
+
+Use an MPI run when one machine is not enough and you want to spread the simulation across multiple cluster nodes. **MPI (Message Passing Interface)** is a standard communication protocol for parallel programs that coordinates separate processes across a cluster, including across nodes with separate memory, by passing messages between them.
+
+In an MPI run, one Python process acts as the manager. It runs the GITL loop and sends image generation or Jacobian calculations to worker processes. The worker processes wait for tasks, run them, and send the results back to the manager. 
+
+This is useful because CorgiSim/PROPER image generation and Jacobian computation can be slow and resource intensive. MPI lets several workers run these tasks at the same time across a cluster allocation.
+
+MPI documentation often calls these processes "ranks". This page uses "manager process" and "worker processes" to explain the run. 
+
+```yaml
+runtime:
+  use_mpi: true
+  num_imager_worker: 21    # MPI worker processes
+  num_proper_process: 5    # PROPER/CorgiSim processes per worker process
+  num_jac_process: 6       # ignored in MPI mode
+```
+
+For this example, we launch 22 total MPI processes: 
+
+```text
+1 manager process + 21 worker processes = 22 total MPI processes
+```
+
+Example Slurm launch:
+
+```bash
+#SBATCH --nodes=4
+#SBATCH --ntasks=22
+#SBATCH --cpus-per-task=5
+
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+
+mpirun -np $SLURM_NTASKS python run_corgisim_nulling_gitl.py --param_file example_mpi_param.yml
+```
+
+:::{note}
+Example MPI submission scripts are available in `corgihowfsc/scripts/example_mpi_*.sh`. Use them as templates, but check the module loads, conda environment, `--ntasks`, and `--cpus-per-task` values for your cluster.
+:::
+
 
 ---
 
-## Local multiprocessing
+## Choose Between Local and MPI 
 
-### How it works
-
-When `use_mpi: false`, all parallelism is handled by `multiprocessing.Pool` inside a single process. Two independent axes of parallelism are in play:
-
-**Outer axis — imager workers** (`num_imager_worker`)  
-Multiple probe images can be collected in parallel. Each worker is an independent OS process that receives one (DM setting, wavelength) task and returns a detector frame.
-
-**Inner axis — PROPER processes** (`num_proper_process`)  
-Each imager worker may itself spawn a `multiprocessing.Pool` internally for PROPER's optical propagation. This is nested parallelism: an outer worker spawning its own inner workers.
-
-To allow this nesting, `corgihowfsc` uses `NestablePool` (see `utils/parallel_executor.py`), which overrides the default behaviour that prevents daemonic processes from spawning children.
-
-**Jacobian parallelism** (`num_jac_process`)  
-Jacobian computation uses a separate pool that is independent from the imager workers. It only applies in local mode, in MPI mode the Jacobian is distributed across ranks instead (e.g. divided into 5 jobs when `num_imager_worker = 5`)
-
-### CPU sizing
-
-Peak concurrent CPU usage on one machine is:
-
-```text
-num_imager_worker × num_proper_process
-```
-
-At startup, `get_cpu_allocation()` checks this product against the CPUs allocated to the process and warns if it exceeds the hardware limit. On Linux clusters it reads `sched_getaffinity`; on macOS/Windows it falls back to `cpu_count()`.
-
-**Example**: 3 imager workers × 5 PROPER processes = 15 CPUs peak. If your node or session has 16 CPUs, this is fine. If you have 8, expect hardware thrashing.
-
----
-
-## MPI
-
-### MPI execution model
-
-When `use_mpi: true`, the application uses a **manager–worker** model across MPI ranks:
-
-- **Rank 0** runs the main loop (`nulling_gitl`) and acts as the task manager
-- **Ranks 1..N−1** are persistent workers that wait for tasks from rank 0
-
-All communication goes through `mpi4py` point-to-point `send`/`recv` calls. There is no collective communication during the loop.
-
-### Worker lifecycle
-
-Workers are long-lived: they are initialized once and then reused for all frames and Jacobian chunks in the run. The lifecycle has four stages:
-
-```text
-rank 0                           rank 1..N-1
-------                           -----------
-initialize_mpi_comm()            initialize_mpi_comm()
-  (rank != 0 check passes,         (rank != 0 check fails,
-   returns comm)                    enters worker_loop(), blocks on recv())
-
-send INIT + worker_config    →   recv INIT, build local GitlImage,
-                                 cfg, cstrat, hconf
-                                 (state is cached for the rest of the run)
-
-for each probe frame:
-  send FRAME task              →   run frame, send RESULT back
-  ← recv RESULT
-
-for each Jacobian chunk:
-  send JAC_CHUNK task          →   run Jacobian slice, send RESULT back
-  ← recv RESULT
-
-send STOP                      →   recv STOP, exit worker_loop(), terminate
-```
-
-The `worker_config` data sent during `INIT` contains only lightweight values (file paths, backend type, mode, stellar overrides), not live Python objects. Each worker rebuilds its own `GitlImage` and configuration objects locally. This avoids serialising and transmitting large objects with every task.
-
-### Task queue
-
-Rank 0 uses a dynamic task queue (`_run_manager_task_queue`) to keep workers busy:
-
-1. One initial task is sent to each active worker rank
-2. Rank 0 waits on `recv(source=ANY_SOURCE)`
-3. Whichever worker finishes first sends its result back
-4. Rank 0 immediately dispatches the next pending task to that now-free worker
-5. Results are reordered by `job_id` before being returned, so the caller always gets frames back in logical order regardless of which worker finished first
-
-This keeps all workers busy: as soon as one finishes, it gets the next task immediately.
-
-### Rank sizing
-
-As a rule of thumb:
-
-```text
-number of MPI ranks = num_imager_worker + 1
-```
-
-The `+1` is for rank 0, which does not execute frame or Jacobian tasks. `num_imager_worker` caps how many worker ranks are actively used even if the job is launched with more ranks than that.
-
-**Example**: `num_imager_worker: 21` → launch with `-n 22`.
-
-If you launch with more ranks than `num_imager_worker + 1`, the extra ranks are still initialised but will not receive tasks. This wastes allocation.
-
----
-
-## Choosing a mode
-
-| Situation | Recommendation |
+| Situation | Recommended Run Type |
 | --- | --- |
-| Laptop or single workstation, any model | `use_mpi: false` |
-| Debugging, first run, troubleshooting | `use_mpi: false` |
-| `cgi-howfsc` (compact) model on a cluster | Either mode works; local multiprocessing is usually sufficient |
-| `corgihowfsc` (corgisim) model, many iterations | `use_mpi: true` — each frame is slow enough to justify distributed workers |
-| Multi-node job scheduler (SLURM) | `use_mpi: true` with `mpiexec` |
+| Laptop or workstation | Local run |
+| First test run or debugging | Local run |
+| Single-node run with enough CPUs | Local run |
+| Multi-node cluster allocation | MPI run |
+| Slow CorgiSim image generation across many iterations | MPI run |
 
-Start with `use_mpi: false`. Switch to MPI when the per-iteration wall time is the bottleneck and you have multiple nodes available.
-
----
-
-## Code layout
-
-| File | Role |
-| --- | --- |
-| `corgihowfsc/scripts/run_corgisim_nulling_gitl.py` | Launcher — reads YAML, calls `initialize_mpi_comm()` before any setup |
-| `corgihowfsc/gitl/nulling_gitl.py` | Main loop — calls either the local or MPI frame/Jacobian path depending on `comm` |
-| `corgihowfsc/mpi/mpi_runtime.py` | Manager and worker loop — `initialize_mpi_comm`, `initialize_workers`, `worker_loop`, `collect_framelist_mpi`, `precompute_jac_mpi`, `_run_manager_task_queue` |
-| `corgihowfsc/mpi/mpi_worker.py` | Worker task execution — `initialize_mpi_worker_state`, `run_mpi_frame_task`, `run_mpi_jac_task` |
-| `corgihowfsc/utils/gitl_worker.py` | Shared lower-level helpers used by both local and MPI paths |
-| `corgihowfsc/utils/parallel_executor.py` | `NestablePool` and `run_parallel` for local multiprocessing |
-| `corgihowfsc/utils/howfsc_initialization.py` | `get_cpu_allocation` — validates CPU counts and warns on oversubscription |
+Start with a local run. Switch to MPI when the per-iteration wall time is the bottleneck and you have a cluster allocation available.
 
 ---
 
-## Common issues
+## Parallel Parameters
 
-**The job hangs immediately at launch**  
-You set `use_mpi: true` but launched without `mpiexec`, `mpirun`, or `srun`. All ranks end up as rank 0 and none enter the worker loop.
+| Parameter | Local Run (`use_mpi: false`) | MPI Run (`use_mpi: true`) |
+| --- | --- | --- |
+| `num_imager_worker` | Number of local image worker processes. `null` means serial/default. | Number of MPI worker processes. Usually `--ntasks - 1`. |
+| `num_proper_process` | Number of PROPER subprocesses inside each local image worker. | Number of PROPER subprocesses inside each MPI worker process. Usually matches `--cpus-per-task`. |
+| `num_jac_process` | Number of local Jacobian processes. | Ignored. MPI Jacobian chunks use the MPI worker processes capped by `num_imager_worker`. |
+| `use_mpi` | `false` | `true` |
 
-**Workers block waiting for tasks that never arrive**  
-The MPI job was launched with fewer ranks than `num_imager_worker + 1`. Rank 0 tries to dispatch to ranks that do not exist.
+---
 
-**High CPU usage but slow wall time**  
-`num_imager_worker × num_proper_process` exceeds your CPU allocation. Reduce one or both. Check the startup warning from `get_cpu_allocation`.
+## Sizing a Local Run
 
-**Frames out of order or missing**  
-Not a normal failure mode: the task queue reorders by `job_id` before returning. If you see this, check that all MPI ranks are still alive (a worker crash will cause rank 0 to hang waiting for a result that will never arrive).
+For local image generation, the approximate peak CPU use is:
+
+```text
+num_imager_worker x num_proper_process
+```
+
+For example:
+
+```yaml
+num_imager_worker: 3
+num_proper_process: 5
+```
+
+can use up to:
+
+```text
+3 x 5 = 15 CPU cores
+```
+
+`num_jac_process` controls a separate local Jacobian process pool. It is not active at the exact same time as image generation, but it should still be no larger than the CPUs available for the job.
+
+At the start of the local run, it checks for oversubscription and warns if the requested process count exceeds the CPUs visible to the process. Oversubscription means asking for more parallel processes than available CPU cores, which can make the run slower rather than faster because processes compete for the same cores.
+
+For a first local run, start conservatively:
+
+```yaml
+runtime:
+  use_mpi: false
+  num_imager_worker: null
+  num_proper_process: 5
+  num_jac_process: 6
+```
+
+Increase `num_imager_worker` only if image generation is the bottleneck and the machine has enough CPUs for the additional workers.
+
+---
+
+## MPI Run Model
+
+In MPI mode, one process is the manager. It runs the main loop and sends work to the workers.
+
+```text
+process 0       manager
+process 1..N-1  workers
+```
+
+Worker processes are initialized once and reused for image generation and Jacobian chunks.
+
+The manager process does not compute image or Jacobian tasks. Therefore:
+
+```text
+total MPI processes = num_imager_worker + 1
+```
+
+:::{important}
+In MPI mode, launch `num_imager_worker + 1` total MPI processes. Rank 0 is the manager and does not run frame or Jacobian tasks.
+:::
+
+Example:
+
+```yaml
+num_imager_worker: 21
+```
+
+requires:
+
+```bash
+mpirun -np 22 ...
+```
+
+or in Slurm:
+
+```bash
+#SBATCH --ntasks=22
+```
+
+---
+
+## MPI Process and CPU Sizing
+
+For MPI mode, use this mapping:
+
+```text
+--ntasks         = num_imager_worker + 1
+--cpus-per-task  = num_proper_process
+```
+
+Example YAML:
+
+```yaml
+runtime:
+  use_mpi: true
+  num_imager_worker: 21
+  num_proper_process: 5
+```
+
+Example Slurm settings:
+
+```bash
+#SBATCH --ntasks=22
+#SBATCH --cpus-per-task=5
+```
+
+This means:
+
+```text
+1 manager process
+21 worker processes
+5 CPUs available to each MPI process
+```
+
+Each worker process may spawn up to `num_proper_process` PROPER/CorgiSim subprocesses.
+
+---
+
+## Choosing `num_imager_worker`
+
+For image generation, the useful maximum is the number of images in one framelist:
+
+```text
+n_wvl x (2 x n_probe_pairs + 1)
+```
+
+For HLC band 1 with 3 wavelengths and 3 probe pairs:
+
+```text
+3 x (2 x 3 + 1) = 21
+```
+
+So a natural MPI setup is:
+
+```yaml
+num_imager_worker: 21
+```
+
+and:
+
+```bash
+#SBATCH --ntasks=22
+```
+
+Using more than 21 worker processes will not speed up image generation for this case because there are only 21 image tasks in one framelist. Extra workers may still be initialized, but they will sit idle during image collection.
+
+---
+
+## Process-Per-Core Mode
+
+The intended parallel model is process-based:
+
+```text
+MPI processes x PROPER processes
+```
+
+Threaded numerical libraries should be kept single-threaded because this workflow uses process-based parallelism:
+
+```bash
+export OMP_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+```
+
+PROPER's multi-run path uses a multiprocessing pool for `NCPUS` work and sets its multi-process FFT thread count to 1 internally. The environment variables above prevent threaded math libraries from adding extra parallelism around the process-based model.
+
+Do not use:
+
+```bash
+export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+```
+
+---
+
+## Slurm Launch Notes
+
+Prefer an explicit MPI process count:
+
+```bash
+mpirun -np $SLURM_NTASKS python run_corgisim_nulling_gitl.py --param_file example_mpi_param.yml
+```
+
+On systems where `mpirun` correctly uses the scheduler allocation, you can also omit `-np`:
+
+```bash
+mpirun python run_corgisim_nulling_gitl.py --param_file mpi_param.yml
+```
+
+:::{warning}
+Check that the MPI process count launched by Slurm matches `num_imager_worker + 1`. Extra MPI processes are initialized but remain idle; too few MPI processes reduce the requested parallelism.
+:::
+
+If you use:
+
+```bash
+#SBATCH --ntasks-per-node=6
+```
+
+some MPI launchers may infer the total process count from:
+
+```text
+nodes x ntasks-per-node
+```
+
+For example:
+
+```bash
+#SBATCH --nodes=4
+#SBATCH --ntasks-per-node=6
+```
+
+This can launch 24 MPI processes. If your YAML has:
+
+```yaml
+num_imager_worker: 21
+```
+
+you only wanted 22 total MPI processes, so 2 worker processes will be initialized but idle.
+
+---
+
+## Common Startup Warnings
+
+### More MPI Processes Than Requested Workers
+
+```text
+MPI launched 23 worker processes, but num_imager_worker=21.
+Extra worker processes will be initialized but remain idle.
+```
+
+This means MPI launched more processes than your YAML will use. The run is still correct, but some allocated processes are wasted.
+
+Fix by launching exactly:
+
+```text
+num_imager_worker + 1
+```
+
+total MPI processes.
+
+### Fewer MPI Processes Than Requested Workers
+
+```text
+MPI requested 21 active worker processes, but only 9 worker processes were launched.
+The MPI task queues will use 9 workers.
+```
+
+The run is still correct, but slower than expected.
+
+Fix by increasing the MPI process count or reducing `num_imager_worker`.
+
+### PROPER Processes Exceed CPUs Per Task
+
+```text
+num_proper_process exceeds the CPU affinity visible to the MPI process
+```
+
+This usually means:
+
+```yaml
+num_proper_process
+```
+
+is larger than:
+
+```bash
+#SBATCH --cpus-per-task
+```
+
+Fix by making them match, or by reducing `num_proper_process`.
