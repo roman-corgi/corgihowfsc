@@ -16,6 +16,7 @@ corgihowfsc documentation
    gitl_cgi_howfsc
    parameter_reference
    mpi_multiprocessing
+   parallel_setup_details
    loop_outputs
    jacobian_computation
 
