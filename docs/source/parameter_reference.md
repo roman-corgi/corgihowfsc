@@ -18,10 +18,24 @@ If `--param_file` is not provided, the script falls back to `default_param.yml` 
 active_model: "cgi-howfsc" # choose from "cgi-howfsc" or "corgihowfsc". This will determine which imager model is used and which settings are applied to the imager initialization.
 
 runtime:
-  num_proper_process: 5 # typical value for HLC band 1 runs
-  num_jac_process: 6 # used for local Jacobian computation when use_mpi is false
-  num_imager_worker: null # set to an integer > 1 to parallelize image generation
-  use_mpi: false # set true to use the MPI manager-worker runtime instead of local multiprocessing
+  # Number of PROPER processes used inside each imager worker.
+  # For MPI runs, this should match --cpus-per-task in the job submission script.
+  num_proper_process: 5 # typical value for HLC band 1 runs, but can be changed as needed.
+
+  # Local mode only: number of processes for Jacobian computation when use_mpi is false.
+  # MPI mode: ignored; Jacobian computation uses the active MPI workers capped by num_imager_worker.
+  num_jac_process: 6
+
+  # Local mode: local imager worker processes; null means serial.
+  # Set to an integer > 1 to parallelize image generation on a single machine.
+  # MPI mode: active MPI workers; should be equal to --ntasks - 1 in the MPI allocation (one manager process, rest are workers).
+  # Useful image-generation max: n_wvl * (2 * n_probe_pairs + 1).
+  num_imager_worker: null
+
+  # false = local serial or multiprocessing execution (depending on num_imager_worker and num_jac_process settings)
+  # true = MPI manager-worker execution (should be used for multi-node runs)
+  use_mpi: false
+
   debug: false # enable debug logging and extra debug outputs; with MPI, also writes one log file per worker rank
 
 sim_settings:
@@ -102,17 +116,17 @@ Chooses which block under `models` is active.
 
 ### `runtime`
 
-Controls parallel execution.
+Controls local and MPI parallel execution.
 
 | Field | Default | Description |
 | --- | --- | --- |
-| `num_proper_process` | `5` | Number of local PROPER processes used inside one image worker |
-| `num_jac_process` | `6` | Number of local processes used for Jacobian computation when MPI is off |
-| `num_imager_worker` | `null` | Number of outer image workers; `null` disables explicit outer parallelism; an integer caps active MPI worker ranks |
-| `use_mpi` | `false` | Set `true` to enable MPI mode: rank 0 runs the main loop, all other ranks wait for work |
+| `num_proper_process` | `5` | Number of PROPER processes used inside each image worker. For MPI runs, this should match `--cpus-per-task`. |
+| `num_jac_process` | `6` | Local mode only: number of local processes used for Jacobian computation. Ignored in MPI mode. |
+| `num_imager_worker` | `null` | Local mode: number of local image worker processes; `null` means serial image generation. MPI mode: number of active MPI worker ranks, usually total MPI processes minus one manager rank. |
+| `use_mpi` | `false` | `false`: local serial or multiprocessing execution. `true`: MPI manager-worker execution for multi-node runs. |
 | `debug` | `false` | Enable debug logging and extra debug outputs. Not recommended for large runs because it increases log volume and may write additional debug artifacts. If `use_mpi` is `true`, rank-specific worker log files are also written. |
 
-See [MPI and Multiprocessing](mpi_multiprocessing.md) for more detail.
+See [Parallel Runs: Local and Multi-Node MPI](mpi_multiprocessing.md) for more detail.
 
 ---
 
