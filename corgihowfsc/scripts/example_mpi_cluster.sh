@@ -18,7 +18,7 @@ cd /path/to/corgihowfsc/corgihowfsc/scripts
 source /path/to/oneapi/file.sh
 
 # Set number of threads for each MPI process to spawn 
-# TODO : double check if this is the correct setup 
+# TODO : check if this is needed. By default all the threading environments should be set to 1. 
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
 source /path/to/conda.sh
@@ -26,7 +26,3 @@ conda activate corgiloop_public
 
 # Run script
 mpirun -np $SLURM_NPROCS python run_corgisim_nulling_gitl.py --param_file default_param.yml
-
-
-
-
