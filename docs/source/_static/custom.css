@@ -1,0 +1,16 @@
+/* Increase content width beyond RTD default (800px) but avoid full-bleed on wide screens */
+.wy-nav-content {
+    max-width: 1200px !important;
+}
+
+/* Let long table description columns wrap without stretching the whole page. */
+.wy-table-responsive table td:last-child {
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+.wy-table-responsive table td:not(:last-child),
+.wy-table-responsive table th {
+    white-space: nowrap;
+}

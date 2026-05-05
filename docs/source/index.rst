@@ -14,6 +14,9 @@ corgihowfsc documentation
 
    gitl_corgi_howfsc
    gitl_cgi_howfsc
+   parameter_reference
+   mpi_multiprocessing
+   parallel_setup_details
    loop_outputs
    jacobian_computation
 
@@ -28,7 +31,15 @@ corgihowfsc documentation
    :maxdepth: 1
    :caption: corgihowfsc functions
 
+   nulling_gitl
    Probe
    Estimator
-   plotting
+   corgisim_gitl_frames
    corgisim_manager
+   contrast_normalization
+   plotting
+   metrics
+   parallel_executor
+   saving_output
+   howfsc_initialization
+   mpi_runtime
