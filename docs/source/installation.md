@@ -16,15 +16,18 @@ Download these files manually by clicking on the following links and save them t
 | File                                              | Download Link                                                                                                                          |
 |---------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
 | `proper_v3.3.4_python.zip`                        | [Proper Library](https://sourceforge.net/projects/proper-library/files/proper_v3.3.4_python.zip/download)                              |
-| `roman_preflight_proper_public_v2.0.2_python.zip` | [Roman preflight Proper model](https://sourceforge.net/projects/cgisim/files/roman_preflight_proper_public_v2.0.2_python.zip/download) |
 | `cgisim_v4.1.zip`                                 | [CGISim](https://sourceforge.net/projects/cgisim/files/cgisim_v4.1.zip/download)                                                       |
 
 ### 2. Clone required repositories
 
-Navigate to a directory where you want to clone the repositories, then clone the CGI-EETC repo and this repo, CorgiSim-howfsc:
+Navigate to a directory where you want to clone the following three repositories, then clone them:  
+- CGI-EETC repo
+- the repo containing the CPP-specific CGISim Roman preflight model to use with Corgisim (*not* the official model from Sourceforge)
+- this repo, CorgiSim-howfsc
 
 ```bash
 git clone https://github.com/nasa-jpl/cgi-eetc.git
+git clone https://github.com/roman-corgi/cgisim_cpp.git
 git clone https://github.com/roman-corgi/corgihowfsc.git
 ````
 
@@ -51,15 +54,26 @@ python setup_cgi_packages.py C:\Users\username\Downloads\
 python setup_cgi_packages.py /home/user/cgi-files/
 ```
 
-### 4. Get large files and install cgi-eetc
+### 4. Install the Roman model done with CGISim (Corgisim-specific) from the local clone
+
+:::{note}
+This installation only finishes correctly if PROPER has been installed before, which is done in step 3 above by calling `setup_cgi_packages.py`.
+:::
 
 ```bash
-cd cgi-eetc
+cd ../cgisim_cpp
+pip install -e .
+```
+
+### 5. Get large files and install cgi-eetc
+
+```bash
+cd ../cgi-eetc
 git lfs pull
 pip install -e .
 ```
 
-### 5. Optional: Install cgi-howfsc in editable mode for development
+### 6. Optional: Install cgi-howfsc in editable mode for development
 
 ```bash
 pip uninstall howfsc
@@ -68,7 +82,7 @@ cd cgi-howfsc
 pip install -e .
 ```
 
-### 6. Verify Installation
+### 7. Verify Installation
 Test that everything is installed correctly:
 
 ```python
@@ -90,7 +104,7 @@ python setup_cgi_packages.py --help
 ## Troubleshooting
 
 ### Missing Downloads
-- Verify all 3 zip files are in your specified directory
+- Verify both zip files are in your specified directory
 - Check file names match exactly (case-sensitive)
 - Use absolute paths to avoid confusion
 
@@ -113,7 +127,7 @@ If you encounter an error like this:
 ```bash
 OSError: No SIMPLE card found, this file does not appear to be a valid FITS file. If this is really a FITS file, try with ignore_missing_simple=True
 ```
-you are probably missing the LFS files from cgi-eetc.
+you are probably missing the LFS files from `cgi-eetc`.
 
 To fix this...
 - Make sure you have Git LFS installed: https://git-lfs.github.com/

@@ -126,12 +126,6 @@ def main():
             'url': 'https://sourceforge.net/projects/proper-library/'
         },
         {
-            'name': 'Roman Preflight Proper',
-            'zip': 'roman_preflight_proper_public_v2.0.2_python.zip',
-            'dir': 'roman_preflight_proper_public_v2.0.2_python',
-            'url': 'https://sourceforge.net/projects/cgisim/'
-        },
-        {
             'name': 'CGISim',
             'zip': 'cgisim_v4.1.zip',
             'dir': 'cgisim_v4.1',
