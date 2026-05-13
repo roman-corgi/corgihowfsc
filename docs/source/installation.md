@@ -16,7 +16,6 @@ Download these files manually by clicking on the following links and save them t
 | File                                              | Download Link                                                                                                                          |
 |---------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
 | `proper_v3.3.4_python.zip`                        | [Proper Library](https://sourceforge.net/projects/proper-library/files/proper_v3.3.4_python.zip/download)                              |
-| `roman_preflight_proper_public_v2.0.2_python.zip` | [Roman preflight Proper model](https://sourceforge.net/projects/cgisim/files/roman_preflight_proper_public_v2.0.2_python.zip/download) |
 | `cgisim_v4.1.zip`                                 | [CGISim](https://sourceforge.net/projects/cgisim/files/cgisim_v4.1.zip/download)                                                       |
 
 ### 2. Clone required repositories
@@ -90,7 +89,7 @@ python setup_cgi_packages.py --help
 ## Troubleshooting
 
 ### Missing Downloads
-- Verify all 3 zip files are in your specified directory
+- Verify both zip files are in your specified directory
 - Check file names match exactly (case-sensitive)
 - Use absolute paths to avoid confusion
 
