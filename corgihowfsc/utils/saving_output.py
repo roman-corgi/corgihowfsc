@@ -43,7 +43,7 @@ def compute_xticks(n, max_ticks=15, threshold=25, values=None):
         ticks = np.append(ticks, n)
     return ticks
 
-def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list, jac, iteration_durations=None, debugging_dict=None):
+def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list, jac, iteration_durations=None, debugging_dict=None, normalizer = None, true_exptime_list=None):
     """
     Save all outputs for a single HOWFSC iteration and update cumulative summary plots.
 
@@ -115,7 +115,14 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
         returned by ``howfsc_computation``. If provided, per-wavelength scalars
         are appended to ``debugging_history.csv`` via
         ``save_debugging_iteration``. Defaults to None.
-
+    normalizer : object or None, optional
+        The instantiated normalization process used
+        to accurately convert raw detector frames into contrast unit.
+        Propagated to `save_normalized_images_cube`. Defaults to None.
+    true_exptime_list : list or 1D array, optional
+        List of exact exposure times corresponding to each frame in `flist` for the
+        current iteration. Used for the normalization of images in contrast unit, bypassing
+        the offset `camlist`. Defaults to None.
     Returns
     -------
     efields_complex_array : ndarray
@@ -253,6 +260,7 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
         stack_coh.append(coh_int)
         stack_incoh.append(incoh_int)
 
+    actual_exptime = true_exptime_list if true_exptime_list is not None else param_order_to_list(camlist[i][1])
     hdr = pyfits.Header()
     hdr['NLAM'] = len(cfg.sl_list)
     hdr['ITER'] = i + 1
@@ -260,10 +268,23 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
     # Saving data of images
     prim = pyfits.PrimaryHDU(header=hdr)
     img_raw = pyfits.ImageHDU(flist, name='RAW_IMAGES')
-    prev = pyfits.ImageHDU(param_order_to_list(camlist[i][1]), name='CAM_PARAMS')
+    prev = pyfits.ImageHDU(actual_exptime, name='CAM_PARAMS')
 
     hdul_main = pyfits.HDUList([prim, img_raw, prev])
     hdul_main.writeto(os.path.join(iterpath, "images.fits"), overwrite=True)
+
+    # Saving data of images in contrast units
+
+    save_normalized_images_cube(
+        iterpath=iterpath,
+        flist=flist,
+        true_exptime_list=actual_exptime,
+        debugging_dict=debugging_dict,
+        nlam=len(cfg.sl_list),
+        hdr=hdr,
+        cam_params_hdu=prev,
+        normalizer=normalizer
+    )
 
     # Saving total intensity
     prim_tot = pyfits.PrimaryHDU(header=hdr)
@@ -353,7 +374,7 @@ def refactor_efields(cfg, oitem, perfect_efield_list=None):
     return efields_realimag, efields_complex_array, perfect_efields_realimag, perfect_efields_complex_array
 
 
-def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list, jac):
+def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list, jac, normalizer=None, debug_list=None, true_exptime_history=None):
 
     outpath = os.path.dirname(fileout)
 
@@ -362,10 +383,18 @@ def save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm
     all_perfect_efields_complex = []  # Will collect perfect complex e-fields per iteration
 
     # Create one subdirectory per iteration
-    iters = [len(framelistlist)-1] if output_every_iter else range(len(framelistlist))
+    iters = [len(framelistlist) - 1] if output_every_iter else range(len(framelistlist))
     for i in iters:
-        efields_complex_array, perfect_efields_complex_array = save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list, output_every_iter, pred_c, ni_lists, perfect_efield_list[i], jac)
-        # Convert to numpy array for this iteration: shape (n_wavelengths, height, width)
+        current_debug = debug_list[i] if not output_every_iter and debug_list is not None else None
+        current_exptime = true_exptime_history[i] if true_exptime_history is not None else None
+
+        efields_complex_array, perfect_efields_complex_array = save_outputs_iter(
+            i, fileout, cfg, camlist, framelistlist, otherlist, measured_c, dm1_list, dm2_list,
+            output_every_iter, pred_c, ni_lists, perfect_efield_list[i], jac,
+            debugging_dict=current_debug,
+            normalizer=normalizer,
+            true_exptime_list=current_exptime
+        )
         efields_complex_array = np.stack(efields_complex_array, axis=0)
         all_efields_complex.append(efields_complex_array)
 
@@ -568,3 +597,73 @@ def save_debugging_iteration(debugging_dict, iteration, outpath,
                     debugging_dict['cam_params_inputs']['pred_bright_contrast_probing'][j, 0],
             })
 
+
+def save_normalized_images_cube(iterpath, flist, true_exptime_list, debugging_dict, nlam, hdr, cam_params_hdu, normalizer):
+    """
+    Converts the images.fits cube in contrast unit.
+
+    Iterates through each frame of the raw sequence (flist) which contains images probed and unprobed, extracts the specific
+    exposure time strictly associated with that frame, and applies the normalization.
+
+    Parameters
+    ----------
+    iterpath : str
+        Absolute path to the current iteration output directory.
+    flist : list of np.ndarray
+        List of 2D raw detector images. Total size must be nlam * nframes_per_lam.
+    true_exptime_list : list or 1D array, optional
+        List of exact exposure times corresponding to each frame in `flist` for the
+        current iteration. Used for the normalization of images in contrast unit, bypassing
+        the offset `camlist`. Defaults to None.
+    debugging_dict : dict
+        Dictionary from the main loop containing 'peakflux' per wavelength (necessary for the conversion).
+    nlam : int
+        Number of spectral channels.
+    hdr : astropy.io.fits.Header
+        FITS header to attach to the primary HDU.
+    cam_params_hdu : astropy.io.fits.ImageHDU
+        Camera parameters HDU to append for scientific traceability.
+    normalizer : object
+        The instantiated normalization object handling
+        the specific noise regime logic and scaling factors.
+
+    Returns
+    -------
+    None
+    """
+    if normalizer is None or debugging_dict is None:
+        log.warning("Missing normalization tools. Bypassing images_contrast.fits generation.")
+        return
+
+    nframes = len(flist)
+    nframes_per_lam = nframes // nlam
+    normalized_flist = []
+
+    img_ctr = pyfits.ImageHDU(name='NORMALIZED_IMAGES')
+
+    for idx, raw_im in enumerate(flist):
+        lam_idx = idx // nframes_per_lam
+
+        try:
+            peakflux = float(debugging_dict['peakflux'][lam_idx, 0])
+            exptime = float(true_exptime_list[idx])
+        except IndexError:
+            log.error(f"Index {idx} out of bounds. Cannot normalize frame.")
+            return
+
+        # Normalise to contrast units the images
+        norm_im = normalizer.normalize(raw_im, peakflux, exptime)
+        normalized_flist.append(norm_im)
+
+        img_ctr.header[f'EXP{idx:03d}'] = (exptime, f'Exptime (s) frame {idx}')
+        img_ctr.header[f'PFL{idx:03d}'] = (peakflux, f'Peakflux frame {idx}')
+        img_ctr.header[f'LAM{idx:03d}'] = (lam_idx, f'Lambda index frame {idx}')
+
+    # Saving the data in the iteration folder
+    img_ctr.data = np.array(normalized_flist)
+    prim = pyfits.PrimaryHDU(header=hdr)
+    hdul_ctr = pyfits.HDUList([prim, img_ctr, cam_params_hdu])
+
+    out_file = os.path.join(iterpath, "images_contrast.fits")
+    hdul_ctr.writeto(out_file, overwrite=True)
+    log.info(f"Normalized contrast cube saved to {out_file}")
