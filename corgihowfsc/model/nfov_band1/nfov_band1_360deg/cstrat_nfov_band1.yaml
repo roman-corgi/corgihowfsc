@@ -1,88 +1,154 @@
 regularization:
   -
     first: 1
+    last: 3
+    low: 0
+    high: 1.0e-5
+    value: -4.5
+  -
+    first: 4
     last: 4
     low: 0
     high: 1.0e-5
-    value: -2.0
+    value: -4.5
   -
     first: 5
-    last: 5
-    low: 0
-    high: 1.0e-5
-    value: -5.0
-  -
-    first: 6
-    last: 9
-    low: 0
-    high: 1.0e-5
-    value: -2.0
-  -
-    first: 10
     last: 10
     low: 0
     high: 1.0e-5
-    value: -5.0
+    value: -4.5
   -
     first: 11
-    last: 14
+    last: 11
     low: 0
     high: 1.0e-5
-    value: -2.0
+    value: -6.0
   -
-    first: 15
-    last: 15
+    first: 12
+    last: 16
     low: 0
     high: 1.0e-5
-    value: -5.0
+    value: -3.5
   -
-    first: 16
-    last: 19
+    first: 17
+    last: 17
     low: 0
     high: 1.0e-5
-    value: -2.0
+    value: -6.0
   -
-    first: 20
-    last: 20
+    first: 18
+    last: 22
     low: 0
     high: 1.0e-5
-    value: -5.0
+    value: -3.5
   -
-    first: 21
-    last: 24
+    first: 23
+    last: 23
     low: 0
     high: 1.0e-5
-    value: -2.0
+    value: -6.0
   -
-    first: 25
-    last: 25
+    first: 24
+    last: 28
     low: 0
     high: 1.0e-5
-    value: -5.0
+    value: -3.5
   -
-    first: 26
+    first: 29
     last: 29
     low: 0
     high: 1.0e-5
-    value: -3.0
+    value: -6.0
   -
     first: 30
-    last: 30
+    last: 34
     low: 0
     high: 1.0e-5
-    value: -5.0
+    value: -3.5
   -
-    first: 31
+    first: 35
+    last: 35
+    low: 0
+    high: 1.0e-5
+    value: -6.5
+  -
+    first: 36
+    last: 40
+    low: 0
+    high: 1.0e-5
+    value: -3.5
+  -
+    first: 41
+    last: 41
+    low: 0
+    high: 1.0e-5
+    value: -6.5
+  -
+    first: 42
+    last: 46
+    low: 0
+    high: 1.0e-5
+    value: -3.5
+  -
+    first: 47
+    last: 47
+    low: 0
+    high: 1.0e-5
+    value: -6.5
+  -
+    first: 48
+    last: 52
+    low: 0
+    high: 1.0e-5
+    value: -3.5
+  -
+    first: 53
+    last: 53
+    low: 0
+    high: 1.0e-5
+    value: -6.5
+  -
+    first: 54
+    last: 58
+    low: 0
+    high: 1.0e-5
+    value: -3.5
+  -
+    first: 59
+    last: 59
+    low: 0
+    high: 1.0e-5
+    value: -6.5
+  -
+    first: 60
+    last: 64
+    low: 0
+    high: 1.0e-5
+    value: -3.5
+  -
+    first: 65
+    last: 65
+    low: 0
+    high: 1.0e-5
+    value: -6.5
+  -
+    first: 66
+    last: 75
+    low: 0
+    high: 1.0e-5
+    value: -3.5
+  -
+    first: 76
     last: None
     low: 0
     high: 1.0e-5
-    value: -3.0
+    value: -3.5
   -
     first: 1
     last: None
     low: 1.0e-5
     high: None
-    value: -2.0
+    value: -3.5
 
 pixelweights:
   -
