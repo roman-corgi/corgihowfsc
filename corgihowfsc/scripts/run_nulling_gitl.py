@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 import matplotlib
-matplotlib.use('TkAgg')
+#matplotlib.use('TkAgg')
 
 import eetc
 from howfsc.control.cs import ControlStrategy
