@@ -45,10 +45,77 @@ from corgihowfsc.utils.gitl_worker import _collect_framelist
 from corgihowfsc.gitl.gitl_funcs import get_initial_cam_params
 from corgihowfsc.utils.metrics import get_ni
 
+from astropy.io import fits
+
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'jacdata')
+
+def apply_pmn_creep_and_hysteresis(flat_dm_filenames,add_creep,add_hysteresis,dmstartmaps,previous_dmstartmap_filenames=None):
+    '''
+    Apply PMN creep and DM hysteresis to the DM voltage maps
+    PMN creep is modeled as a scale factor afffecting the actuator voltages
+    DM hysteresis is modeled as 1% of the difference between the new pattern and
+    the previous one, added to the new pattern
+
+    Parameters
+    ----------
+    flat_dm_filenames: list of strings
+        Two-element list providing the paths to the flat patterns for dm1 and dm2
+    add_creep : Boolean
+        Determines whether to add creep (true) or not (false)
+    add_hysteresis : Boolean
+        Determines whether to add hysteresis (true) or not (false)
+    dmstartmaps : list of ndarray
+        Two-element list [dm1, dm2] giving the absolute starting DM
+        commands in volts.
+    previous_dmstartmap_filenames: optional list of ndarray (if applying hysteresis)
+        Two-element list [previous_dm1_startmap_filename,previous_dm2_startmap_filename]
+        giving the names of the files containing the previous dmstartmaps
+        
+    Returns
+    -------
+    dmstartmaps_adjusted: list of ndarray
+        Two-element list [dm1_adjusted,dm2_adjusted] giving the starting DM commands in volts,
+        modified by the creep and/or hysteresis
+
+    '''
+    # Step 0: Load the HLC flats
+    flat_dm1 = fits.getdata(flat_dm_filenames[0])
+    flat_dm2 = fits.getdata(flat_dm_filenames[1])
+    
+    # For now, the creep is modeled as a multiplicative scale factor, fixed at 371/390
+    if add_creep == True:
+        creep_factor = 371/390
+    else:
+        creep_factor = 1
+    
+    # DM hysteresis is modeled as 1% of the change from the previous voltage pattern,
+    # added to the current pattern
+    if add_hysteresis == True:
+        
+        # Step 1: Load the previous dmstartmaps
+        previous_dm1_startmap = fits.getdata(previous_dmstartmap_filenames[0])
+        previous_dm2_startmap = fits.getdata(previous_dmstartmap_filenames[1])
+    
+        # Step 2: Calculate the delta voltages for each dm
+        dm1_delta = dmstartmaps[0] - previous_dm1_startmap
+        dm2_delta = dmstartmaps[1] - previous_dm2_startmap
+        
+    else:
+        dm1_delta = 0
+        dm2_delta = 0
+        
+    # Calculate the adjusted voltage patterns
+    deltadm1_from_flat = dmstartmaps[0] - flat_dm1
+    deltadm2_from_flat = dmstartmaps[1] - flat_dm2
+    
+    dm1_adjusted = flat_dm1 + creep_factor*deltadm1_from_flat - 0.01*dm1_delta
+    dm2_adjusted = flat_dm2 + creep_factor*deltadm2_from_flat - 0.01*dm2_delta
+    
+    dmstartmaps_adjusted = [dm1_adjusted,dm2_adjusted]
+    return dmstartmaps_adjusted
 
 
 def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps, metadata=None, output_every_iter=True, output_model_efield=True):
@@ -110,6 +177,11 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     num_threads = args.num_threads
     contrast = float(args.starting_contrast) # "starting" value to bootstrap getting we0
     debug = args.debug
+    flat_dm_filenames = args.flat_dm_filenames
+    apply_creep = args.apply_creep
+    apply_hysteresis = args.apply_hysteresis
+    if apply_hysteresis == True:
+        previous_dmstartmap_filenames = args.previous_dmstartmap_filenames
 
     safe_cpu_count = args.num_imager_worker 
     print('Using num_imager_worker = ', safe_cpu_count)
@@ -161,6 +233,18 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     # dm1_list, dm2_list
     # Get DM lists
     dm1_list, dm2_list, dmrel_list, dm10, dm20 = probes.get_dm_probes(cfg, probefiles, dmstartmaps)
+    if (apply_creep == True) or (apply_hysteresis == True):
+        if (apply_creep == True) and (apply_hysteresis != True):
+            print('Applying PMN creep')
+            previous_dmstartmap_filenames = None
+        elif (apply_creep != True) and (apply_hysteresis == True):
+            print('Applying DM hysteresis')
+        elif (apply_creep == True) and (apply_hysteresis == True):
+            print('Applying PMN creep and DM hysteresis')
+            
+        dmstartmaps_adjusted = apply_pmn_creep_and_hysteresis(flat_dm_filenames,apply_creep,apply_hysteresis,dmstartmaps,previous_dmstartmap_filenames)
+        dm1_list, dm2_list , _, _, _ = probes.get_dm_probes(cfg,probefiles,dmstartmaps_adjusted)
+        
     nlam = len(cfg.sl_list)
     ndm = 2 * len(dmrel_list) + 1
     nprobepair = len(dmrel_list)
