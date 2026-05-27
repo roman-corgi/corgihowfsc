@@ -3,7 +3,7 @@ from pathlib import Path
 import matplotlib
 import argparse
 
-matplotlib.use('TkAgg') #Agg
+#matplotlib.use('TkAgg') #Agg
 
 import eetc
 from howfsc.control.cs import ControlStrategy
@@ -21,6 +21,8 @@ from corgihowfsc.utils.contrast_nomalization import CorgiNormalization, EETCNorm
 from corgihowfsc.gitl.nulling_gitl import nulling_gitl
 from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 from corgihowfsc.utils.output_management import make_output_file_structure
+
+import numpy as np
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
@@ -45,6 +47,8 @@ def main(param_file_name='default_param.yml', fullpath=False):
 
     cmd_args = parser.parse_args()
     param_file = os.path.abspath(os.path.expanduser(cmd_args.param_file))
+    # Verify this is the correct file
+    print('Using parameters from %s' % param_file)
 
     if not os.path.isfile(param_file):
         raise FileNotFoundError(f'Parameter file not found: {param_file}')
@@ -68,7 +72,12 @@ def main(param_file_name='default_param.yml', fullpath=False):
     mode = sim_settings['mode']
     dark_hole = sim_settings['dark_hole']
     probe_shape = sim_settings['probe_shape']
-
+    flat_dm_filenames = sim_settings['flat_dm_filenames']
+    apply_creep = sim_settings['apply_creep']
+    apply_hysteresis = sim_settings['apply_hysteresis']
+    if apply_hysteresis == True:
+        previous_dmstartmap_filenames = sim_settings['previous_dmstartmap_filenames']
+   
     # Backend specific settings - which imager model to use, normalisation strategy, and which dmstartmaps to use for the first iteration (if any)
     backend_type = model_cfg['backend_type']
     normalization_type = model_cfg['normalization_type']
@@ -145,7 +154,12 @@ def main(param_file_name='default_param.yml', fullpath=False):
     args.num_proper_process = num_proper_process
     args.use_mpi = use_mpi
     args.debug = debug
-
+    args.flat_dm_filenames = flat_dm_filenames
+    args.apply_creep = apply_creep
+    args.apply_hysteresis = apply_hysteresis
+    if apply_hysteresis == True:
+        args.previous_dmstartmap_filenames = previous_dmstartmap_filenames
+   
     os.environ.setdefault(
         'CORGIHOWFSC_IMAGE_DEBUG_CSV',
         os.path.join(os.path.dirname(args.logfile), 'image_worker_debug.csv'),
@@ -195,6 +209,7 @@ def main(param_file_name='default_param.yml', fullpath=False):
 
     if num_proper_process is not None:
         corgi_overrides['NCPUS'] = num_proper_process
+               
 
     # Initialise the workers with the necessary data and configuration to run the howfsc loop, including the model files and any overrides
     if mpi_comm is not None:
@@ -220,8 +235,7 @@ def main(param_file_name='default_param.yml', fullpath=False):
         hconf=hconf,  # Your host config with stellar properties
         backend=backend_type,
         cor=mode,
-        corgi_overrides=corgi_overrides
-    )
+        )
 
     # Estimator selection
     if model_cfg['estimator'] == 'perfect':
@@ -268,6 +282,8 @@ def main(param_file_name='default_param.yml', fullpath=False):
         "dark_hole": args.dark_hole,
         "probe_shape": args.probe_shape,
         "precomp": args.precomp,
+        "apply_creep": args.apply_creep,
+        "apply_hysteresis": args.apply_hysteresis,
         # --- runtime ---
         "num_process": args.num_process,
         "num_threads": args.num_threads,
@@ -319,4 +335,5 @@ def main(param_file_name='default_param.yml', fullpath=False):
 
 
 if __name__ == '__main__':
-    main()
+    param_file_name='/Users/jessicag/Documents/GitHub/Dev/corgihowfsc/sandbox/jag/kickoff_iterations_params.yml'
+    main(param_file_name = param_file_name)
