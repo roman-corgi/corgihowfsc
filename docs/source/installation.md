@@ -23,7 +23,7 @@ Download these files manually by clicking on the following links and save them t
 
 Navigate to a directory where you want to clone the following three repositories, then clone them:  
 - CGI-EETC repo
-- the repo containing the CPP-specific CGISim Roman preflight model to use with Corgisim (*not* the official model from Sourceforge)
+- the repo containing the CPP-specific CGISim Roman preflight model to use with Corgisim (overrides the official model from Sourceforge)
 - this repo, CorgiSim-howfsc
 
 ```bash
