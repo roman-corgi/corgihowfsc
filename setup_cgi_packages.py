@@ -25,24 +25,26 @@ def check_environment():
     """Check if we're in the correct conda environment"""
     conda_env = os.environ.get('CONDA_DEFAULT_ENV')
     if conda_env != 'corgiloop':
-        print("❌ ERROR: Please activate the corgiloop environment first:")
+        print("[ERROR] Please activate the corgiloop environment first:")
         print("   conda activate corgiloop")
         sys.exit(1)
-    print(f"✓ Using conda environment: {conda_env}")
+    print(f"[OK] Using conda environment: {conda_env}")
 
 
 def run_pip_install(package_dir):
     """Install a package using pip in the current environment"""
     print(f"   Installing from {package_dir}...")
     try:
-        result = subprocess.run([sys.executable, "-m", "pip", "install", "."],
-                                cwd=package_dir,
-                                check=True,
-                                capture_output=True,
-                                text=True)
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "."],
+            cwd=package_dir,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
         return True
     except subprocess.CalledProcessError as e:
-        print(f"   ❌ Installation failed: {e}")
+        print(f"   [ERROR] Installation failed: {e}")
         print(f"   Error output: {e.stderr}")
         return False
 
@@ -143,14 +145,14 @@ def main():
 
     # Validate downloads directory
     if not downloads_dir.exists():
-        print(f"❌ ERROR: Downloads directory not found: {downloads_dir}")
+        print(f"[ERROR] Downloads directory not found: {downloads_dir}")
         print("Please provide a valid path to the directory containing the zip files.")
         print("\nExample usage:")
         print("  python setup_cgi_packages.py /path/to/your/downloads/")
         sys.exit(1)
 
-    print(f"📁 Downloads directory: {downloads_dir}")
-    print(f"📁 Extraction directory: {work_dir}\n")
+    print(f"[INFO] Downloads directory: {downloads_dir}")
+    print(f"[INFO] Extraction directory: {work_dir}\n")
 
     # Check for all required files first and validate them
     missing_files = []
@@ -166,21 +168,21 @@ def main():
                 invalid_files.append({'zip': pkg['zip'], 'error': message})
 
     if missing_files:
-        print("❌ ERROR: Missing required files in downloads directory:")
+        print("[ERROR] Missing required files in downloads directory:")
         for missing in missing_files:
-            print(f"   • {missing['zip']}")
+            print(f"   - {missing['zip']}")
             print(f"     Download from: {missing['url']}")
         print(f"\nPlease download all files to: {downloads_dir}")
         sys.exit(1)
 
     if invalid_files:
-        print("❌ ERROR: Invalid or corrupted ZIP files:")
+        print("[ERROR] Invalid or corrupted ZIP files:")
         for invalid in invalid_files:
-            print(f"   • {invalid['zip']}: {invalid['error']}")
+            print(f"   - {invalid['zip']}: {invalid['error']}")
         print(f"\nPlease re-download the corrupted files to: {downloads_dir}")
         sys.exit(1)
 
-    print("✓ All required ZIP files found and validated!\n")
+    print("[OK] All required ZIP files found and validated!\n")
 
     # Process each package
     success_count = 0
@@ -192,7 +194,7 @@ def main():
 
         # Step 1: Extract ZIP file
         if not dir_path.exists():
-            print(f"   📦 Extracting ZIP file: {pkg['zip']}")
+            print(f"   [INFO] Extracting ZIP file: {pkg['zip']}")
             print(f"      From: {zip_path}")
             print(f"      To: {work_dir}")
             try:
@@ -214,27 +216,27 @@ def main():
 
                         # If extracted directory name differs from expected, rename it
                         if actual_dir_name != pkg['dir'] and actual_dir_path.exists():
-                            print(f"      Renaming extracted directory: {actual_dir_name} → {pkg['dir']}")
+                            print(f"      Renaming extracted directory: {actual_dir_name} -> {pkg['dir']}")
                             actual_dir_path.rename(dir_path)
 
-                print(f"   ✅ Successfully extracted {pkg['zip']}")
+                print(f"   [OK] Successfully extracted {pkg['zip']}")
             except zipfile.BadZipFile:
-                print(f"   ❌ Error: {pkg['zip']} is not a valid ZIP file or is corrupted")
+                print(f"   [ERROR] {pkg['zip']} is not a valid ZIP file or is corrupted")
                 continue
             except Exception as e:
-                print(f"   ❌ Extraction failed: {e}")
+                print(f"   [ERROR] Extraction failed: {e}")
                 # Cleanup partial extraction
                 if dir_path.exists():
-                    print(f"   🧹 Cleaning up partial extraction...")
+                    print("   [INFO] Cleaning up partial extraction...")
                     shutil.rmtree(dir_path, ignore_errors=True)
                 continue
         else:
-            print(f"   📁 ZIP already extracted - using existing directory: {dir_path}")
+            print(f"   [INFO] ZIP already extracted - using existing directory: {dir_path}")
 
         # Step 2: Verify setup.py exists
         setup_py = dir_path / "setup.py"
         if not setup_py.exists():
-            print(f"   ❌ Error: setup.py not found in {dir_path}")
+            print(f"   [ERROR] setup.py not found in {dir_path}")
             print(f"      Expected structure after extraction:")
             print(f"      {dir_path}/setup.py")
             # List what's actually in the directory for debugging
@@ -247,27 +249,26 @@ def main():
                 except Exception:
                     print(f"      Could not list directory contents")
             continue
-        print(f"   ✓ Found setup.py in extracted directory")
+        print("   [OK] Found setup.py in extracted directory")
 
-        # Step 3: Install package using pip
-        print(f"   🔧 Installing {pkg['name']} using pip...")
+        print(f"   [INFO] Installing {pkg['name']} using pip...")
         if run_pip_install(dir_path):
-            print(f"   ✅ {pkg['name']} installed successfully\n")
+            print(f"   [OK] {pkg['name']} installed successfully\n")
             success_count += 1
         else:
-            print(f"   ❌ {pkg['name']} installation failed\n")
+            print(f"   [ERROR] {pkg['name']} installation failed\n")
 
     # Summary
     print("=" * 50)
     if success_count == len(packages):
-        print("🎉 ALL PACKAGES INSTALLED SUCCESSFULLY!")
+        print("[OK] ALL PACKAGES INSTALLED SUCCESSFULLY!")
         print("\nYour CGI environment is ready to use!")
         print("The corgiloop environment is already activated.")
     else:
-        print(f"⚠️  {success_count}/{len(packages)} packages installed successfully")
+        print(f"[WARNING] {success_count}/{len(packages)} packages installed successfully")
         print("Please check the errors above and try again.")
 
-    print(f"\n📝 Note: Extracted files are in {work_dir}")
+    print(f"\n[INFO] Note: Extracted files are in {work_dir}")
     print("      You can delete this directory after successful installation.")
     return success_count == len(packages)
 
@@ -277,8 +278,8 @@ if __name__ == "__main__":
         success = main()
         sys.exit(0 if success else 1)
     except KeyboardInterrupt:
-        print("\n❌ Installation interrupted by user.")
+        print("\n[ERROR] Installation interrupted by user.")
         sys.exit(1)
     except Exception as e:
-        print(f"\n❌ Unexpected error: {e}")
+        print(f"\n[ERROR] Unexpected error: {e}")
         sys.exit(1)

@@ -462,9 +462,13 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
 
         # Measured e-field at this setting
         log.info('Measured e-field at this setting')
+
+        # NOTE - when using perfect estimator, the estimator will return model e-field
+        # when imager == corgisim, estimator will return the central subband of its respective bandpass
+
         efield = estimator.estimate_efield(
-            intlist[j],
-            plist[j],
+            intensities=intlist[j],
+            phases=plist[j],
             min_good_probes=hconf['howfsc']['min_good_probes'],
             eestclip=hconf['howfsc']['eestclip'],
             eestcondlim=hconf['howfsc']['eestcondlim'],
@@ -506,19 +510,6 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         ely = cfg.sl_list[j].proptolyot(edm0)
         edh0 = cfg.sl_list[j].proptodh(ely)
         model_efield = insertinto(edh0, efield.shape)
-
-        # # TODO - normalisation of the model e-field?
-        # perfect_efield = imager.get_efield(dm1v=dmlistmeas[0], dm2v=dmlistmeas[1], lind=j, crop=croplist[j * ndm])
-        #
-        # if imager.backend == 'corgihowfsc':
-        #     # TODO - add a warning here for those who wants to speed up the corgisim by changing number of filters in cgisim_bandpasses
-        #     log.info('Using corgisim model, so perfect e-field is same for all DM settings at a given wavelength')
-        #     # mid_index = len(perfect_efield) // 2  # Get the central bandpass for the e-field
-        #     # model_efield = perfect_efield[mid_index]
-        # elif imager.backend == 'cgi-howfsc':
-        #     model_efield = perfect_efield
-        # else:
-        #     raise ValueError(f"Unrecognized imager backend: {imager.backend}")
 
         other[j]['model_efield'] = model_efield  # for reqt 1133640
 
@@ -574,20 +565,21 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
     log.info('probeheight = %g', probeheight)
     scale_factor_list = get_scale_factor_list(hconf['probe']['dmrel_ph_list'],
                                                probeheight)
-    log.info('scale factors = [%g, %g, %g, %g, %g, %g]', scale_factor_list[0],
-             scale_factor_list[1], scale_factor_list[2],
-             scale_factor_list[3], scale_factor_list[4],
-             scale_factor_list[5],
-    )
+    # Leaving old logging here for future comparison with gitl.py
+    # log.info('scale factors = [%g, %g, %g, %g, %g, %g]', scale_factor_list[0],
+    #          scale_factor_list[1], scale_factor_list[2],
+    #          scale_factor_list[3], scale_factor_list[4],
+    #          scale_factor_list[5],
+    # )
+    log.info('scale factors = ' + str(scale_factor_list))
 
     log.info('Compute camera settings using exposure time calculator')
     gain_list = []
     exptime_list = []
     nframes_list = []
     final_optflag = 0
-    debugging_dict['cam_params'] = {}                             
-    debugging_dict['cam_params']['nom'] = np.zeros((nlam, 3))
-    debugging_dict['cam_params']['probing'] = np.zeros((nlam, 3))
+
+    debugging_dict['cam_params'] = {}
     debugging_dict['cam_params_inputs'] = {}
     debugging_dict['cam_params_inputs']['pred_mean_contrast'] = np.zeros((nlam, 1))
     debugging_dict['cam_params_inputs']['pred_bright_contrast'] = np.zeros((nlam, 1))
@@ -658,7 +650,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         if optflag != 0:
             final_optflag = optflag
             pass
-        debugging_dict['cam_params']['nom'][index, :] = [gain, exptime, nframes]
+
         # nprobepair probes
         log.info('Probed camera settings from calculator')
         probed_snr = cstrat.get_probedsnr(iteration, prev_c)
@@ -680,7 +672,6 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         if optflag != 0:
             final_optflag = optflag
             pass
-        debugging_dict['cam_params']['probing'][index, :] = [gain, exptime, nframes]
         debugging_dict['cam_params_inputs']['pred_mean_contrast'][index] = scale
         debugging_dict['cam_params_inputs']['pred_bright_contrast'][index] = scale_bright
         debugging_dict['cam_params_inputs']['pred_mean_contrast_probing'][index] = pscale
@@ -708,6 +699,7 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
                               hconf['overhead']['overframe'],
                               )
     log.info('Expected time to complete next iteration = %g', next_time)
+    debugging_dict['next_iter_dur'] = next_time
 
     # 10. End
     if final_optflag == 0: # first optimizer succeeded every time

@@ -1,8 +1,25 @@
 import os
 from datetime import datetime
 from pathlib import Path
+import logging
 import yaml
 import sys
+
+
+def setup_logging(debug=False, logfile=None):
+    """Configure root logging for the current process."""
+    level = logging.DEBUG if debug else logging.INFO
+
+    config = {
+        "level": level,
+        "format": "%(asctime)s %(levelname)s %(name)s: %(message)s",
+        "force": True,
+    }
+
+    if logfile is not None:
+        config["filename"] = logfile
+
+    logging.basicConfig(**config)
 
 
 def make_output_file_structure(loop_framework, backend_type, base_path, base_corgiloop_path, final_filename, tag=None):
@@ -39,6 +56,9 @@ def save_run_config(args, fileout):
     """
     # convert args → dict safely
     cfg = vars(args).copy() if not isinstance(args, dict) else args.copy()
+    
+    # Runtime-only objects like MPI communicators are not YAML-serializable.
+    cfg.pop("mpi_comm", None)
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -68,14 +88,14 @@ def update_yml(path, updates: dict):
         with path.open("r", encoding="utf-8") as f:
             existing = yaml.safe_load(f) or {}
 
-    def merge(d, u):
-        for k, v in u.items():
-            if isinstance(v, dict) and isinstance(d.get(k), dict):
-                merge(d[k], v)
-            else:
-                d[k] = v
-        return d
+    # pull _meta out, put updates first, then existing args, then _meta at top
+    meta = existing.pop("_meta", None)
+    
+    merged = {}
+    if meta:
+        merged["_meta"] = meta
+    merged.update(updates)   # active_model, backend_type, etc. come first
+    merged.update(existing)  # then the args
 
-    merged = merge(existing, updates)
     with path.open("w", encoding="utf-8") as f:
         yaml.safe_dump(merged, f, sort_keys=False)

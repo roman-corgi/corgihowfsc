@@ -90,7 +90,7 @@ pixelweights:
 
 **Notes**:
 
-[//]: # (- [FILL IN: When to use uniform weights vs. custom weights])
+- If using `path_overrides` in `scripts/default_params.yaml` then the path must be changed to an absolute path
 
 [//]: # (- [FILL IN: How to generate custom pixel weight files])
 
@@ -241,6 +241,8 @@ fixedbp: '../../every_mask_config/fixedbp_zeros.fits'
 
 **Notes**:
 
+- If using `path_overrides` in `scripts/default_params.yaml` then the path must be changed to an absolute path
+
 ---
 
 ## Usage Guidelines
@@ -338,7 +340,7 @@ fixedbp: '../../every_mask_config/fixedbp_zeros.fits'
 
 ## File Path Conventions
 
-Relative paths in control strategy files are resolved relative to the location of the cstrat file.
+Relative paths in control strategy files are resolved relative to the location of the cstrat file. If using `path_overrides` in `scripts/default_params.yaml` then the paths must be changed to absolute paths.
 
 [//]: # (The example paths shown &#40;`../../every_mask_config/`&#41; suggest [FILL IN: explain directory structure].)
 

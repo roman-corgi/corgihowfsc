@@ -15,16 +15,13 @@ def get_cpu_allocation(num_process=None, num_imager_worker=None, num_proper_proc
     """
     Validate CPU counts for nested parallelism against allocated CPUs,
     and warn if oversubscription is detected.
-
     On Linux clusters, uses os.sched_getaffinity(0) to get the number of CPUs
     allocated to the current process. Falls back to
     os.cpu_count() on Windows/macOS, which may overestimate available CPUs on
     shared systems.
-
     The peak concurrent CPU usage is num_imager_worker * num_proper_process:
     - num_imager_worker: outer parallel workers, each collecting one probe image
     - num_proper_process: PROPER's internal multiprocessing CPUs per imager worker
-
     Args:
         num_process: int or None, number of processes for Jacobian computation.
                      Defaults to 1.
@@ -32,12 +29,12 @@ def get_cpu_allocation(num_process=None, num_imager_worker=None, num_proper_proc
                            probe image collection via run_parallel. Defaults to 1.
         num_proper_process: int or None, number of PROPER internal CPUs per imager
                             worker, passed via corgi_overrides['NCPUS']. Defaults to 1.
-
     Returns:
         num_process: int, unchanged from input (or 1 if None)
         num_imager_worker: int, unchanged from input (or 1 if None)
         num_proper_process: int, unchanged from input (or 1 if None)
-
+    Raises:
+        ValueError: If any argument is not a positive integer (when not None).
     Warns:
         If num_imager_worker * num_proper_process exceeds allocated CPUs, warns that
         hardware thrashing is likely.
@@ -54,6 +51,13 @@ def get_cpu_allocation(num_process=None, num_imager_worker=None, num_proper_proc
             "Falling back to os.cpu_count() which may overestimate "
             "available CPUs on shared/cluster systems."
         )
+
+    # Validate inputs
+    for name, val in [('num_process', num_process),
+                      ('num_imager_worker', num_imager_worker),
+                      ('num_proper_process', num_proper_process)]:
+        if val is not None and (not isinstance(val, int) or val < 1):
+            raise ValueError(f"{name} must be a positive integer or None, got {val!r}")
 
     # Defaults
     num_process = num_process or 1
@@ -97,7 +101,8 @@ def get_args(niter=5,
                     stellarvmagtarget=None,
                     stellartypetarget=None,
                     jacpath=None,
-                    dmstartmap_filenames=None):
+                    dmstartmap_filenames=None,
+                    path_overrides=None):
         """
         Initialize HOWFSC simulation with all required variables and configurations.
         Returns all variables needed for the main simulation loop.
@@ -201,6 +206,7 @@ def get_args(niter=5,
         args.jacpath = jacpath
         args.dmstartmap_filenames = dmstartmap_filenames
         # args.dm_start_shape = dm_start_shape
+        args.path_overrides = path_overrides or {}
 
         return args
 
@@ -337,7 +343,7 @@ def load_files(args, howfscpath):
             #     print('Using ' + start_parts[0] + '_' + start_parts[1] + '_' + ' as starting DM shape')
 
             if dmstartmap_filenames is None:
-                dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
+                dmstartmap_filenames = ['gitl_start_compact_dm1.fits', 'gitl_start_compact_dm2.fits']
 
         elif 'half' in args.dark_hole:
             hconffile = os.path.join(modelpath_band, 'hconf_nfov_flat.yaml')
@@ -485,10 +491,39 @@ def load_files(args, howfscpath):
         # should not reach here; argparse should catch this
         raise ValueError('Invalid coronagraph mode type')
 
-    dmstartmaps = [
-        fits.getdata(os.path.join(modelpath, dmstartmap_filenames[0])),
-        fits.getdata(os.path.join(modelpath, dmstartmap_filenames[1])),
-    ]
+    # Apply any explicit path overrides
+    _local_paths = {'cfgfile': cfgfile, 'cstratfile': cstratfile, 'hconffile': hconffile}
+    for key, val in getattr(args, 'path_overrides', {}).items():
+        if key in _local_paths:
+            _local_paths[key] = val
+        else:
+            raise ValueError(f"Unrecognized path override key: '{key}'")
+
+    cfgfile, cstratfile, hconffile = (
+        _local_paths['cfgfile'],
+        _local_paths['cstratfile'],
+        _local_paths['hconffile'],
+    )
+
+    dm_abs_flags = [os.path.isabs(p) for p in dmstartmap_filenames]
+
+    if any(dm_abs_flags) and not all(dm_abs_flags):
+        raise ValueError(
+            "dmstartmap_filenames must be specified consistently: "
+            "either both absolute paths or both filenames relative to modelpath. "
+            f"Got: {dmstartmap_filenames}"
+        )
+
+    if os.path.isabs(dmstartmap_filenames[0]):
+        dmstartmaps = [
+            fits.getdata(dmstartmap_filenames[0]),
+            fits.getdata(dmstartmap_filenames[1]),
+        ]
+    else:
+        dmstartmaps = [
+            fits.getdata(os.path.join(modelpath, dmstartmap_filenames[0])),
+            fits.getdata(os.path.join(modelpath, dmstartmap_filenames[1])),
+        ]
     # dmstartmaps = load_dm_start_maps(dm_start_file)
 
 

@@ -1,8 +1,9 @@
 import os
 from pathlib import Path
 import matplotlib
+import argparse
 
-matplotlib.use('TkAgg')
+matplotlib.use('TkAgg') #Agg
 
 import eetc
 from howfsc.control.cs import ControlStrategy
@@ -10,9 +11,6 @@ from howfsc.model.mode import CoronagraphMode
 from howfsc.util.loadyaml import loadyaml
 
 import roman_preflight_proper
-
-### Then, run the following command to copy the default prescription file
-roman_preflight_proper.copy_here()
 
 import corgihowfsc
 from corgihowfsc.utils.howfsc_initialization import get_args, load_files, get_cpu_allocation
@@ -26,97 +24,196 @@ from corgihowfsc.utils.output_management import make_output_file_structure
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
-defjacpath = os.path.join(os.path.dirname(howfscpath), 'temp')  # User should set to somewhere outside the repo
-precomp = 'precomp_jacs_always'  # 'load_all' if defjacpath is not None else 'precomp_all_once'
 
-base_path = Path.home()  # this is the proposed default but can be changed
-base_corgiloop_path = 'corgiloop_data'
-final_filename = 'final_frames.fits'
 
-loop_framework = 'corgi-howfsc'  # do not modify
-backend_type = 'cgi-howfsc'  # 'corgihowfsc' for the corgisim model, otherwise for the compact model use: 'cgi-howfsc'
-normalization_type = 'eetc' # 'eetc' for the compact model (cgi-howfsc), otherwise for the corgisim (corgihowfsc) model can use 'eetc', 'corgisim-off-axis', 'corgisim-on-axis'
+def main(param_file_name='default_param.yml', fullpath=False):
 
-dmstartmap_filenames = ['iter_080_dm1.fits',
-                        'iter_080_dm2.fits']  # For nfov_band1 only. ['iter_061_dm1.fits', 'iter_061_dm2.fits'] for wfov_band4
-
-output_every_iter = True  # Set to True to save frames at every iteration in real time, False to save all data after the simulation is complete. The file structure will be the same in both cases.
-
-# CPU count setup for parallel processing
-num_proper_process = 5 # Default is set by corgi_overrides in GitlImage initialization to 2. 
-num_jac_process = 12 # Default to 2 processes for Jacobian calculation, can be increased if needed. 
-num_imager_worker = None # Number of images to generate in parallel. If None, probing images are simulated in serial.
-
-def main():
-    global num_jac_process, num_imager_worker, num_proper_process
-
-    # Desired mask, band, dark hole, and probe shape
-    mode = 'nfov_band1'
-    dark_hole = '360deg'
-    probe_shape = 'default'
-
-    print(backend_type, 'nulling Gitl simulation starting with mode = {}, dark hole = {}, probe shape = {}'.format(mode, dark_hole, probe_shape))
-
-    # Make output path
-    # Note get_args() needs a fileout_path so if it is desired to move make_output_file_structure() after get_args()
-    # make sure to update args.fileout with final fileout_path
-    folder_tag = None  # optional additional descriptor for output folder
-    fileout_path = make_output_file_structure(loop_framework, backend_type, base_path, base_corgiloop_path,
-                                              final_filename, tag=folder_tag)
-
-    # Check the CPU allocation and give user a warning if the requested parallelization may exceed available resources
-    num_jac_process, num_imager_worker, num_proper_process = get_cpu_allocation(num_jac_process, num_imager_worker, num_proper_process)
+    # make sure each worker has access to the roman preflight model for mpi 
+    roman_preflight_proper.copy_here()
     
+    # Set the path to the default parameter file relative to this script
+    default_param_file = param_file_name if fullpath else os.path.join(os.path.dirname(__file__), param_file_name)
+
+    # Create the argument parser and add the --param_file argument
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--param_file',
+        type=str,
+        default=default_param_file,
+        help='Path to parameter YAML file'
+    )
+
+    cmd_args = parser.parse_args()
+    param_file = os.path.abspath(os.path.expanduser(cmd_args.param_file))
+
+    if not os.path.isfile(param_file):
+        raise FileNotFoundError(f'Parameter file not found: {param_file}')
+
+    params = loadyaml(param_file)
+
+    # Shared config
+    active_model = params['active_model']
+
+    runtime = params['runtime']
+    sim_settings = params['sim_settings']
+    paths = params['paths']
+    crop_cfg = params['crop']
+    model_cfg = params['models'][active_model]
+
+    # Simulation settings
+    loop_framework = sim_settings['loop_framework']
+    precomp = sim_settings['precomp']
+    output_every_iter = sim_settings['output_every_iter']
+    niter = sim_settings['niter']
+    mode = sim_settings['mode']
+    dark_hole = sim_settings['dark_hole']
+    probe_shape = sim_settings['probe_shape']
+
+    # Backend specific settings - which imager model to use, normalisation strategy, and which dmstartmaps to use for the first iteration (if any)
+    backend_type = model_cfg['backend_type']
+    normalization_type = model_cfg['normalization_type']
+    dmstartmap_filenames = model_cfg['dmstartmap_filenames']
+
+    # Paths
+    base_path = Path(paths['base_path']).expanduser()
+    base_corgiloop_path = paths['base_corgiloop_path']
+    final_filename = paths['final_filename']
+    folder_tag = paths['folder_tag']
+
+    # Optional path overrides
+    path_overrides = {
+        k: v for k, v in params.get('path_overrides', {}).items()
+        if v is not None
+    }
+
+    defjacpath_cfg = paths['defjacpath']
+    if os.path.isabs(defjacpath_cfg):
+        defjacpath = defjacpath_cfg
+    else:
+        defjacpath = os.path.join(os.path.dirname(howfscpath), defjacpath_cfg)
+
+    # runtime settings
+    num_proper_process = runtime['num_proper_process']
+    num_jac_process = runtime['num_jac_process']
+    num_imager_worker = runtime['num_imager_worker']
+    use_mpi = runtime.get('use_mpi', False)
+    debug = runtime.get('debug', False)
+
+    print(
+        backend_type,
+        'nulling Gitl simulation starting with mode = {}, dark hole = {}, probe shape = {}'.format(
+            mode, dark_hole, probe_shape
+        )
+    )
+
+    # Output path
+    fileout_path = make_output_file_structure(
+        loop_framework,
+        backend_type,
+        base_path,
+        base_corgiloop_path,
+        final_filename,
+        tag=folder_tag
+    )
+
+    # Validate local CPU allocation. MPI allocation is checked after initializing MPI.
+    if not use_mpi:
+        num_jac_process, num_imager_worker, num_proper_process = get_cpu_allocation(
+            num_jac_process,
+            num_imager_worker,
+            num_proper_process,
+        )
+
+    # Set up arguments for the howfsc initialization 
     args = get_args(
-        niter=3,
+        niter=niter,
         mode=mode,
         dark_hole=dark_hole,
         probe_shape=probe_shape,
         precomp=precomp,
         num_process=num_jac_process,
-        num_threads=1,
+        num_threads=1, # Do not change this number
         fileout=fileout_path,
         jacpath=defjacpath,
+        path_overrides=path_overrides,
         dmstartmap_filenames=dmstartmap_filenames,
         logfile=os.path.join(os.path.dirname(fileout_path), 'gitl.log')
     )
 
-
-    # User params
-    mode = args.mode
+    args.starting_contrast = float(model_cfg['starting_contrast'])
     args.num_imager_worker = num_imager_worker
     args.num_proper_process = num_proper_process
+    args.use_mpi = use_mpi
+    args.debug = debug
+
+    os.environ.setdefault(
+        'CORGIHOWFSC_IMAGE_DEBUG_CSV',
+        os.path.join(os.path.dirname(args.logfile), 'image_worker_debug.csv'),
+    )
+
+    # Initialize MPI if needed, and add the mpi_comm to args for use in howfsc initialization and later passing to workers; 
+    # If not using MPI, mpi_comm will be None and should be handled as such in the code
+    mpi_comm = None
+
+    if use_mpi:
+        from corgihowfsc.mpi.mpi_runtime import initialize_mpi_comm, validate_mpi_allocation
+        mpi_comm = initialize_mpi_comm()
+
+        # checking the MPI allocation here.
+        validate_mpi_allocation(
+            mpi_comm,
+            num_imager_worker=num_imager_worker,
+            num_proper_process=num_proper_process,
+        )
+    
+    # Add mpi_comm to args for use in howfsc initialization and later passing to workers
+    args.mpi_comm = mpi_comm
 
     modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps = load_files(args,
                                                                                                            howfscpath)
 
-    # cfg
     cfg = CoronagraphMode(cfgfile)
-
-    # hconffile
     hconf = loadyaml(hconffile, custom_exception=TypeError)
 
     # Define control and estimator strategy
     cstrat = ControlStrategy(cstratfile)
-    estimator = DefaultEstimator()
 
     # Initialize default probes class
     probes = ProbesShapes(args.probe_shape)
 
-    # Image cropping parameters:
-    crop_params = {}
-    crop_params['nrow'] = 153  # FIXED VALUE; do not change this
-    crop_params['ncol'] = 153  # FIXED VALUE; do not change this
+    # Crop parameters
+    crop_params = {
+        'nrow': crop_cfg['nrow'],
+        'ncol': crop_cfg['ncol'],
+        'lrow': model_cfg['lrow'],
+        'lcol': model_cfg['lcol'],
+    }
 
-    # Define imager and normalization (counts->contrast) strategy
-    corgi_overrides = {}
+    # Corgi overrides
+    corgi_overrides = model_cfg.get('corgi_overrides', {}).copy()   
     corgi_overrides['output_dim'] = crop_params['nrow']
-    corgi_overrides['is_noise_free'] = False
-    corgi_overrides['oversampling_factor'] = 3  # Always needs to be odd!
 
     if num_proper_process is not None:
         corgi_overrides['NCPUS'] = num_proper_process
-        
+
+    # Initialise the workers with the necessary data and configuration to run the howfsc loop, including the model files and any overrides
+    if mpi_comm is not None:
+        from corgihowfsc.mpi.mpi_runtime import build_worker_init_config, initialize_workers
+        initialize_workers(
+            mpi_comm,
+            build_worker_init_config(
+                args, 
+                cfgfile,
+                cstratfile,
+                hconffile,
+                backend_type,
+                mode,
+                corgi_overrides,
+            ),
+        )
+    else:
+        print("MPI not enabled, running in single node.")
+
     imager = GitlImage(
         cfg=cfg,  # Your CoronagraphMode object
         cstrat=cstrat,  # Your ControlStrategy object
@@ -126,16 +223,21 @@ def main():
         corgi_overrides=corgi_overrides
     )
 
-    if backend_type == 'cgi-howfsc':
-        crop_params['lrow'] = 436
-        crop_params['lcol'] = 436
-    elif backend_type == 'corgihowfsc':
-        crop_params['lrow'] = 0
-        crop_params['lcol'] = 0
-          
+    # Estimator selection
+    if model_cfg['estimator'] == 'perfect':
+        estimator = PerfectEstimator()
+        # Reduce number of probe pairs to speed up simulation:
+        probefiles = {0: probefiles[0]}
+        hconf['probe']['dmrel_ph_list'] = hconf['probe']['dmrel_ph_list'][:1]
+    elif model_cfg['estimator'] == 'default':
+        estimator = DefaultEstimator()
+    else:
+        raise ValueError(f"Invalid estimator choice: {model_cfg['estimator']}. Choose 'perfect' or 'default'.")
+
+    # Normalization
     if normalization_type == 'eetc':
         normalization_strategy = EETCNormalization(backend_type, corgi_overrides)
-      
+
     elif normalization_type == 'corgisim-off-axis' and backend_type == 'corgihowfsc':
         normalization_strategy = CorgiNormalization(cfg,
                                                   cstrat,
@@ -157,6 +259,27 @@ def main():
 
 
     metadata = {
+        # --- user run settings ---
+        "active_model": active_model,
+        "backend_type": backend_type,
+        "normalization_type": normalization_type,
+        "niter": args.niter,
+        "mode": args.mode,
+        "dark_hole": args.dark_hole,
+        "probe_shape": args.probe_shape,
+        "precomp": args.precomp,
+        # --- runtime ---
+        "num_process": args.num_process,
+        "num_threads": args.num_threads,
+        "num_imager_worker": args.num_imager_worker,
+        "num_proper_process": args.num_proper_process,
+        "use_mpi": args.use_mpi,
+        # --- crop & overrides ---
+        "crop_params": crop_params,
+        "corgi_overrides": corgi_overrides,
+        # --- resolved file paths ---
+        "fileout": str(args.fileout),
+        "jacpath": str(args.jacpath),
         "inputs": {
             "modelpath": str(modelpath),
             "cfgfile": str(cfgfile),
@@ -164,10 +287,12 @@ def main():
             "cstratfile": str(cstratfile),
             "jacfile": str(jacfile),
             "probefiles": {str(k): str(v) for k, v in probefiles.items()}
-            if isinstance(probefiles, dict) else probefiles,
+                if isinstance(probefiles, dict) else probefiles,
             "n2clistfiles": [str(p) for p in (n2clistfiles or [])],
         },
-        "hconf": hconf,  # already YAML-safe
+        # --- full hconf dump ---
+        "hconf": hconf,
+        # --- objects used ---
         "objects": {
             "cfg_class": type(cfg).__name__,
             "cstrat_class": type(cstrat).__name__,
@@ -175,17 +300,22 @@ def main():
             "probes_class": type(probes).__name__,
             "imager_class": type(imager).__name__,
         },
-        "crop_params": crop_params,
-        "corgi_overrides": corgi_overrides,
     }
 
-    nulling_gitl(cstrat,
-                 estimator,
-                 probes,
-                 normalization_strategy,
-                 imager,
-                 cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps,
-                 metadata, output_every_iter)
+    try:
+        nulling_gitl(cstrat,
+                     estimator,
+                     probes,
+                     normalization_strategy,
+                     imager,
+                     cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps,
+                     metadata, output_every_iter)
+    finally:
+        if mpi_comm is not None:
+            from corgihowfsc.mpi.mpi_runtime import shutdown_workers
+            shutdown_workers(mpi_comm)
+
+    print('nulling_gitl complete, exiting', flush=True)
 
 
 if __name__ == '__main__':

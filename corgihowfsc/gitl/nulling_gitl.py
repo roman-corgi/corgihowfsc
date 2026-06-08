@@ -32,13 +32,19 @@ from howfsc.model.mode import CoronagraphMode
 
 from howfsc.util.loadyaml import loadyaml
 from howfsc.util.gitl_tools import param_order_to_list
+from howfsc.precomp import howfsc_precomputation
 
 from corgihowfsc.gitl.modular_gitl import howfsc_computation
-from howfsc.precomp import howfsc_precomputation
 from corgihowfsc.utils.saving_output import save_outputs, save_outputs_iter
-from corgihowfsc.utils.output_management import save_run_config, update_yml
+from corgihowfsc.utils.output_management import (
+    save_run_config,
+    setup_logging,
+    update_yml,
+)
 from corgihowfsc.utils.gitl_worker import _collect_framelist
-from corgihowfsc.utils.metrics import get_ni, get_perfect_efield
+from corgihowfsc.gitl.gitl_funcs import get_initial_cam_params
+from corgihowfsc.utils.metrics import get_ni
+
 
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(howfsc.__file__))
@@ -102,13 +108,18 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     precomp = args.precomp
     num_process = args.num_process
     num_threads = args.num_threads
+    contrast = float(args.starting_contrast) # "starting" value to bootstrap getting we0
+    debug = args.debug
 
-    safe_cpu_count = args.num_imager_worker # TODO - hard coding
+    safe_cpu_count = args.num_imager_worker 
     print('Using num_imager_worker = ', safe_cpu_count)
 
-    # TODO - move this out from here and change it to os.sched_getaffinity
-    if safe_cpu_count == None:
-        safe_cpu_count = 1
+    use_mpi = args.use_mpi
+    num_proper_process = args.num_proper_process
+    mpi_comm = args.mpi_comm
+
+    if use_mpi:
+        from corgihowfsc.mpi.mpi_runtime import collect_framelist_mpi, precompute_jac_mpi
 
     # Make filout dir
     if args.fileout is not None:
@@ -116,14 +127,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         os.makedirs(os.path.dirname(args.fileout), exist_ok=True)
 
     # Set up logging
-    if logfile is not None:
-        logging.basicConfig(filename=logfile, level=logging.INFO)
-        pass
-    else:
-        logging.basicConfig(level=logging.INFO)
-        pass
-
-    log = logging.getLogger(__name__)
+    setup_logging(debug=debug, logfile=logfile)
 
     config_path = save_run_config(args, args.fileout)
     log.info(f"Saved run configuration to {config_path}")
@@ -152,27 +156,14 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         pr = cProfile.Profile()
         pass
 
-    # Set up logging
-    if logfile is not None:
-        logging.basicConfig(filename=logfile, level=logging.INFO)
-        pass
-    else:
-        logging.basicConfig(level=logging.INFO)
-        pass
-    log = logging.getLogger(__name__)
+    contrast = float(args.starting_contrast) # "starting" value to bootstrap getting we0
 
-
-    # exptime = 10 # FIXME this should be derived from contrast eventually
-    contrast = 3.5e-4 # "starting" value to bootstrap getting we0
-
-    # dm1_list, dm2
+    # dm1_list, dm2_list
     # Get DM lists
     dm1_list, dm2_list, dmrel_list, dm10, dm20 = probes.get_dm_probes(cfg, probefiles, dmstartmaps)
     nlam = len(cfg.sl_list)
     ndm = 2 * len(dmrel_list) + 1
-
-    # cstratfile
-    # cstrat = ControlStrategy(cstratfile)
+    nprobepair = len(dmrel_list)
 
     # nrow, ncol, croplist
     nrow = crop_params['nrow']
@@ -206,19 +197,31 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         pass
     elif precomp in ['precomp_jacs_once', 'precomp_jacs_always']:
         t0 = time.time()
-        jac, jtwj_map, _ = howfsc_precomputation(
-            cfg=cfg,
-            dmset_list=[dm10, dm20],
-            cstrat=cstrat,
-            subcroplist=subcroplist,
-            jacmethod='fast',
-            do_n2clist=False,
-            num_process=num_process,
-            num_threads=num_threads,
-        )
+        
+        if use_mpi:
+            jac, jtwj_map, _ = precompute_jac_mpi(
+                mpi_comm,
+                cfg, [dm10, dm20], cstrat, subcroplist,
+                jacmethod='fast', num_threads=num_threads,
+                do_n2clist=False,
+                max_workers=safe_cpu_count,
+            )
+        else:
+            jac, jtwj_map, _ = howfsc_precomputation(
+                cfg=cfg,
+                dmset_list=[dm10, dm20],
+                cstrat=cstrat,
+                subcroplist=subcroplist,
+                jacmethod='fast',
+                do_n2clist=False,
+                num_process=num_process,
+                num_threads=num_threads,
+            )
+        
         t1 = time.time()
         log.info('Initial jac calc time: ' + str(t1-t0) + ' seconds')
         n2clist = []
+        
         for n2cfn in n2clistfiles:
             n2clist.append(pyfits.getdata(n2cfn))
             pass
@@ -243,58 +246,69 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
 
     # TODO: update this to allow other stars? Not sure why its always v
     get_cgi_eetc = CGIEETC(mag=hconf['star']['stellar_vmag'],
-                       phot='v', # only using V-band magnitudes as a standard
-                       spt=hconf['star']['stellar_type'],
-                       pointer_path=os.path.join(eetc_path,
-                                                 hconf['hardware']['pointer']),
+                        phot='v', # only using V-band magnitudes as a standard
+                        spt=hconf['star']['stellar_type'],
+                        pointer_path=os.path.join(eetc_path,
+                                                    hconf['hardware']['pointer']),
     )
 
 
     print('Calculating initial eetc exp time')
+    orig_exptime_list, orig_gain_list, orig_nframes_list, this_iter_time = get_initial_cam_params(cstrat, contrast, hconf, get_cgi_eetc, nprobepair, ndm, nlam)
 
-    # Initialize things
-    unprobed_snr = cstrat.get_unprobedsnr(1, contrast)
-    probeheight = cstrat.get_probeheight(1, contrast)
-    probed_snr = cstrat.get_probedsnr(1, contrast)
-    pscale = contrast + probeheight
-    pscale_bright = 1.5*contrast + probeheight + \
-                    2 * np.sqrt(probeheight) * np.sqrt(1.5*contrast)
-                    
-    nframes, exptime, gain, snr_out, optflag = \
-        get_cgi_eetc.calc_exp_time(
-            sequence_name=hconf['hardware']['sequence_list'][0],
-            snr=probed_snr,
-            scale=pscale,
-            scale_bright=pscale_bright,
-        )
+    # prev lists for debugging later
+    prev_exptime_list = orig_exptime_list.copy()
+    prev_gain_list = orig_gain_list.copy()
+    prev_nframes_list = orig_nframes_list.copy()
+    iteration_durations = []
+    iteration_durations.append(this_iter_time)
 
-    # prev_exptime_list
-    prev_exptime_list = [exptime] * (nlam * ndm)
-
-    # framelist
-    # do last, needs peak flux
+    # set the initial seed
     rng = np.random.default_rng(12345)
-    
-    num_imager_worker = args.num_imager_worker 
-    print('Using num_imager_worker = ', num_imager_worker)
+
 
     # normalisation strategy first then imager, since normalisation strategy is needed to calculate peak flux for framelist collection
 
+    # get the time for framelist collection
+    t0 = time.time()
     # this step is to apply probe images
-    framelist = _collect_framelist(
-        imager, cfg, dm1_list, dm2_list,
-        exptime_list=[exptime] * (nlam * ndm),
-        gain_list=[gain] * (nlam * ndm),
-        nframes_list=[nframes] * (nlam * ndm), 
-        croplist=croplist,
-        normalization_strategy=normalization_strategy,
-        get_cgi_eetc=get_cgi_eetc,
-        hconf=hconf,
-        ndm=ndm,
-        cstrat=cstrat,
-        fracbadpix=fracbadpix,
-        n_jobs=safe_cpu_count,
-    )
+    if use_mpi:
+        framelist = collect_framelist_mpi(
+            mpi_comm,
+            imager, cfg, dm1_list, dm2_list,
+            exptime_list=orig_exptime_list,
+            gain_list=orig_gain_list,
+            nframes_list=orig_nframes_list,
+            croplist=croplist,
+            normalization_strategy=normalization_strategy,
+            get_cgi_eetc=get_cgi_eetc,
+            hconf=hconf,
+            ndm=ndm,
+            cstrat=cstrat,
+            fracbadpix=fracbadpix,
+            iteration=0,
+            max_workers=safe_cpu_count,
+        )
+    else:
+        framelist = _collect_framelist(
+            imager, cfg, dm1_list, dm2_list,
+            exptime_list=orig_exptime_list,
+            gain_list=orig_gain_list,
+            nframes_list=orig_nframes_list,
+            croplist=croplist,
+            normalization_strategy=normalization_strategy,
+            get_cgi_eetc=get_cgi_eetc,
+            hconf=hconf,
+            ndm=ndm,
+            cstrat=cstrat,
+            fracbadpix=fracbadpix,
+            iteration=0,
+            n_jobs=safe_cpu_count,
+        )
+    t1 = time.time()
+
+    log.info('Initial framelist collection time: %s seconds (mpi=%s)',
+                t1-t0, use_mpi)
 
     # drop packets for testing if requested
     if nbadpacket > 0:
@@ -327,9 +341,9 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         abs_dm1, abs_dm2, scale_factor_list, gain_list, exptime_list, \
         nframes_list, prev_c, next_c, next_time, status, other, debugging_dict = \
         howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
-                           croplist, prev_exptime_list,
-                           cstrat, n2clist, hconf, iteration,
-                           estimator, imager, normalization_strategy, probes)
+                            croplist, prev_exptime_list,
+                            cstrat, n2clist, hconf, iteration,
+                            estimator, imager, normalization_strategy, probes)
         if isprof:
             pr.disable()
             pass
@@ -345,6 +359,23 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         # New lists compared to original version
         measured_c.append(prev_c)
         pred_c.append(next_c)
+
+        # Add camera parameters to debugging dictionary
+        debugging_dict['cam_params']['nom'] = np.zeros((nlam, 3))
+        debugging_dict['cam_params']['probing'] = np.zeros((nlam, 3))
+        for j in range(nlam):
+            nom_idx = j * ndm  # unprobed frame index in flat list
+            probe_idx = j * ndm + 1  # first probe frame index
+            debugging_dict['cam_params']['nom'][j, :] = [
+                prev_gain_list[nom_idx],
+                prev_exptime_list[nom_idx],
+                prev_nframes_list[nom_idx],
+            ]
+            debugging_dict['cam_params']['probing'][j, :] = [
+                prev_gain_list[probe_idx],
+                prev_exptime_list[probe_idx],
+                prev_nframes_list[probe_idx],
+            ]
 
         log.info('-----------------------------------')
         log.info('Summary of iteration ' + str(iteration))
@@ -364,17 +395,30 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             hdul.writeto(fileout, overwrite=True)
 
             if output_model_efield and imager.backend == 'corgihowfsc':
-                perfect_efield_list.append(get_perfect_efield(imager, abs_dm1, abs_dm2, croplist, log, nlam, ndm, speedup=True))
+                # if speedup == True: getting the model e-field for the central bandpass (e.g. 1b for band 1)
+                # if speedup == False: getting the model e-field for all bandpasses
+                if estimator.name == 'perfect':
+                    perfect_efield = [otherlist[iteration-1][j]['meas_efield'] for j in range(len(cfg.sl_list))]
+                else:
+                    perfect_efield = imager.get_all_efields(abs_dm1=abs_dm1, abs_dm2=abs_dm2, croplist=croplist, nlam=nlam, ndm=ndm, speedup=True)
+
+                perfect_efield_list.append(perfect_efield)
             else:
                 perfect_efield_list.append(None)
 
+            # get the NI metric for this iteration
             ni_score, ni_inner, ni_outer = get_ni(framelistlist[iteration-1], cfg, prev_exptime_list,
                                                   debugging_dict['peakflux'], normalization_strategy, ndm, nrow, ncol)
             ni_lists['ni_score'].append(ni_score)
             ni_lists['ni_inner'].append(ni_inner)
             ni_lists['ni_outer'].append(ni_outer)
-            _, _ = save_outputs_iter(iteration-1, fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, perfect_efield_list[iteration-1], debugging_dict=debugging_dict)
 
+            debugging_dict['this_iter_time'] = iteration_durations[iteration-1]
+            _, _ = save_outputs_iter(iteration-1, fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, perfect_efield_list[iteration-1], jac, iteration_durations=iteration_durations, debugging_dict=debugging_dict)
+
+            # Append iteration duration for next iteration
+            iteration_durations.append(debugging_dict['next_iter_dur'])
+            
         
         print('-----------------------------------')
         print('Iteration: ' + str(iteration))
@@ -387,34 +431,56 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         # new dm1_list, dm2_list
         dm1_list = []
         dm2_list = []
+        # slight change to allow for different numbers of probe pairs when using perfect estimator to speed up iterations
+        nprobepair = len(dmrel_list)
         for index in range(nlam):
-            # DM1 same per wavelength
-            dm1_list.append(abs_dm1)
-            dm1_list.append(abs_dm1 + scale_factor_list[0]*dmrel_list[0])
-            dm1_list.append(abs_dm1 + scale_factor_list[3]*dmrel_list[0])
-            dm1_list.append(abs_dm1 + scale_factor_list[1]*dmrel_list[1])
-            dm1_list.append(abs_dm1 + scale_factor_list[4]*dmrel_list[1])
-            dm1_list.append(abs_dm1 + scale_factor_list[2]*dmrel_list[2])
-            dm1_list.append(abs_dm1 + scale_factor_list[5]*dmrel_list[2])
+            dm1_list.append(abs_dm1)  # unprobed
+            for i, dmrel in enumerate(dmrel_list):
+                dm1_list.append(abs_dm1 + scale_factor_list[i] * dmrel)  # positive
+                dm1_list.append(abs_dm1 + scale_factor_list[i + nprobepair] * dmrel)  # negative
             for j in range(ndm):
-                # DM2 always same
                 dm2_list.append(abs_dm2)
-                pass
-            pass
+
+        # Leaving old framework here for future comparison with nulltest_gitl.py (which by design only allows 3 sets of probe commands)
+        # for index in range(nlam):
+        #     # DM1 same per wavelength
+        #     dm1_list.append(abs_dm1)
+        #     dm1_list.append(abs_dm1 + scale_factor_list[0]*dmrel_list[0])
+        #     dm1_list.append(abs_dm1 + scale_factor_list[3]*dmrel_list[0])
+        #     dm1_list.append(abs_dm1 + scale_factor_list[1]*dmrel_list[1])
+        #     dm1_list.append(abs_dm1 + scale_factor_list[4]*dmrel_list[1])
+        #     dm1_list.append(abs_dm1 + scale_factor_list[2]*dmrel_list[2])
+        #     dm1_list.append(abs_dm1 + scale_factor_list[5]*dmrel_list[2])
+        #     for j in range(ndm):
+        #         # DM2 always same
+        #         dm2_list.append(abs_dm2)
+        #         pass
+        #     pass
 
         # Skip the very last Jacobian that never gets used
         if precomp in ['precomp_jacs_always'] and iteration < niter:
             t0 = time.time()
-            jac, jtwj_map, _ = howfsc_precomputation(
-                cfg=cfg,
-                dmset_list=[abs_dm1, abs_dm2],
-                cstrat=cstrat,
-                subcroplist=subcroplist,
-                jacmethod='fast',
-                do_n2clist=False,
-                num_process=num_process,
-                num_threads=num_threads,
-            )
+
+            if use_mpi:
+                jac, jtwj_map, _ = precompute_jac_mpi(
+                    mpi_comm,
+                    cfg, [abs_dm1, abs_dm2], cstrat, subcroplist,
+                    jacmethod='fast', num_threads=num_threads,
+                    do_n2clist=False,
+                    max_workers=safe_cpu_count,
+                )
+            else:
+                jac, jtwj_map, _ = howfsc_precomputation(
+                    cfg=cfg,
+                    dmset_list=[abs_dm1, abs_dm2],
+                    cstrat=cstrat,
+                    subcroplist=subcroplist,
+                    jacmethod='fast',
+                    do_n2clist=False,
+                    num_process=num_process,
+                    num_threads=num_threads,
+                )
+
             t1 = time.time()
             log.info('Jac recalc time: ' + str(t1-t0) + ' seconds')
 
@@ -424,20 +490,46 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         prev_nframes_list = param_order_to_list(nframes_list)
 
         # new framelist
-        framelist = _collect_framelist(
-            imager, cfg, dm1_list, dm2_list,
-            exptime_list=prev_exptime_list,
-            gain_list=prev_gain_list,
-            nframes_list=prev_nframes_list,
-            croplist=croplist,
-            normalization_strategy=normalization_strategy,
-            get_cgi_eetc=get_cgi_eetc,
-            hconf=hconf,
-            ndm=ndm,
-            cstrat=cstrat,
-            fracbadpix=fracbadpix,
-            n_jobs=safe_cpu_count,
-        )
+        # get the time for framelist collection
+        t0 = time.time()
+
+        if use_mpi:
+            framelist = collect_framelist_mpi(
+                mpi_comm,
+                imager, cfg, dm1_list, dm2_list,
+                exptime_list=prev_exptime_list,
+                gain_list=prev_gain_list,
+                nframes_list=prev_nframes_list,
+                croplist=croplist,
+                normalization_strategy=normalization_strategy,
+                get_cgi_eetc=get_cgi_eetc,
+                hconf=hconf,
+                ndm=ndm,
+                cstrat=cstrat,
+                fracbadpix=fracbadpix,
+                iteration=iteration,
+                max_workers=safe_cpu_count,
+            )
+        else:
+            framelist = _collect_framelist(
+                imager, cfg, dm1_list, dm2_list,
+                exptime_list=prev_exptime_list,
+                gain_list=prev_gain_list,
+                nframes_list=prev_nframes_list,
+                croplist=croplist,
+                normalization_strategy=normalization_strategy,
+                get_cgi_eetc=get_cgi_eetc,
+                hconf=hconf,
+                ndm=ndm,
+                cstrat=cstrat,
+                fracbadpix=fracbadpix,
+                iteration=iteration,
+                n_jobs=safe_cpu_count,
+            )
+
+        t1 = time.time()
+        log.info('Framelist collection time for iteration %d: %s seconds (mpi=%s)',
+                    iteration, t1-t0, use_mpi)
 
         # drop packets for testing if requested
         if nbadpacket > 0:
@@ -460,9 +552,9 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
                 pass
             pass
 
-        # technically new nrow, ncol, croplist too, but these don't actually
-        # change (parameters are not updated)
-        pass
+    # technically new nrow, ncol, croplist too, but these don't actually
+    # change (parameters are not updated)
+    pass
 
     if isprof:
         # cumtime
@@ -489,12 +581,12 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
         hdul.writeto(fileout, overwrite=True)
 
         ni_score, ni_inner, ni_outer = get_ni(framelistlist[iteration - 1], cfg, prev_exptime_list,
-                                              debugging_dict['peakflux'], normalization_strategy, ndm, nrow, ncol)
+                                                debugging_dict['peakflux'], normalization_strategy, ndm, nrow, ncol)
         ni_lists['ni_score'].append(ni_score)
         ni_lists['ni_inner'].append(ni_inner)
         ni_lists['ni_outer'].append(ni_outer)
 
-        save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, perfect_efield_list)
+        save_outputs(fileout, cfg, camlist, framelistlist, otherlist, measured_c, abs_dm1list, abs_dm2list, output_every_iter, pred_c, ni_lists, perfect_efield_list, jac)
 
 
 if __name__ == "__main__":

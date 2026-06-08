@@ -21,21 +21,64 @@ class ProbesShapes(Probes):
         self.lcol = lcol
 
     def get_dm_probes(self, cfg, probefiles, dmstartmaps,
-                      scalelist=[0.3, 0.3, 0.3, -0.3, -0.3, -0.3]):
+                      scalelist=None):
+        """
+        Build DM1 and DM2 command lists for a probed HOWFSC iteration.
 
-        # Get probe commands
-        # dm1_list, dm2
-        # dmrel_list = [pyfits.getdata(probe0file),
-        #               pyfits.getdata(probe1file),
-        #               pyfits.getdata(probe2file),
-        #               ]  # these are 1e-5 probe relative DM settings
-        dmrel_list = [pyfits.getdata(probefiles[0]),
-                      pyfits.getdata(probefiles[1]),
-                      pyfits.getdata(probefiles[2]),
-                      ]  # these are 1e-5 probe relative DM settings
+        For each wavelength, the DM1 list contains one unprobed command followed
+        by a positive/negative pair for each probe, giving ndm = 2*nprobepair + 1
+        entries per wavelength. DM2 is held fixed at dm20 for all entries.
+
+        Parameters
+        ----------
+        cfg : CoronagraphMode
+            Optical model; used to determine the number of wavelengths (nlam).
+        probefiles : list of str
+            Paths to FITS files containing the relative DM probe commands.
+            The number of probes (nprobepair) is inferred from the length of
+            this list.
+        dmstartmaps : list of ndarray
+            Two-element list [dm10, dm20] giving the absolute starting DM
+            commands in volts.
+        scalelist : list of float, optional
+            Scale factors applied to the probe commands. Must have length
+            2 * nprobepair, where the first half are the positive-probe scales
+            and the second half are the negative-probe scales. Defaults to
+            [0.3] * nprobepair + [-0.3] * nprobepair.
+
+        Returns
+        -------
+        dm1_list : list of ndarray
+            Absolute DM1 commands for all wavelengths and DM settings,
+            length nlam * ndm.
+        dm2_list : list of ndarray
+            Absolute DM2 commands for all wavelengths and DM settings,
+            length nlam * ndm. All entries are dm20.
+        dmrel_list : list of ndarray
+            Relative probe DM commands loaded from probefiles, length nprobepair.
+        dm10 : ndarray
+            Starting absolute DM1 command (48x48 array, volts).
+        dm20 : ndarray
+            Starting absolute DM2 command (48x48 array, volts).
+
+        Raises
+        ------
+        ValueError
+            If scalelist is provided but its length is not 2 * nprobepair.
+        """
+        dmrel_list = [pyfits.getdata(f) for f in probefiles.values()]
+        nprobepair = len(dmrel_list)
+
+        if scalelist is None:
+            scalelist = [0.3] * nprobepair + [-0.3] * nprobepair
+
+        if len(scalelist) != 2 * nprobepair:
+            raise ValueError(
+                f"scalelist length ({len(scalelist)}) must be 2 * number of probes ({2 * nprobepair})"
+            )
 
         nlam = len(cfg.sl_list)
-        self.ndm = 2 * len(dmrel_list) + 1
+        self.ndm = 2 * nprobepair + 1
         self.croplist = [(self.lrow, self.lcol, self.nrow, self.ncol)] * (nlam * self.ndm)
 
         dm10 = dmstartmaps[0]
@@ -43,19 +86,12 @@ class ProbesShapes(Probes):
         dm1_list = []
         dm2_list = []
         for index in range(nlam):
-            # DM1 same per wavelength
-            dm1_list.append(dm10)
-            dm1_list.append(dm10 + scalelist[0] * dmrel_list[0])
-            dm1_list.append(dm10 + scalelist[3] * dmrel_list[0])
-            dm1_list.append(dm10 + scalelist[1] * dmrel_list[1])
-            dm1_list.append(dm10 + scalelist[4] * dmrel_list[1])
-            dm1_list.append(dm10 + scalelist[2] * dmrel_list[2])
-            dm1_list.append(dm10 + scalelist[5] * dmrel_list[2])
+            dm1_list.append(dm10)  # unprobed
+            for i, dmrel in enumerate(dmrel_list):
+                dm1_list.append(dm10 + scalelist[i] * dmrel)  # positive probe
+                dm1_list.append(dm10 + scalelist[i + nprobepair] * dmrel)  # negative probe
             for j in range(self.ndm):
-                # DM2 always same
                 dm2_list.append(dm20)
-                pass
-            pass
 
         return dm1_list, dm2_list, dmrel_list, dm10, dm20
 
@@ -68,7 +104,7 @@ class ProbesShapes(Probes):
 
         # log.info('4. Estimate complex electric fields and return fields ' +
         #          'with bad electric field maps')
-        plist = []  # for model-based phase storage, chunked by lam
+        plist = [np.zeros((nprobepair, nrow, ncol)) for _ in range(nlam)] # for model-based phase storage, chunked by lam
 
         # This is a catch-all dictionary for HOWFSC information we want to export
         # from the call, but don't strictly need to set up the next iteration.
@@ -81,7 +117,7 @@ class ProbesShapes(Probes):
             # data collection will do plus then minus
             for j in range(nlam):
                 # other[j] = dict()
-                plist.append(np.zeros((nprobepair, nrow, ncol)))
+                # plist.append(np.zeros((nprobepair, nrow, ncol)))
                 # log.info('Wavelength %d of %d', j + 1, nlam)
                 # log.info('Get probe phase from model and DM settings')
                 _, tmpph = probe_ap(cfg,
