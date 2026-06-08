@@ -29,9 +29,10 @@ sim_settings:
   flat_dm_filenames:
       - "/Users/jessicag/anaconda3/envs/corgiloop/lib/python3.12/site-packages/roman_preflight_proper/examples/hlc_flat_wfe_dm1_v.fits"
       - "/Users/jessicag/anaconda3/envs/corgiloop/lib/python3.12/site-packages/roman_preflight_proper/examples/hlc_flat_wfe_dm2_v.fits"
-  apply_creep: true # options: apply PMN creep to the voltage maps (true) or not (false or None) 
-  apply_hysteresis: true # options: apply hysteresis to the voltage maps (true) or not (false or None)
+  apply_creep: false # true # options: apply PMN creep to the voltage maps (true) or not (false or None) 
+  apply_hysteresis: false # true # options: apply hysteresis to the voltage maps (true) or not (false or None)
   previous_dmstartmap_filenames:
+      # Only used if hysteresis applied
       - "/Users/jessicag/anaconda3/envs/corgiloop/lib/python3.12/site-packages/roman_preflight_proper/examples/spc-wide_ni_2e-8_dm1_v.fits"
       - "/Users/jessicag/anaconda3/envs/corgiloop/lib/python3.12/site-packages/roman_preflight_proper/examples/spc-wide_ni_2e-8_dm2_v.fits"
   apply_zernikes: true
@@ -87,3 +88,8 @@ models:
       # Parameters forwarded to GitlImage initialization
       is_noise_free: true
       oversampling_factor: 3 # always odd number
+      # Parameters only needed if apply_zernikes is true above
+      zindex:
+        - 4
+      zval_m:
+        - 3.0e-8
