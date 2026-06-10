@@ -114,7 +114,7 @@ probedsnr:
     last: None
     low: 0
     high: None
-    value: 7
+    value: 15
 
 probeheight:
   - 
@@ -122,19 +122,19 @@ probeheight:
     last: None
     low: 0
     high: 1.0e-7
-    value: 1.0e-7
+    value: 5.0e-7
   - 
     first: 1
     last: None
     low: 1.0e-7
     high: 1.0e-6
-    value: 1.0e-7
+    value: 5.0e-7
   - 
     first: 1
     last: None
     low: 1.0e-6
     high: None
-    value: 1.0e-7
+    value: 5.0e-7
 
 
 fixedbp: '../../every_mask_config/fixedbp_zeros.fits'
