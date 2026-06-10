@@ -6,11 +6,11 @@ runtime:
   num_proper_process: 5 
 
   # Local only: Jacobian worker processes. Ignored in MPI mode.
-  num_jac_process: 6 
+  num_jac_process: 14
 
   # Local: image worker processes; null means serial image generation.
   # MPI: active worker ranks; usually total MPI ranks minus 1 manager.
-  num_imager_worker: null
+  num_imager_worker: 7
 
   # false: local run; true: MPI manager-worker run.
   use_mpi: false 
