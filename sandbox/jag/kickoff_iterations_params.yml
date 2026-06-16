@@ -29,14 +29,16 @@ sim_settings:
   flat_dm_filenames:
       - "/Users/jessicag/anaconda3/envs/corgiloop/lib/python3.12/site-packages/roman_preflight_proper/examples/hlc_flat_wfe_dm1_v.fits"
       - "/Users/jessicag/anaconda3/envs/corgiloop/lib/python3.12/site-packages/roman_preflight_proper/examples/hlc_flat_wfe_dm2_v.fits"
-  apply_creep: false # true # options: apply PMN creep to the voltage maps (true) or not (false or None) 
-  apply_hysteresis: false # true # options: apply hysteresis to the voltage maps (true) or not (false or None)
+  apply_creep: true # true # options: apply PMN creep to the voltage maps (true) or not (false or None) 
+  apply_hysteresis: true # true # options: apply hysteresis to the voltage maps (true) or not (false or None)
   previous_dmstartmap_filenames:
       # Only used if hysteresis applied
       - "/Users/jessicag/anaconda3/envs/corgiloop/lib/python3.12/site-packages/roman_preflight_proper/examples/spc-wide_ni_2e-8_dm1_v.fits"
       - "/Users/jessicag/anaconda3/envs/corgiloop/lib/python3.12/site-packages/roman_preflight_proper/examples/spc-wide_ni_2e-8_dm2_v.fits"
-  apply_zernikes: true
-
+  add_Z6_to_DM1: true # options: apply voltage pattern to model Z6 on DM1 (true) or not (false or None)
+  DM1_Z6_nm: 2.5 # How many nm of astigmatism (Z6) to add to DM1, only used if add_Z6_to_DM1 == True
+  add_Z6_to_DM2: true # options: apply voltage pattern to model Z6 on DM2 (true) or not (false or None)
+  DM2_Z6_nm: 2.5 # How many nm of astigmatism (Z6) to add to DM2, only used if add_Z6_to_DM2 == True
 
 paths:
   base_path: "~" # default to home directory, but user can change to a different path
