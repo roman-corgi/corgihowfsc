@@ -117,6 +117,69 @@ def apply_pmn_creep_and_hysteresis(flat_dm_filenames,add_creep,add_hysteresis,dm
     dmstartmaps_adjusted = [dm1_adjusted,dm2_adjusted]
     return dmstartmaps_adjusted
 
+def calculate_Z6(x,y,c=1):
+    '''
+    Calculate the focus at a point (x,y) in Cartesian coordinates, multiplied
+    by the scale factor c.
+    
+    Parameters:
+    ----------
+    x: x coordinate (normalized to a max of 1)
+    y: y coordinate (normalized to a max of 1)
+    c: scale factor
+    
+    Returns:
+    -------
+    Z6: the calculated focus
+    Z6(rho,theta) = c*sqrt(6)*rho**2*cos(2*theta)
+    '''
+    # Step 1: Convert (x,y) to (rho,theta)
+    rho = np.sqrt(x**2 + y**2)
+    theta = np.atan2(y,x)
+    
+    # Step 2: Calculate Z6
+    Z6 = c * np.sqrt(6) * rho**2 * np.cos(2*theta)
+    
+    return Z6
+
+def apply_Z6_to_DM(dm_num,nm):
+    '''
+    Calculate the voltage map that applies astigmatism to the selected dm.
+    
+    Parameters:
+    ----------
+    dm_num: scalar, 1 or 2 to identify the DM
+    nm: float, how many nm of astigmatism to apply
+    
+    Returns:
+    --------
+    Z6_voltages: voltage map that applies astigmatism to the dm.
+    '''
+    # Step 0: Set the scale factor
+    if dm_num==1:
+        c = nm/3.6
+    elif dm_num==2:
+        c = nm/3.3
+        
+    # Step 1: Set up a 48x48 coordinate grid
+    n = np.arange(0,48).reshape(1,48)
+    dx = 2/48
+    xvt = (n-24+1/2)*dx
+    dy = 2/48
+    yvt = (n-24+1/2)*dy
+    (X,Y) = np.meshgrid(xvt,yvt)
+    
+    # Step 2: Calculate Z6 voltages for points within a circle of radius 1
+    Z6_voltages = np.zeros((48,48))
+    for ii in range(48):
+        for jj in range(48):
+            if X[ii,jj]**2 + Y[ii,jj]**2 > 1:
+                Z6_voltages[ii,jj] = 0
+            else:
+                Z6_voltages[ii,jj] = calculate_Z6(X[ii,jj], Y[ii,jj],c)
+                
+    return Z6_voltages
+    
 
 def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps, metadata=None, output_every_iter=True, output_model_efield=True):
     """Run a nulling sequence, using the compact optical model as the data source.
@@ -182,6 +245,10 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     apply_hysteresis = args.apply_hysteresis
     if apply_hysteresis == True:
         previous_dmstartmap_filenames = args.previous_dmstartmap_filenames
+    add_Z6_to_DM1 = args.add_Z6_to_DM1
+    DM1_Z6_nm = args.DM1_Z6_nm
+    add_Z6_to_DM2 = args.add_Z6_to_DM2
+    DM2_Z6_nm = args.DM2_Z6_nm
 
     safe_cpu_count = args.num_imager_worker 
     print('Using num_imager_worker = ', safe_cpu_count)
@@ -243,6 +310,18 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             print('Applying PMN creep and DM hysteresis')
             
         dmstartmaps_adjusted = apply_pmn_creep_and_hysteresis(flat_dm_filenames,apply_creep,apply_hysteresis,dmstartmaps,previous_dmstartmap_filenames)
+        dm1_list, dm2_list , _, _, _ = probes.get_dm_probes(cfg,probefiles,dmstartmaps_adjusted)
+    else:
+        dmstartmaps_adjusted = dmstartmaps
+    
+    # Add Z6 to DM1 and DM2 if appropriate
+    if add_Z6_to_DM1 == True:
+        Z6_voltages = apply_Z6_to_DM(1, DM1_Z6_nm)
+        dmstartmaps_adjusted[0] = dmstartmaps_adjusted[0]+Z6_voltages
+        dm1_list, dm2_list , _, _, _ = probes.get_dm_probes(cfg,probefiles,dmstartmaps_adjusted)
+    if add_Z6_to_DM2 == True:
+        Z6_voltages = apply_Z6_to_DM(2, DM2_Z6_nm)
+        dmstartmaps_adjusted[1] = dmstartmaps_adjusted[1] + Z6_voltages
         dm1_list, dm2_list , _, _, _ = probes.get_dm_probes(cfg,probefiles,dmstartmaps_adjusted)
         
     nlam = len(cfg.sl_list)
