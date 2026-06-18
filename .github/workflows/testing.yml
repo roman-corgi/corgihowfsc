@@ -100,8 +100,8 @@ jobs:
             -o "${GITHUB_WORKSPACE}/downloads/proper_v3.3.5_python.zip"
 
           curl -L \
-            "https://sourceforge.net/projects/cgisim/files/roman_preflight_proper_public_v2.0.2_python.zip/download" \
-            -o "${GITHUB_WORKSPACE}/downloads/roman_preflight_proper_public_v2.0.2_python.zip"
+            "https://sourceforge.net/projects/cgisim/files/roman_preflight_proper_public_v2.0.3_python.zip/download" \
+            -o "${GITHUB_WORKSPACE}/downloads/roman_preflight_proper_public_v2.0.3_python.zip"
 
           curl -L \
             "https://sourceforge.net/projects/cgisim/files/cgisim_v4.1.zip/download" \
