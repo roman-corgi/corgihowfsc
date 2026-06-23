@@ -3,7 +3,7 @@ from pathlib import Path
 import matplotlib
 import argparse
 
-matplotlib.use('TkAgg')
+matplotlib.use('TkAgg') #Agg
 
 import eetc
 from howfsc.control.cs import ControlStrategy
@@ -11,9 +11,6 @@ from howfsc.model.mode import CoronagraphMode
 from howfsc.util.loadyaml import loadyaml
 
 import roman_preflight_proper
-
-### Then, run the following command to copy the default prescription file
-roman_preflight_proper.copy_here()
 
 import corgihowfsc
 from corgihowfsc.utils.howfsc_initialization import get_args, load_files, get_cpu_allocation
@@ -31,6 +28,9 @@ howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
 
 def main(param_file_name='default_param.yml', fullpath=False):
 
+    # make sure each worker has access to the roman preflight model for mpi 
+    roman_preflight_proper.copy_here()
+    
     # Set the path to the default parameter file relative to this script
     default_param_file = param_file_name if fullpath else os.path.join(os.path.dirname(__file__), param_file_name)
 
@@ -96,6 +96,8 @@ def main(param_file_name='default_param.yml', fullpath=False):
     num_proper_process = runtime['num_proper_process']
     num_jac_process = runtime['num_jac_process']
     num_imager_worker = runtime['num_imager_worker']
+    use_mpi = runtime.get('use_mpi', False)
+    debug = runtime.get('debug', False)
 
     print(
         backend_type,
@@ -114,13 +116,15 @@ def main(param_file_name='default_param.yml', fullpath=False):
         tag=folder_tag
     )
 
-    # Validate CPU allocation
-    num_jac_process, num_imager_worker, num_proper_process = get_cpu_allocation(
-        num_jac_process,
-        num_imager_worker,
-        num_proper_process
-    )
+    # Validate local CPU allocation. MPI allocation is checked after initializing MPI.
+    if not use_mpi:
+        num_jac_process, num_imager_worker, num_proper_process = get_cpu_allocation(
+            num_jac_process,
+            num_imager_worker,
+            num_proper_process,
+        )
 
+    # Set up arguments for the howfsc initialization 
     args = get_args(
         niter=niter,
         mode=mode,
@@ -139,6 +143,31 @@ def main(param_file_name='default_param.yml', fullpath=False):
     args.starting_contrast = float(model_cfg['starting_contrast'])
     args.num_imager_worker = num_imager_worker
     args.num_proper_process = num_proper_process
+    args.use_mpi = use_mpi
+    args.debug = debug
+
+    os.environ.setdefault(
+        'CORGIHOWFSC_IMAGE_DEBUG_CSV',
+        os.path.join(os.path.dirname(args.logfile), 'image_worker_debug.csv'),
+    )
+
+    # Initialize MPI if needed, and add the mpi_comm to args for use in howfsc initialization and later passing to workers; 
+    # If not using MPI, mpi_comm will be None and should be handled as such in the code
+    mpi_comm = None
+
+    if use_mpi:
+        from corgihowfsc.mpi.mpi_runtime import initialize_mpi_comm, validate_mpi_allocation
+        mpi_comm = initialize_mpi_comm()
+
+        # checking the MPI allocation here.
+        validate_mpi_allocation(
+            mpi_comm,
+            num_imager_worker=num_imager_worker,
+            num_proper_process=num_proper_process,
+        )
+    
+    # Add mpi_comm to args for use in howfsc initialization and later passing to workers
+    args.mpi_comm = mpi_comm
 
     modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps = load_files(args,
                                                                                                            howfscpath)
@@ -167,9 +196,24 @@ def main(param_file_name='default_param.yml', fullpath=False):
     if num_proper_process is not None:
         corgi_overrides['NCPUS'] = num_proper_process
 
-    if num_proper_process is not None:
-        corgi_overrides['NCPUS'] = num_proper_process
-        
+    # Initialise the workers with the necessary data and configuration to run the howfsc loop, including the model files and any overrides
+    if mpi_comm is not None:
+        from corgihowfsc.mpi.mpi_runtime import build_worker_init_config, initialize_workers
+        initialize_workers(
+            mpi_comm,
+            build_worker_init_config(
+                args, 
+                cfgfile,
+                cstratfile,
+                hconffile,
+                backend_type,
+                mode,
+                corgi_overrides,
+            ),
+        )
+    else:
+        print("MPI not enabled, running in single node.")
+
     imager = GitlImage(
         cfg=cfg,  # Your CoronagraphMode object
         cstrat=cstrat,  # Your ControlStrategy object
@@ -229,6 +273,7 @@ def main(param_file_name='default_param.yml', fullpath=False):
         "num_threads": args.num_threads,
         "num_imager_worker": args.num_imager_worker,
         "num_proper_process": args.num_proper_process,
+        "use_mpi": args.use_mpi,
         # --- crop & overrides ---
         "crop_params": crop_params,
         "corgi_overrides": corgi_overrides,
@@ -257,13 +302,20 @@ def main(param_file_name='default_param.yml', fullpath=False):
         },
     }
 
-    nulling_gitl(cstrat,
-                 estimator,
-                 probes,
-                 normalization_strategy,
-                 imager,
-                 cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps,
-                 metadata, output_every_iter)
+    try:
+        nulling_gitl(cstrat,
+                     estimator,
+                     probes,
+                     normalization_strategy,
+                     imager,
+                     cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps,
+                     metadata, output_every_iter)
+    finally:
+        if mpi_comm is not None:
+            from corgihowfsc.mpi.mpi_runtime import shutdown_workers
+            shutdown_workers(mpi_comm)
+
+    print('nulling_gitl complete, exiting', flush=True)
 
 
 if __name__ == '__main__':

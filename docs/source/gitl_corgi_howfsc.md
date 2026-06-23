@@ -62,6 +62,8 @@ python scripts/run_corgisim_nulling_gitl.py --param_file /path/to/my_params.yml
 ```
 If `--param_file` is not provided, the script falls back to `default_param.yml` located in the same directory as the script.
 
+For a field-by-field description of the YAML file, see [Parameter Reference](parameter_reference.md).
+
 You can run the `scripts/run_corgisim_nulling_gitl.py` script as follows by passing the path to your Jacobian (optional),
 in which case you need to set the `precomp` variable to `load_all`:
 ```yaml
@@ -113,13 +115,21 @@ path_overrides:
 This will override the `howfsc_optical_model`, `cstrat_nfov_band1`, and `hconf_nfov_flat` files that are loaded. 
 **Note: if using `path_overrides` all relative paths in the `cfgfile` and `cstratfile` must be changed to absolute paths.**
 
-For parallel computing the parameters are: 
+For parallel computing the parameters are:
 ```yaml
-num_proper_process: 5 
-num_jac_process: 6
-num_imager_worker: null
+num_proper_process: 5 # typical value for HLC band 1 runs
+num_jac_process: 6 # used for local Jacobian computation when use_mpi is false
+num_imager_worker: null # set to an integer > 1 to parallelize image generation
+use_mpi: false # set true to use the MPI manager-worker runtime instead of local multiprocessing
+debug: false # enable more verbose logging and extra debug outputs; with MPI, also writes one log file per worker rank
+
 ```
 If running on a powerful desktop or cluster, the user can set `num_imager_worker` to an integer >1 such that multiple probe images are simulated in parallel.
+Set `use_mpi: true` to use the MPI manager-worker runtime instead of local multiprocessing.
+Set `debug: true` to enable more verbose logging and extra debug outputs. If `use_mpi: true`, debug mode also writes one log file per worker rank.
+
+For the current MPI and local multiprocessing execution model, including which modules own runtime orchestration versus worker task execution, see [MPI and Multiprocessing](mpi_multiprocessing.md).
+For output files generated during the loop, including debug-related outputs, see [loop outputs](loop_outputs.md).
 
 
 From here the script can be run as-is! The result will be some iteration-specific information printed to stdout, and a
