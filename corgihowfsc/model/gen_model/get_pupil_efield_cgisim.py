@@ -124,17 +124,20 @@ def gen_efield(bandpass, v_dm1, v_dm2):
 
 if __name__ == '__main__':
 
-    delta_dm1 = 0
+    # delta_dm1 = 0
 
-    v_dm1 = proper.prop_fits_read(os.path.join(GEN_MODEL_PATH, 'in', 'flatmaps', 'hlc_flat_wfe_dm1_v.fits' ))
-    v_dm2 = proper.prop_fits_read(os.path.join(GEN_MODEL_PATH, 'in', 'flatmaps', 'hlc_flat_wfe_dm2_v.fits' ))
+    v_dm1 = proper.prop_fits_read(os.path.join(GEN_MODEL_PATH, 'in', 'flatmaps', 'flatmap_band1_dm1_v.fits' ))
+    v_dm2 = proper.prop_fits_read(os.path.join(GEN_MODEL_PATH, 'in', 'flatmaps', 'flatmap_band1_dm2_v.fits' ))
     gen_efield('1b', v_dm1, v_dm2)
-
-    v_dm1 = proper.prop_fits_read(os.path.join(GEN_MODEL_PATH, 'in', 'flatmaps', 'spc-spec_flat_wfe_dm1_v.fits' ))
-    v_dm2 = proper.prop_fits_read(os.path.join(GEN_MODEL_PATH, 'in', 'flatmaps', 'spc-spec_flat_wfe_dm2_v.fits' ))
+    
+    v_dm1 = proper.prop_fits_read(os.path.join(GEN_MODEL_PATH, 'in', 'flatmaps', 'flatmap_band2_dm1_v.fits' ))
+    v_dm2 = proper.prop_fits_read(os.path.join(GEN_MODEL_PATH, 'in', 'flatmaps', 'flatmap_band2_dm2_v.fits' ))
     gen_efield('2c', v_dm1, v_dm2)
+
+    v_dm1 = proper.prop_fits_read(os.path.join(GEN_MODEL_PATH, 'in', 'flatmaps', 'flatmap_band3_dm1_v.fits' ))
+    v_dm2 = proper.prop_fits_read(os.path.join(GEN_MODEL_PATH, 'in', 'flatmaps', 'flatmap_band3_dm2_v.fits' ))
     gen_efield('3c', v_dm1, v_dm2)
 
-    v_dm1 = proper.prop_fits_read(os.path.join(GEN_MODEL_PATH, 'in', 'flatmaps', 'spc-wide_flat_wfe_dm1_v.fits' ))
-    v_dm2 = proper.prop_fits_read(os.path.join(GEN_MODEL_PATH, 'in', 'flatmaps', 'spc-wide_flat_wfe_dm2_v.fits' ))
+    v_dm1 = proper.prop_fits_read(os.path.join(GEN_MODEL_PATH, 'in', 'flatmaps', 'flatmap_band4_dm1_v.fits' ))
+    v_dm2 = proper.prop_fits_read(os.path.join(GEN_MODEL_PATH, 'in', 'flatmaps', 'flatmap_band4_dm2_v.fits' ))
     gen_efield('4b', v_dm1, v_dm2)

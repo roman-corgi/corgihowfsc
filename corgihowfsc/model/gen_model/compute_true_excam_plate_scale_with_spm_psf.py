@@ -52,19 +52,20 @@ def run_calib():
                     '4a', '4b', '4c'
                     ]
 
-    v_dm1 = proper.prop_fits_read(os.path.join(IN_PATH, 'flatmaps', 'hlc_flat_wfe_dm1_v.fits' ))
-    v_dm2 = proper.prop_fits_read(os.path.join(IN_PATH, 'flatmaps', 'hlc_flat_wfe_dm2_v.fits' ))
-
     for bandpass in bandpassList:
 
         if '1' in bandpass:
             cor_type = 'spc-wide_band1'
+            band_num = 1
         elif '2' in bandpass:
             cor_type = 'spc-spec_band2'
+            band_num = 2
         elif '3' in bandpass:
             cor_type = 'spc-spec_band3'
+            band_num = 3
         elif '4' in bandpass:
             cor_type = 'spc-wide_band4'
+            band_num = 4
 
         if bandpass == '1':
             lam0_um = 0.575
@@ -105,6 +106,9 @@ def run_calib():
             lam0_um = 0.825
         elif bandpass == '4c':
             lam0_um = 0.857
+
+        v_dm1 = proper.prop_fits_read(os.path.join(IN_PATH, 'flatmaps', ('flatmap_band%d_dm1_v.fits' % band_num)))
+        v_dm2 = proper.prop_fits_read(os.path.join(IN_PATH, 'flatmaps', ('flatmap_band%d_dm2_v.fits' % band_num)))
 
         nlam = 1
         lam_array = lam0_um

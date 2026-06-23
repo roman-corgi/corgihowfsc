@@ -40,10 +40,7 @@ def fit_pupil_diameter():
     # use_errors = True
     # star_spectrum = 'a0v'  # 'k5v'
     # star_vmag = 2.0
-
-    v_dm1 = proper.prop_fits_read(os.path.join(IN_PATH, 'flatmaps', 'hlc_flat_wfe_dm1_v.fits' ))
-    v_dm2 = proper.prop_fits_read(os.path.join(IN_PATH, 'flatmaps', 'hlc_flat_wfe_dm2_v.fits' ))
-
+    
     # ccd_fn = os.path.join(IN_PATH, 'ccd_params_for_pupil_imaging.yaml')
     # ccd = loadyaml(ccd_fn)
     # ccd.update({'exptime': 0.8})
@@ -65,14 +62,22 @@ def fit_pupil_diameter():
 
         if bandpass == '1b':
             cor_type = 'hlc_band1'
+            band_num = 1
         elif bandpass == '2c':
             cor_type = 'hlc_band2'
+            band_num = 2
         elif bandpass == '3c':
             cor_type = 'hlc_band3'
+            band_num = 3
         elif bandpass == '4b':
             cor_type = 'hlc_band4'
+            band_num = 4
         else:
             raise ValueError(f'bandpass value {bandpass} not accepted here.')
+
+        v_dm1 = proper.prop_fits_read(os.path.join(IN_PATH, 'flatmaps', ('flatmap_band%d_dm1_v.fits' % band_num)))
+        v_dm2 = proper.prop_fits_read(os.path.join(IN_PATH, 'flatmaps', ('flatmap_band%d_dm2_v.fits' % band_num)))
+
 
         # # Store lists of true values
         # rotTrueList.append(rotTrue)
