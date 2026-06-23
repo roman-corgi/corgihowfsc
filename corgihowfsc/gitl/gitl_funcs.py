@@ -385,3 +385,126 @@ def check_inputs(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
 
     return lenflist, nlam, ndm, nprobepair, lendm1list, lendm2list, dm1nact, dm2nact, allpix, lencroplist, nrow, ncol, subcroplist, lenpelist
 
+
+def get_initial_cam_params(cstrat, contrast, hconf, get_cgi_eetc, nprobepair, ndm, nlam):
+    """
+    Compute initial EXCAM camera parameters for the first HOWFSC iteration.
+
+    Uses the starting contrast estimate and the control strategy to determine
+    the appropriate SNR targets and probe height, then calls the exposure time
+    calculator to derive per-frame exposure times, gains, and frame counts for
+    both the unprobed and probed DM settings across all wavelength channels.
+    Also computes the expected wall-clock time for the first iteration.
+
+    Parameters
+    ----------
+    cstrat : ControlStrategy
+        Control strategy object. Used to retrieve the unprobed SNR target,
+        probed SNR target, and probe height at iteration 1 for the given
+        starting contrast.
+    contrast : float
+        Starting contrast estimate used to bootstrap the exposure time
+        calculation. Typically set by ``args.starting_contrast``.
+    hconf : dict
+        Hardware configuration dictionary. Must contain ``hardware.sequence_list``
+        (one sequence name per wavelength) and all ``overhead`` keys
+        (``overdm``, ``overfilt``, ``overboth``, ``overfixed``, ``overframe``).
+    get_cgi_eetc : CGIEETC
+        Initialized exposure time calculator object used to compute
+        ``(nframes, exptime, gain, snr_out, optflag)`` for each DM setting
+        and wavelength.
+    nprobepair : int
+        Number of probe pairs. Determines how many probed exposure time entries
+        are appended per wavelength channel.
+    ndm : int
+        Total number of DM settings per wavelength (``2 * nprobepair + 1``).
+        Passed to ``expected_time`` to compute the iteration duration.
+    nlam : int
+        Number of wavelength channels. Must match the length of
+        ``hconf['hardware']['sequence_list']``.
+
+    Returns
+    -------
+    orig_exptime_list : list of float
+        Flattened list of exposure times in seconds for all ``nlam * ndm``
+        frames, ordered as ``[lam0 unprobed, lam0 probe0, ..., lam1 unprobed,
+        ...]``. Produced by ``param_order_to_list``.
+    orig_gain_list : list of float
+        Flattened list of EXCAM gain values, in the same order as
+        ``orig_exptime_list``.
+    orig_nframes_list : list of int
+        Flattened list of frame counts, in the same order as
+        ``orig_exptime_list``.
+    next_time : float
+        Expected wall-clock time to complete the first iteration, in seconds,
+        computed by ``expected_time`` using the overhead values from ``hconf``.
+    """
+
+    # Initialize things
+    unprobed_snr = cstrat.get_unprobedsnr(1, contrast)
+    bright_scaling = 10 if contrast > 1e-6 else 5
+    probeheight = cstrat.get_probeheight(1, contrast)
+    probed_snr = cstrat.get_probedsnr(1, contrast)
+    pscale = contrast + probeheight
+    pscale_bright = 1.5 * contrast + probeheight + \
+                    2 * np.sqrt(probeheight) * np.sqrt(1.5 * contrast)
+
+    orig_exptime_list = []
+    orig_gain_list = []
+    orig_nframes_list = []
+
+    for index, sequence in enumerate(hconf['hardware']['sequence_list']):
+        innere = []
+        innerg = []
+        innern = []
+
+        # Unprobed parameters
+        nframes, exptime, gain, snr_out, optflag = \
+            get_cgi_eetc.calc_exp_time(
+                sequence_name=sequence,
+                snr=unprobed_snr,
+                scale=contrast,
+                scale_bright=bright_scaling*contrast,
+            )
+
+        innere.append(exptime)
+        innerg.append(gain)
+        innern.append(nframes)
+
+        # Probed parameters
+        nframes, exptime, gain, snr_out, optflag = \
+            get_cgi_eetc.calc_exp_time(
+                sequence_name=sequence,
+                snr=probed_snr,
+                scale=pscale,
+                scale_bright=pscale_bright,
+            )
+
+        for k in range(nprobepair):
+            innere.append(exptime)
+            innerg.append(gain)
+            innern.append(nframes)
+
+        orig_exptime_list.append(innere)
+        orig_gain_list.append(innerg)
+        orig_nframes_list.append(innern)
+
+    orig_exptime_list = param_order_to_list(orig_exptime_list)
+    orig_gain_list = param_order_to_list(orig_gain_list)
+    orig_nframes_list = param_order_to_list(orig_nframes_list)
+
+    next_time = expected_time(ndm,
+                              nlam,
+                              orig_exptime_list,
+                              orig_nframes_list,
+                              hconf['overhead']['overdm'],
+                              hconf['overhead']['overfilt'],
+                              hconf['overhead']['overboth'],
+                              hconf['overhead']['overfixed'],
+                              hconf['overhead']['overframe'],
+                              )
+
+
+    return orig_exptime_list, orig_gain_list, orig_nframes_list, next_time
+
+

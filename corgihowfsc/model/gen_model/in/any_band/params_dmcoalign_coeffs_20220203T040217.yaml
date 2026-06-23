@@ -1,0 +1,51 @@
+# This file written automatically by ray_trace_20220121_script.m
+# 03-Feb-2022 07:12:38
+# polynomial fit coefficients for:
+#    telescope field angle x, y (radians) as a function of DM2-DM1 shear (m)
+#    PSF centroid on EXCAM x, y (pixels) as a function of DM2-DM1 shear (m)
+# polynomial fits are cubic in two-dimensions
+# order of polynomial coefficients: p0 x^3 + p1 x^2 y + p2 x y^2 + p3 y^3 + p4 x^2 + p5 x y + p6 y^2 + p7 x + p8 y + p9
+field_x:
+- -1.653e-03
+- -1.697e-02
+- -4.049e-03
+- -1.567e-02
+- -6.808e-03
+- -4.658e-03
+- -3.378e-03
+- -4.921e-09
+- -1.914e-02
+- -8.007e-09
+field_y:
+- 2.541e-02
+- 4.527e-03
+- 2.143e-02
+- 2.128e-03
+- 1.146e-02
+- -3.315e-03
+- 6.035e-03
+- 1.959e-02
+- 6.403e-09
+- 9.848e-09
+excam_x:
+- 5.156e+03
+- -3.145e+00
+- 4.217e+03
+- 3.919e+00
+- -4.157e-02
+- 3.567e-01
+- 9.979e-02
+- -2.370e+00
+- -2.887e-05
+- 8.819e-07
+excam_y:
+- 1.618e+00
+- 4.181e+03
+- 8.192e+00
+- 4.969e+03
+- 4.148e+00
+- -1.498e-03
+- 4.410e+00
+- -2.106e-05
+- -2.337e+00
+- -9.729e-07

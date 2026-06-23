@@ -20,6 +20,9 @@ import numpy as np
 import proper
 from corgisim import outputs
 import time
+import logging
+log = logging.getLogger(__name__)
+
 
 # import helper functions 
 from corgihowfsc.utils.corgisim_utils import _extract_host_properties_from_hconf, CGI_TO_CORGI_MAPPING, SUPPORTED_CORGI_MODES, SUPPORTED_CGI_MODES, map_wavelength_to_corgisim_bandpass
@@ -36,15 +39,32 @@ class GitlImage:
 
         """
         Arguments:
-            cor: mode string, only required when name = 'cgi-howfsc'. Must be one of ['narrowfov', 'nfov_flat', 'nfov_dm']. If name = 'corgihowfsc', this will be mapped. 
-            polaxis: integer, polarization axis setting for the camera.  Must be one of [0, 10, 20, 30].  Default is 10.
-            cfg: CoronagraphMode object, only required if name = 'cgi-howfsc'.
-            cstrat: ControlStrategy object, only required if name = 'cgi-howfsc'.
-            Vmag: float, V magnitude of the host star, default to 2.56 (del Leo).
-            sptype: string, spectral type of the host star, default to 'A5V'.
-            ref_flag: boolean, if True, use reference spectrum from pysynphot, otherwise use Pickles atlas. Default to False.               
-            is_noise_free: boolean, if True, generate a noise-free frame. Default to True. Only used if name = 'corgihowfsc'.
-            output_dim: integer, output dimension of the cropped image from corgisim. Default to 51. 
+            cfg:
+                A Configuration object defining a coronagraph-mode setup for CGI, including wavelength channels (sl_list), deformable mirror states (dmlist), 
+                and initial DM settings (initmaps), loaded from a YAML file (cfgfile).
+                See https://roman-corgi.github.io/corgihowfsc/cfg_docs.html for more details.
+            cstrat: 
+                A ControlStrategy object which contains the necessary information to perform wavefront sensing and control. 
+                See https://roman-corgi.github.io/corgihowfsc/cstrat_docs.html for more details.
+                
+            hconf:
+                A HardwareConfig object that contains instrument configurations and host star properties.
+                See https://roman-corgi.github.io/corgihowfsc/hconf_docs.html for more details.
+
+            backend: str, either 'corgihowfsc' or 'cgi-howfsc', indicating which optical model to use for image generation. Default is 'cgi-howfsc'. 
+            # TODO - we should change this attribute to something else ... it's not really a backend ... 
+            cor: str, CGI coronagraph mode (e.g., 'narrowfov', 'nfov_flat', 'nfov_dm'). 
+                Required if backend is 'cgi-howfsc'. Ignored if backend is 'corgihowfsc' since corgisim will use its own internal mapping.
+
+            corgi_overrides: Optional dict of CorgiSim-specific overrides:
+                See corgisim doc for details, but some examples include:
+                - bandpass: str, bandpass number ('1', '2', '3', '4')
+                - is_noise_free: bool, generate noise-free images (default: True)
+                - output_dim: int, output image dimension (default: 51)
+                - polaxis: int, polarization axis (default: 10)
+                - Vmag: float, override host star V magnitude
+                - sptype: str, override spectral type
+                - ref_flag: bool, use reference spectrum (default: False)
         """
         # Validate backend choice
         if backend not in ['corgihowfsc', 'cgi-howfsc']:
@@ -71,11 +91,18 @@ class GitlImage:
         if self.backend == 'corgihowfsc':
             self._init_corgihowfsc(corgi_overrides)
 
-        else:
-            self.nrow = 153
-            self.ncol = 153
-            self.lrow = 436
-            self.lcol = 436
+        else: 
+            from howfsc.util.loadyaml import loadyaml
+            _defaults = loadyaml(os.path.join(os.path.dirname(__file__), '..', 'scripts', 'default_param.yml'))
+            self.nrow = _defaults['crop']['nrow']
+            self.ncol = _defaults['crop']['ncol']
+            self.lrow = _defaults['models']['cgi-howfsc']['lrow']
+            self.lcol = _defaults['models']['cgi-howfsc']['lcol']
+
+            # self.nrow = 153
+            # self.ncol = 153
+            # self.lrow = 436
+            # self.lcol = 436
 
 
     def _init_corgihowfsc (self, corgi_overrides):
@@ -111,8 +138,8 @@ class GitlImage:
                     check.positive_scalar_integer(val, f'crop[{i}]', TypeError)
         check.positive_scalar_integer(cleanrow, 'cleanrow', TypeError)
         check.positive_scalar_integer(cleancol, 'cleancol', TypeError)
-        
-    def gitlframe_corgisim(self, dm1v, dm2v, fixedbp, exptime, crop, lind=0, gain=1, cleanrow=1024, cleancol=1024, wfe=None):
+
+    def gitlframe_corgisim(self, dm1v, dm2v, fixedbp, exptime, crop, lind=0, gain=1, nframes=1, cleanrow=1024, cleancol=1024, wfe=None):
         """
         Generate a GITL frame using the CorgiSim optical model. Following the procedure in sim_gitlframe in howfsc.util.gitlframes.
 
@@ -124,13 +151,14 @@ class GitlImage:
          exptime: Exposure time used when collecting the data in in.  Should be a
           real scalar > 0. If is_noise_free = True, this can be any positive value.
          crop: 4-tuple of (lower row, lower col, number of rows, number of cols). Currently not in used
-         lind = 0: integer >= 0 indicating which wavelength channel in use. 
+         lind = 0: integer >= 0 indicating which wavelength channel in use.
+         nframes: number of frames averaged if backend_type='corgihowfsc' and corgi_overrides['is_noise_free'] = False
 
         wfe is a placeholder argument for now to keep the option of passing additional wavefront error (e.g. zernike coefficients) to modify the frame generation
         """        
         self.check_gitlframeinputs(dm1v, dm2v, fixedbp, exptime=exptime, crop=crop, cleanrow=cleanrow, cleancol=cleancol)
 
-        return self.corgisim_manager.generate_host_star_psf(dm1v, dm2v, lind=lind, exptime=exptime, gain=gain)
+        return self.corgisim_manager.generate_host_star_psf(dm1v, dm2v, lind=lind, exptime=exptime, gain=gain, nframes=nframes)
 
     def gitlframe_cgihowfsc(self, dmlist, peakflux, fixedbp, exptime, crop, lind, cleanrow=1024, cleancol=1024):
         """ 
@@ -160,7 +188,7 @@ class GitlImage:
             cleanrow=cleanrow,
             cleancol=cleancol
         )
-    def get_image(self, dm1v, dm2v, exptime, gain=1, crop=None, lind=0, peakflux=1, cleanrow=1024, cleancol=1024, fixedbp=np.zeros((1024, 1024), dtype=bool), wfe=None):
+    def get_image(self, dm1v, dm2v, exptime, gain=1, nframes=1, crop=None, lind=0, peakflux=1, cleanrow=1024, cleancol=1024, fixedbp=np.zeros((1024, 1024), dtype=bool), wfe=None):
 
         """
         Get a simulated GITL frame using either corgisim or cgi-howfsc repo's optical model. This get_image method should be compatible with both cgi-howfsc and corgisim. 
@@ -178,6 +206,7 @@ class GitlImage:
          polaxis: integer, polarization axis setting for the camera.  Must be one of [0, 10, 20, 30].  Default is 10.
          cleanrow: Number of rows in a clean frame.  Integer > 0.  Defaults to 1024, the number of active area rows on the EXCAM detector; under nominal conditions, there should be no reason to use anything else.
 
+         nframes: number of frames averaged if backend_type='corgihowfsc' and corgi_overrides['is_noise_free'] = False
          exptime: Exposure time used when collecting the data in in. Should be a real scalar > 0 when noise is included. If is_noise_free = True, this can be any positive value.
          gain: EM gain setting for the EMCCD.  Real scalar >= 1.
 
@@ -190,7 +219,8 @@ class GitlImage:
         self.check_gitlframeinputs(dm1v, dm2v, fixedbp, exptime, crop, cleanrow, cleancol)
 
         if self.backend == 'corgihowfsc':
-            return self.gitlframe_corgisim(dm1v, dm2v, fixedbp, exptime, gain, lind, cleanrow, cleancol)
+
+            return self.gitlframe_corgisim(dm1v, dm2v, fixedbp, exptime, crop, lind=lind, gain=gain, nframes=nframes, cleanrow=cleanrow, cleancol=cleancol)
         else:  # cgi-howfsc
             if crop is None:
                 raise ValueError("crop parameter is required for cgi-howfsc")
@@ -198,9 +228,12 @@ class GitlImage:
             
             return self.gitlframe_cgihowfsc(dmlist, peakflux, self.cstrat.fixedbp, exptime, crop, lind, cleanrow, cleancol)
 
-    def get_efield(self, dm1v, dm2v, lind=0, crop=None, output_shape=(153, 153),  cleanrow = 1024, cleancol = 1024):
+    def get_efield(self, dm1v, dm2v, lind=0, crop=None, output_shape=(153, 153), cleanrow=1024, cleancol=1024):
         """
-        Get a simulated GITL efield using either corgisim or cgi-howfsc repo's optical model. This get_efield method should be compatible with both cgi-howfsc and corgisim.
+        Get a simulated GITL efield using either corgisim or the compact model model. This get_efield method should be compatible with both cgi-howfsc and corgisim. 
+
+        e-field output should be normalized for both models. e-field output from the compact & corgisim models are in normalised contrast units. NOTE - the e-field output from corgisim needs to be normalized in the same way the e-field is generated so that the units match; the EETC peakflux cannot be used here. 
+
         Arguments:
          dm1v: ndarray, absolute voltage map for DM1.
          dm2v: ndarray, absolute voltage map for DM2.
@@ -209,14 +242,16 @@ class GitlImage:
           All are integers; the first two must be >= 0 and the second two must be > 0. Only used if name = 'cgi-howfsc'.
         """
 
-        if crop is None:
-            raise ValueError("crop parameter is required for cgi-howfsc")
+        if self.backend == 'corgihowfsc': # Corgisim model
+            efield = self.corgisim_manager.generate_efield(dm1v, dm2v, lind, crop=crop)
+            mid_sublam = efield.shape[0] // 2
 
-        if self.backend == 'corgihowfsc':
-            # Futur work
-            raise NotImplementedError("CorgiSim efield not implemented yet.")
+            return efield[mid_sublam, :, :]
 
-        else:  # cgi-howfsc
+        else:  # Compact model
+            if crop is None:
+                raise ValueError("crop parameter is required for cgi-howfsc backend")
+
             dmlist = [dm1v, dm2v]
             return self.gitlefield_cgihowfsc(
                 dmlist=dmlist,
@@ -226,29 +261,24 @@ class GitlImage:
                 cleancol=cleancol
             )
 
-# Helper function to map wavelength to corgisim bandpass
-def map_wavelength_to_corgisim_bandpass(wavelength_m, tolerance=3e-9):
-    """
-    Map wavelength to CorgiSim bandpass label.
-    
-    Args:
-        wavelength_m: Wavelength in meters
-        tolerance: Matching tolerance in meters (default ±3nm)
+    def get_all_efields(self, abs_dm1, abs_dm2, croplist, nlam, ndm, speedup=False):
         
-    Returns:
-        CorgiSim bandpass label ('1', '2', '3', or '4')
-    """
-    corgisim_wavelengths = {
-        '1': 575e-9, '2': 660e-9, '3': 730e-9, '4': 825e-9}
-    
-    for bandpass, wl in corgisim_wavelengths.items():
-        if abs(wavelength_m - wl) <= tolerance:
-            return bandpass
-    
-    available_nm = [wl * 1e9 for wl in corgisim_wavelengths.values()]
-    raise ValueError(f"Wavelength {wavelength_m*1e9:.1f} nm does not match any "
-                    f"CorgiSim options {available_nm} nm within ±{tolerance*1e9:.0f} nm")
+        if self.backend == 'corgihowfsc' and speedup:
+            # TODO - add a warning here for those who wants to speed up the corgisim by changing number of filters in cgisim_bandpasses
+            log.info('Using corgisim model, so perfect e-field is same for all DM settings at a given wavelength')
 
+        lam_inds = [nlam//2] if speedup else range(nlam)
+        perfect_efields = []
 
+        for j in lam_inds:
+            efield = self.get_efield(
+                dm1v=abs_dm1,
+                dm2v=abs_dm2,
+                lind=j,
+                crop=croplist[j * ndm]
+            )
+            perfect_efields.append(efield)
+
+        return perfect_efields
 
 

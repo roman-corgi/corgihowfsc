@@ -13,11 +13,11 @@
 
 Download these files manually by clicking on the following links and save them to any **directory of your choice**, e.g.: `/path/to/your/downloads/`:
 
-| File | Download Link                                                                                                                          |
-|------|----------------------------------------------------------------------------------------------------------------------------------------|
-| `proper_v3.3.3_python.zip` | [Proper Library](https://sourceforge.net/projects/proper-library/files/proper_v3.3.3_python.zip/download)                              |
-| `roman_preflight_proper_public_v2.0.1_python.zip` | [Roman preflight Proper model](https://sourceforge.net/projects/cgisim/files/roman_preflight_proper_public_v2.0.1_python.zip/download) |
-| `cgisim_v4.0.zip` | [CGISim](https://sourceforge.net/projects/cgisim/files/cgisim_v4.0.zip/download)                                                       |
+| File                                              | Download Link                                                                                                                          |
+|---------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| `proper_v3.3.4_python.zip`                        | [Proper Library](https://sourceforge.net/projects/proper-library/files/proper_v3.3.4_python.zip/download)                              |
+| `roman_preflight_proper_public_v2.0.2_python.zip` | [Roman preflight Proper model](https://sourceforge.net/projects/cgisim/files/roman_preflight_proper_public_v2.0.2_python.zip/download) |
+| `cgisim_v4.1.zip`                                 | [CGISim](https://sourceforge.net/projects/cgisim/files/cgisim_v4.1.zip/download)                                                       |
 
 ### 2. Clone required repositories
 
@@ -59,8 +59,16 @@ git lfs pull
 pip install -e .
 ```
 
-### 5. Verify Installation
+### 5. Optional: Install cgi-howfsc in editable mode for development
 
+```bash
+pip uninstall howfsc
+git clone https://github.com/roman-corgi/cgi-howfsc.git
+cd cgi-howfsc
+pip install -e .
+```
+
+### 6. Verify Installation
 Test that everything is installed correctly:
 
 ```python
@@ -109,4 +117,4 @@ you are probably missing the LFS files from cgi-eetc.
 
 To fix this...
 - Make sure you have Git LFS installed: https://git-lfs.github.com/
-- If you installed from a cgi-eetc repo clone, run `git lfs pull` in that directory to download the large files.
+- Run `git lfs fetch --all` then `git lfs pull` in your `corgihowfsc` repo, and also `cgi-howfsc` repo if you installed it in dev mode from a local clone.

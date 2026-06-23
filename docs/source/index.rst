@@ -6,9 +6,29 @@ corgihowfsc documentation
    :caption: Getting Started
 
    installation
+   contributing
 
 .. toctree::
    :maxdepth: 1
-   :caption: HOWFSC Loops and Models
+   :caption: HOWFSC Loop
 
-   nulling_test_gitl_cgi_howfsc
+   gitl_corgi_howfsc
+   gitl_cgi_howfsc
+   loop_outputs
+   jacobian_computation
+
+.. toctree::
+   :maxdepth: 1
+   :caption: corgihowfsc file structure
+
+   cstrat_docs
+   hconf_docs
+
+.. toctree::
+   :maxdepth: 1
+   :caption: corgihowfsc functions
+
+   Probe
+   Estimator
+   plotting
+   corgisim_manager

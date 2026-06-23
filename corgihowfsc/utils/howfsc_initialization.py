@@ -3,13 +3,85 @@ import os
 import argparse
 import cProfile
 import pstats
-import logging
 import glob
 
 import numpy as np
 from astropy.io import fits
 
 from howfsc.util.load import load
+import warnings
+
+def get_cpu_allocation(num_process=None, num_imager_worker=None, num_proper_process=None):
+    """
+    Validate CPU counts for nested parallelism against allocated CPUs,
+    and warn if oversubscription is detected.
+    On Linux clusters, uses os.sched_getaffinity(0) to get the number of CPUs
+    allocated to the current process. Falls back to
+    os.cpu_count() on Windows/macOS, which may overestimate available CPUs on
+    shared systems.
+    The peak concurrent CPU usage is num_imager_worker * num_proper_process:
+    - num_imager_worker: outer parallel workers, each collecting one probe image
+    - num_proper_process: PROPER's internal multiprocessing CPUs per imager worker
+    Args:
+        num_process: int or None, number of processes for Jacobian computation.
+                     Defaults to 1.
+        num_imager_worker: int or None, number of parallel imager workers for
+                           probe image collection via run_parallel. Defaults to 1.
+        num_proper_process: int or None, number of PROPER internal CPUs per imager
+                            worker, passed via corgi_overrides['NCPUS']. Defaults to 1.
+    Returns:
+        num_process: int, unchanged from input (or 1 if None)
+        num_imager_worker: int, unchanged from input (or 1 if None)
+        num_proper_process: int, unchanged from input (or 1 if None)
+    Raises:
+        ValueError: If any argument is not a positive integer (when not None).
+    Warns:
+        If num_imager_worker * num_proper_process exceeds allocated CPUs, warns that
+        hardware thrashing is likely.
+        If os.sched_getaffinity is unavailable, warns that cpu_count may
+        overestimate available CPUs.
+    """
+    # Get hardware limit
+    if hasattr(os, 'sched_getaffinity'):
+        allocated_cpus = len(os.sched_getaffinity(0))
+    else:
+        allocated_cpus = os.cpu_count() or 1
+        warnings.warn(
+            "os.sched_getaffinity not available on this platform. "
+            "Falling back to os.cpu_count() which may overestimate "
+            "available CPUs on shared/cluster systems."
+        )
+
+    # Validate inputs
+    for name, val in [('num_process', num_process),
+                      ('num_imager_worker', num_imager_worker),
+                      ('num_proper_process', num_proper_process)]:
+        if val is not None and (not isinstance(val, int) or val < 1):
+            raise ValueError(f"{name} must be a positive integer or None, got {val!r}")
+
+    # Defaults
+    num_process = num_process or 1
+    num_imager_worker = num_imager_worker or 1
+    num_proper_process = num_proper_process or 1
+
+    # Peak concurrent load
+    peak_concurrent = num_imager_worker * num_proper_process
+
+    # Case 1: Check for instantaneous oversubscription
+    if peak_concurrent > allocated_cpus:
+        warnings.warn(
+            f"Instantaneous load ({num_imager_worker} workers × {num_proper_process} cores = {peak_concurrent}) "
+            f"exceeds available CPUs ({allocated_cpus})."
+        )
+
+    # Case 2: Check if total task count is high but concurrency is safely throttled
+    if num_process > allocated_cpus:
+        warnings.warn(
+            f"Instantaneous load ({num_process} workers × 1 core = {num_process}) "
+            f"exceeds available CPUs ({allocated_cpus})."
+        )
+
+    return num_process, num_imager_worker, num_proper_process
 
 def get_args(niter=5,
                     mode='narrowfov',
@@ -29,7 +101,8 @@ def get_args(niter=5,
                     stellarvmagtarget=None,
                     stellartypetarget=None,
                     jacpath=None,
-                    dmstartmap_filenames=None):
+                    dmstartmap_filenames=None,
+                    path_overrides=None):
         """
         Initialize HOWFSC simulation with all required variables and configurations.
         Returns all variables needed for the main simulation loop.
@@ -40,8 +113,12 @@ def get_args(niter=5,
             Coronagraph mode from test data; must be one of 'widefov', 'narrowfov',
             'nfov_dm', 'nfov_flat', or 'spectroscopy'.  Defaults to 'narrowfov'.
         isprof : bool, optional
-            If True, runs the Python cProfile profiler on howfsc_computation and
-            displays the top 20 howfsc/ contributors to cumulative time.
+            If True, enables Python's cProfile profiler around calls to
+            `howfsc_computation()` during the nulling loop. Profiling statistics
+            are accumulated across all iterations. At the end of the run, the
+            top 20 entries whose module or file path contains "howfsc" are
+            logged, sorted by both cumulative time ("cumtime") and internal
+            function time ("tottime").
         logfile : str, optional
             If present, absolute path to file location to log to.
         fracbadpix : float, optional
@@ -129,6 +206,7 @@ def get_args(niter=5,
         args.jacpath = jacpath
         args.dmstartmap_filenames = dmstartmap_filenames
         # args.dm_start_shape = dm_start_shape
+        args.path_overrides = path_overrides or {}
 
         return args
 
@@ -182,11 +260,11 @@ def get_args_cmd(defjacpath):
                     help='If present, type of the target star desired will be updated in the hconf file (for parameter stellar_type_target in hconf file).')
 
     ap.add_argument('-j', '--jacpath', default=defjacpath, help="absolute path to read Jacobian files from", type=str)
+    ap.add_argument('--probe_shape', default='default', choices=['default', 'single'],
+                    help="Shape of the probes: 'default' (Sinc) or 'single' (Single Actuator).")
     args = ap.parse_args()
 
     return args
-
-
 
 def load_files(args, howfscpath):
     # User params
@@ -203,18 +281,14 @@ def load_files(args, howfscpath):
     if nbadframe < 0:
         raise ValueError('Number of bad frames cannot be less than 0.')
 
-    if isprof:
-        pr = cProfile.Profile()
-        pass
+    # Check probes shapes : Default = sinc-sin-sin, others are alternates probes
+    supported_shapes = {'default', 'single', 'gaussian', 'unmodulated_sinc'}
 
-    # Set up logging
-    if logfile is not None:
-        logging.basicConfig(filename=logfile, level=logging.INFO)
-        pass
-    else:
-        logging.basicConfig(level=logging.INFO)
-        pass
-    log = logging.getLogger(__name__)
+    if args.probe_shape not in supported_shapes:
+        raise ValueError(
+            f"Probe shape '{args.probe_shape}' not recognized. "
+            f"Supported: {', '.join(supported_shapes)}"
+        )
 
     model_path_all = os.path.join(howfscpath, 'model', 'every_mask_config')
     n2clistfiles = [
@@ -234,9 +308,37 @@ def load_files(args, howfscpath):
 
         if '360deg' in args.dark_hole:
             hconffile = os.path.join(modelpath_band, 'hconf_nfov_flat.yaml')
+<<<<<<< HEAD
             cstratfile = os.path.join(modelpath, 'cstrat_nfov_band1_360deg_alpha02.yaml')
             # cstratfile = os.path.join(modelpath, 'cstrat_nfov_band1.yaml')
 
+=======
+            cstratfile = os.path.join(modelpath, 'cstrat_nfov_band1.yaml')
+            if args.probe_shape == 'default':
+                # Sinc-sin-sin probes
+                probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_cos.fits')
+                probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinlr.fits')
+                probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinud.fits')
+            elif args.probe_shape == 'single':
+                # Single actuator probes
+                probe0file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act0.fits')
+                probe1file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act1.fits')
+                probe2file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act2.fits')
+            elif args.probe_shape == 'gaussian':
+                # Gaussian probes
+                probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian0.fits')
+                probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian1.fits')
+                probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian2.fits')
+            elif args.probe_shape == 'unmodulated_sinc':
+                # Unmodulated sinc probes
+                probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinc.fits')
+                probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinc_shifted_right.fits')
+                probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinc_shifted_diag_ur.fits')
+            else:
+                # Raise an error if the probe shape is not recognized
+                raise ValueError(f"Probe shape '{args.probe_shape}' is not recognized. "
+                                 "Supported shapes are: 'default', 'single', 'gaussian' and 'unmodulated_sinc'.")
+>>>>>>> origin/main
             # if args.dm_start_shape is not None:
             #     dm_start_file = os.path.join(modelpath, args.dm_start_shape)
             # else:
@@ -246,21 +348,32 @@ def load_files(args, howfscpath):
             #     dm_start_file = os.path.join(modelpath, start_parts[0] + '_' + start_parts[1] + '_')
             #     print('Using ' + start_parts[0] + '_' + start_parts[1] + '_' + ' as starting DM shape')
 
-            probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_cos.fits')
-            probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinlr.fits')
-            probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinud.fits')
-
             if dmstartmap_filenames is None:
-                dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
+                dmstartmap_filenames = ['gitl_start_compact_dm1.fits', 'gitl_start_compact_dm2.fits']
 
         elif 'half' in args.dark_hole:
             hconffile = os.path.join(modelpath_band, 'hconf_nfov_flat.yaml')
             cstratfile = os.path.join(modelpath, 'cstrat_nfov_band1_half.yaml')
 
-            probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_cos.fits')
-            probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinlr.fits')
-            probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinud.fits')
-
+            if args.probe_shape == 'single':
+                # Single actuator alternate probes
+                probe0file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act0.fits')
+                probe1file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act1.fits')
+                probe2file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act2.fits')
+            elif args.probe_shape == 'default':
+                # Sinc probes
+                probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_cos.fits')
+                probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinlr.fits')
+                probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinud.fits')
+            elif args.probe_shape == 'gaussian':
+                # Gaussian alternate probes
+                probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian0.fits')
+                probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian1.fits')
+                probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian2.fits')
+            else:
+                # Raise an error if the probe shape is not recognized
+                raise ValueError(f"Probe shape '{args.probe_shape}' is not recognized. "
+                                 "Supported shapes are: 'single', 'default' and 'gaussian'.")
             if 'top' in args.dark_hole:
                 if dmstartmap_filenames is None:
                     dmstartmap_filenames = ['iter_061_dm1.fits', 'iter_061_dm2.fits']
@@ -271,6 +384,8 @@ def load_files(args, howfscpath):
         probefiles[1] = probe2file
 
     elif mode == 'spec_band2':
+        if args.dark_hole != 'both_sides':
+            raise ValueError("For spectroscopy modes, dark hole must be 'both_sides'")
         modelpath_band = os.path.join(howfscpath, 'model', 'spec_band2')
         modelpath = os.path.join(modelpath_band, mode + '_' + args.dark_hole)
         probepath = os.path.join(howfscpath, 'model', 'probes')
@@ -280,6 +395,7 @@ def load_files(args, howfscpath):
         cfgfile = os.path.join(modelpath, 'howfsc_optical_model.yaml')
         cstratfile = os.path.join(modelpath, 'cstrat_spec_band2.yaml')
 
+        # BUG - file missing - only exist in cgihowfsc but not in corgihowfsc
         probe0file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_cos.fits')
         probe1file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_sinlr.fits')
         probe2file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_sinud.fits')
@@ -302,7 +418,15 @@ def load_files(args, howfscpath):
             os.path.join(model_path_all, 'ones_like_fs.fits'),
         ]
 
+        if dmstartmap_filenames is None:
+            print('No DM start maps provided, loading default...')
+            dmstartmap_filenames = ['iter_061_dm1.fits', 'iter_061_dm2.fits']
+        else:
+            print('Using provided DM start maps: ', dmstartmap_filenames)
+
     elif mode == 'spec_band3':
+        if args.dark_hole != 'both_sides':
+            raise ValueError("For spectroscopy modes, dark hole must be 'both_sides'")
         modelpath_band = os.path.join(howfscpath, 'model', 'spec_band3')
         modelpath = os.path.join(modelpath_band, mode + '_' + args.dark_hole)
         probepath = os.path.join(howfscpath, 'model', 'probes')
@@ -312,6 +436,7 @@ def load_files(args, howfscpath):
         cfgfile = os.path.join(modelpath, 'howfsc_optical_model.yaml')
         cstratfile = os.path.join(modelpath, 'cstrat_spec_band3.yaml')
 
+        # BUG - file missing - only exist in cgihowfsc but not in corgihowfsc
         probe0file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_cos.fits')
         probe1file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_sinlr.fits')
         probe2file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_sinud.fits')
@@ -373,10 +498,39 @@ def load_files(args, howfscpath):
         # should not reach here; argparse should catch this
         raise ValueError('Invalid coronagraph mode type')
 
-    dmstartmaps = [
-        fits.getdata(os.path.join(modelpath, dmstartmap_filenames[0])),
-        fits.getdata(os.path.join(modelpath, dmstartmap_filenames[1])),
-    ]
+    # Apply any explicit path overrides
+    _local_paths = {'cfgfile': cfgfile, 'cstratfile': cstratfile, 'hconffile': hconffile}
+    for key, val in getattr(args, 'path_overrides', {}).items():
+        if key in _local_paths:
+            _local_paths[key] = val
+        else:
+            raise ValueError(f"Unrecognized path override key: '{key}'")
+
+    cfgfile, cstratfile, hconffile = (
+        _local_paths['cfgfile'],
+        _local_paths['cstratfile'],
+        _local_paths['hconffile'],
+    )
+
+    dm_abs_flags = [os.path.isabs(p) for p in dmstartmap_filenames]
+
+    if any(dm_abs_flags) and not all(dm_abs_flags):
+        raise ValueError(
+            "dmstartmap_filenames must be specified consistently: "
+            "either both absolute paths or both filenames relative to modelpath. "
+            f"Got: {dmstartmap_filenames}"
+        )
+
+    if os.path.isabs(dmstartmap_filenames[0]):
+        dmstartmaps = [
+            fits.getdata(dmstartmap_filenames[0]),
+            fits.getdata(dmstartmap_filenames[1]),
+        ]
+    else:
+        dmstartmaps = [
+            fits.getdata(os.path.join(modelpath, dmstartmap_filenames[0])),
+            fits.getdata(os.path.join(modelpath, dmstartmap_filenames[1])),
+        ]
     # dmstartmaps = load_dm_start_maps(dm_start_file)
 
 

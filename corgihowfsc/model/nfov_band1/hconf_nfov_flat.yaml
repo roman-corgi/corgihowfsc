@@ -9,7 +9,7 @@ overhead:
 # Stellar properties for HOWFSC target
 star:
   stellar_vmag: 2.25
-  stellar_type: O5
+  stellar_type: G0V
   stellar_vmag_target: 5.0
   stellar_type_target: F5V  # G0V
 
@@ -24,18 +24,25 @@ excam:
 
 # Hardware configuration for observation
 hardware:
+<<<<<<< HEAD
 #  sequence_list: [ CGI_SEQ_NFOV_UNOCC_ASTROM_PHOTOM_PS_FLAT_1A, CGI_SEQ_NFOV_UNOCC_ASTROM_PHOTOM_PS_FLAT_1B, CGI_SEQ_NFOV_UNOCC_ASTROM_PHOTOM_PS_FLAT_1C ]
   sequence_list: [CGI_SEQ_NFOV_UNOCC_ASTROM_PHOTOM_PS_1A, CGI_SEQ_NFOV_UNOCC_ASTROM_PHOTOM_PS_1B, CGI_SEQ_NFOV_UNOCC_ASTROM_PHOTOM_PS_1C]
   # sequence_list: [OPEN_NFOV_1A_OPTDMS, OPEN_NFOV_1B_OPTDMS, OPEN_NFOV_1C_OPTDMS]
   sequence_observation: CGI_SEQ_NFOV_UNOCC_ASTROM_PHOTOM_PS_1
+=======
+  #sequence_list: [ CGI_SEQ_NFOV_UNOCC_ASTROM_PHOTOM_PS_FLAT_1A, CGI_SEQ_NFOV_UNOCC_ASTROM_PHOTOM_PS_FLAT_1B, CGI_SEQ_NFOV_UNOCC_ASTROM_PHOTOM_PS_FLAT_1C ]
+#  sequence_list: [CGI_SEQ_NFOV_UNOCC_ASTROM_PHOTOM_PS_1A, CGI_SEQ_NFOV_UNOCC_ASTROM_PHOTOM_PS_1B, CGI_SEQ_NFOV_UNOCC_ASTROM_PHOTOM_PS_1C]
+  sequence_list: [OPEN_NFOV_1A_SEED, OPEN_NFOV_1B_SEED, OPEN_NFOV_1C_SEED]
+  sequence_observation: OPEN_NFOV_1_SEED
+>>>>>>> origin/main
   pointer: pointer_howfsc.yaml
 
 # Wavefront control solver config
 howfsc:
   method: cholesky # tool for least-squares solver
   min_good_probes: 3 # num good probe intensity estimates required per pix
-  eestclip: 0.1 # if iinc < -icoh*eestclip, e-field marked as bad
-  eestcondlim: 0.4 # if lstsq solve has cond number below this, e-field bad
+  eestclip: .inf # if iinc < -icoh*eestclip, e-field marked as bad
+  eestcondlim: 0 # if lstsq solve has cond number below this, e-field bad
 
 # Probe pattern parameters
 probe:
