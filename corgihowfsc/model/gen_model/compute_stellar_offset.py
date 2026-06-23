@@ -39,8 +39,8 @@ def get_stellar_offset():
     # star_spectrum = 'a0v'  # 'k5v'
     # star_vmag = 2.0
 
-    v_dm1 = proper.prop_fits_read(os.path.join(IN_PATH, 'flatmaps', 'hlc_flat_wfe_dm1_v.fits' ))
-    v_dm2 = proper.prop_fits_read(os.path.join(IN_PATH, 'flatmaps', 'hlc_flat_wfe_dm2_v.fits' ))
+    v_dm1 = proper.prop_fits_read(os.path.join(IN_PATH, 'flatmaps', 'flatmap_band1_dm1_v.fits' ))
+    v_dm2 = proper.prop_fits_read(os.path.join(IN_PATH, 'flatmaps', 'flatmap_band1_dm2_v.fits' ))
 
     fn_config = os.path.join(IN_PATH, 'any_band', 'params_psffit.yaml')
 
@@ -62,18 +62,25 @@ def get_stellar_offset():
         if '1' in bandpass:
             cor_type = 'hlc_band1'
             fn_ref_base = 'ref_psf_band_1b.fits'
+            band_num = 1
         elif '2' in bandpass:
             cor_type = 'hlc_band2'
             fn_ref_base = 'ref_psf_band_2c.fits'
+            band_num = 2
         elif '3' in bandpass:
             cor_type = 'hlc_band3'
             fn_ref_base = 'ref_psf_band_3c.fits'
+            band_num = 3
         elif '4' in bandpass:
             cor_type = 'hlc_band4'
             fn_ref_base = 'ref_psf_band_4b.fits'
+            band_num = 4
         else:
             raise ValueError(f'bandpass value {bandpass} not accepted here.')
         
+        v_dm1 = proper.prop_fits_read(os.path.join(IN_PATH, 'flatmaps', ('flatmap_band%d_dm1_v.fits' % band_num)))
+        v_dm2 = proper.prop_fits_read(os.path.join(IN_PATH, 'flatmaps', ('flatmap_band%d_dm2_v.fits' % band_num)))
+
         ref_img = fits.getdata(os.path.join(OUT_PATH, 'focal_plane', 'psf', fn_ref_base))
 
         print("Computing pupil image")
