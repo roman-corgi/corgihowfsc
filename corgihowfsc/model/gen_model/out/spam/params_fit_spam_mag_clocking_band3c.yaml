@@ -6,7 +6,7 @@ nMag: 7
 dBeamNom: 0.0170146
 dCircleM: 0.001
 dyCircM: 0.015
-nBeamNom: 297.4533996582031
+nBeamNom: 296.532470703125
 radiusROI: 40
 nPixFFT: 1024
 nPixOut: 90
