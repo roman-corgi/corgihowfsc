@@ -233,8 +233,10 @@ def dm_registration(
     amp_unpoked = amp
     ph_unpoked = ph_frontend_none
 
-    fn_dm1_abs = os.path.join(GEN_MODEL_PATH, 'out', 'dm', 'hlc_flat_wfe_dm1_v.fits')
-    fn_dm2_abs = os.path.join(GEN_MODEL_PATH, 'out', 'dm', 'hlc_flat_wfe_dm2_v.fits')
+    fn_dm1_abs = os.path.join(IN_PATH, 'flatmaps', 'flatmap_band1_dm1_v.fits')
+    fn_dm2_abs = os.path.join(IN_PATH, 'flatmaps', 'flatmap_band1_dm2_v.fits')
+#     fn_dm1_abs = os.path.join(GEN_MODEL_PATH, 'out', 'dm', 'hlc_flat_wfe_dm1_v.fits')
+#     fn_dm2_abs = os.path.join(GEN_MODEL_PATH, 'out', 'dm', 'hlc_flat_wfe_dm2_v.fits')
     dmv1_nom = proper.prop_fits_read(fn_dm1_abs)
     dmv2_nom = proper.prop_fits_read(fn_dm2_abs)
     nact_dm1, _ = dmv1_nom.shape  # needed in build model below
