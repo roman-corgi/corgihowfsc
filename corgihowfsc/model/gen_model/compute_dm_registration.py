@@ -7,6 +7,7 @@ Example usage:
 """
 import argparse
 import os
+import pathlib
 import sys
 
 import numpy as np
@@ -19,6 +20,7 @@ import proper
 from cal.pr.util.unwrap import unwrap_segments
 from cal.buildmodel.build_dm import add_dm_registration
 from cal.util.loadyaml import loadyaml
+from cal.util.writeyaml import writeyaml
 from cal.dmreg.dmreg import calc_dmreg_from_poke_grid_for_any_pupil
 from cal.dmcoalign.calcoffset import calcoffset
 import cal.pupilfit.pupilfit_open as pfo
@@ -389,13 +391,32 @@ def dm_registration(
         excam_dx = None
         excam_dy = None
 
-    # 8. If requested, display graphs for sanity checking
+    # 10. Copy YAML files over to different directory. 
+    # Have to change relative paths first, though.
+    dm_dict = loadyaml(fn_dmreg)
+    
+    # Both DMs    
+    for dm_name in ['DM1', 'DM2']:
+        dm_dict['dms'][dm_name]['registration']['inffn'] = str(pathlib.Path(*(pathlib.Path(dm_dict['dms'][dm_name]['registration']['inffn']).parts[2:])))
+        dm_dict['dms'][dm_name]['voltages']['tiefn'] = str(pathlib.Path(*(pathlib.Path(dm_dict['dms'][dm_name]['voltages']['tiefn']).parts[2:])))
+        dm_dict['dms'][dm_name]['voltages']['flatfn'] = str(pathlib.Path(*(pathlib.Path(dm_dict['dms'][dm_name]['voltages']['flatfn']).parts[2:])))
+
+    # Crosstalk filename for DM2 only
+    dm_name = 'DM2'
+    dm_dict['dms'][dm_name]['voltages']['crosstalkfn'] = str(pathlib.Path(*(pathlib.Path(dm_dict['dms'][dm_name]['voltages']['crosstalkfn']).parts[2:])))
+
+    fn_dmreg_2 = os.path.join(MODEL_PATH, 'homf_dmreg', f'howfsc_optical_model_dmreg_only_band_{bandpass}.yaml')
+    writeyaml(dm_dict, fn_dmreg_2)
+
+    # 11. If requested, display graphs for sanity checking
     if show_plot:
         if block:
-            print('Close figure to continue ...')
-            plt.show(block=True)
+            plt.pause(2)
+            #print('Close figure to continue ...')
+            #plt.show(block=True)
         else:
-            plt.show(block=False)
+            #plt.show(block=False)
+            plt.pause(2)
 
     return map_dict_dm1, map_dict_dm2, excam_dx, excam_dy
 

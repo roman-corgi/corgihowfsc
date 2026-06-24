@@ -707,9 +707,9 @@ def write_cstrat(fn_setup):
     write_cstrat_file(fn_cstrat, nlam, nexcam, reg_vec, dmmultgain_vec)
 
 
-def write_model(model_type, band_num, label):
+def write_model(mode_type, band_num, label):
 
-    fn_setup = os.path.join(MODEL_PATH, 'homf_params', f'homf_params_{model_type}_band{str(band_num)}_{label}.yaml')
+    fn_setup = os.path.join(MODEL_PATH, 'homf_params', f'homf_params_{mode_type}_band{str(band_num)}_{label}.yaml')
 
     setup_steps(fn_setup)
     # add_fixedbp(fn_setup)  # Only need to do once
@@ -734,7 +734,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         prog="python write_model.py",
         description="Populate the optical model definition file and generate the FITS files for it.")
-    parser.add_argument("model_type", type=str, choices=mode_type_list, help=f"Which type of mask config to use. Choices are {mode_type_list}.")
+    parser.add_argument("mode_type", type=str, choices=mode_type_list, help=f"Which type of mask config to use. Choices are {mode_type_list}.")
     parser.add_argument("band_num", type=int, choices=band_list, help=f"Which bandpass to use. Choices are {band_list}.")
     parser.add_argument("label", type=str,
                         help="Text descriptor used to differentiate the use case from others in the same band and mask config. Typically describes the dark hole size/shape.")
@@ -742,7 +742,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     retvals = write_model(
-        args.model_type,
+        args.mode_type,
         args.band_num,
         args.label,
     )

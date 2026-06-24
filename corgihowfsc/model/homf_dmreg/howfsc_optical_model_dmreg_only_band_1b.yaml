@@ -2,14 +2,14 @@ dms:
   DM1:
     pitch: 0.0009906
     registration:
-      dx: -0.014224950169164925
-      dy: -0.04932028167763836
+      dx: -0.016130703910254666
+      dy: -0.05002164771055773
       inffn: ../dm1/dm_1236-2_brian_inf_v1.0.fits
       nact: 48
-      ppact_cx: 6.436212500311111
-      ppact_cy: 6.3393938970505905
+      ppact_cx: 6.436283468211902
+      ppact_cy: 6.340233369251831
       ppact_d: 13
-      thact: 90.02875243700015
+      thact: 90.02758628757478
       flipx: true
     voltages:
       gainfn: gain_map_dm1.fits
@@ -25,14 +25,14 @@ dms:
   DM2:
     pitch: 0.0009906
     registration:
-      dx: 0.08969719226420841
-      dy: -0.5719916242919781
+      dx: 0.0758724379406691
+      dy: -0.5712052356447495
       inffn: ../dm2/dm_1236-5_brian_inf_v1.0.fits
       nact: 48
-      ppact_cx: 6.430940805724932
-      ppact_cy: 6.335016890470873
+      ppact_cx: 6.431031264455319
+      ppact_cy: 6.336280622115511
       ppact_d: 13
-      thact: 90.00377291980786
+      thact: 90.00613700528329
       flipx: false
     voltages:
       gainfn: gain_map_dm2.fits
