@@ -9,8 +9,8 @@ import os
 
 import numpy as np
 
-from howfsc.util import check
-from howfsc.util.writeyaml import writeyaml
+from cal.util import check
+from cal.util.writeyaml import writeyaml
 
 
 def write_cstrat_file(fn, nlam, nexcam, reg_vec, dmmultgain_vec):

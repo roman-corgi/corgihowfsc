@@ -2,14 +2,14 @@ dms:
   DM1:
     pitch: 0.0009906
     registration:
-      dx: -0.014224950169164925
-      dy: -0.04932028167763836
+      dx: -0.016130703910254666
+      dy: -0.05002164771055773
       inffn: ../dm1/dm_1236-2_brian_inf_v1.0.fits
       nact: 48
-      ppact_cx: 6.436212500311111
-      ppact_cy: 6.3393938970505905
+      ppact_cx: 6.436283468211902
+      ppact_cy: 6.340233369251831
       ppact_d: 13
-      thact: 90.02875243700015
+      thact: 90.02758628757478
       flipx: true
     voltages:
       gainfn: ../any/gain_map_dm1.fits
@@ -25,14 +25,14 @@ dms:
   DM2:
     pitch: 0.0009906
     registration:
-      dx: 0.08969719226420841
-      dy: -0.5719916242919781
+      dx: 0.0758724379406691
+      dy: -0.5712052356447495
       inffn: ../dm2/dm_1236-5_brian_inf_v1.0.fits
       nact: 48
-      ppact_cx: 6.430940805724932
-      ppact_cy: 6.335016890470873
+      ppact_cx: 6.431031264455319
+      ppact_cy: 6.336280622115511
       ppact_d: 13
-      thact: 90.00377291980786
+      thact: 90.00613700528329
       flipx: false
     voltages:
       gainfn: ../any/gain_map_dm2.fits
@@ -56,17 +56,17 @@ sls:
     ft_dir: reverse
     sp:
       afn: ../any/spm_amp.fits
-      pdp: 298.0449523925781
+      pdp: 298.57135009765625
       pfn: ../any/subband0/spm_ph.fits
     lyot:
       afn: ../any/lyot_amp.fits
-      pdp: 298.0449523925781
+      pdp: 298.57135009765625
       pfn: ../any/subband0/lyot_ph.fits
       tip: 0.0
       tilt: 0.0
     epup:
       afn: epup_amp.fits
-      pdp: 298.0449523925781
+      pdp: 298.57135009765625
       pfn: ../any/subband0/epup_ph.fits
       tip: 0
       tilt: 0
@@ -85,17 +85,17 @@ sls:
     ft_dir: reverse
     sp:
       afn: ../any/spm_amp.fits
-      pdp: 298.0449523925781
+      pdp: 298.57135009765625
       pfn: ../any/subband1/spm_ph.fits
     lyot:
       afn: ../any/lyot_amp.fits
-      pdp: 298.0449523925781
+      pdp: 298.57135009765625
       pfn: ../any/subband1/lyot_ph.fits
       tip: 0.0
       tilt: 0.0
     epup:
       afn: epup_amp.fits
-      pdp: 298.0449523925781
+      pdp: 298.57135009765625
       pfn: ../any/subband1/epup_ph.fits
       tip: 0
       tilt: 0
@@ -114,17 +114,17 @@ sls:
     ft_dir: reverse
     sp:
       afn: ../any/spm_amp.fits
-      pdp: 298.0449523925781
+      pdp: 298.57135009765625
       pfn: ../any/subband2/spm_ph.fits
     lyot:
       afn: ../any/lyot_amp.fits
-      pdp: 298.0449523925781
+      pdp: 298.57135009765625
       pfn: ../any/subband2/lyot_ph.fits
       tip: 0.0
       tilt: 0.0
     epup:
       afn: epup_amp.fits
-      pdp: 298.0449523925781
+      pdp: 298.57135009765625
       pfn: ../any/subband2/epup_ph.fits
       tip: 0
       tilt: 0
