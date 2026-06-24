@@ -29,8 +29,8 @@ sim_settings:
   flat_dm_filenames:
       - "/Users/jessicag/anaconda3/envs/corgiloop/lib/python3.12/site-packages/roman_preflight_proper/examples/hlc_flat_wfe_dm1_v.fits"
       - "/Users/jessicag/anaconda3/envs/corgiloop/lib/python3.12/site-packages/roman_preflight_proper/examples/hlc_flat_wfe_dm2_v.fits"
-  apply_creep: true # true # options: apply PMN creep to the voltage maps (true) or not (false or None) 
-  apply_hysteresis: true # true # options: apply hysteresis to the voltage maps (true) or not (false or None)
+  apply_creep: true # options: apply PMN creep to the voltage maps (true) or not (false or None) 
+  apply_hysteresis: true # options: apply hysteresis to the voltage maps (true) or not (false or None)
   previous_dmstartmap_filenames:
       # Only used if hysteresis applied
       - "/Users/jessicag/anaconda3/envs/corgiloop/lib/python3.12/site-packages/roman_preflight_proper/examples/spc-wide_ni_2e-8_dm1_v.fits"
@@ -90,8 +90,14 @@ models:
       # Parameters forwarded to GitlImage initialization
       is_noise_free: true
       oversampling_factor: 3 # always odd number
-      # Parameters only needed if apply_zernikes is true above
+      # Parameters to add Z4 (focus) to primary
       zindex:
         - 4
       zval_m:
         - 3.0e-8
+      # Parameters to add LS misalignment
+      lyot_x_shift_m: 3.0e-7
+      lyot_y_shift_m: -3.0e-7
+      # Parameters to add FSAM misalignment
+      field_stop_x_offset_m: -3.0e-7
+      field_stop_y_offset_m: -3.0e-7
