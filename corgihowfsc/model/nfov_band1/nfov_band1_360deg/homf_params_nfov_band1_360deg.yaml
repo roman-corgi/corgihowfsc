@@ -16,7 +16,7 @@ is_hlc: true
 mask_folder: 'HLC_20190210b_NFOV'
 fn_lyot: 'LS_HLC_20190210b_NFOV_1000_XCS.fits'
 fn_spm: null
-mag_pupil_vs_ref:  0.2982591247558594  # See beam diameter in scripts/data/spam/calib_spam_results.csv
+mag_pupil_vs_ref:  0.297722259521484  # See beam diameter in corgihowfsc/model/gen_model/out/spam/calib_spam_results.csv
 use_spm: false
 is_fpm_open: true
 n_fpm: 75
@@ -41,8 +41,8 @@ dh_dict:  # if dh_match_fs==false, these inputs are used for 'build_sls.add_dh'
     
 
 # PUPIL E-FIELD AND ASSOCIATED DM SETTINGS
-fn_dm1v_epup: './gen_model/out/pupil/1b/v_flat_phase_band1_dm1.fits'
-fn_dm2v_epup: './gen_model/out/pupil/1b/v_flat_phase_band1_dm2.fits'
+fn_dm1v_epup: './gen_model/out/pupil/1b/flatmap_band1_dm1_v.fits'
+fn_dm2v_epup: './gen_model/out/pupil/1b/flatmap_band1_dm2_v.fits'
 fn_amp_end2end: './gen_model/out/pupil/1b/poked_none/amp_end2end.fits'
 fn_ph_end2end: './gen_model/out/pupil/1b/poked_none/phase_end2end.fits'
 fn_ph_backend: './gen_model/out/pupil/1b/poked_none/phase_backend.fits'
