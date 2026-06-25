@@ -101,3 +101,12 @@ models:
       # Parameters to add FSAM misalignment
       field_stop_x_offset_m: -3.0e-7
       field_stop_y_offset_m: -3.0e-7
+      # TWO OPTIONS FOR CHECKING THE STAR ON FPM ALIGNMENT
+      # Option 1: Shift the source throughout the system (shifts at FPM and image) 
+      # Parameters for the x and y offsets in mas
+      source_x_offset_mas: 2.7
+      source_y_offset_mas: 2.7
+      # Option 2: Shift the FPM 
+      # Parameters for the x and y offsets in lambda/D
+      fpm_x_offset: 0
+      fpm_y_offset: 0
