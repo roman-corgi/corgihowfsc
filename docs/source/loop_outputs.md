@@ -69,14 +69,14 @@ These are:
     Final images taken after loop completion. The total number of images is `nlam * ndm`, where `ndm = 1 + 2 * nprobepair`.
     Example: in NFOV band 1 with `nlam = 3` and `nprobepair = 3`, this is 21 images.
 
-# Debugging History CSV
+## Debugging History CSV Details
 
 The `debugging_history.csv` file is written at the end of each HOWFSC iteration
 and records per-iteration, per-wavelength diagnostic quantities from the GITL loop.
 One row is written per wavelength channel per iteration, so a run with `N` iterations
 and `L` wavelength channels produces `N × L` rows.
 
-## File Format
+### File Format
 
 The file has no header on row 0 (which contains metadata); the column names appear on
 row 1. It can be loaded with pandas as follows:
@@ -97,7 +97,7 @@ The helper returns a dictionary of the form `history[field][lam_index]`, where e
 value is a 1-D array of length `N` (one entry per iteration). Iteration indexing in
 the raw CSV is 1-based.
 
-## Columns
+### Columns
 
 | Column | Units | Description |
 |--------|-------|-------------|
@@ -105,23 +105,23 @@ the raw CSV is 1-based.
 | `lam_index` | — | 0-based wavelength channel index. |
 | `beta` | — | Log₁₀ of the EFC regularization parameter selected for this iteration. Less negative values (e.g. `-3.5`) apply weaker regularization; more negative values (e.g. `-6.5`) apply stronger regularization. The value is chosen adaptively by the [Control Strategy Configuration](cstrat_docs.md). |
 | `peakflux` | counts / s | Unocculted stellar peak flux used to normalize raw camera images to normalized intensity (NI) units. Derived from the EETC for the current stellar type and magnitude. |
-| `next_c` | NI | Mean dark hole contrast measured at the end of this iteration (i.e. the starting contrast for the next iteration). |
-| `this_iter_dur` | s | Wall-clock duration of this iteration, including probing, estimation, and control computation. This is the same for all wavelength channels within a given iteration. Cumulative sum gives total elapsed time. |
-| `this_iter_dur_gitl` | s | Wall-clock duration of the GITL-specific overhead within this iteration (e.g. image readout and transfer), excluded from `this_iter_dur`. |
+| `next_c` | contrast | Mean dark hole contrast measured at the end of this iteration (i.e. the starting contrast for the next iteration). |
+| `this_iter_dur` | s | Wall-clock duration of this iteration, including probing, estimation, and control computation. This is the same for all wavelength channels within a given iteration. Cumulative sum OF ONE SUBBAND gives total elapsed time. |
+| `this_iter_dur_gitl` | s | Wall-clock duration of the GITL-specific overhead within this iteration. |
 | `cam_nom_gain` | — | EM gain setting used for the unocculted (nominal) observation. |
 | `cam_nom_exptime` | s | Exposure time used for the unocculted (nominal) observation. |
 | `cam_nom_nframes` | — | Number of frames co-added for the unocculted (nominal) observation. |
 | `cam_probe_gain` | — | EM gain setting used for the probed observations. |
 | `cam_probe_exptime` | s | Exposure time used for each probed observation. |
 | `cam_probe_nframes` | — | Number of frames co-added for each probed observation. |
-| `pred_mean_contrast` | NI | EFC-predicted mean dark hole contrast after applying the DM update, computed from the estimated electric field. |
-| `pred_bright_contrast` | NI | EFC-predicted brightest-pixel dark hole contrast after applying the DM update. |
-| `pred_mean_contrast_probing` | NI | Predicted mean dark hole contrast evaluated at the probing DM state (before the EFC correction is applied). |
-| `pred_bright_contrast_probing` | NI | Predicted brightest-pixel dark hole contrast evaluated at the probing DM state. |
+| `pred_mean_contrast` | contrast | EFC-predicted mean dark hole contrast after applying the DM update, computed from the estimated electric field. |
+| `pred_bright_contrast` | contrast | EFC-predicted brightest-pixel dark hole contrast after applying the DM update. |
+| `pred_mean_contrast_probing` | contrast | Predicted mean dark hole contrast evaluated at the probing DM state (before the EFC correction is applied). |
+| `pred_bright_contrast_probing` | contrast | Predicted brightest-pixel dark hole contrast evaluated at the probing DM state. |
 
-## Usage Notes
+### Usage Notes
 
-### Cumulative elapsed time
+#### Cumulative elapsed time
 
 Because `this_iter_dur` is identical across wavelength channels for a given
 iteration, extract it from a single channel before taking the cumulative sum:
@@ -132,7 +132,7 @@ iter_dur = np.array(history['this_iter_dur'][0])   # lam_index=0
 cumtime_hr = np.cumsum(iter_dur) / 3600.0
 ```
 
-### NI conversion for raw images
+#### NI conversion for raw images
 
 The `RAW_IMAGES` layer in `images.fits` is in detector counts and must be
 converted to NI before comparison with contrast metrics in this file:
@@ -144,7 +144,7 @@ NI = raw_image / cam_nom_exptime / peakflux
 The `intensity_coherent` and `intensity_incoherent` FITS layers are already
 in NI units and require no further conversion.
 
-### Relationship to `measured_contrast.csv`
+#### Relationship to `measured_contrast.csv`
 
 `measured_contrast.csv` contains one row per iteration (averaged over wavelength
 channels) and is the primary source for contrast vs. iteration plots.
@@ -152,9 +152,6 @@ channels) and is the primary source for contrast vs. iteration plots.
 for timing analysis, camera parameter inspection, and prediction vs. measurement
 comparisons.
 
-## See Also
-
-- [Control Strategy Configuration](cstrat_docs.md)
 
 ## Example output directory structure
 
