@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import matplotlib
+
 matplotlib.use('TkAgg')
 
 import eetc
@@ -9,6 +10,7 @@ from howfsc.model.mode import CoronagraphMode
 from howfsc.util.loadyaml import loadyaml
 
 import roman_preflight_proper
+
 ### Then, run the following command to copy the default prescription file
 roman_preflight_proper.copy_here()
 
@@ -25,15 +27,15 @@ from corgihowfsc.utils.output_management import make_output_file_structure
 eetc_path = os.path.dirname(os.path.abspath(eetc.__file__))
 howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
 defjacpath = os.path.join(os.path.dirname(howfscpath), 'temp')  # User should set to somewhere outside the repo
-precomp = 'precomp_jacs_always' #'load_all' if defjacpath is not None else 'precomp_all_once'
+precomp = 'precomp_jacs_always'  # 'load_all' if defjacpath is not None else 'precomp_all_once'
 
 base_path = Path.home()  # this is the proposed default but can be changed
 base_corgiloop_path = 'corgiloop_data'
 final_filename = 'final_frames.fits'
 
-loop_framework = 'corgi-howfsc' # do not modify
+loop_framework = 'corgi-howfsc'  # do not modify
 backend_type = 'cgi-howfsc'  # 'corgihowfsc' for the corgisim model, otherwise for the compact model use: 'cgi-howfsc'
-normalization_type = 'eetc' # 'eetc' for the compact model (cgi-howfsc), otherwise for the corgisim (corgihowfsc) model can use 'eetc', 'corgisim-off-axis', 'corgisim-on-axis'
+normalization_type = 'eetc'  # 'eetc' for the compact model (cgi-howfsc), otherwise for the corgisim (corgihowfsc) model can use 'eetc', 'corgisim-off-axis', 'corgisim-on-axis'
 
 dmstartmap_filenames = ['iter_061_dm1.fits', 'iter_061_dm2.fits']
 
@@ -41,16 +43,16 @@ fileout_path = make_output_file_structure(loop_framework, backend_type, base_pat
 
 # CPU count setup for parallel processing
 # CHECK - num_proper_process might need to be set to 1 when parallising corgisim?
-num_proper_process = None # Default is set by corgi_overrides in GitlImage initialization to 2. 
-num_jac_process = 2 # Default to 2 processes for Jacobian calculation, can be increased if needed. 
+num_proper_process = None  # Default is set by corgi_overrides in GitlImage initialization to 2.
+num_jac_process = 2  # Default to 2 processes for Jacobian calculation, can be increased if needed.
 
 # TODO - dummy numbers now but should be set and implemented later
 num_efield_worker = None
 num_imager_worker = None
 num_corgisim_norm_worker = None
 
-def main(): 
 
+def main():
     args = get_args(
         niter=1,
         mode='wfov_band4',
@@ -67,14 +69,19 @@ def main():
     # User params
     mode = args.mode
 
-    modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps = load_files(args, howfscpath)
+    modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps = load_files(args,
+                                                                                                           howfscpath)
 
     # cfg
     cfg = CoronagraphMode(cfgfile)
 
     # hconffile
     hconf = loadyaml(hconffile, custom_exception=TypeError)
-    print(cstratfile)
+
+    # If it is desired to overwrite the stellar mag/type, do so here
+    # hconf['star']['stellar_vmag'] = 5
+    # hconf['star']['stellar_type'] = 'G0V'
+
     # Define control and estimator strategy
     cstrat = ControlStrategy(cstratfile)
     estimator = DefaultEstimator()
@@ -95,7 +102,6 @@ def main():
 
     if num_proper_process is not None:
         corgi_overrides['NCPUS'] = num_proper_process
-        
     imager = GitlImage(
         cfg=cfg,  # Your CoronagraphMode object
         cstrat=cstrat,  # Your ControlStrategy object
@@ -111,28 +117,28 @@ def main():
     elif backend_type == 'corgihowfsc':
         crop_params['lrow'] = 0
         crop_params['lcol'] = 0
-          
+
     if normalization_type == 'eetc':
-      normalization_strategy = EETCNormalization(backend_type, corgi_overrides)
-      
+        normalization_strategy = EETCNormalization(backend_type, corgi_overrides)
+
     elif normalization_type == 'corgisim-off-axis' and backend_type == 'corgihowfsc':
-      normalization_strategy = CorgiNormalization(cfg,
-                                                  cstrat,
-                                                  hconf,
-                                                  cor=args.mode,
-                                                  corgi_overrides=corgi_overrides,
-                                                  separation_lamD=7,
-                                                  exptime_norm=0.01)
-   
+        normalization_strategy = CorgiNormalization(cfg,
+                                                    cstrat,
+                                                    hconf,
+                                                    cor=args.mode,
+                                                    corgi_overrides=corgi_overrides,
+                                                    separation_lamD=7,
+                                                    exptime_norm=0.01)
+
     elif normalization_type == 'corgisim-on-axis' and backend_type == 'corgihowfsc':
-      normalization_strategy = CorgiNormalizationOnAxis(cfg, 
-                                                        cstrat,
-                                                        hconf,
-                                                        cor=args.mode,
-                                                        corgi_overrides=corgi_overrides,
-                                                        exptime_norm=0.01)
+        normalization_strategy = CorgiNormalizationOnAxis(cfg,
+                                                          cstrat,
+                                                          hconf,
+                                                          cor=args.mode,
+                                                          corgi_overrides=corgi_overrides,
+                                                          exptime_norm=0.01)
     else:
-      raise ValueError('Invalid normalization type or backend-normalization combo.')
+        raise ValueError('Invalid normalization type or backend-normalization combo.')
 
     metadata = {
         "inputs": {
@@ -157,7 +163,9 @@ def main():
         "corgi_overrides": corgi_overrides,
     }
 
-    nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps, metadata)
+    nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile,
+                 probefiles, n2clistfiles, crop_params, dmstartmaps, metadata)
 
-if __name__ == '__main__':    
+
+if __name__ == '__main__':
     main()
