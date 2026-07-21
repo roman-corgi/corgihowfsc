@@ -311,36 +311,28 @@ def load_files(args, howfscpath):
             cstratfile = os.path.join(modelpath, 'cstrat_nfov_band1.yaml')
             if args.probe_shape == 'default':
                 # Sinc-sin-sin probes
-                probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_cos.fits')
-                probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinlr.fits')
-                probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinud.fits')
+                probe0file = os.path.join(probepath, 'nfov_dmrel_4_1.0e-05_cos.fits')
+                probe1file = os.path.join(probepath, 'nfov_dmrel_4_1.0e-05_sinlr.fits')
+                probe2file = os.path.join(probepath, 'nfov_dmrel_4_1.0e-05_sinud.fits')
             elif args.probe_shape == 'single':
                 # Single actuator probes
-                probe0file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act0.fits')
-                probe1file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act1.fits')
-                probe2file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act2.fits')
+                probe0file = os.path.join(probepath, 'nfov_dmrel_1.0e-05_act0.fits')
+                probe1file = os.path.join(probepath, 'nfov_dmrel_1.0e-05_act1.fits')
+                probe2file = os.path.join(probepath, 'nfov_dmrel_1.0e-05_act2.fits')
             elif args.probe_shape == 'gaussian':
                 # Gaussian probes
-                probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian0.fits')
-                probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian1.fits')
-                probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian2.fits')
+                probe0file = os.path.join(probepath, 'nfov_dmrel_4_1.0e-05_gaussian0.fits')
+                probe1file = os.path.join(probepath, 'nfov_dmrel_4_1.0e-05_gaussian1.fits')
+                probe2file = os.path.join(probepath, 'nfov_dmrel_4_1.0e-05_gaussian2.fits')
             elif args.probe_shape == 'unmodulated_sinc':
                 # Unmodulated sinc probes
-                probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinc.fits')
-                probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinc_shifted_right.fits')
-                probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinc_shifted_diag_ur.fits')
+                probe0file = os.path.join(probepath, 'nfov_dmrel_4_1.0e-05_sinc.fits')
+                probe1file = os.path.join(probepath, 'nfov_dmrel_4_1.0e-05_sinc_shifted_right.fits')
+                probe2file = os.path.join(probepath, 'nfov_dmrel_4_1.0e-05_sinc_shifted_diag_ur.fits')
             else:
                 # Raise an error if the probe shape is not recognized
                 raise ValueError(f"Probe shape '{args.probe_shape}' is not recognized. "
                                  "Supported shapes are: 'default', 'single', 'gaussian' and 'unmodulated_sinc'.")
-            # if args.dm_start_shape is not None:
-            #     dm_start_file = os.path.join(modelpath, args.dm_start_shape)
-            # else:
-            #     # If no starting point is given, we will load the last file globbed
-            #     start_options = glob.glob(os.path.join(modelpath, 'iter_*_dm*'))
-            #     start_parts = start_options[0].split('\\')[-1].split('_')
-            #     dm_start_file = os.path.join(modelpath, start_parts[0] + '_' + start_parts[1] + '_')
-            #     print('Using ' + start_parts[0] + '_' + start_parts[1] + '_' + ' as starting DM shape')
 
             if dmstartmap_filenames is None:
                 dmstartmap_filenames = ['gitl_start_compact_dm1.fits', 'gitl_start_compact_dm2.fits']
@@ -351,19 +343,19 @@ def load_files(args, howfscpath):
 
             if args.probe_shape == 'single':
                 # Single actuator alternate probes
-                probe0file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act0.fits')
-                probe1file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act1.fits')
-                probe2file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act2.fits')
+                probe0file = os.path.join(probepath, 'nfov_dmrel_1.0e-05_act0.fits')
+                probe1file = os.path.join(probepath, 'nfov_dmrel_1.0e-05_act1.fits')
+                probe2file = os.path.join(probepath, 'nfov_dmrel_1.0e-05_act2.fits')
             elif args.probe_shape == 'default':
                 # Sinc probes
-                probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_cos.fits')
-                probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinlr.fits')
-                probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinud.fits')
+                probe0file = os.path.join(probepath, 'nfov_dmrel_4_1.0e-05_cos.fits')
+                probe1file = os.path.join(probepath, 'nfov_dmrel_4_1.0e-05_sinlr.fits')
+                probe2file = os.path.join(probepath, 'nfov_dmrel_4_1.0e-05_sinud.fits')
             elif args.probe_shape == 'gaussian':
                 # Gaussian alternate probes
-                probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian0.fits')
-                probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian1.fits')
-                probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian2.fits')
+                probe0file = os.path.join(probepath, 'nfov_dmrel_4_1.0e-05_gaussian0.fits')
+                probe1file = os.path.join(probepath, 'nfov_dmrel_4_1.0e-05_gaussian1.fits')
+                probe2file = os.path.join(probepath, 'nfov_dmrel_4_1.0e-05_gaussian2.fits')
             else:
                 # Raise an error if the probe shape is not recognized
                 raise ValueError(f"Probe shape '{args.probe_shape}' is not recognized. "
@@ -390,9 +382,9 @@ def load_files(args, howfscpath):
         cstratfile = os.path.join(modelpath, 'cstrat_spec_band2.yaml')
 
         # BUG - file missing - only exist in cgihowfsc but not in corgihowfsc
-        probe0file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_cos.fits')
-        probe1file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_sinlr.fits')
-        probe2file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_sinud.fits')
+        probe0file = os.path.join(probepath, 'spec_dmrel_1.0e-05_cos.fits')
+        probe1file = os.path.join(probepath, 'spec_dmrel_1.0e-05_sinlr.fits')
+        probe2file = os.path.join(probepath, 'spec_dmrel_1.0e-05_sinud.fits')
         probefiles = {}
         probefiles[0] = probe0file
         probefiles[2] = probe1file
@@ -431,9 +423,9 @@ def load_files(args, howfscpath):
         cstratfile = os.path.join(modelpath, 'cstrat_spec_band3.yaml')
 
         # BUG - file missing - only exist in cgihowfsc but not in corgihowfsc
-        probe0file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_cos.fits')
-        probe1file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_sinlr.fits')
-        probe2file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_sinud.fits')
+        probe0file = os.path.join(probepath, 'spec_dmrel_1.0e-05_cos.fits')
+        probe1file = os.path.join(probepath, 'spec_dmrel_1.0e-05_sinlr.fits')
+        probe2file = os.path.join(probepath, 'spec_dmrel_1.0e-05_sinud.fits')
         probefiles = {}
         probefiles[0] = probe0file
         probefiles[2] = probe1file
@@ -524,21 +516,6 @@ def load_files(args, howfscpath):
             fits.getdata(os.path.join(modelpath, dmstartmap_filenames[0])),
             fits.getdata(os.path.join(modelpath, dmstartmap_filenames[1])),
         ]
-    # dmstartmaps = load_dm_start_maps(dm_start_file)
-
 
     return modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps
-
-
-# def load_dm_start_maps(dm_start_file):
-#     dmkeylist = ['DM1', 'DM2']
-#     # Load DM settings used to collect channel data
-#     dmstartmaps = []
-#     for dmkey in dmkeylist:
-#         ipath = dm_start_file + dmkey.lower() + '.fits'
-#         dmstartmap = load(ipath)
-#         dmstartmaps.append(dmstartmap)
-
-#     return dmstartmaps
-
 
