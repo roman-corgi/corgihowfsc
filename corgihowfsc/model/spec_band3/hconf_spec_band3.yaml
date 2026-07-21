@@ -24,8 +24,8 @@ excam:
 
 # Hardware configuration for observation
 hardware:
-  sequence_list: [CGI_SEQ_SPEC_UNOCC_ASTROM_PHOTOM_PS_3A, CGI_SEQ_SPEC_UNOCC_ASTROM_PHOTOM_PS_3B, CGI_SEQ_SPEC_UNOCC_ASTROM_PHOTOM_PS_3C, CGI_SEQ_SPEC_UNOCC_ASTROM_PHOTOM_PS_3G, CGI_SEQ_SPEC_UNOCC_ASTROM_PHOTOM_PS_3E]
-  sequence_observation: CGI_SEQ_SETUP_NOFPMFS_SPEC
+  sequence_list: [SPEC_SPEC_3A_FLATDMS, SPEC_SPEC_3B_FLATDMS, SPEC_SPEC_3C_FLATDMS, SPEC_SPEC_3G_FLATDMS, SPEC_SPEC_3E_FLATDMS]
+  sequence_observation: SPEC_SPEC_3_FLATDMS
   pointer: pointer_howfsc.yaml
 
 # Wavefront control solver config
