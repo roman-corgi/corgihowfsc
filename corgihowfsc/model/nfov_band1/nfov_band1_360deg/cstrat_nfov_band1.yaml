@@ -113,35 +113,70 @@ unprobedsnr:
     last: None
     low: 0
     high: None
-    value: 5
+    value: 2
 
 probedsnr:
   -
     first: 1
     last: None
-    low: 0
+    low: 1.0e-8
     high: None
-    value: 7
+    value: 3
+  -
+    first: 1
+    last: None
+    low: 0
+    high: 1.0e-8
+    value: 4
 
 probeheight:
   - 
     first: 1
     last: None
     low: 0
-    high: 1.0e-7
+    high: 1.0e-9
+    value: 5.0e-9
+  - 
+    first: 1
+    last: None
+    low: 1.0e-9
+    high: 5.0e-9
+    value: 1.0e-8
+  - 
+    first: 1
+    last: None
+    low: 5.0e-9
+    high: 1.0e-8
+    value: 5.0e-8
+  - 
+    first: 1
+    last: None
+    low: 1.0e-8
+    high: 5.0e-8
     value: 1.0e-7
   - 
     first: 1
     last: None
+    low: 5.0e-8
+    high: 1.0e-7
+    value: 5.0e-7
+  - 
+    first: 1
+    last: None
     low: 1.0e-7
-    high: 1.0e-6
+    high: 5.0e-7
     value: 1.0e-6
+  - 
+    first: 1
+    last: None
+    low: 5.0e-7
+    high: 1.0e-6
+    value: 5.0e-6
   - 
     first: 1
     last: None
     low: 1.0e-6
     high: None
     value: 1.0e-5
-
 
 fixedbp: '../../every_mask_config/fixedbp_zeros.fits'
