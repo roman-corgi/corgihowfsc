@@ -32,8 +32,8 @@ hardware:
 howfsc:
   method: cholesky # tool for least-squares solver
   min_good_probes: 3 # num good probe intensity estimates required per pix
-  eestclip: .inf # if iinc < -icoh*eestclip, e-field marked as bad
-  eestcondlim: 0 # if lstsq solve has cond number below this, e-field bad
+  eestclip: 1.0 # if iinc < -icoh*eestclip, e-field marked as bad
+  eestcondlim: 0.1 # if lstsq solve has cond number below this, e-field bad
 
 # Probe pattern parameters
 probe:
