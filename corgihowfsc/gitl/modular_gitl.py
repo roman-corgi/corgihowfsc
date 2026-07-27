@@ -47,6 +47,7 @@ from howfsc.scripts.gitlframes import sim_gitlframe, get_efield_cgihowfsc
 ###
 
 from corgihowfsc.gitl.gitl_funcs import check_inputs
+from corgihowfsc.sensing.PerfectEstimator import PerfectEstimator
 ###
 
 log = logging.getLogger(__name__)
@@ -478,6 +479,11 @@ def _main_howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
             lam_idx=j,
             crop=croplist[j * ndm]
         )
+
+        if isinstance(estimator, PerfectEstimator):
+            efield_phase = np.angle(efield)
+            efield = np.sqrt(other[j]['meas_intensity']) * np.exp(1j * efield_phase)
+
         badefield = np.isnan(efield)
         efield[badefield] = 0 # nan is the one value that EFC can't fix
         emeas[ndhpix[j]:ndhpix[j+1]] = efield[dhlist[j]]
