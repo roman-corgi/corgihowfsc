@@ -12,13 +12,16 @@ _MANAGER_KEYS = frozenset({
 })
 
 CGI_TO_CORGI_MAPPING = {
-    'narrowfov': 'hlc',
+    'narrowfov': 'hlc', 
     'nfov_flat': 'hlc', 
     'nfov_dm': 'hlc',
     'nfov_band1': 'hlc',
     'spec_band2': 'spc-spec_band2', 
     'spec_band3': 'spc-spec_band3',
-    'wfov_band4': 'spc-wide'
+    'wfov_band4': 'spc-wide', # or spc-wide_band4 
+    'specrot_band2': 'spc-spec_band2_rotated',
+    'specrot_band3': 'spc-spec_band3_rotated',
+    'wfov_band1': 'spc-wide_band1'
 }
 
 SUPPORTED_CGI_MODES = list(CGI_TO_CORGI_MAPPING.keys())
