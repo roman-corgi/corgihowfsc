@@ -1,5 +1,5 @@
 # SUBBANDS and WAVELENGTHS
-coro_mode: 'nfov_band1_360deg'
+coro_mode: 'nfov_band1_both_sides'
 coro_mode_parent: 'nfov_band1'
 cal_bandpass: '1b'
 lam_central: 575.0E-9

@@ -13,9 +13,13 @@ NOTES on data types:
     > = big-endian (MSB first)
 
 Example Calls in a Bash Terminal:
-python write_model_for_corgihowfsc.py nfov 1 360deg
-python write_model_for_corgihowfsc.py specrot 3 130deg
-
+python write_model_for_corgihowfsc.py nfov 1 both_sides
+python write_model_for_corgihowfsc.py wfov 1 both_sides
+python write_model_for_corgihowfsc.py spec 2 both_sides
+python write_model_for_corgihowfsc.py spec 3 both_sides
+python write_model_for_corgihowfsc.py specrot 2 both_sides
+python write_model_for_corgihowfsc.py specrot 3 both_sides
+python write_model_for_corgihowfsc.py wfov 4 both_sides
 
 """
 import argparse
@@ -290,7 +294,7 @@ def do_epup_and_lyot(fn_setup):
 
     # Write pupil amplitude FITS file
     # Assume achromatic pupil amplitude, so don't put in chromatic subfolders
-    base_amp_fn = 'epup_amp.fits'
+    base_amp_fn = '../any/epup_amp.fits'
     fn_amp = os.path.join(any_path(fn_setup), 'epup_amp.fits')
     hdu = fits.PrimaryHDU(amp)
     hdu.writeto(fn_amp, overwrite=True)

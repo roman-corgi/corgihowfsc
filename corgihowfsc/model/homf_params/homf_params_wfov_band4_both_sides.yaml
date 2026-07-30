@@ -1,12 +1,12 @@
 # SUBBANDS and WAVELENGTHS
-coro_mode: 'wfov_band1_360deg'
-coro_mode_parent: 'wfov_band1'
-cal_bandpass: '1b'
-lam_central: 575.0E-9
-ppl_meas_ref: 2.2749
-subband_list: ['1A', '1B', '1C']
+coro_mode: 'wfov_band4_both_sides'
+coro_mode_parent: 'wfov_band4'
+cal_bandpass: '4b'
+lam_central: 825.0E-9
+ppl_meas_ref: 3.2662
+subband_list: ['4A', '4B', '4C']
 n_subband: 3
-fn_ref_howfsc_yaml: './homf_dmreg/howfsc_optical_model_dmreg_only_band_1b.yaml'
+fn_ref_howfsc_yaml: './homf_dmreg/howfsc_optical_model_dmreg_only_band_4b.yaml'
 
 # STAR
 spectral_type: 'f5v'
@@ -17,7 +17,7 @@ mask_folder: 'SPC_20200610_WFOV'
 fn_fpm: 'FPM_SPC_20200610_WFOV_25pixPerLamD.fits'
 fn_lyot: 'LS_SPC_20200610_WFOV_1000_XCS.fits'
 fn_spm: 'SPM_SPC-20200610_1000_rounded9_gray_rotated_XCS.fits'
-mag_pupil_vs_ref: 0.297722259521484  # See beam diameter in corgihowfsc/model/gen_model/out/spam/calib_spam_results.csv
+mag_pupil_vs_ref: 0.296989014  # See beam diameter in scripts/data/spam/calib_spam_results.csv
 use_spm: true
 is_fpm_open: false
 n_fpm: 167  # >= 4*20.4*2+1 = 164.2
@@ -33,20 +33,21 @@ fn_fs: null
 
 # DARK HOLE PIXELS
 dh_match_fs: false  # Whether to set the dark hole to be a thresholded version of the field stop
-fs_thresh_for_dh:  0.1  # only used if dh_match_fs==true. Do not know what best value is.
-dh_dict:  # if dh_match_fs==false, these inputs are used for 'build_sls.add_dh'
+fs_thresh_for_dh:  0.1  # only used if dh_match_fs==true. Not know what best value is.
+dh_dict:  # if dh_match_fs==true, these inputs are used for 'build_sls.add_dh'
     shape: 'annulus'
     radiusInnerLamD: 5.6
     radiusOuterLamD: 20.4
     xOffset: 0  # from star center. Star center added separately
     yOffset: 0  # from star center. Star center added separately
+    
 
 # PUPIL E-FIELD AND ASSOCIATED DM SETTINGS
-fn_dm1v_epup: './gen_model/out/pupil/1b/flatmap_band1_dm1_v.fits'
-fn_dm2v_epup: './gen_model/out/pupil/1b/flatmap_band1_dm2_v.fits'
-fn_amp_end2end: './gen_model/out/pupil/1b/poked_none/amp_end2end.fits'
-fn_ph_end2end: './gen_model/out/pupil/1b/poked_none/phase_end2end.fits'
-fn_ph_backend: './gen_model/out/pupil/1b/poked_none/phase_backend.fits'
+fn_dm1v_epup: './gen_model/out/pupil/4b/flatmap_band4_dm1_v.fits'
+fn_dm2v_epup: './gen_model/out/pupil/4b/flatmap_band4_dm2_v.fits'
+fn_amp_end2end: './gen_model/out/pupil/4b/poked_none/amp_end2end.fits'
+fn_ph_end2end: './gen_model/out/pupil/4b/poked_none/phase_end2end.fits'
+fn_ph_backend: './gen_model/out/pupil/4b/poked_none/phase_backend.fits'
 
 # DO NOT CHANGE 
 n_excam: 153

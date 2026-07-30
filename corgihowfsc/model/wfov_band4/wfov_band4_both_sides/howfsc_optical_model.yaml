@@ -2,14 +2,14 @@ dms:
   DM1:
     pitch: 0.0009906
     registration:
-      dx: -0.016130703910254666
-      dy: -0.05002164771055773
-      inffn: ../dm1/dm_1236-2_brian_inf_v1.0.fits
+      dx: -0.0077520103635464925
+      dy: -0.0511945054545461
+      inffn: ../../dm1/dm_1236-2_brian_inf_v1.0.fits
       nact: 48
-      ppact_cx: 6.436283468211902
-      ppact_cy: 6.340233369251831
+      ppact_cx: 6.411546007313234
+      ppact_cy: 6.315293916725681
       ppact_d: 13
-      thact: 90.02758628757478
+      thact: 90.02613985696115
       flipx: true
     voltages:
       gainfn: ../any/gain_map_dm1.fits
@@ -18,21 +18,21 @@ dms:
       vneighbor: 50.0
       vcorner: 75.0
       vquant: 0.001678466796875
-      tiefn: ../dm1/tied_actuator_map.fits
-      flatfn: ../dm1/dm_allzeros.fits
+      tiefn: ../../dm1/tied_actuator_map.fits
+      flatfn: ../../dm1/dm_allzeros.fits
       crosstalkfn: null
     z: 0.0
   DM2:
     pitch: 0.0009906
     registration:
-      dx: 0.0758724379406691
-      dy: -0.5712052356447495
-      inffn: ../dm2/dm_1236-5_brian_inf_v1.0.fits
+      dx: 0.10603549580103311
+      dy: -0.588025824937029
+      inffn: ../../dm2/dm_1236-5_brian_inf_v1.0.fits
       nact: 48
-      ppact_cx: 6.431031264455319
-      ppact_cy: 6.336280622115511
+      ppact_cx: 6.406405222296017
+      ppact_cy: 6.307991360010323
       ppact_d: 13
-      thact: 90.00613700528329
+      thact: 90.0089831045575
       flipx: false
     voltages:
       gainfn: ../any/gain_map_dm2.fits
@@ -41,9 +41,9 @@ dms:
       vneighbor: 50.0
       vcorner: 75.0
       vquant: 0.001678466796875
-      tiefn: ../dm2/tied_actuator_map.fits
-      flatfn: ../dm2/dm_allzeros.fits
-      crosstalkfn: ../dm2/crosstalk_dm2_20240719.yaml
+      tiefn: ../../dm2/tied_actuator_map.fits
+      flatfn: ../../dm2/dm_allzeros.fits
+      crosstalkfn: ../../dm2/crosstalk_dm2_20240719.yaml
     z: 1.0
 init:
   DM1:
@@ -52,89 +52,89 @@ init:
     dminit: ../any/dmabs_init_dm2.fits
 sls:
   0:
-    lam: 5.545370626178385e-07
+    lam: 7.914113988892523e-07
     ft_dir: reverse
     sp:
-      afn: ../../every_mask_config/ones_like_pupil.fits
-      pdp: 298.57135009765625
-      pfn: ../../every_mask_config/zeros_like_pupil.fits
+      afn: ../any/spm_amp.fits
+      pdp: 296.82757568359375
+      pfn: ../any/subband0/spm_ph.fits
     lyot:
       afn: ../any/lyot_amp.fits
-      pdp: 298.57135009765625
+      pdp: 296.82757568359375
       pfn: ../any/subband0/lyot_ph.fits
       tip: 0.0
       tilt: 0.0
     epup:
-      afn: epup_amp.fits
-      pdp: 298.57135009765625
+      afn: ../any/epup_amp.fits
+      pdp: 296.82757568359375
       pfn: ../any/subband0/epup_ph.fits
       tip: 0
       tilt: 0
     fs:
-      afn: subband0/fs_amp.fits
+      afn: ../../every_mask_config/ones_like_fs.fits
       pfn: ../../every_mask_config/zeros_like_fs.fits
-      ppl: 2.193941502172732
+      ppl: 3.133221710366152
     fpm:
       afn: ../any/subband0/fpm_amp.fits
-      isopen: true
+      isopen: false
       pfn: ../any/subband0/fpm_ph.fits
-      ppl: 11.572947393763585
+      ppl: 3.837146176432738
     dh: subband0/dh_sw_mask.fits
   1:
-    lam: 5.74500481380718e-07
+    lam: 8.235731508369222e-07
     ft_dir: reverse
     sp:
-      afn: ../../every_mask_config/ones_like_pupil.fits
-      pdp: 298.57135009765625
-      pfn: ../../every_mask_config/zeros_like_pupil.fits
+      afn: ../any/spm_amp.fits
+      pdp: 296.82757568359375
+      pfn: ../any/subband1/spm_ph.fits
     lyot:
       afn: ../any/lyot_amp.fits
-      pdp: 298.57135009765625
+      pdp: 296.82757568359375
       pfn: ../any/subband1/lyot_ph.fits
       tip: 0.0
       tilt: 0.0
     epup:
-      afn: epup_amp.fits
-      pdp: 298.57135009765625
+      afn: ../any/epup_amp.fits
+      pdp: 296.82757568359375
       pfn: ../any/subband1/epup_ph.fits
       tip: 0
       tilt: 0
     fs:
-      afn: subband1/fs_amp.fits
+      afn: ../../every_mask_config/ones_like_fs.fits
       pfn: ../../every_mask_config/zeros_like_fs.fits
-      ppl: 2.272923730596514
+      ppl: 3.2605510609255215
     fpm:
       afn: ../any/subband1/fpm_amp.fits
-      isopen: true
+      isopen: false
       pfn: ../any/subband1/fpm_ph.fits
-      ppl: 11.989575263597594
+      ppl: 3.9930819434517435
     dh: subband1/dh_sw_mask.fits
   2:
-    lam: 5.943651679503219e-07
+    lam: 8.558346455967925e-07
     ft_dir: reverse
     sp:
-      afn: ../../every_mask_config/ones_like_pupil.fits
-      pdp: 298.57135009765625
-      pfn: ../../every_mask_config/zeros_like_pupil.fits
+      afn: ../any/spm_amp.fits
+      pdp: 296.82757568359375
+      pfn: ../any/subband2/spm_ph.fits
     lyot:
       afn: ../any/lyot_amp.fits
-      pdp: 298.57135009765625
+      pdp: 296.82757568359375
       pfn: ../any/subband2/lyot_ph.fits
       tip: 0.0
       tilt: 0.0
     epup:
-      afn: epup_amp.fits
-      pdp: 298.57135009765625
+      afn: ../any/epup_amp.fits
+      pdp: 296.82757568359375
       pfn: ../any/subband2/epup_ph.fits
       tip: 0
       tilt: 0
     fs:
-      afn: subband2/fs_amp.fits
+      afn: ../../every_mask_config/ones_like_fs.fits
       pfn: ../../every_mask_config/zeros_like_fs.fits
-      ppl: 2.351515340122065
+      ppl: 3.3882752963009013
     fpm:
       afn: ../any/subband2/fpm_amp.fits
-      isopen: true
+      isopen: false
       pfn: ../any/subband2/fpm_ph.fits
-      ppl: 12.404142635484979
+      ppl: 4.149501311984449
     dh: subband2/dh_sw_mask.fits

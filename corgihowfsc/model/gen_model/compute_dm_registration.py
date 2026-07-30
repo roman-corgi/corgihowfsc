@@ -397,13 +397,13 @@ def dm_registration(
     
     # Both DMs    
     for dm_name in ['DM1', 'DM2']:
-        dm_dict['dms'][dm_name]['registration']['inffn'] = str(pathlib.Path(*(pathlib.Path(dm_dict['dms'][dm_name]['registration']['inffn']).parts[2:])))
-        dm_dict['dms'][dm_name]['voltages']['tiefn'] = str(pathlib.Path(*(pathlib.Path(dm_dict['dms'][dm_name]['voltages']['tiefn']).parts[2:])))
-        dm_dict['dms'][dm_name]['voltages']['flatfn'] = str(pathlib.Path(*(pathlib.Path(dm_dict['dms'][dm_name]['voltages']['flatfn']).parts[2:])))
+        dm_dict['dms'][dm_name]['registration']['inffn'] = str(pathlib.Path(*(pathlib.Path(dm_dict['dms'][dm_name]['registration']['inffn']).parts[1:])))
+        dm_dict['dms'][dm_name]['voltages']['tiefn'] = str(pathlib.Path(*(pathlib.Path(dm_dict['dms'][dm_name]['voltages']['tiefn']).parts[1:])))
+        dm_dict['dms'][dm_name]['voltages']['flatfn'] = str(pathlib.Path(*(pathlib.Path(dm_dict['dms'][dm_name]['voltages']['flatfn']).parts[1:])))
 
     # Crosstalk filename for DM2 only
     dm_name = 'DM2'
-    dm_dict['dms'][dm_name]['voltages']['crosstalkfn'] = str(pathlib.Path(*(pathlib.Path(dm_dict['dms'][dm_name]['voltages']['crosstalkfn']).parts[2:])))
+    dm_dict['dms'][dm_name]['voltages']['crosstalkfn'] = str(pathlib.Path(*(pathlib.Path(dm_dict['dms'][dm_name]['voltages']['crosstalkfn']).parts[1:])))
 
     fn_dmreg_2 = os.path.join(MODEL_PATH, 'homf_dmreg', f'howfsc_optical_model_dmreg_only_band_{bandpass}.yaml')
     writeyaml(dm_dict, fn_dmreg_2)

@@ -1,5 +1,5 @@
 # SUBBANDS and WAVELENGTHS
-coro_mode: 'spec_band3_130deg'
+coro_mode: 'spec_band3_both_sides'
 coro_mode_parent: 'spec_band3'
 cal_bandpass: '3c'
 lam_central: 730.0E-9  # 727.0E-9
