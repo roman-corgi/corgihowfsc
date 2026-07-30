@@ -1,6 +1,6 @@
 # SUBBANDS and WAVELENGTHS
-coro_mode: 'spec_band2_130deg'
-coro_mode_parent: 'spec_band2'
+coro_mode: 'specrot_band2_both_sides'
+coro_mode_parent: 'specrot_band2'
 cal_bandpass: '2c'
 lam_central: 660.0E-9  # 656.0E-9
 ppl_meas_ref: 2.5974
@@ -14,10 +14,10 @@ spectral_type: 'f5v'
 
 # MASKS
 is_hlc: false
-mask_folder: 'SPC_20200617_Spec'
-fn_fpm: 'FPM_SPC_20200617_Spec_25pixPerLamD.fits'
-fn_lyot: 'LS_SPC_20200617_Spec_1000_XCS.fits'
-fn_spm: 'SPM_SPC-20200617_1000_rounded9_rotated_XCS.fits'
+mask_folder: 'SPC_20200628_Spec_Rot60'
+fn_fpm: 'FPM_SPC_20200628_Spec_Rot60_25pixPerLamD_XCS.fits'
+fn_lyot: 'LS_SPC_20200628_Spec_Rot60_1000_XCS.fits'
+fn_spm: 'SPM_SPC_20200628_Spec_Rot60_1000_XCS.fits'
 mag_pupil_vs_ref: 0.298077118  # See beam diameter in corgihowfsc/model/gen_model/out/spam/calib_spam_results.csv
 use_spm: true
 is_fpm_open: false
@@ -40,7 +40,7 @@ dh_dict:  # if dh_match_fs==true, these inputs are used for 'build_sls.add_dh'
     radiusInnerLamD: 2.6
     radiusOuterLamD: 9.4
     openingAngle: 65.0
-    clocking: 90.0
+    clocking: 30
     xOffset: 0  # from star center. Star center added separately
     yOffset: 0  # from star center. Star center added separately
 
