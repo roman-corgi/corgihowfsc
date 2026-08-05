@@ -16,12 +16,22 @@ CGI_TO_CORGI_MAPPING = {
     'nfov_flat': 'hlc', # removed?
     'nfov_dm': 'hlc', # removed? 
     'nfov_band1': 'hlc',
-    'spec_band2': 'spc-spec', 
-    'spec_band3': 'spc-spec',
-    'wfov_band4': 'spc-wide', 
-    'specrot_band2': 'spc-spec_rotated',
-    'specrot_band3': 'spc-spec_rotated',
-    'wfov_band1': 'spc-wide'
+    'spec_band2': 'spc-spec_band{bandpass}', 
+    'spec_band3': 'spc-spec_band{bandpass}',
+    'wfov_band4': 'spc-wide_band{bandpass}', 
+    'specrot_band2': 'spc-spec_band{bandpass}_rotated', 
+    'specrot_band3': 'spc-spec_band{bandpass}_rotated', 
+    'wfov_band1': 'spc-wide_band{bandpass}',
+}
+
+EXPECTED_BANDPASS = {
+    'nfov_band1': '1',
+    'spec_band2': '2',
+    'spec_band3': '3',
+    'wfov_band1': '1',
+    'wfov_band4': '4',
+    'specrot_band2': '2',
+    'specrot_band3': '3',
 }
 
 SUPPORTED_CGI_MODES = list(CGI_TO_CORGI_MAPPING.keys())
@@ -45,6 +55,18 @@ def _extract_host_properties_from_hconf(hconf):
         }
     except (AttributeError, KeyError) as e:
         raise ValueError(f"hconf missing required star configuration: {e}")
+
+def map_cgi_to_corgisim_mode(cgi_mode, bandpass): 
+    if cgi_mode not in CGI_TO_CORGI_MAPPING:
+        raise ValueError(f"Unsupported CGI mode: {cgi_mode}.")
+
+    expected = EXPECTED_BANDPASS.get(cgi_mode)
+    if expected is not None and bandpass != expected:
+        raise ValueError(
+            f"{cgi_mode} requires bandpass {expected}, "
+            f"but the cfg wavelength resolved to bandpass {bandpass}"
+        )
+    return CGI_TO_CORGI_MAPPING[cgi_mode].format(bandpass=bandpass)
 
 # Helper function to map wavelength to corgisim bandpass
 def map_wavelength_to_corgisim_bandpass(wavelength_m, tolerance=5e-9):
