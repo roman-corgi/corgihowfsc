@@ -110,7 +110,7 @@ class CorgisimManager:
         self.Vmag = self.corgi_overrides.get('Vmag', self.host_star_properties['Vmag'])
         self.sptype = self.corgi_overrides.get('sptype', self.host_star_properties['spectral_type'])
         self.ref_flag = self.corgi_overrides.get('ref_flag', self.host_star_properties['ref_flag'])
-        self._mode = 'excam'  # default camera mode
+        self._mode = 'excam'  # default camera mode # TODO - for spec mode, do we need to swithc to spec? but we are not using the prism and slit for howfsc??? also we are still using the excam right? 
         self.k_gain = 8.7 # photo e-/DN, calibrated in TVAC
 
     def _initialize_base_scene(self):
