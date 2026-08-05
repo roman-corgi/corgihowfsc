@@ -6,9 +6,9 @@ log = logging.getLogger(__name__)
 
 from corgihowfsc.utils.corgisim_utils import (
     _extract_host_properties_from_hconf,
-    CGI_TO_CORGI_MAPPING,
     SUPPORTED_CGI_MODES,
     map_wavelength_to_corgisim_bandpass, 
+    map_cgi_to_corgisim_mode,
     _MANAGER_KEYS
     )
 from corgihowfsc.utils import onboard_processing
@@ -104,8 +104,10 @@ class CorgisimManager:
             raise ValueError("bandpass must be one of ['1', '2', '3', '4']")
         
         # map cgihowfsc mode to corgihowfsc
-        corgi_base_mode = CGI_TO_CORGI_MAPPING[self.cor]
-        self.cor_mapped = f'{corgi_base_mode}_band{self.bandpass}'
+        self.cor_mapped = map_cgi_to_corgisim_mode(
+            self.cor,
+            self.bandpass,
+        )
 
         # Extract host star properties
         if self.hconf is not None:
