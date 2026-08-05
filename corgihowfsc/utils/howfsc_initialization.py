@@ -11,6 +11,8 @@ from astropy.io import fits
 from howfsc.util.load import load
 import warnings
 
+# TODO - fix the initialisation as we have a major update in the file tree and also names of the file. 
+
 def get_cpu_allocation(num_process=None, num_imager_worker=None, num_proper_process=None):
     """
     Validate CPU counts for nested parallelism against allocated CPUs,
