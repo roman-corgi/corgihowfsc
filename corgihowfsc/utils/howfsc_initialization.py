@@ -71,7 +71,7 @@ PROBE_FILES = {
     ),
 }
 
-MODEL_DIRS = namedtuple('ModelDirs', ['modelpath_band', 'modelpath', 'probepath', 'model_path_all'])
+MODEL_DIRS = namedtuple('ModelDirs', ['modelpath_band', 'modelpath', 'probepath', 'model_path_all', 'model_any_dir'])
 
 def _get_model_dirs(mode, dark_hole, howfscpath):
     """Resolve and validate every model subdirectory load_files() needs.
