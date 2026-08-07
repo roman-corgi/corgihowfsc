@@ -80,20 +80,20 @@ def _get_model_dirs(mode, dark_hole, howfscpath):
         modelpath: path to the specific mode/dark_hole variant directory
         modelpath_band: path to the mode/dark_hole variant directory
         probepath: path to the probes directory
-        model_path_all: path to the every_mask_config directory    
-"""
+        model_path_all: path to the every_mask_config directory
+        model_any_dir: path to the any directory
+    """
     modelpath_band = os.path.join(howfscpath, 'model', mode)
-
     modelpath = os.path.join(modelpath_band, f"{mode}_{dark_hole}")
 
     if not os.path.isdir(modelpath):
         raise ValueError(f"No model directory found for mode '{mode}' and dark_hole '{dark_hole}' at {modelpath}")
     
     probepath = os.path.join(howfscpath, 'model', 'probes')
-
     model_path_all = os.path.join(howfscpath, 'model', 'every_mask_config')
+    model_any_dir = os.path.join(modelpath_band, 'any')
 
-    return MODEL_DIRS(modelpath_band=modelpath_band, modelpath=modelpath, probepath=probepath, model_path_all=model_path_all)
+    return MODEL_DIRS(modelpath_band=modelpath_band, modelpath=modelpath, probepath=probepath, model_path_all=model_path_all, model_any_dir=model_any_dir)
 
 
 def get_cpu_allocation(num_process=None, num_imager_worker=None, num_proper_process=None):
