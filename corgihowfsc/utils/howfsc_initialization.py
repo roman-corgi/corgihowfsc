@@ -35,13 +35,42 @@ PROBE_FILES = {
         gaussian=['nfov_dmrel_4_1.0e-05_gaussian0.fits', 'nfov_dmrel_4_1.0e-05_gaussian1.fits', 'nfov_dmrel_4_1.0e-05_gaussian2.fits'],
         unmodulated_sinc=['nfov_dmrel_4_1.0e-05_sinc.fits', 'nfov_dmrel_4_1.0e-05_sinc_shifted_right.fits', 'nfov_dmrel_4_1.0e-05_sinc_shifted_diag_ur.fits']
     ),
-    # 'spec_band3': {
-    #     'default': ['spec_dmrel_band3_ni1e-05_sin150_rot0.fits', 'spec_dmrel_band3_ni1e-05_sin210_rot0.fits', 'spec_dmrel_band3_ni1e-05_sin90_rot0.fits'],
-    # },
-    # 'wfov_band4': {
-    #     'default': ['wfov_dmrel_1e-5_cos_constrained.fits', 'wfov_dmrel_1e-5_sinlr_constrained.fits', 'wfov_dmrel_1e-5_sinud_constrained.fits'],
-    # },
-    # # spec_band2 intentionally omitted — no probe files exist for it yet.
+    'spec_band2': ProbeFiles(
+        default=None,
+        single=None,
+        gaussian=None,
+        unmodulated_sinc=None
+    ),
+    'spec_band3': ProbeFiles(
+        default=None,
+        single=None,
+        gaussian=None,
+        unmodulated_sinc=None
+    ),
+    'wfov_band4': ProbeFiles(
+        default=['wfov_dmrel_1e-5_cos_constrained.fits', 'wfov_dmrel_1e-5_sinlr_constrained.fits','wfov_dmrel_1e-5_sinud_constrained.fits'],
+        single=None,
+        gaussian=None,
+        unmodulated_sinc=None
+    ),
+    'wfov_band1': ProbeFiles(
+        default=None,
+        single=None,
+        gaussian=None,
+        unmodulated_sinc=None
+    ),
+    'specrot_band2': ProbeFiles(
+        default=None,
+        single=None,
+        gaussian=None,
+        unmodulated_sinc=None
+    ),
+    'specrot_band3': ProbeFiles(
+        default=None,
+        single=None,
+        gaussian=None,
+        unmodulated_sinc=None
+    ),
 }
 
 MODEL_DIRS = namedtuple('ModelDirs', ['modelpath_band', 'modelpath', 'probepath', 'model_path_all'])
