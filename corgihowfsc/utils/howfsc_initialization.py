@@ -95,6 +95,36 @@ def _get_model_dirs(mode, dark_hole, howfscpath):
 
     return MODEL_DIRS(modelpath_band=modelpath_band, modelpath=modelpath, probepath=probepath, model_path_all=model_path_all, model_any_dir=model_any_dir)
 
+def _get_probe_files(mode, probe_shape, dirs):
+    """
+    Resolve and validate the probe files for the given mode and probe shape.
+
+    Returns a dictionary mapping probe indices to file paths.
+
+    # probe_names = getattr(PROBE_FILES[mode], args.probe_shape)
+    # probe0file = os.path.join(dirs.probepath, probe_names[0])
+    # probe1file = os.path.join(dirs.probepath, probe_names[1])
+    # probe2file = os.path.join(dirs.probepath, probe_names[2])
+    # probefiles = {}
+    # probefiles[0] = probe0file
+    # probefiles[2] = probe1file
+    # probefiles[1] = probe2file
+
+    """
+    if mode not in PROBE_FILES:
+        raise ValueError(f"Mode '{mode}' not recognized. Supported modes: {list(PROBE_FILES.keys())}")
+
+    probe_names = getattr(PROBE_FILES[mode], probe_shape)
+    if probe_names is None:
+        raise ValueError(f"Probe shape '{probe_shape}' not available for mode '{mode}'")
+
+    probefiles = {
+        0: os.path.join(dirs.probepath, probe_names[0]),
+        1: os.path.join(dirs.probepath, probe_names[2]),  # Note: index 2 corresponds to probe 1
+        2: os.path.join(dirs.probepath, probe_names[1]),  # Note: index 1 corresponds to probe 2
+    }
+
+    return probefiles
 
 def get_cpu_allocation(num_process=None, num_imager_worker=None, num_proper_process=None):
     """
@@ -395,20 +425,11 @@ def load_files(args, howfscpath):
         jacfile = []
 
     # Load the probe files based on the mode and probe shape
-    probe_names = getattr(PROBE_FILES[mode], args.probe_shape)
-    probe0file = os.path.join(dirs.probepath, probe_names[0])
-    probe1file = os.path.join(dirs.probepath, probe_names[1])
-    probe2file = os.path.join(dirs.probepath, probe_names[2])
+    probefiles = _get_probe_files(mode, args.probe_shape, dirs)
 
-
-    # TODO - figure out how to handle the DM start maps. for now we should just use a dm init map
+    # NOTE - figure out how to handle the DM start maps. for now we should just use a dm init map
     if dmstartmap_filenames is None:
-                dmstartmap_filenames = ['gitl_start_compact_dm1.fits', 'gitl_start_compact_dm2.fits']
-
-    probefiles = {}
-    probefiles[0] = probe0file
-    probefiles[2] = probe1file
-    probefiles[1] = probe2file
+        dmstartmap_filenames = ['dmabs_init_dm1.fits', 'dmabs_init_dm2.fits']
 
     # Apply any explicit path overrides
     _local_paths = {'cfgfile': cfgfile, 'cstratfile': cstratfile, 'hconffile': hconffile}
@@ -425,6 +446,7 @@ def load_files(args, howfscpath):
         _local_paths['hconffile'],
     )
 
+    # Apply DM start mpap path overrides if provided
     dm_abs_flags = [os.path.isabs(p) for p in dmstartmap_filenames]
 
     if any(dm_abs_flags) and not all(dm_abs_flags):
@@ -441,8 +463,8 @@ def load_files(args, howfscpath):
         ]
     else:
         dmstartmaps = [
-            fits.getdata(os.path.join(dirs.modelpath, dmstartmap_filenames[0])),
-            fits.getdata(os.path.join(dirs.modelpath, dmstartmap_filenames[1])),
+            fits.getdata(os.path.join(dirs.model_any_dir, dmstartmap_filenames[0])),
+            fits.getdata(os.path.join(dirs.model_any_dir, dmstartmap_filenames[1])),
         ]
 
     return dirs.modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps
