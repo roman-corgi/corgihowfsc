@@ -18,8 +18,11 @@ ModeFiles = namedtuple('ModeFiles', ['hconf', 'cstrat'])
 DEFAULT_FILES = {
     'nfov_band1': ModeFiles(hconf='hconf_nfov_flat.yaml', cstrat='cstrat_nfov_band1.yaml'),
     'spec_band2': ModeFiles(hconf='hconf_spec_band2.yaml', cstrat='cstrat_example_spec_band2_both_sides.yaml'),
-    # 'spec_band3': ModeFiles(hconf='hconf_spec_band3.yaml', cstrat='cstrat_spec_band3.yaml'),
-    # 'wfov_band4': ModeFiles(hconf='hconf_wfov_band4.yaml', cstrat='cstrat_wfov_band4.yaml'),
+    'spec_band3': ModeFiles(hconf='hconf_spec_band3.yaml', cstrat='cstrat_example_spec_band3_both_sides.yaml'),
+    'wfov_band4': ModeFiles(hconf='hconf_wfov_band4.yaml', cstrat='cstrat_example_wfov_band4_both_sides.yaml'),
+    'specrot_band2': ModeFiles(hconf='hconf_specrot_band2.yaml', cstrat='cstrat_example_specrot_band2_both_sides.yaml'),
+    'specrot_band3': ModeFiles(hconf='hconf_specrot_band3.yaml', cstrat='cstrat_example_specrot_band3_both_sides.yaml'),
+    'wfov_band1': ModeFiles(hconf='hconf_wfov_band1.yaml', cstrat='cstrat_example_wfov_band1_both_sides.yaml'),
 }
 
 ProbeFiles = namedtuple('ProbeFiles', ['default', 'single', 'gaussian', 'unmodulated_sinc'])
