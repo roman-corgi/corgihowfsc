@@ -13,10 +13,8 @@ import warnings
 from collections import namedtuple
 
 ModeFiles = namedtuple('ModeFiles', ['hconf', 'cstrat'])
-
-# TODO - update the list here --> check the model dir
 DEFAULT_FILES = {
-    'nfov_band1': ModeFiles(hconf='hconf_nfov_flat.yaml', cstrat='cstrat_nfov_band1.yaml'),
+    'nfov_band1': ModeFiles(hconf='hconf_nfov_flat.yaml', cstrat='cstrat_example_nfov_band1_both_sides.yaml'),
     'spec_band2': ModeFiles(hconf='hconf_spec_band2.yaml', cstrat='cstrat_example_spec_band2_both_sides.yaml'),
     'spec_band3': ModeFiles(hconf='hconf_spec_band3.yaml', cstrat='cstrat_example_spec_band3_both_sides.yaml'),
     'wfov_band4': ModeFiles(hconf='hconf_wfov_band4.yaml', cstrat='cstrat_example_wfov_band4_both_sides.yaml'),
