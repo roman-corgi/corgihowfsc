@@ -14,15 +14,17 @@ from collections import namedtuple
 
 ModeFiles = namedtuple('ModeFiles', ['hconf', 'cstrat'])
 
+# TODO - update the list here --> check the model dir
 DEFAULT_FILES = {
     'nfov_band1': ModeFiles(hconf='hconf_nfov_flat.yaml', cstrat='cstrat_nfov_band1.yaml'),
-    'spec_band2': {'hconf': 'hconf_spec_band2.yaml', 'cstrat': 'cstrat_example_spec_band2_both_sides.yaml'},
-    # 'spec_band3': {'hconf': 'hconf_spec_band3.yaml', 'cstrat': 'cstrat_spec_band3.yaml'},  # note: this jac name looks like a pre-existing typo, worth checking
-    # 'wfov_band4': {'hconf': 'hconf_wfov_band4.yaml', 'cstrat': 'cstrat_wfov_band4.yaml'},
+    'spec_band2': ModeFiles(hconf='hconf_spec_band2.yaml', cstrat='cstrat_example_spec_band2_both_sides.yaml'),
+    # 'spec_band3': ModeFiles(hconf='hconf_spec_band3.yaml', cstrat='cstrat_spec_band3.yaml'),
+    # 'wfov_band4': ModeFiles(hconf='hconf_wfov_band4.yaml', cstrat='cstrat_wfov_band4.yaml'),
 }
 
 ProbeFiles = namedtuple('ProbeFiles', ['default', 'single', 'gaussian', 'unmodulated_sinc'])
 
+# TODO - update the list here --> check the probe dir and also the previous load_files func. 
 PROBE_FILES = {
     'nfov_band1': ProbeFiles(
         default=['nfov_dmrel_4_1.0e-05_cos.fits', 'nfov_dmrel_4_1.0e-05_sinlr.fits', 'nfov_dmrel_4_1.0e-05_sinud.fits'],
