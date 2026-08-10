@@ -382,6 +382,28 @@ def load_files(args, howfscpath):
         _local_paths['hconffile'],
     )
 
+    # Verify cfg/cstrat/hconf files before loading the probe 
+    # fails here with a clear message naming exactly what's missing, instead
+    # of being masked by a later, unrelated probe-resolution error.
+    _missing_config = {name: p for name, p in _local_paths.items() if not os.path.isfile(p)}
+    if _missing_config:
+        raise FileNotFoundError(
+            f"load_files(mode='{mode}', dark_hole='{args.dark_hole}') resolved to "
+            f"{len(_missing_config)} missing file(s): {_missing_config}"
+        )
+
+    if jacpath is not None:
+        jacfile = os.path.join(jacpath, 'jac' + mode + '_' + args.dark_hole + '.fits')
+    else:
+        jacfile = []
+
+    # Load the probe files based on the mode and probe shape
+    probefiles = _get_probe_files(mode, args.probe_shape, dirs)
+
+    # NOTE - figure out how to handle the DM start maps. for now we should just use a dm init map
+    if dmstartmap_filenames is None:
+        dmstartmap_filenames = ['dmabs_init_dm1.fits', 'dmabs_init_dm2.fits']
+
     # Apply DM start mpap path overrides if provided
     dm_abs_flags = [os.path.isabs(p) for p in dmstartmap_filenames]
 
