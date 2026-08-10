@@ -16,13 +16,13 @@ probeheight:
   low: 0
   high: null
   value: 1.0e-06
-fixedbp: fixedbp_zeros.fits
+fixedbp: ../../every_mask_config/fixedbp_zeros.fits
 pixelweights:
 - first: 1
   last: null
   low: 0
   high: null
-  value: pixelweights_ones_nlam5_nrow153.fits
+  value: ../../every_mask_config/pixelweights_ones_nlam5_nrow153.fits
 regularization:
 - first: 1
   last: 1
