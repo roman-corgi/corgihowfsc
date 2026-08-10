@@ -12,69 +12,13 @@ from howfsc.util.load import load
 import warnings
 from collections import namedtuple
 
-ModeFiles = namedtuple('ModeFiles', ['hconf', 'cstrat'])
-DEFAULT_FILES = {
-    'nfov_band1': ModeFiles(hconf='hconf_nfov_flat.yaml', cstrat='cstrat_example_nfov_band1_both_sides.yaml'),
-    'spec_band2': ModeFiles(hconf='hconf_spec_band2.yaml', cstrat='cstrat_example_spec_band2_both_sides.yaml'),
-    'spec_band3': ModeFiles(hconf='hconf_spec_band3.yaml', cstrat='cstrat_example_spec_band3_both_sides.yaml'),
-    'wfov_band4': ModeFiles(hconf='hconf_wfov_band4.yaml', cstrat='cstrat_example_wfov_band4_both_sides.yaml'),
-    'specrot_band2': ModeFiles(hconf='hconf_specrot_band2.yaml', cstrat='cstrat_example_specrot_band2_both_sides.yaml'),
-    'specrot_band3': ModeFiles(hconf='hconf_specrot_band3.yaml', cstrat='cstrat_example_specrot_band3_both_sides.yaml'),
-    'wfov_band1': ModeFiles(hconf='hconf_wfov_band1.yaml', cstrat='cstrat_example_wfov_band1_both_sides.yaml'),
-}
-
-ProbeFiles = namedtuple('ProbeFiles', ['default', 'single', 'gaussian', 'unmodulated_sinc'])
-
-# TODO - update the list here --> check the probe dir and also the previous load_files func. 
-PROBE_FILES = {
-    'nfov_band1': ProbeFiles(
-        default=['nfov_dmrel_4_1.0e-05_cos.fits', 'nfov_dmrel_4_1.0e-05_sinlr.fits', 'nfov_dmrel_4_1.0e-05_sinud.fits'],
-        single=['nfov_dmrel_1.0e-05_act0.fits', 'nfov_dmrel_1.0e-05_act1.fits', 'nfov_dmrel_1.0e-05_act2.fits'],
-        gaussian=['nfov_dmrel_4_1.0e-05_gaussian0.fits', 'nfov_dmrel_4_1.0e-05_gaussian1.fits', 'nfov_dmrel_4_1.0e-05_gaussian2.fits'],
-        unmodulated_sinc=['nfov_dmrel_4_1.0e-05_sinc.fits', 'nfov_dmrel_4_1.0e-05_sinc_shifted_right.fits', 'nfov_dmrel_4_1.0e-05_sinc_shifted_diag_ur.fits']
-    ),
-    'spec_band2': ProbeFiles(
-        default=None,
-        single=None,
-        gaussian=None,
-        unmodulated_sinc=None
-    ),
-    'spec_band3': ProbeFiles(
-        default=None,
-        single=None,
-        gaussian=None,
-        unmodulated_sinc=None
-    ),
-    'wfov_band4': ProbeFiles(
-        default=['wfov_dmrel_1e-5_cos_constrained.fits', 'wfov_dmrel_1e-5_sinlr_constrained.fits','wfov_dmrel_1e-5_sinud_constrained.fits'],
-        single=None,
-        gaussian=None,
-        unmodulated_sinc=None
-    ),
-    'wfov_band1': ProbeFiles(
-        default=None,
-        single=None,
-        gaussian=None,
-        unmodulated_sinc=None
-    ),
-    'specrot_band2': ProbeFiles(
-        default=None,
-        single=None,
-        gaussian=None,
-        unmodulated_sinc=None
-    ),
-    'specrot_band3': ProbeFiles(
-        default=None,
-        single=None,
-        gaussian=None,
-        unmodulated_sinc=None
-    ),
-}
+from corgihowfsc.model.model_registry import DEFAULT_FILES, PROBE_FILES
 
 MODEL_DIRS = namedtuple('ModelDirs', ['modelpath_band', 'modelpath', 'probepath', 'model_path_all', 'model_any_dir'])
 
 def _get_model_dirs(mode, dark_hole, howfscpath):
-    """Resolve and validate every model subdirectory load_files() needs.
+    """
+    Resolve and validate every model subdirectory load_files() needs.
 
     Returns a namedtuple with the following fields:
         modelpath: path to the specific mode/dark_hole variant directory
@@ -415,23 +359,15 @@ def load_files(args, howfscpath):
     ]
 
     # Load the configuration files based on the mode and dark hole
+    if mode not in DEFAULT_FILES:
+        raise ValueError(f"Mode '{mode}' not recognized. Supported modes: {sorted(DEFAULT_FILES)}")
+
     cfgfile = os.path.join(dirs.modelpath, 'howfsc_optical_model.yaml')
-    hconffile = os.path.join(dirs.modelpath_band, DEFAULT_FILES[mode].hconf)
-    cstratfile = os.path.join(dirs.modelpath, DEFAULT_FILES[mode].cstrat)
+    hconffile = os.path.join(dirs.modelpath_band, DEFAULT_FILES[mode])
+    cstratfile = os.path.join(dirs.modelpath, f'cstrat_example_{mode}_{args.dark_hole}.yaml')
 
-    if jacpath is not None:
-        jacfile = os.path.join(jacpath, 'jac' + mode + '_' + args.dark_hole + '.fits')
-    else:
-        jacfile = []
-
-    # Load the probe files based on the mode and probe shape
-    probefiles = _get_probe_files(mode, args.probe_shape, dirs)
-
-    # NOTE - figure out how to handle the DM start maps. for now we should just use a dm init map
-    if dmstartmap_filenames is None:
-        dmstartmap_filenames = ['dmabs_init_dm1.fits', 'dmabs_init_dm2.fits']
-
-    # Apply any explicit path overrides
+    # Apply any explicit path overrides before validating existence, so an
+    # override can rescue a mode whose computed default doesn't exist.
     _local_paths = {'cfgfile': cfgfile, 'cstratfile': cstratfile, 'hconffile': hconffile}
 
     for key, val in getattr(args, 'path_overrides', {}).items():
