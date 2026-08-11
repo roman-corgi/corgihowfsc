@@ -24,16 +24,16 @@ excam:
 
 # Hardware configuration for observation
 hardware:
-  sequence_list: [CGI_SEQ_SPEC_UNOCC_ASTROM_PHOTOM_PS_3A, CGI_SEQ_SPEC_UNOCC_ASTROM_PHOTOM_PS_3B, CGI_SEQ_SPEC_UNOCC_ASTROM_PHOTOM_PS_3C, CGI_SEQ_SPEC_UNOCC_ASTROM_PHOTOM_PS_3G, CGI_SEQ_SPEC_UNOCC_ASTROM_PHOTOM_PS_3E]
-  sequence_observation: CGI_SEQ_SETUP_NOFPMFS_SPEC
+  sequence_list: [SPEC_SPEC_ROT_2A_FLATDMS, SPEC_SPEC_ROT_2B_FLATDMS, SPEC_SPEC_ROT_2C_FLATDMS]
+  sequence_observation: SPEC_SPEC_ROT_2_FLATDMS
   pointer: pointer_howfsc.yaml
 
 # Wavefront control solver config
 howfsc:
   method: cholesky # tool for least-squares solver
   min_good_probes: 3 # num good probe intensity estimates required per pix
-  eestclip: 0.1 # if iinc < -icoh*eestclip, e-field marked as bad
-  eestcondlim: 0.4 # if lstsq solve has cond number below this, e-field bad
+  eestclip: 1.0 # if iinc < -icoh*eestclip, e-field marked as bad
+  eestcondlim: 0.1 # if lstsq solve has cond number below this, e-field bad
 
 # Probe pattern parameters
 probe:
