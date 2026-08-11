@@ -144,7 +144,7 @@ pixelweights:
     last: None
     low: 0
     high: None
-    value: '/Users/ajriggs/Repos/roman-corgi/corgihowfsc/corgihowfsc/model/every_mask_config/pixelweights_ones_nlam3_nrow153.fits'
+    value: ../../every_mask_config/pixelweights_ones_nlam3_nrow153.fits
 
 dmmultgain:
   -
@@ -191,4 +191,4 @@ probeheight:
     value: 1.0e-5
 
 
-fixedbp: '/Users/ajriggs/Repos/roman-corgi/corgihowfsc/corgihowfsc/model/every_mask_config/fixedbp_zeros.fits'
+fixedbp: ../../every_mask_config/fixedbp_zeros.fits
