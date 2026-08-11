@@ -22,7 +22,7 @@ pixelweights:
   last: null
   low: 0
   high: null
-  value: ../../every_mask_config/pixelweights_ones_nlam3_nrow153.fits
+  value: ../../every_mask_config/pixelweights_ones_nlam5_nrow153.fits
 regularization:
 - first: 1
   last: 1
@@ -214,7 +214,7 @@ dmmultgain:
   last: 8
   low: 0
   high: null
-  value: 0.0
+  value: 1.0
 - first: 9
   last: 9
   low: 0
@@ -234,7 +234,7 @@ dmmultgain:
   last: 12
   low: 0
   high: null
-  value: 0.0
+  value: 1.0
 - first: 13
   last: 13
   low: 0
@@ -254,7 +254,7 @@ dmmultgain:
   last: 16
   low: 0
   high: null
-  value: 0.0
+  value: 1.0
 - first: 17
   last: 17
   low: 0
@@ -274,7 +274,7 @@ dmmultgain:
   last: 20
   low: 0
   high: null
-  value: 0.0
+  value: 1.0
 - first: 21
   last: 21
   low: 0
@@ -294,7 +294,7 @@ dmmultgain:
   last: 24
   low: 0
   high: null
-  value: 0.0
+  value: 1.0
 - first: 25
   last: 25
   low: 0
