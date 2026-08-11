@@ -42,7 +42,9 @@ PROBE_FILES = {
         unmodulated_sinc=['nfov_dmrel_4_1.0e-05_sinc.fits', 'nfov_dmrel_4_1.0e-05_sinc_shifted_right.fits', 'nfov_dmrel_4_1.0e-05_sinc_shifted_diag_ur.fits'],
     ),
     'spec_band2': ProbeFiles(),
-    'spec_band3': ProbeFiles(),
+    'spec_band3': ProbeFiles(
+        default=['spec_dmrel_band3_ni1e-05_sin150_rot0.fits', 'spec_dmrel_band3_ni1e-05_sin210_rot0.fits', 'spec_dmrel_band3_ni1e-05_sin90_rot0.fits'],
+    ),
     'wfov_band4': ProbeFiles(
         default=['wfov_dmrel_1e-5_cos_constrained.fits', 'wfov_dmrel_1e-5_sinlr_constrained.fits', 'wfov_dmrel_1e-5_sinud_constrained.fits'],
     ),
