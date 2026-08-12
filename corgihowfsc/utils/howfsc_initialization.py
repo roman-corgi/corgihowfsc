@@ -364,7 +364,7 @@ def load_files(args, howfscpath):
 
     cfgfile = os.path.join(dirs.modelpath, 'howfsc_optical_model.yaml')
     hconffile = os.path.join(dirs.modelpath_band, DEFAULT_FILES[mode])
-    cstratfile = os.path.join(dirs.modelpath, f'cstrat_example_{mode}_{args.dark_hole}.yaml')
+    cstratfile = os.path.join(dirs.modelpath, f'cstrat_{mode}_{args.dark_hole}.yaml') #cstrat_nfov_band1_both_sides
 
     # Apply any explicit path overrides before validating existence, so an
     # override can rescue a mode whose computed default doesn't exist.
