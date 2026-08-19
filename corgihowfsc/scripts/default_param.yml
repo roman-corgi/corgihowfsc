@@ -24,7 +24,7 @@ sim_settings:
   output_every_iter: true # whether to save the output frames at every iteration (true) or after all iterations are done (false)
   niter: 3 # number of iterations to run
   mode: "nfov_band1" # options: see models
-  dark_hole: "360deg"  # options: see models
+  dark_hole: "both_sides"  # options: see models
   probe_shape: "default" 
 
 paths:
@@ -53,13 +53,14 @@ models:
     normalization_type: "eetc"
     estimator: "default" # options are "perfect" and "default"; perfect estimator uses the model e-field for estimation, while default estimator uses the standard pairwise probing method
     starting_contrast: 6e-10 # starting contrast value for dmstartmap_filenames; not actually used in compact model
-    dmstartmap_filenames: 
+    dmstartmap_filenames: null
     # Initial DM shape. Provide either:
-    # - two filenames relative to modelpath, or
+    # - two filenames relative to modelpath under <mode>/any/, or
     # - two absolute paths.
     # Mixed absolute/relative entries are not supported.
-      - "gitl_start_compact_dm1.fits"  # can provide full path including filename or just a filename if the file is located in the modelpath
-      - "gitl_start_compact_dm2.fits"  # can provide full path including filename or just a filename if the file is located in the modelpath
+      # - "gitl_start_compact_dm1.fits"  # can provide full path including filename or just a filename if the file is located in the modelpath
+      # - "gitl_start_compact_dm2.fits"  # can provide full path including filename or just a filename if the file is located in the modelpath
+    # or null. It uses dmabs_init_dm1 and dmabs_init_dm2 under <mode>/any/ if no dmstartmap_filenames are provided.
     lrow: 436 # Do not modify
     lcol: 436 # Do not modify
 
