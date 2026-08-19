@@ -1,0 +1,45 @@
+# Parameters for performing the fit of magnification and clocking at the
+# shaped pupil masks as seen at ExCAM.
+# Used by pupilfit_gsw.fit_shaped_pupil_mag_clocking.
+
+# Parameters in the loop for fitting magnification and clocking
+nIter: 5  # int, number of loop iterations
+# Clocking values checked are np.linspace(-clockMaxDeg, clockMaxDeg, nClock)
+clockMaxDeg: 3.0  # float, max +/- clocking error checked [degrees]
+nClock: 7  # int, number of clocking values checked 
+# Magnification values checked are np.linspace(1-DeltaMag, 1+DeltaMag, nMag)
+DeltaMag: 0.05  # float, max +/- additive magnification error checked
+nMag: 7  # int, number of Magnification values checked 
+
+# Length values in meters
+# Refer to document "Layout of Shaped Pupil Mask Array" in 
+# https://alpha-lib.jpl.nasa.gov/docushare/dsweb/View/Collection-238978
+# to confirm final values.
+dBeamNom: 17.0146e-3  # float, nominal (major) diameter of beam at SPM [meters]
+dCircleM: 1.0e-3   # diameter of the fiducial circles [meters]
+dyCircM: 15.0e-3  # float, vertical distance between the fiducial circles' 
+                # centers
+
+# Pixel counts
+nBeamNom: 300.0  # float, nominal/expected number of pixels across the major
+                # beam diameter
+radiusROI: 40 # float, radius in pixels of the regions of interest (ROIs)
+    # where the fiducial circles are expected to be.  Everything outside those
+    # ROIs is zeroed out. ROIs should be oversized to allow for magnification
+    # and clocking errors.
+    # Zero-tolerance value is dCircleM/2/dBeamNom*nBeamNom = 11.35
+nPixFFT: 1024  # int, number of pixels across the padded, square array
+                # containing the fiducial spots. That array is FFT'ed.
+nPixOut: 90  # int, number of pixels across the square array containing the
+              # squared FFT of the measured fiducial spots.
+nSubpixels: 10  # int, number of sub-pixels across used when making
+                 # anti-aliased edges of the modeled fiducial circles.
+
+# AMPTHRESH parameters
+nBin: 21  # number of bins used by AMPTHRESH
+
+# Expected rotation of the spots off nominal. Mainly intended as values of 0
+# or 90 since the rest of the clocking is being estimated. A value of 0
+# means the spots are along the horizontal axis in the input array and a value
+# of 90 means they are along the vertical axis. Units of degrees.
+rotation: 0  # degrees CCW
