@@ -12,7 +12,7 @@ from howfsc.util.load import load
 import warnings
 from collections import namedtuple
 
-from corgihowfsc.model.model_registry import DEFAULT_FILES, PROBE_FILES
+from corgihowfsc.model.model_registry import DEFAULT_FILES, PROBE_FILES, DM_STARTMAP_FILES
 
 MODEL_DIRS = namedtuple('ModelDirs', ['modelpath_band', 'modelpath', 'probepath', 'model_path_all', 'model_any_dir'])
 
@@ -69,6 +69,54 @@ def _get_probe_files(mode, probe_shape, dirs):
     }
 
     return probefiles
+
+def _get_dm_startmap_files(mode):
+    """
+    Resolve the default DM start map file paths for the given mode.
+
+    Returns a list of two absolute paths to the flat_wfe_dm files from
+    roman_preflight_proper_public/examples directory.
+
+    Args:
+        mode: str, coronagraph mode (e.g., 'nfov_band1', 'wfov_band1', etc.)
+
+    Returns:
+        list of two absolute paths to DM start map FITS files
+
+    Raises:
+        ValueError: if mode is not recognized
+        FileNotFoundError: if the expected files don't exist
+    """
+    if mode not in DM_STARTMAP_FILES:
+        raise ValueError(
+            f"No default flat_wfe_dm files defined for mode '{mode}'. "
+            f"Supported modes: {sorted(DM_STARTMAP_FILES.keys())}"
+        )
+
+    dm1_file, dm2_file = DM_STARTMAP_FILES[mode]
+
+    # Path to roman_preflight_proper_public examples directory
+    roman_preflight_examples = os.path.join(
+        os.path.expanduser('~'),
+        'Documents', 'github_repos', 'roman-corgi-repos',
+        'roman_preflight_proper_public_v2.0.1_python',
+        'roman_preflight_proper', 'examples'
+    )
+
+    dmstartmap_filenames = [
+        os.path.join(roman_preflight_examples, dm1_file),
+        os.path.join(roman_preflight_examples, dm2_file),
+    ]
+
+    # Verify the files exist
+    for filepath in dmstartmap_filenames:
+        if not os.path.isfile(filepath):
+            raise FileNotFoundError(
+                f"Default DM start map not found: {filepath}. "
+                f"Please ensure roman_preflight_proper_public is installed at the expected location."
+            )
+
+    return dmstartmap_filenames
 
 def get_cpu_allocation(num_process=None, num_imager_worker=None, num_proper_process=None):
     """
@@ -400,11 +448,11 @@ def load_files(args, howfscpath):
     # Load the probe files based on the mode and probe shape
     probefiles = _get_probe_files(mode, args.probe_shape, dirs)
 
-    # NOTE - figure out how to handle the DM start maps. for now we should just use a dm init map
+    # Handle DM start maps: if None, load default flat_wfe_dm files from roman_preflight_proper_public
     if dmstartmap_filenames is None:
-        dmstartmap_filenames = ['dmabs_init_dm1.fits', 'dmabs_init_dm2.fits']
+        dmstartmap_filenames = _get_dm_startmap_files(mode)
 
-    # Apply DM start mpap path overrides if provided
+    # Apply DM start map path overrides if provided
     dm_abs_flags = [os.path.isabs(p) for p in dmstartmap_filenames]
 
     if any(dm_abs_flags) and not all(dm_abs_flags):
