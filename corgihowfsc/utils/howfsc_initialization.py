@@ -469,8 +469,8 @@ def load_files(args, howfscpath):
         ]
     else:
         dmstartmaps = [
-            fits.getdata(os.path.join(dirs.model_any_dir, dmstartmap_filenames[0])),
-            fits.getdata(os.path.join(dirs.model_any_dir, dmstartmap_filenames[1])),
+            fits.getdata(os.path.join(dirs.modelpath, dmstartmap_filenames[0])),
+            fits.getdata(os.path.join(dirs.modelpath, dmstartmap_filenames[1])),
         ]
 
     return dirs.modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps
