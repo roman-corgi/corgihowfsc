@@ -1,0 +1,50 @@
+# pixels per lambda/D
+ppl: 2.2746  # 2.26
+
+# relative or absolute path to the reference PSF at the above resolution
+# If relative, will be relative to THIS FILE
+fn_ref_psf: '../focal_plane/psf/ref_psf_band_1b.fits'
+
+# Distance in meters to forward Fresnel propagate the beam.
+# Refer to Jira ticket https://jira.jpl.nasa.gov/browse/WFIRST-4081
+# for an explanation. In summary, 0.34 meters is the distance that minimizes
+# the variation in amplitude when Fresnel propagating the beam while DM1 is poked,
+# or when DM2 is propagated by 1+0.34 meters.
+deltaz: 0 #0.340
+
+# number of points to zero-pad the array to before Fresnel propagating
+# in the collimated beam near the DMs
+nxfresnel: 2048
+
+# number of PIL+EXCAM pixels across the beam diameter. Used for defining pixel
+# size for the Fresnel propagation
+diam_pupil_pix: 300.63 #301.0
+
+# diameter in meters of the pupil at DM1
+diam_pupil_m: 46.3e-3
+
+# Direction of the Fourier transform from the pupil to the focus in the CGI model.
+# Necessary to get right only if the x_offset and y_offset are used so that they 
+# have the correct sign.
+ft_dir: 'reverse'
+
+# Filename of tuning parameters for PSF location finding.
+# Passed directly to cal.psffit.psffit.psffit().
+# If relative, will be relative to THIS FILE
+fn_psffit_tuning: 'params_psffit_for_tip_tilt_removal.yaml'
+
+#  Number of points across to keep in the focal plane after Fourier transforming.
+# Passed directly to cal.util.remove_ptt.remove_ptt_at_focus().
+nCrop: 100
+
+# number of bins used by cal.ampthresh.amptresh.ampthresh().
+nBin: 21
+
+# number of iterations to run PSF recentering.  
+# Passed directly to cal.util.remove_ptt.remove_ptt_at_focus()
+nIter: 2
+
+# Minimum number of zeroed pixels to be allowed to stay in the thresholded
+# mask of the amplitude. Needed to avoid undesired zeroed areas where there
+# are dead actuators.
+min_size_zeros: 20

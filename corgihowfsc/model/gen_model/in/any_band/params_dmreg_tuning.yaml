@@ -1,0 +1,44 @@
+# Tuning parameters for cal.dmreg.dmreg.calc_dmreg_from_poke_grid().
+
+# opt_method is the optimization method handed directly to 
+# scipy.optimize.minimize()'s method argument.
+# See https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html
+# for a list of other options, but since the optimization is highly nonlinear
+# when starting far-off, 'L-BFGS-B' is probably the safest option and has a
+# better capture range than 'Nelder-Mead'.
+opt_method: 'L-BFGS-B'
+
+# nErode is the number of pixels by which to erode the thresholded phase
+# retrieval pupil amplitude. This helps throw out bad phase estimates near the
+# edges of the illuminated regions.
+nErode: 6
+
+# Z_noll_max is the max Noll Zernike mode index to subtract out of the phase
+# estimates. All modes from Z_1 to Z_{Z_noll_max} are subtracted off both the
+# measured and modeled delta phase maps to remove estimatrion error residuals
+# from the measured phase and to make the modeled phase match the  measured
+# one better
+Z_noll_max: 21
+
+# ppact_tol_pct is the percentage tolerance on the x- and y-axis plate scales
+# compared to the starting value given. It is used to create the plate scale
+# bounds as (1-ppact_tol_pct/100) and (1+ppact_tol_pct/100) times the 
+# starting value.
+ppact_tol_pct: 5.0
+
+# dxdy_tol_pix is the tolerance in detector pixels of the DM grid translation
+# relative to the array it is in. It is used to create the translation dx and
+# dy bounds as the starting value +/- dxdy_tol_pix.
+# For a 4x4 poke grid, make sure this number is < 2*ppact_cx so that
+# the solver does not accidentally find a solution 4 actuators away from the
+# real one.
+dxdy_tol_pix: 12.0
+
+# thact_tol_deg is the tolerance in degrees of the DM grid translation. It is
+# used to reate the optimization bounds for the DM grid rotation angle as
+# the starting value +/- thact_tol_deg.
+thact_tol_deg: 2.0
+
+# Number of bins used when making a histogram of phase retrieval pupil
+# amplitude values for thresholding with ampthresh().
+nBin: 21

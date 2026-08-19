@@ -1,0 +1,15 @@
+nIter: 5
+clockMaxDeg: 3.0
+nClock: 7
+DeltaMag: 0.05
+nMag: 7
+dBeamNom: 0.0170146
+dCircleM: 0.001
+dyCircM: 0.015
+nBeamNom: 298.2585144042969
+radiusROI: 40
+nPixFFT: 1024
+nPixOut: 90
+nSubpixels: 10
+nBin: 21
+rotation: 0

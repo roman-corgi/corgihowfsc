@@ -4,7 +4,7 @@ dms:
     registration:
       dx: -0.014224950169164925
       dy: -0.04932028167763836
-      inffn: ../../dm1/dm_1236-2_brian_inf_v1.0.fits
+      inffn: ../dm1/dm_1236-2_brian_inf_v1.0.fits
       nact: 48
       ppact_cx: 6.436212500311111
       ppact_cy: 6.3393938970505905
@@ -18,8 +18,8 @@ dms:
       vneighbor: 50.0
       vcorner: 75.0
       vquant: 0.001678466796875
-      tiefn: ../../dm1/tied_actuator_map.fits
-      flatfn: ../../dm1/dm_allzeros.fits
+      tiefn: ../dm1/tied_actuator_map.fits
+      flatfn: ../dm1/dm_allzeros.fits
       crosstalkfn: null
     z: 0.0
   DM2:
@@ -27,7 +27,7 @@ dms:
     registration:
       dx: 0.08969719226420841
       dy: -0.5719916242919781
-      inffn: ../../dm2/dm_1236-5_brian_inf_v1.0.fits
+      inffn: ../dm2/dm_1236-5_brian_inf_v1.0.fits
       nact: 48
       ppact_cx: 6.430940805724932
       ppact_cy: 6.335016890470873
@@ -41,9 +41,9 @@ dms:
       vneighbor: 50.0
       vcorner: 75.0
       vquant: 0.001678466796875
-      tiefn: ../../dm2/tied_actuator_map.fits
-      flatfn: ../../dm2/dm_allzeros.fits
-      crosstalkfn: ../../dm2/crosstalk_dm2_20240719.yaml
+      tiefn: ../dm2/tied_actuator_map.fits
+      flatfn: ../dm2/dm_allzeros.fits
+      crosstalkfn: ../dm2/crosstalk_dm2_20240719.yaml
     z: 1.0
 init:
   DM1:
@@ -56,24 +56,24 @@ sls:
     ft_dir: reverse
     sp:
       afn: ../../every_mask_config/ones_like_pupil.fits
-      pdp: 299.1448059082031
+      pdp: 298.0449523925781
       pfn: ../../every_mask_config/zeros_like_pupil.fits
     lyot:
       afn: ../any/lyot_amp.fits
-      pdp: 299.1448059082031
+      pdp: 298.0449523925781
       pfn: ../any/subband0/lyot_ph.fits
       tip: 0.0
       tilt: 0.0
     epup:
-      afn: ../any/epup_amp.fits
-      pdp: 299.1448059082031
+      afn: epup_amp.fits
+      pdp: 298.0449523925781
       pfn: ../any/subband0/epup_ph.fits
       tip: 0
       tilt: 0
     fs:
       afn: subband0/fs_amp.fits
       pfn: ../../every_mask_config/zeros_like_fs.fits
-      ppl: 2.1936521784878877
+      ppl: 2.193941502172732
     fpm:
       afn: ../any/subband0/fpm_amp.fits
       isopen: true
@@ -85,24 +85,24 @@ sls:
     ft_dir: reverse
     sp:
       afn: ../../every_mask_config/ones_like_pupil.fits
-      pdp: 299.1448059082031
+      pdp: 298.0449523925781
       pfn: ../../every_mask_config/zeros_like_pupil.fits
     lyot:
       afn: ../any/lyot_amp.fits
-      pdp: 299.1448059082031
+      pdp: 298.0449523925781
       pfn: ../any/subband1/lyot_ph.fits
       tip: 0.0
       tilt: 0.0
     epup:
-      afn: ../any/epup_amp.fits
-      pdp: 299.1448059082031
+      afn: epup_amp.fits
+      pdp: 298.0449523925781
       pfn: ../any/subband1/epup_ph.fits
       tip: 0
       tilt: 0
     fs:
       afn: subband1/fs_amp.fits
       pfn: ../../every_mask_config/zeros_like_fs.fits
-      ppl: 2.2726239912149238
+      ppl: 2.272923730596514
     fpm:
       afn: ../any/subband1/fpm_amp.fits
       isopen: true
@@ -114,24 +114,24 @@ sls:
     ft_dir: reverse
     sp:
       afn: ../../every_mask_config/ones_like_pupil.fits
-      pdp: 299.1448059082031
+      pdp: 298.0449523925781
       pfn: ../../every_mask_config/zeros_like_pupil.fits
     lyot:
       afn: ../any/lyot_amp.fits
-      pdp: 299.1448059082031
+      pdp: 298.0449523925781
       pfn: ../any/subband2/lyot_ph.fits
       tip: 0.0
       tilt: 0.0
     epup:
-      afn: ../any/epup_amp.fits
-      pdp: 299.1448059082031
+      afn: epup_amp.fits
+      pdp: 298.0449523925781
       pfn: ../any/subband2/epup_ph.fits
       tip: 0
       tilt: 0
     fs:
       afn: subband2/fs_amp.fits
       pfn: ../../every_mask_config/zeros_like_fs.fits
-      ppl: 2.3512052365561775
+      ppl: 2.351515340122065
     fpm:
       afn: ../any/subband2/fpm_amp.fits
       isopen: true

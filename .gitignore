@@ -6,6 +6,11 @@ corgihowfsc/temp/**
 
 corgihowfsc/model/probes/*.png
 
+corgihowfsc/model/dm_seeds/nfov**
+corgihowfsc/model/dm_seeds/wfov**
+corgihowfsc/model/dm_seeds/spec**
+corgihowfsc/model/dm_seeds/mswc**
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

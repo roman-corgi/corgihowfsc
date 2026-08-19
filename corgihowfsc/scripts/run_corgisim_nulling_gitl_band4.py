@@ -74,11 +74,7 @@ def main():
 
     # hconffile
     hconf = loadyaml(hconffile, custom_exception=TypeError)
-
-    # If it is desired to overwrite the stellar mag/type, do so here
-    # hconf['star']['stellar_vmag'] = 5
-    # hconf['star']['stellar_type'] = 'G0V'
-
+    print(cstratfile)
     # Define control and estimator strategy
     cstrat = ControlStrategy(cstratfile)
     estimator = DefaultEstimator()

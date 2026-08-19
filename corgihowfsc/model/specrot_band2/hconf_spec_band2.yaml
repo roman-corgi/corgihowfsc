@@ -1,0 +1,41 @@
+# Overhead times for onboard activities, in seconds
+overhead:
+  overdm: 5.0 # overhead with every DM move (only)
+  overfilt: 60.0 # overhead with every CFAM move (only)
+  overboth: 2.0 # overhead with each DM/CFAM combo (e.g. camera settings)
+  overfixed: 5.0 # fixed overhead per iteration for one-offs (e.g. set DM2)
+  overframe: 2.0 # overhead per frame for readout
+
+# Stellar properties for HOWFSC target
+star:
+  stellar_vmag: 2.25
+  stellar_type: O5
+  stellar_vmag_target: 5.0
+  stellar_type_target: F5V  # G0V
+
+# EXCAM detector parameters and manual camera setting constraints
+excam:
+  cleanrow: 1024
+  cleancol: 1024
+  scale_method: percentile # must be either 'mean' or 'percentile'
+  scale_percentile: 70 # ignored if method is 'mean'
+  scale_bright_method: percentile # must be either 'mean' or 'percentile'
+  scale_bright_percentile: 99 # ignored if method is 'mean'
+
+# Hardware configuration for observation
+hardware:
+  sequence_list: [CGI_SEQ_SPEC_UNOCC_ASTROM_PHOTOM_PS_3A, CGI_SEQ_SPEC_UNOCC_ASTROM_PHOTOM_PS_3A, CGI_SEQ_SPEC_UNOCC_ASTROM_PHOTOM_PS_3A, CGI_SEQ_SPEC_UNOCC_ASTROM_PHOTOM_PS_3A, CGI_SEQ_SPEC_UNOCC_ASTROM_PHOTOM_PS_3B]
+  sequence_observation: CGI_SEQ_SETUP_NOFPMFS_SPEC
+  pointer: pointer_howfsc.yaml
+
+# Wavefront control solver config
+howfsc:
+  method: cholesky # tool for least-squares solver
+  min_good_probes: 3 # num good probe intensity estimates required per pix
+  eestclip: 0.1 # if iinc < -icoh*eestclip, e-field marked as bad
+  eestcondlim: 0.4 # if lstsq solve has cond number below this, e-field bad
+
+# Probe pattern parameters
+probe:
+  # list of probe heights values for a relative DM setting with  scale = 1
+  dmrel_ph_list: [1.0e-5, 1.0e-5, 1.0e-5]
