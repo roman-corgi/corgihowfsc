@@ -7,6 +7,7 @@ import glob
 
 import numpy as np
 from astropy.io import fits
+import roman_preflight_proper
 
 from howfsc.util.load import load
 import warnings
@@ -75,7 +76,7 @@ def _get_dm_startmap_files(mode):
     Resolve the default DM start map file paths for the given mode.
 
     Returns a list of two absolute paths to the flat_wfe_dm files from
-    roman_preflight_proper_public/examples directory.
+    roman_preflight_proper/examples directory.
 
     Args:
         mode: str, coronagraph mode (e.g., 'nfov_band1', 'wfov_band1', etc.)
@@ -95,13 +96,9 @@ def _get_dm_startmap_files(mode):
 
     dm1_file, dm2_file = DM_STARTMAP_FILES[mode]
 
-    # Path to roman_preflight_proper_public examples directory
-    roman_preflight_examples = os.path.join(
-        os.path.expanduser('~'),
-        'Documents', 'github_repos', 'roman-corgi-repos',
-        'roman_preflight_proper_public_v2.0.1_python',
-        'roman_preflight_proper', 'examples'
-    )
+    # Get the path to roman_preflight_proper/examples directory
+    roman_preflight_base = os.path.dirname(os.path.abspath(roman_preflight_proper.__file__))
+    roman_preflight_examples = os.path.join(roman_preflight_base, 'examples')
 
     dmstartmap_filenames = [
         os.path.join(roman_preflight_examples, dm1_file),
@@ -113,7 +110,7 @@ def _get_dm_startmap_files(mode):
         if not os.path.isfile(filepath):
             raise FileNotFoundError(
                 f"Default DM start map not found: {filepath}. "
-                f"Please ensure roman_preflight_proper_public is installed at the expected location."
+                f"Please ensure the roman_preflight_proper examples directory contains the required files."
             )
 
     return dmstartmap_filenames
