@@ -48,7 +48,9 @@ PROBE_FILES = {
     'wfov_band4': ProbeFiles(
         default=['wfov_dmrel_1e-5_cos_constrained.fits', 'wfov_dmrel_1e-5_sinlr_constrained.fits', 'wfov_dmrel_1e-5_sinud_constrained.fits'],
     ),
-    'wfov_band1': ProbeFiles(),
+    'wfov_band1': ProbeFiles(
+        default=['wfov_band1_dmrel_1e-5_cos.fits', 'wfov_band1_dmrel_1e-5_sinlr_constrained.fits', 'wfov_band1_dmrel_1e-5_sinud.fits']
+    ),
     'specrot_band2': ProbeFiles(),
     'specrot_band3': ProbeFiles(),
 }
