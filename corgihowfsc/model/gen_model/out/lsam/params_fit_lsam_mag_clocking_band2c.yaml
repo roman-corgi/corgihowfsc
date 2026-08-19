@@ -1,0 +1,8 @@
+clockMaxDeg: 3.0
+nClock: 11
+deltaAmpMax: 0.5
+diamPupil: 299.4394836425781
+magShrinkFac: 0.5
+deltaMag: 0.05
+nMag: 11
+nIterMag: 3

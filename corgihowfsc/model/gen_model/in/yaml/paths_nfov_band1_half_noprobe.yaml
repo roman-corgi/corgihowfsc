@@ -1,0 +1,18 @@
+# FILES
+cfgfile: $SIT_PATH/corgihowfsc/models/nfov_band1_flat_half_noprobe/howfsc_optical_model.yaml
+cstratfile: $SIT_PATH/corgihowfsc/models/nfov_band1_flat_half_noprobe/cstrat_nfov_band1_flat_half_noprobe.yaml
+probe0file: $SIT_PATH/corgihowfsc/models/nfov_band1_flat_half_noprobe/nfov_dm_dmrel_4_1.0e-05_cos.fits
+probe1file: $SIT_PATH/corgihowfsc/models/nfov_band1_flat_half_noprobe/nfov_dm_dmrel_4_1.0e-05_sinlr.fits
+probe2file: $SIT_PATH/corgihowfsc/models/nfov_band1_flat_half_noprobe/nfov_dm_dmrel_4_1.0e-05_sinud.fits
+hconffile: $SIT_PATH/corgihowfsc/models/nfov_band1_flat_half_noprobe/hconf_nfov_band1_flat_half_noprobe.yaml
+dm1file: $SIT_PATH/corgihowfsc/models/nfov_band1_flat_half_noprobe/dmabs_init_dm1.fits
+dm2file: $SIT_PATH/corgihowfsc/models/nfov_band1_flat_half_noprobe/dmabs_init_dm2.fits
+
+# numbers
+exptime: 10 # FIXME this should be derived from contrast eventually
+contrast: 1.0e-5 # "starting" value to bootstrap getting we0
+scalelist: [0.3, 0.3, 0.3, -0.3, -0.3, -0.3] # relative to 1e-5 for these, sqrt (0.1 = 1e-7)
+nrow: 153
+ncol: 153
+lrow: 436
+lcol: 436

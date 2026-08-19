@@ -148,6 +148,11 @@ class CorgiNormalization(Normalization):
         # if exptime is None or self.corgisim_manager.is_noise_free:
         #     exptime = 1.  # unit
 
+        if self.corgisim_manager.is_noise_free:
+            exptime = 1.  # unit
+        else:
+            exptime = self.exptime_norm
+
         dy = self.separation_lamD * mas_per_lamD
         dx = 0.
 
@@ -156,14 +161,15 @@ class CorgiNormalization(Normalization):
                                                                        dx,
                                                                        dy,
                                                                        lind=sl_ind,
-                                                                       exptime=self.exptime_norm,
+                                                                       exptime=exptime, # self.exptime_norm,
                                                                        gain=gain)
         if (np.nanmax(image_comp_corgi) > 89610) and (not self.corgisim_manager.is_noise_free): #10300:
             print("**** WARNING: off-axis PSF saturated ****")
+        # peakflux = np.nanmax(image_comp_corgi) / self.exptime_norm
+        peakflux = np.nanmax(image_comp_corgi) / exptime
 
-        peakflux = np.nanmax(image_comp_corgi) / self.exptime_norm
-
-        return image_comp_corgi/self.exptime_norm, peakflux
+        # return image_comp_corgi/self.exptime_norm, peakflux
+        return image_comp_corgi/exptime, peakflux
 
     def normalize(self, im, peakflux, exptime):
         """
