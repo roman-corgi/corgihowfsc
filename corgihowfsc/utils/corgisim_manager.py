@@ -377,7 +377,7 @@ class CorgisimManager:
         return e_field_norm
 
 
-    def generate_master_dark(self, detector, exptime, gain):
+    def generate_master_dark(self, detector, exptime):
         """
         dark:  master dark
         FPM: fixed pattern noise map
@@ -389,7 +389,7 @@ class CorgisimManager:
         D = detector.emccd.dark_current * np.ones((self.output_dim,self.output_dim))
         C = detector.emccd.cic * np.ones((self.output_dim,self.output_dim))
         FPN = np.zeros((self.output_dim,self.output_dim)) # Not included in emccd_detect
-        dark = FPN / gain + exptime * D + C
+        dark = FPN / self.em_gain + exptime * D + C
 
 
         return dark
