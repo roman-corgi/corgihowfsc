@@ -13,7 +13,7 @@ sim_settings:
   output_every_iter: true # whether to save the output frames at every iteration (true) or after all iterations are done (false)
   niter: 81 # number of iterations to run
   mode: "nfov_band1" # options: see models
-  dark_hole: "360deg"  # options: see models
+  dark_hole: "both_sides"  # options: see models
   probe_shape: "default" 
 
 paths:
