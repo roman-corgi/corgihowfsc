@@ -77,3 +77,8 @@ models:
       # Parameters forwarded to GitlImage initialization
       is_noise_free: false
       oversampling_factor: 3 # always odd number
+    emccd_overrides:
+      # Parameters forwarded to CorgiDetector initialization
+      em_gain: 100
+      bias: 0
+      cr_rate: 5
