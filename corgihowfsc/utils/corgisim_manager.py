@@ -118,6 +118,15 @@ class CorgisimManager:
         self._mode = 'excam'  # default camera mode
         self.k_gain = 8.7 # photo e-/DN, calibrated in TVAC
 
+    def _initialize_emccd_params(self):
+        """
+        Initialize EMCCD parameters from overrides or defaults.
+        Other parameeter can be added here as needed, otherwise they will take the default values from CorgiDetector.
+        """
+        self.em_gain = self.emccd_overrides.get('em_gain', 1) # default to 1
+        self.bias = self.emccd_overrides.get('bias', 0) # default to 0
+        self.cr_rate = self.emccd_overrides.get('cr_rate', 5) # default to 5
+
     def _initialize_base_scene(self):
         # Initialise scene object 
         point_source_info = [] # default is just none, tbc whether there should be point source or not
@@ -134,12 +143,33 @@ class CorgisimManager:
         
         return self.bandpass + subband_option[lind]
 
-    def _get_passthrough_keywords(self):
+    def _get_passthrough_keywords(self, is_corgi_overrides=True):
         """
         Return any corgi_overrides keys that are not manager-level keys, to be
         forwarded directly to CorgiOptics as optics_keywords.
         """
-        return {k: v for k, v in self.corgi_overrides.items() if k not in _MANAGER_KEYS}
+        if is_corgi_overrides:
+            return {k: v for k, v in self.corgi_overrides.items() if k not in _MANAGER_KEYS}
+        else:
+            return {k: v for k, v in self.emccd_overrides.items() if k not in _MANAGER_KEYS}
+
+    def create_emccd_detector(self, gain=None):
+        """
+        Create a CorgiDetector instance with the specified EMCCD parameters.
+        """
+        self._initialize_emccd_params()
+        
+        emccd_dict = {
+            'em_gain': self.em_gain if gain is None else gain, # take a value from the argument if provided. otherwise use the default value from the manager
+            'bias': self.bias,
+            'cr_rate': self.cr_rate
+        }
+
+        emccd_dict.update(self._get_passthrough_keywords(is_corgi_overrides=False))  # Update with any additional overrides
+
+        detector = instrument.CorgiDetector(emccd_dict)
+
+        return detector
 
     def create_optics(self, dm1v, dm2v, lind):
         bandpass_recipe = self._get_bandpass_recipe(lind)
