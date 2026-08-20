@@ -331,11 +331,10 @@ class CorgisimManager:
             return sim_scene.host_star_image.data
         else:
             # generate detector image
-            emccd_dict = {'em_gain': gain, 'bias':bias, 'cr_rate': 0}
-            detector = instrument.CorgiDetector(emccd_dict)
+            detector = self.create_emccd_detector(gain)
             # sim_scene.image_on_detector.data is not gain corrected or bias subtracted
             master_dark = self.generate_master_dark(detector, exptime, gain)
-            B = bias * np.ones((self.output_dim, self.output_dim))
+            B = self.bias * np.ones((self.output_dim, self.output_dim))
 
             coadd = np.zeros((self.output_dim, self.output_dim))
             for n in range(nframes):
