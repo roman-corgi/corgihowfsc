@@ -394,8 +394,7 @@ class CorgisimManager:
 
         return dark
     
-    def generate_off_axis_psf(self, dm1v, dm2v, dx, dy, companion_vmag=None, lind=0, exptime=1.0, gain=1, bias=0):
-        # TODO: move bias to be a class attribute
+    def generate_off_axis_psf(self, dm1v, dm2v, dx, dy, companion_vmag=None, lind=0, exptime=1.0, gain=1):
         if companion_vmag is None:
             companion_vmag = self.Vmag
         
@@ -419,11 +418,10 @@ class CorgisimManager:
             return sim_scene.point_source_image.data
         else:
             # generate detector image
-            emccd_dict = {'em_gain': gain, 'cr_rate': 0, 'bias': bias}
-            detector = instrument.CorgiDetector(emccd_dict)
-            master_dark = self.generate_master_dark(detector, exptime, gain)
+            detector = self.create_emccd_detector()
+            master_dark = self.generate_master_dark(detector, exptime)
             sim_scene = detector.generate_detector_image(sim_scene, exptime)
             # sim_scene.image_on_detector.data is not gain corrected or bias subtracted
-            B = bias * np.ones((self.output_dim, self.output_dim))
-            return (self.k_gain*sim_scene.image_on_detector.data - B)/gain - master_dark
+            B = self.bias * np.ones((self.output_dim, self.output_dim))
+            return (self.k_gain*sim_scene.image_on_detector.data - B)/self.em_gain - master_dark
 
