@@ -23,7 +23,7 @@ class CorgisimManager:
     - PSF and detector image
     """
 
-    def __init__(self, cfg, cstrat, hconf, cor=None, corgi_overrides=None):
+    def __init__(self, cfg, cstrat, hconf, cor=None, corgi_overrides=None, emccd_overrides=None):
         """
         Args:
             cfg:
@@ -46,21 +46,28 @@ class CorgisimManager:
                 - Vmag: float, override host star V magnitude
                 - sptype: str, override spectral type
                 - ref_flag: bool, use reference spectrum (default: False)
+            emccd_overrides: Optional dict of EMCCD-specific overrides:
+                See corgisim doc for details, but some examples include:
+                - em_gain: float, EM gain setting (default: 1)
+                - bias: float, detector bias level (default: 0)
+                - cr_rate: float, cosmic ray rate (default: 5)
         """
 
         if corgi_overrides is None: 
             corgi_overrides = {}
+
+        if emccd_overrides is None:
+            emccd_overrides = {}
         
         self.cfg = cfg 
         self.cstrat = cstrat
         self.hconf = hconf 
         self.cor = cor 
         self.corgi_overrides = corgi_overrides
+        self.emccd_overrides = emccd_overrides
 
         self._validate_inputs()
-        
         self._initialize_config()
-
         self._initialize_base_scene()
 
     def _validate_inputs(self):
