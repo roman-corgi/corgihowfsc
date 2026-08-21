@@ -123,7 +123,6 @@ class CorgisimManager:
         Initialize EMCCD parameters from overrides or defaults.
         Other parameeter can be added here as needed, otherwise they will take the default values from CorgiDetector.
         """
-        self.em_gain = self.emccd_overrides.get('em_gain', 1) # default to 1
         self.bias = self.emccd_overrides.get('bias', 0) # default to 0
         self.cr_rate = self.emccd_overrides.get('cr_rate', 5) # default to 5
 
@@ -160,7 +159,7 @@ class CorgisimManager:
         self._initialize_emccd_params()
         
         emccd_dict = {
-            'em_gain': self.em_gain if gain is None else gain, # take a value from the argument if provided. otherwise use the default value from the manager
+            'em_gain': gain,
             'bias': self.bias,
             'cr_rate': self.cr_rate
         }
@@ -279,7 +278,7 @@ class CorgisimManager:
             coadd = np.zeros((self.output_dim, self.output_dim))
             for n in range(nframes):
                 sim_scene = detector.generate_detector_image(sim_scene, exptime)
-                frame = (self.k_gain * sim_scene.image_on_detector.data - B) / self.em_gain - master_dark
+                frame = (self.k_gain * sim_scene.image_on_detector.data - B) / detector.emccd.em_gain - master_dark
                 coadd += frame
             # frame = (sim_scene.image_on_detector.data - B) * self.k_gain / self.em_gain - master_dark
             return coadd/nframes
@@ -389,7 +388,7 @@ class CorgisimManager:
         D = detector.emccd.dark_current * np.ones((self.output_dim,self.output_dim))
         C = detector.emccd.cic * np.ones((self.output_dim,self.output_dim))
         FPN = np.zeros((self.output_dim,self.output_dim)) # Not included in emccd_detect
-        dark = FPN / self.em_gain + exptime * D + C
+        dark = FPN / detector.emccd.em_gain + exptime * D + C
 
 
         return dark
@@ -418,10 +417,10 @@ class CorgisimManager:
             return sim_scene.point_source_image.data
         else:
             # generate detector image
-            detector = self.create_emccd_detector()
+            detector = self.create_emccd_detector(gain)
             master_dark = self.generate_master_dark(detector, exptime)
             sim_scene = detector.generate_detector_image(sim_scene, exptime)
             # sim_scene.image_on_detector.data is not gain corrected or bias subtracted
             B = self.bias * np.ones((self.output_dim, self.output_dim))
-            return (self.k_gain*sim_scene.image_on_detector.data - B)/self.em_gain - master_dark
+            return (self.k_gain*sim_scene.image_on_detector.data - B)/detector.emccd.em_gain - master_dark
 

@@ -79,6 +79,5 @@ models:
       oversampling_factor: 3 # always odd number
     emccd_overrides:
       # Parameters forwarded to CorgiDetector initialization
-      em_gain: 100
       bias: 0
-      cr_rate: 5
+      cr_rate: 1000
