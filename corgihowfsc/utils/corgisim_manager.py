@@ -273,7 +273,7 @@ class CorgisimManager:
             # generate detector image
             detector = self.create_emccd_detector(gain)
             # sim_scene.image_on_detector.data is not gain corrected or bias subtracted
-            master_dark = self.generate_master_dark(detector, exptime, self.em_gain)
+            master_dark = self.generate_master_dark(detector, exptime)
             B = self.bias * np.ones((self.output_dim, self.output_dim))
 
             coadd = np.zeros((self.output_dim, self.output_dim))
@@ -333,7 +333,7 @@ class CorgisimManager:
             # generate detector image
             detector = self.create_emccd_detector(gain)
             # sim_scene.image_on_detector.data is not gain corrected or bias subtracted
-            master_dark = self.generate_master_dark(detector, exptime, gain)
+            master_dark = self.generate_master_dark(detector, exptime)
             B = self.bias * np.ones((self.output_dim, self.output_dim))
 
             coadd = np.zeros((self.output_dim, self.output_dim))
