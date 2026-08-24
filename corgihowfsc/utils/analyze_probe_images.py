@@ -12,10 +12,10 @@ NOTES on data types:
     > = big-endian (MSB first)
 
 Example Calls in a Bash Terminal:
-python write_gaussian_probes.py --mode 'nfov_band1' --dark_hole '360deg'
+python write_gaussian_probes.py --mode 'nfov_band1' --dark_hole 'both_sides'
 python write_gaussian_probes.py --mode 'nfov_band1' --dark_hole 'half_top'
 python write_gaussian_probes.py --mode 'spec_band3' --dark_hole 'both_sides' --write
-python write_gaussian_probes.py --mode 'wfov_band4' --dark_hole '360deg' --write
+python write_gaussian_probes.py --mode 'wfov_band4' --dark_hole 'both_sides' --write
 
 """
 import os
@@ -744,7 +744,7 @@ if __name__ == '__main__':
 
     analysis_path = '/Users/ilaginja/Nextcloud/Areas/RomanCPP/alternate_probes/probe_comparison/active_analysis/sigma_sweep_1e-7_analysis'
     mode = 'nfov_band1'
-    dark_hole = '360deg'
+    dark_hole = 'both_sides'
     ni = 1e-7
 
     ### Gaussian probes

@@ -189,7 +189,7 @@ def get_cpu_allocation(num_process=None, num_imager_worker=None, num_proper_proc
 
 def get_args(niter=5,
                     mode='narrowfov',
-                    dark_hole='360deg',
+                    dark_hole='both_sides',
                     probe_shape='default',
                     profile=False,
                     fracbadpix=0,
