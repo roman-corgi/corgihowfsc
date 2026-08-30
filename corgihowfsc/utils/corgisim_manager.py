@@ -1,5 +1,5 @@
 import numpy as np
-from corgisim import scene, instrument
+from corgisim import scene, instrument, jitter
 
 import logging 
 log = logging.getLogger(__name__)
@@ -46,6 +46,7 @@ class CorgisimManager:
                 - Vmag: float, override host star V magnitude
                 - sptype: str, override spectral type
                 - ref_flag: bool, use reference spectrum (default: False)
+                - stellar_diam_and_jitter_keywords: dict, contains parameters for running corgisim's finite stellar diameter and jitter model
         """
 
         if corgi_overrides is None: 
@@ -98,7 +99,8 @@ class CorgisimManager:
             self.host_star_properties = {
                 'Vmag': 2.25,  # default to del Leo
                 'spectral_type': '05',
-                'ref_flag': 1
+                'ref_flag': 1,
+                'stellar_diam_mas': 1.18
             }
         
         # Set other corgihowfsc specific parameters; if not provided, use defaults
@@ -110,6 +112,18 @@ class CorgisimManager:
         self.ref_flag = self.corgi_overrides.get('ref_flag', self.host_star_properties['ref_flag'])
         self._mode = 'excam'  # default camera mode
         self.k_gain = 8.7 # photo e-/DN, calibrated in TVAC
+        # For the stellar diameter and jitter model
+        stellar_diam_and_jitter_keywords = {}
+        if 'stellar_diam_and_jitter_keywords' in self.corgi_overrides.keys(): # If stellar diameter and jitter model keywords are provided
+            if 'use_finite_stellar_diam' in self.corgi_overrides['stellar_diam_and_jitter_keywords'].keys(): # and 'use_finite_stellar_diam' is included
+                if (self.corgi_overrides['stellar_diam_and_jitter_keywords']['use_finite_stellar_diam'] == 1): # and set to 1 to indicate that the finite stellar diameter model should be used,
+                    if ('N_rings_of_offsets' not in self.corgi_overrides['stellar_diam_and_jitter_keywords'].keys()): # then load the parameters for a predefined default model if needed
+                        # Use a default finite stellar diameter model
+                        stellar_diam_and_jitter_keywords = jitter.load_predefined_jitter_and_stellar_diam_params(quicktest=True,stellar_diam_mas=self.host_star_properties['stellar_diam_mas'])
+                    else:
+                        # Use the provided model parameters if they are specified
+                        stellar_diam_and_jitter_keywords = self.corgi_overrides['stellar_diam_and_jitter_keywords']
+        self.stellar_diam_and_jitter_keywords = stellar_diam_and_jitter_keywords
 
     def _initialize_base_scene(self):
         # Initialise scene object 
@@ -163,7 +177,8 @@ class CorgisimManager:
             self._mode,
             bandpass_recipe,
             optics_keywords=optics_keywords,
-            if_quiet=True
+            if_quiet=True,
+            stellar_diam_and_jitter_keywords=self.stellar_diam_and_jitter_keywords
         )
 
         return optics
