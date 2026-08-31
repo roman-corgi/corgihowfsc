@@ -54,7 +54,7 @@ def write_cstrat_file(fn, nlam, nexcam, reg_vec, dmmultgain_vec):
         'last': None,
         'low': 0,
         'high': None,
-        'value': ('pixelweights_ones_nlam%d_nrow%d.fits' % (nlam, nexcam)),
+        'value': ('../../every_mask_config/pixelweights_ones_nlam%d_nrow%d.fits' % (nlam, nexcam)),
     },]
 
     regularization = []
@@ -96,7 +96,7 @@ def write_cstrat_file(fn, nlam, nexcam, reg_vec, dmmultgain_vec):
     all_dict['unprobedsnr'] = unprobedsnr0
     all_dict['probedsnr'] = probedsnr0
     all_dict['probeheight'] = probeheight
-    all_dict['fixedbp'] = 'fixedbp_zeros.fits'
+    all_dict['fixedbp'] = '../../every_mask_config/fixedbp_zeros.fits'
     all_dict['pixelweights'] = pixelweights
     all_dict['regularization'] = regularization
     all_dict['dmmultgain'] = dmmultgain

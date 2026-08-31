@@ -161,7 +161,7 @@ def OLD_clean_pr_cgisim(amp, phwrap, bandpass, subtract_backend=True):
     # 2. Subtract back-end phase from end-to-end phase (in E-field to avoid
     # issues with unwrapping making artifacts before Fresnel propagation)
     # to get front-end E-field at PIL.
-    efield_pil = amp * np.exp(-1j*(phwrap - ph_backend))
+    efield_pil = amp * np.exp(1j*(phwrap - ph_backend))
 
     # 3. Remove piston/tip, and tilt from the front-end E-field at PIL plane.
     fn_pr_prop_params = os.path.join(HERE, 'data', 'pupil', f'params_read_and_prop_pr_band_{bandpass}.yaml')
