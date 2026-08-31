@@ -79,5 +79,5 @@ models:
       oversampling_factor: 3 # always odd number
     emccd_overrides:
       # Parameters forwarded to CorgiDetector initialization
-      bias: 1500 # default value, but can be overridden by user in the config file
-      cr_rate: 5 # default value, but can be overridden by user in the config file
+      bias: 0 # default value, but can be overridden by user in the config file
+      cr_rate: 0 # default value, but can be overridden by user in the config file
