@@ -123,7 +123,7 @@ class CorgisimManager:
         Initialize EMCCD parameters from overrides or defaults.
         Other parameeter can be added here as needed, otherwise they will take the default values from CorgiDetector.
         """
-        self.bias = self.emccd_overrides.get('bias', 0) # default to 0
+        self.bias = self.emccd_overrides.get('bias', 1500) # default to 1500 
         self.cr_rate = self.emccd_overrides.get('cr_rate', 5) # default to 5
 
     def _initialize_base_scene(self):
