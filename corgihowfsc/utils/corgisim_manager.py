@@ -23,7 +23,7 @@ class CorgisimManager:
     - PSF and detector image
     """
 
-    def __init__(self, cfg, cstrat, hconf, cor=None, corgi_overrides=None):
+    def __init__(self, cfg, cstrat, hconf, cor=None, corgi_overrides=None, emccd_overrides=None):
         """
         Args:
             cfg:
@@ -46,21 +46,28 @@ class CorgisimManager:
                 - Vmag: float, override host star V magnitude
                 - sptype: str, override spectral type
                 - ref_flag: bool, use reference spectrum (default: False)
+            emccd_overrides: Optional dict of EMCCD-specific overrides:
+                See corgisim doc for details, but some examples include:
+                - em_gain: float, EM gain setting (default: 1)
+                - bias: float, detector bias level (default: 0)
+                - cr_rate: float, cosmic ray rate (default: 5)
         """
 
         if corgi_overrides is None: 
             corgi_overrides = {}
+
+        if emccd_overrides is None:
+            emccd_overrides = {}
         
         self.cfg = cfg 
         self.cstrat = cstrat
         self.hconf = hconf 
         self.cor = cor 
         self.corgi_overrides = corgi_overrides
+        self.emccd_overrides = emccd_overrides
 
         self._validate_inputs()
-        
         self._initialize_config()
-
         self._initialize_base_scene()
 
     def _validate_inputs(self):
@@ -111,6 +118,14 @@ class CorgisimManager:
         self._mode = 'excam'  # default camera mode
         self.k_gain = 8.7 # photo e-/DN, calibrated in TVAC
 
+    def _initialize_emccd_params(self):
+        """
+        Initialize EMCCD parameters from overrides or defaults.
+        Other parameeter can be added here as needed, otherwise they will take the default values from CorgiDetector.
+        """
+        self.bias = self.emccd_overrides.get('bias', 0) # default should be 1500
+        self.cr_rate = self.emccd_overrides.get('cr_rate', 0) # default should be 5
+
     def _initialize_base_scene(self):
         # Initialise scene object 
         point_source_info = [] # default is just none, tbc whether there should be point source or not
@@ -127,12 +142,33 @@ class CorgisimManager:
         
         return self.bandpass + subband_option[lind]
 
-    def _get_passthrough_keywords(self):
+    def _get_passthrough_keywords(self, is_corgi_overrides=True):
         """
         Return any corgi_overrides keys that are not manager-level keys, to be
         forwarded directly to CorgiOptics as optics_keywords.
         """
-        return {k: v for k, v in self.corgi_overrides.items() if k not in _MANAGER_KEYS}
+        if is_corgi_overrides:
+            return {k: v for k, v in self.corgi_overrides.items() if k not in _MANAGER_KEYS}
+        else:
+            return {k: v for k, v in self.emccd_overrides.items() if k not in _MANAGER_KEYS}
+
+    def create_emccd_detector(self, gain=None):
+        """
+        Create a CorgiDetector instance with the specified EMCCD parameters.
+        """
+        self._initialize_emccd_params()
+        
+        emccd_dict = {
+            'em_gain': gain,
+            'bias': self.bias,
+            'cr_rate': self.cr_rate
+        }
+
+        emccd_dict.update(self._get_passthrough_keywords(is_corgi_overrides=False))  # Update with any additional overrides
+
+        detector = instrument.CorgiDetector(emccd_dict)
+
+        return detector
 
     def create_optics(self, dm1v, dm2v, lind):
         bandpass_recipe = self._get_bandpass_recipe(lind)
@@ -234,20 +270,18 @@ class CorgisimManager:
             return sim_scene.host_star_image.data
         else:
             # generate detector image
-            emccd_dict = {'em_gain': gain, 'bias':bias, 'cr_rate': 0}
-            detector = instrument.CorgiDetector(emccd_dict)
+            detector = self.create_emccd_detector(gain)
             # sim_scene.image_on_detector.data is not gain corrected or bias subtracted
-            master_dark = self.generate_master_dark(detector, exptime, gain)
-            B = bias * np.ones((self.output_dim, self.output_dim))
+            master_dark = self.generate_master_dark(detector, exptime)
+            B = self.bias * np.ones((self.output_dim, self.output_dim))
 
             coadd = np.zeros((self.output_dim, self.output_dim))
             for n in range(nframes):
                 sim_scene = detector.generate_detector_image(sim_scene, exptime)
-                frame = (self.k_gain * sim_scene.image_on_detector.data - B) / gain - master_dark
+                frame = (self.k_gain * sim_scene.image_on_detector.data - B) / detector.emccd.em_gain - master_dark
                 coadd += frame
-            # frame = (sim_scene.image_on_detector.data - B) * self.k_gain / gain - master_dark
+            # frame = (sim_scene.image_on_detector.data - B) * self.k_gain / self.em_gain - master_dark
             return coadd/nframes
-
 
 
     def generate_host_star_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, nframes=1, bias=0):
@@ -296,11 +330,10 @@ class CorgisimManager:
             return sim_scene.host_star_image.data
         else:
             # generate detector image
-            emccd_dict = {'em_gain': gain, 'bias':bias, 'cr_rate': 0}
-            detector = instrument.CorgiDetector(emccd_dict)
+            detector = self.create_emccd_detector(gain)
             # sim_scene.image_on_detector.data is not gain corrected or bias subtracted
-            master_dark = self.generate_master_dark(detector, exptime, gain)
-            B = bias * np.ones((self.output_dim, self.output_dim))
+            master_dark = self.generate_master_dark(detector, exptime)
+            B = self.bias * np.ones((self.output_dim, self.output_dim))
 
             coadd = np.zeros((self.output_dim, self.output_dim))
             for n in range(nframes):
@@ -343,7 +376,7 @@ class CorgisimManager:
         return e_field_norm
 
 
-    def generate_master_dark(self, detector, exptime, gain):
+    def generate_master_dark(self, detector, exptime):
         """
         dark:  master dark
         FPM: fixed pattern noise map
@@ -355,13 +388,12 @@ class CorgisimManager:
         D = detector.emccd.dark_current * np.ones((self.output_dim,self.output_dim))
         C = detector.emccd.cic * np.ones((self.output_dim,self.output_dim))
         FPN = np.zeros((self.output_dim,self.output_dim)) # Not included in emccd_detect
-        dark = FPN / gain + exptime * D + C
-
+        log.debug(f"Current detector gain in generate_master_dark: {detector.emccd.em_gain}")        
+        dark = FPN / detector.emccd.em_gain + exptime * D + C
 
         return dark
     
-    def generate_off_axis_psf(self, dm1v, dm2v, dx, dy, companion_vmag=None, lind=0, exptime=1.0, gain=1, bias=0):
-        # TODO: move bias to be a class attribute
+    def generate_off_axis_psf(self, dm1v, dm2v, dx, dy, companion_vmag=None, lind=0, exptime=1.0, gain=1):
         if companion_vmag is None:
             companion_vmag = self.Vmag
         
@@ -385,11 +417,10 @@ class CorgisimManager:
             return sim_scene.point_source_image.data
         else:
             # generate detector image
-            emccd_dict = {'em_gain': gain, 'cr_rate': 0, 'bias': bias}
-            detector = instrument.CorgiDetector(emccd_dict)
-            master_dark = self.generate_master_dark(detector, exptime, gain)
+            detector = self.create_emccd_detector(gain)
+            master_dark = self.generate_master_dark(detector, exptime)
             sim_scene = detector.generate_detector_image(sim_scene, exptime)
             # sim_scene.image_on_detector.data is not gain corrected or bias subtracted
-            B = bias * np.ones((self.output_dim, self.output_dim))
-            return (self.k_gain*sim_scene.image_on_detector.data - B)/gain - master_dark
+            B = self.bias * np.ones((self.output_dim, self.output_dim))
+            return (self.k_gain*sim_scene.image_on_detector.data - B)/detector.emccd.em_gain - master_dark
 
