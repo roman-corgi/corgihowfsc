@@ -13,6 +13,7 @@ NOTES on data types:
     > = big-endian (MSB first)
 
 Example Calls in a Bash Terminal:
+python write_model_for_corgihowfsc.py nfov 1 both_sides_sim
 python write_model_for_corgihowfsc.py nfov 1 both_sides
 python write_model_for_corgihowfsc.py wfov 1 both_sides
 python write_model_for_corgihowfsc.py spec 2 both_sides
@@ -107,13 +108,16 @@ def extract_first_number(text):
 def get_lam_list(fn_setup):
     AtoM = 1e-10  # angstroms to meters
     setup_dict = loadyaml(fn_setup)
+    if setup_dict['subband_list'] is not None:
+        lam_list = AtoM * np.array(get_effective_wavelength(cfam=setup_dict['subband_list'], spt=setup_dict['spectral_type']))
+    else:
+        lam_list = list(setup_dict['lam_central']*np.linspace(1-setup_dict['bw']/2, 1+setup_dict['bw']/2, setup_dict['n_subband']))
     # if setup_dict['noprobe']:
     #     # If not probing, then cover the whole bandwidth
     #     lam_list = list(setup_dict['lam_central']*np.linspace(1-setup_dict['bw']/2, 1+setup_dict['bw']/2, setup_dict['n_subband']))
     # else:
     #     # If probing, then use the required subbands
     #     lam_list = AtoM * np.array(get_effective_wavelength(cfam=setup_dict['subband_list'], spt=setup_dict['spectral_type']))
-    lam_list = AtoM * np.array(get_effective_wavelength(cfam=setup_dict['subband_list'], spt=setup_dict['spectral_type']))
 
     return lam_list
 
@@ -125,7 +129,8 @@ def add_fixedbp(fn_setup):
     data = np.zeros((1024, 1024), dtype='>u1')
 
     fn = os.path.join(every_path(fn_setup), 'fixedbp_zeros.fits')
-    fits.writeto(fn, data, overwrite=True)
+    if os.path.isfile(fn):
+        fits.writeto(fn, data, overwrite=True)
 
 
 def add_pixelweights(fn_setup):
@@ -148,7 +153,8 @@ def add_pixelweights(fn_setup):
 
     # hdul = fits.PrimaryHDU(ones_2d)
     fn_pw = os.path.join(every_path(fn_setup), f"pixelweights_ones_nlam{n_subband}_nrow{setup_dict['n_excam']}.fits")
-    hdul.writeto(fn_pw, overwrite=True)
+    if not os.path.isfile(fn_pw):
+        hdul.writeto(fn_pw, overwrite=True)
 
 
 def setup_steps(fn_setup):
@@ -381,15 +387,12 @@ def gen_field_stop(fn_setup):
     for index, lam in enumerate(lam_list):
         print('Adding field stop for wavelength %d of %d...' % (index+1, setup_dict['n_subband']), end='')
 
-        # if setup_dict['noprobe']:
-        #     tip = 0
-        #     tilt = 0
-        # else:
-        #     tip = float(setup_dict['tip_list'][index])
-        #     tilt = float(setup_dict['tilt_list'][index])
-
-        tip = float(setup_dict['tip_list'][index])
-        tilt = float(setup_dict['tilt_list'][index])
+        if setup_dict['subband_list'] is not None:
+            tip = float(setup_dict['tip_list'][index])
+            tilt = float(setup_dict['tilt_list'][index])
+        else:
+            tip = 0
+            tilt = 0
 
         if setup_dict['fn_fs'] is None:
 
@@ -425,7 +428,7 @@ def gen_field_stop(fn_setup):
             fn_out = os.path.join(specific_path(fn_setup), fs_amp_base_fn)
             fits.writeto(fn_out, np.real(mask), overwrite=True)
 
-            print('done.')
+        print('done.')
 
     return None
 
@@ -438,14 +441,12 @@ def do_dark_hole_and_star_position(fn_setup):
 
     for index, lam in enumerate(lam_list):
 
-        # if setup_dict['noprobe']:
-        #     tip = 0
-        #     tilt = 0
-        # else:
-        #     tip = float(setup_dict['tip_list'][index])
-        #     tilt = float(setup_dict['tilt_list'][index])
-        tip = float(setup_dict['tip_list'][index])
-        tilt = float(setup_dict['tilt_list'][index])
+        if setup_dict['subband_list'] is not None:
+            tip = float(setup_dict['tip_list'][index])
+            tilt = float(setup_dict['tilt_list'][index])
+        else:
+            tip = 0
+            tilt = 0
 
         print('Adding downstream tip/tilt for wavelength %d of %d...' % (index+1, setup_dict['n_subband']), end='')
 
@@ -518,7 +519,7 @@ def add_fpm(fn_setup):
                 'shapeOut': shapeOut,
                 'fnCalibData': (fnCalibData),
                 'fnOccData': (fnOccData),
-                'xOffset': 0,
+                'xOffset': 20,
                 'yOffset': 0,
                 'use_fourier': False,
                 'data_path': os.path.join(MASK_PATH, setup_dict['mask_folder']),
@@ -716,8 +717,8 @@ def write_model(mode_type, band_num, label):
     fn_setup = os.path.join(MODEL_PATH, 'homf_params', f'homf_params_{mode_type}_band{str(band_num)}_{label}.yaml')
 
     setup_steps(fn_setup)
-    # add_fixedbp(fn_setup)  # Only need to do once
-    # add_pixelweights(fn_setup)  # Only need to do twice, once for 3 subbands and once for 5 subbands
+    add_fixedbp(fn_setup)  # Only need to do once
+    add_pixelweights(fn_setup)  # Only need to do twice, once for 3 subbands and once for 5 or 7 subbands
     save_gain_and_dm_maps(fn_setup)
     add_lam(fn_setup)
     add_ft_dir(fn_setup)

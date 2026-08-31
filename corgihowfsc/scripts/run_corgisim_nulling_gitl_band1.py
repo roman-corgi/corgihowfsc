@@ -1,5 +1,7 @@
 import os
 from datetime import datetime
+import sys
+
 import matplotlib
 matplotlib.use('TkAgg')
 
@@ -30,15 +32,15 @@ current_datetime = datetime.now()
 folder_name = 'gitl_simulation_' + current_datetime.strftime("%Y-%m-%d_%H%M%S")
 fits_name = 'final_frames.fits'
 fileout_path = os.path.join(os.path.dirname(os.path.dirname(corgihowfsc.__file__)), 'data', folder_name, fits_name)
-dmstartmap_filenames = ['iter_080_dm1.fits', 'iter_080_dm2.fits']
+dmstartmap_filenames = ['hlc_seed_from_tvac_dm1.fits', 'hlc_seed_from_tvac_dm2.fits']
 
 
 def main(): 
 
     args = get_args(
-        niter=30,
+        niter=50,
         mode='nfov_band1',
-        dark_hole='360deg',
+        dark_hole='both_sides',
         probe_shape='default',
         precomp=precomp,
         num_process=0,
@@ -59,6 +61,8 @@ def main():
     # hconffile
     hconf = loadyaml(hconffile, custom_exception=TypeError)
     print(cstratfile)
+    sys.exit(0)
+    
     # Define control and estimator strategy
     cstrat = ControlStrategy(cstratfile)
     estimator = DefaultEstimator()
@@ -81,7 +85,7 @@ def main():
         cfg=cfg,         # Your CoronagraphMode object
         cstrat=cstrat,   # Your ControlStrategy object
         hconf=hconf,      # Your host config with stellar properties
-        backend='corgihowfsc',
+        backend='cgi-howfsc', #'corgihowfsc',
         cor=mode,
         corgi_overrides=corgi_overrides
     )

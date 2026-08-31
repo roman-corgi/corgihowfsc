@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import sys
 import matplotlib
 matplotlib.use('TkAgg')
 
@@ -30,16 +31,17 @@ loop_framework = 'cgi-howfsc' # do not modify
 backend_type = 'cgi-howfsc' # Note: the framework cgi-howfsc can only work with the compact model
 
 precomp = 'precomp_jacs_always' #'load_all' if defjacpath is not None else 'precomp_all_once'
-dmstartmap_filenames = ['gitl_start_compact_dm1.fits', 'gitl_start_compact_dm2.fits']
+# dmstartmap_filenames = ['gitl_start_compact_dm1.fits', 'gitl_start_compact_dm2.fits']
+dmstartmap_filenames = ['hlc_seed_from_tvac_dm1.fits', 'hlc_seed_from_tvac_dm2.fits']
 
 fileout_path = make_output_file_structure(loop_framework, backend_type, base_path, base_corgiloop_path, final_filename)
 
 def main(): 
 
     args = get_args(
-        niter=5,
+        niter=50,
         mode='nfov_band1',
-        dark_hole='360deg',
+        dark_hole='both_sides_sim',
         probe_shape='default',
         precomp=precomp,
         num_process=0,
@@ -48,6 +50,13 @@ def main():
         jacpath=defjacpath,
         dmstartmap_filenames=dmstartmap_filenames,
     )
+
+    args.starting_contrast = 3e-3
+    args.debug = False
+    args.use_mpi = False
+    args.mpi_comm = None
+    args.num_imager_worker = 6
+    args.num_proper_process = 1
 
     # User params
     niter = args.niter
@@ -65,6 +74,9 @@ def main():
     jacpath = args.jacpath
 
     modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps = load_files(args, howfscpath)
+    print(cstratfile)
+    print(hconffile)
+    # sys.exit(0)
 
     # cfg
     cfg = CoronagraphMode(cfgfile)
@@ -94,7 +106,8 @@ def main():
     )
     corgi_overrides = {'is_noise_free': False}
     normalization_strategy = EETCNormalization(backend_type, corgi_overrides)
-    nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps)
+    nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg, args, hconf, modelpath, jacfile, probefiles, n2clistfiles, crop_params, dmstartmaps,
+                 metadata, output_every_iter)
 
 if __name__ == '__main__':    
     main()

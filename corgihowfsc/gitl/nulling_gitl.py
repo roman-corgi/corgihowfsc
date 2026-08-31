@@ -162,6 +162,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
     # Get DM lists
     dm1_list, dm2_list, dmrel_list, dm10, dm20 = probes.get_dm_probes(cfg, probefiles, dmstartmaps)
     nlam = len(cfg.sl_list)
+    print(f'nlam = {nlam}')
     ndm = 2 * len(dmrel_list) + 1
     nprobepair = len(dmrel_list)
 

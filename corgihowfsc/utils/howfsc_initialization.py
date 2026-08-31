@@ -306,7 +306,7 @@ def load_files(args, howfscpath):
         else:
             jacfile = []
 
-        if '360deg' in args.dark_hole:
+        if 'both_sides' in args.dark_hole:
             hconffile = os.path.join(modelpath_band, 'hconf_nfov_flat.yaml')
             cstratfile = os.path.join(modelpath, 'cstrat_nfov_band1.yaml')
             if args.probe_shape == 'default':
