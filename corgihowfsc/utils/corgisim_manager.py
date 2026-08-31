@@ -388,8 +388,8 @@ class CorgisimManager:
         D = detector.emccd.dark_current * np.ones((self.output_dim,self.output_dim))
         C = detector.emccd.cic * np.ones((self.output_dim,self.output_dim))
         FPN = np.zeros((self.output_dim,self.output_dim)) # Not included in emccd_detect
+        log.debug(f"Current detector gain in generate_master_dark: {detector.emccd.em_gain}")        
         dark = FPN / detector.emccd.em_gain + exptime * D + C
-
 
         return dark
     
