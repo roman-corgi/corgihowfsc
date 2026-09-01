@@ -68,6 +68,7 @@ def initialize_mpi_worker_state(worker_config):
         backend=worker_config['backend_type'],
         cor=worker_config['mode'],
         corgi_overrides=worker_config['corgi_overrides'],
+        emccd_overrides=worker_config['emccd_overrides'],
     )
     return {
         'frame_cfg': frame_cfg,

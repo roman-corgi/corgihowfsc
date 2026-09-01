@@ -35,7 +35,7 @@ class GitlImage:
     GITL image generator that takes required inputs for cgi-howfsc and can generate images using either cgi-howfsc (compact) or corgisim optical model.
     """
 
-    def __init__(self, cfg, cstrat, hconf, backend='cgi-howfsc', cor=None, corgi_overrides=None):
+    def __init__(self, cfg, cstrat, hconf, backend='cgi-howfsc', cor=None, corgi_overrides=None, emccd_overrides=None):
 
         """
         Arguments:
@@ -65,6 +65,8 @@ class GitlImage:
                 - Vmag: float, override host star V magnitude
                 - sptype: str, override spectral type
                 - ref_flag: bool, use reference spectrum (default: False)
+            emccd_overrides: Optional dict of EMCCD-specific overrides:
+                See corgisim doc for details.
         """
         # Validate backend choice
         if backend not in ['corgihowfsc', 'cgi-howfsc']:
@@ -89,7 +91,7 @@ class GitlImage:
 
         # Backend specific initialisation
         if self.backend == 'corgihowfsc':
-            self._init_corgihowfsc(corgi_overrides)
+            self._init_corgihowfsc(corgi_overrides, emccd_overrides)
 
         else: 
             from howfsc.util.loadyaml import loadyaml
@@ -105,10 +107,10 @@ class GitlImage:
             # self.lcol = 436
 
 
-    def _init_corgihowfsc (self, corgi_overrides):
+    def _init_corgihowfsc (self, corgi_overrides, emccd_overrides):
         """Initialise for corgihowfsc mode. Mapped the input from exisiting cgihowfsc files"""
 
-        self.corgisim_manager = CorgisimManager(self.cfg, self.cstrat, self.hconf, self.cor, corgi_overrides=corgi_overrides)
+        self.corgisim_manager = CorgisimManager(self.cfg, self.cstrat, self.hconf, self.cor, corgi_overrides=corgi_overrides, emccd_overrides=emccd_overrides)
 
     def check_gitlframeinputs(self, dm1v, dm2v, fixedbp, exptime, crop, cleanrow, cleancol):
         """Input validation for both simulators."""
