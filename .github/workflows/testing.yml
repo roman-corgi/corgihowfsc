@@ -96,8 +96,8 @@ jobs:
           mkdir -p "${GITHUB_WORKSPACE}/downloads"
 
           curl -L \
-            "https://sourceforge.net/projects/proper-library/files/proper_v3.3.5_python.zip/download" \
-            -o "${GITHUB_WORKSPACE}/downloads/proper_v3.3.5_python.zip"
+            "https://sourceforge.net/projects/proper-library/files/proper_v3.3.6_python.zip/download" \
+            -o "${GITHUB_WORKSPACE}/downloads/proper_v3.3.6_python.zip"
 
           curl -L \
             "https://sourceforge.net/projects/cgisim/files/roman_preflight_proper_public_v2.0.3_python.zip/download" \
