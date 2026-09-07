@@ -1,10 +1,8 @@
-# Imports and Path Configuration
 import os
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
 from matplotlib.colors import LogNorm
-from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 
 # Compact model
 import corgihowfsc
@@ -43,7 +41,7 @@ probe_path_0 = os.path.join(probes_dir, probe_filename_0)
 probe_path_1 = os.path.join(probes_dir, probe_filename_1)
 probe_path_2 = os.path.join(probes_dir, probe_filename_2)
 
-amp = 0.5
+amp = 1.
 ni_target = 5e-7
 wvln_index = 0
 
@@ -52,6 +50,7 @@ probe_data_0 = fits.getdata(probe_path_0)
 probe_data_1 = fits.getdata(probe_path_1)
 probe_data_2 = fits.getdata(probe_path_2)
 
+#"""
 sl = cfg.sl_list[wvln_index]
 
 # Compute reference fields once
@@ -135,6 +134,19 @@ while iteration < max_iterations:
 # ============================================================
 # PRINT FINAL RESULTS PROMINENTLY
 # ============================================================
+# Compute probe statistics from the final iteration
+max_0 = np.max(probe_cmd_0)
+min_0 = np.min(probe_cmd_0)
+p2p_0 = max_0 - min_0
+
+max_1 = np.max(probe_cmd_1)
+min_1 = np.min(probe_cmd_1)
+p2p_1 = max_1 - min_1
+
+max_2 = np.max(probe_cmd_2)
+min_2 = np.min(probe_cmd_2)
+p2p_2 = max_2 - min_2
+
 print("\n" + "="*60)
 print(f"FINAL RESULTS in wvln band index {wvln_index} :")
 print(f"cp0: {cp0}")
@@ -142,6 +154,9 @@ print(f"cp1: {cp1}")
 print(f"cp2: {cp2}")
 print(f"ni_target: {ni_target}")
 print(f"amp: {amp}")
+print(f"Probe 0 - Max: {max_0} V, Min: {min_0} V, Peak-to-Peak: {p2p_0} V")
+print(f"Probe 1 - Max: {max_1} V, Min: {min_1} V, Peak-to-Peak: {p2p_1} V")
+print(f"Probe 2 - Max: {max_2} V, Min: {min_2} V, Peak-to-Peak: {p2p_2} V")
 print("="*60 + "\n")
 
 # ============================================================
@@ -198,3 +213,11 @@ plt.title(f'DH contrast: {cp2}')
 plt.colorbar()
 
 plt.show()
+"""
+
+amp_final = 0.18217890359626157
+
+fits.writeto('nfov_dm_dmrel_5.0e-07_gaussian0.fits', probe_data_0 * amp_final, overwrite=True)
+fits.writeto('nfov_dm_dmrel_5.0e-07_gaussian1.fits', probe_data_1 * amp_final, overwrite=True)
+fits.writeto('nfov_dm_dmrel_5.0e-07_gaussian2.fits', probe_data_2 * amp_final, overwrite=True)
+"""
