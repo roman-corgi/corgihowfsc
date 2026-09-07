@@ -43,7 +43,7 @@ probe_path_2 = os.path.join(probes_dir, probe_filename_2)
 
 amp = 1.
 ni_target = 5e-7
-wvln_index = 0
+wvln_index = 1
 
 # Load probe data once
 probe_data_0 = fits.getdata(probe_path_0)
