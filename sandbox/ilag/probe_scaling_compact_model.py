@@ -118,16 +118,17 @@ while iteration < max_iterations:
     cp1 = np.nanmean(np.abs(efield_deltaprobe1[mask])**2)
     cp2 = np.nanmean(np.abs(efield_deltaprobe2[mask])**2)
 
-    # Print intermediate cp0 to stdout
-    print(cp0)
+    # Print intermediate cp_to_use to stdout
+    cp_to_use = cp0  # Which of the three probes to use for contrast scaling
+    print(cp_to_use)
 
     # ---- Check convergence ----
-    relative_error = abs(cp0 - ni_target) / ni_target
+    relative_error = abs(cp_to_use - ni_target) / ni_target
     if relative_error < tolerance:
         break
 
-    # ---- Adjust amp proportionally (cp0 ∝ amp²) ----
-    amp = amp * np.sqrt(ni_target / cp0)
+    # ---- Adjust amp proportionally (cp_to_use ∝ amp²) ----
+    amp = amp * np.sqrt(ni_target / cp_to_use)
 
     iteration += 1
 
