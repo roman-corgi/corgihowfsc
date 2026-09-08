@@ -72,7 +72,7 @@ plt.colorbar()
 plt.show()
 
 # ============================================================
-# ITERATIVE LOOP TO ADJUST amp UNTIL cp0 ≈ ni_target
+# ITERATIVE LOOP TO ADJUST amp UNTIL cp_to_use ≈ ni_target
 # ============================================================
 tolerance = 1e-6
 max_iterations = 100
