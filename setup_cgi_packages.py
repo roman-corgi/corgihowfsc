@@ -121,8 +121,8 @@ def main():
     packages = [
         {
             'name': 'Proper',
-            'zip': 'proper_v3.3.6_python.zip',
-            'dir': 'proper_v3.3.6_python',
+            'zip': 'proper_v3.3.7_python.zip',
+            'dir': 'proper_v3.3.7_python',
             'url': 'https://sourceforge.net/projects/proper-library/'
         },
         {
