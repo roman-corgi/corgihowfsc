@@ -10,7 +10,7 @@ With corgihowfsc, you can select from several types of probes as soon as you sta
 #### `Probes.py`
 This file defines the `Probes` class. It establishes the basic methods required for the simulation:
 * `get_dm_probes()`: Returns the voltage {$V_{+}, V_{-}$} corresponding to the requested probe {$I_{+}, I_{-}$} 
-* `get_probe_ap()`: Computes the analytical complex electric field of the probe in the focal plane. To see the images, go find the result of your simulation to `corgiloop_data/corgi-howfsc_gitl`. For each iterations, you will find `images.fits` which contains, for each subband, one image without a probe and six with a probe.
+* `get_probe_ap()`: Computes the analytical complex electric field of the probe in the focal plane. To see the images, go find the result of your simulation in `corgiloop_data/corgi-howfsc_gitl`. For each iteration, you will find `images.fits` which contains, for each subband, one image without a probe and six with a probe.
 ```
 ├── config.yml
 ├── ...
@@ -31,17 +31,17 @@ This file defines the `Probes` class. It establishes the basic methods required 
 ```
 #### `GettingProbes.py`
 This file defines the `ProbesShapes` class. It's a class that inherits from `Probes`. 
-It's responsible for reading the pre-computed probe shapes. These are stored as `.fits` files in `corgihowfsc/model/probes"`.
+It's responsible for reading the pre-computed probe shapes. These are stored as `.fits` files in `corgihowfsc/model/probes`.
 
 ### Generation scripts (`corgihowfsc/scripts/`)
 
 The complex spatial geometries of the probes are synthesized offline before running a loop. These scripts generate the 2D voltage maps that will be loaded by `GettingProbes.py`.
 
 #### `write_sinc_probes.py`
-Generates the default "Sinc-Sinc-Sine" probing maps. This is the default shape on board
+Generates the default "Sinc-Sinc-Sine" probing maps. This is the default shape on board.
 
 #### `write_gaussian_probes.py`
-An alternative generator that produces Gaussian probes on the DM. They should be the preferred choice of alternative probes for the actual instrument
+An alternative generator that produces Gaussian probes on the DM. They should be the preferred choice of alternative probes for the actual instrument.
 
 ### Choosing your probe shape for a run (`corgihowfsc/scripts/default_param.yml"`)
 Before running a loop, you can choose from 4 different probe shapes `{'default', 'single', 'gaussian', 'unmodulated_sinc'}` by specifying it in the YAML file under the section `sim_settings` using the parameter `probe_shape`:
