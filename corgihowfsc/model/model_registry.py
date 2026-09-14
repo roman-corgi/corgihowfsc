@@ -41,7 +41,7 @@ PROBE_FILES = {
         gaussian=['nfov_band1_dmrel_4_1.0e-05_gaussian0.fits', 'nfov_band1_dmrel_4_1.0e-05_gaussian1.fits', 'nfov_band1_dmrel_4_1.0e-05_gaussian2.fits'],
         unmodulated_sinc=['nfov_band1_dmrel_4_1.0e-05_sinc.fits', 'nfov_band1_dmrel_4_1.0e-05_sinc_shifted_right.fits', 'nfov_band1_dmrel_4_1.0e-05_sinc_shifted_diag_ur.fits'],
     ),
-    'spec_band2': ProbeFiles(),
+    'spec_band2': ProbeFiles('spec_band2_dmrel_1.0e-05_cos120_p0.fits', 'spec_band2_dmrel_1.0e-05_cos120_p1.fits', 'spec_band2_dmrel_1.0e-05_cos120_p2.fits'),
     'spec_band3': ProbeFiles(
         default=['spec_band3_dmrel_ni1e-05_sin150_rot0.fits', 'spec_band3_dmrel_ni1e-05_sin210_rot0.fits', 'spec_band3_dmrel_ni1e-05_sin90_rot0.fits'],
     ),
@@ -51,8 +51,8 @@ PROBE_FILES = {
     'wfov_band1': ProbeFiles(
         default=['wfov_band1_dmrel_1.0e-05_cos.fits', 'wfov_band1_dmrel_1.0e-05_sinlr.fits', 'wfov_band1_dmrel_1.0e-05_sinud.fits']
     ),
-    'specrot_band2': ProbeFiles(),
-    'specrot_band3': ProbeFiles(),
+    'specrot_band2': ProbeFiles('specrot_band2_dmrel_1.0e-05_cos120_p0.fits', 'specrot_band2_dmrel_1.0e-05_cos120_p1.fits', 'specrot_band2_dmrel_1.0e-05_cos120_p2.fits'),
+    'specrot_band3': ProbeFiles('specrot_band3_dmrel_1.0e-05_cos120_p0.fits', 'specrot_band3_dmrel_1.0e-05_cos120_p1.fits', 'specrot_band3_dmrel_1.0e-05_cos120_p2.fits'),
 }
 
 # Default DM start map files from roman_preflight_proper_public/examples
