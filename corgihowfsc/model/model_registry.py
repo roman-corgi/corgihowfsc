@@ -58,7 +58,7 @@ PROBE_FILES = {
 # Default DM start map files from roman_preflight_proper_public/examples
 # These flat WFE maps are used when dmstartmap_filenames is null in the config
 DM_STARTMAP_FILES = {
-    'nfov_band1': ('hlc_flat_wfe_dm1_v.fits', 'hlc_flat_wfe_dm2_v.fits'),
+    'nfov_band1': ('hlc_seed_tvac_plus_50_nlam3_dm1.fits', 'hlc_seed_tvac_plus_50_nlam3_dm2.fits'),
     'wfov_band1': ('spc-wide_flat_wfe_dm1_v.fits', 'spc-wide_flat_wfe_dm2_v.fits'),
     'wfov_band4': ('spc-wide_flat_wfe_dm1_v.fits', 'spc-wide_flat_wfe_dm2_v.fits'),
     'spec_band2': ('spc-spec_flat_wfe_dm1_v.fits', 'spc-spec_flat_wfe_dm2_v.fits'),
