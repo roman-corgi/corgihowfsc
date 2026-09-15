@@ -126,6 +126,12 @@ class CorgisimManager:
         self.bias = self.emccd_overrides.get('bias', 0) # default should be 1500
         self.cr_rate = self.emccd_overrides.get('cr_rate', 0) # default should be 5
 
+        # Setup the onboard processing parameters for cosmic ray filtering and frame combination
+        self.cosmic_filter_width = self.emccd_overrides.get('cosmic_filter_width', 2)
+        self.cosmic_saturation_threshold = self.emccd_overrides.get('cosmic_saturation_threshold', 0.99)
+        self.cosmic_plateau_threshold = self.emccd_overrides.get('cosmic_plateau_threshold', 0.85)
+        self.frame_combine = self.emccd_overrides.get('frame_combine', 'mean')
+
     def _initialize_base_scene(self):
         # Initialise scene object 
         point_source_info = [] # default is just none, tbc whether there should be point source or not
