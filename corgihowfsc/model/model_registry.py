@@ -64,11 +64,11 @@ PROBE_FILES = {
 # Default DM start map files from roman_preflight_proper_public/examples
 # These flat WFE maps are used when dmstartmap_filenames is null in the config
 DM_STARTMAP_FILES = {
-    'nfov_band1': ('hlc_flat_wfe_dm1_v.fits', 'hlc_flat_wfe_dm2_v.fits'),
-    'wfov_band1': ('spc-wide_flat_wfe_dm1_v.fits', 'spc-wide_flat_wfe_dm2_v.fits'),
-    'wfov_band4': ('spc-wide_flat_wfe_dm1_v.fits', 'spc-wide_flat_wfe_dm2_v.fits'),
-    'spec_band2': ('spc-spec_flat_wfe_dm1_v.fits', 'spc-spec_flat_wfe_dm2_v.fits'),
-    'spec_band3': ('spc-spec_flat_wfe_dm1_v.fits', 'spc-spec_flat_wfe_dm2_v.fits'),
-    'specrot_band2': ('spc-spec_flat_wfe_dm1_v.fits', 'spc-spec_flat_wfe_dm2_v.fits'),
-    'specrot_band3': ('spc-spec_flat_wfe_dm1_v.fits', 'spc-spec_flat_wfe_dm2_v.fits'),
+    'nfov_band1':    ('band1_flat_wfe_dm1_v.fits', 'band1_flat_wfe_dm2_v.fits'),
+    'wfov_band1':    ('band1_flat_wfe_dm1_v.fits', 'band1_flat_wfe_dm2_v.fits'),
+    'wfov_band4':    ('band4_flat_wfe_dm1_v.fits', 'band4_flat_wfe_dm2_v.fits'),
+    'spec_band2':    ('band2_flat_wfe_dm1_v.fits', 'band2_flat_wfe_dm2_v.fits'),
+    'spec_band3':    ('band3_flat_wfe_dm1_v.fits', 'band3_flat_wfe_dm2_v.fits'),
+    'specrot_band2': ('band2_flat_wfe_dm1_v.fits', 'band2_flat_wfe_dm2_v.fits'),
+    'specrot_band3': ('band3_flat_wfe_dm1_v.fits', 'band3_flat_wfe_dm2_v.fits'),
 }
