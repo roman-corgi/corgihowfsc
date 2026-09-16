@@ -4,61 +4,61 @@ regularization:
     last: 4
     low: 0
     high: 1.0e-5
-    value: -2.0
+    value: -3.0
   -
     first: 5
     last: 5
     low: 0
     high: 1.0e-5
-    value: -5.0
+    value: -6.0
   -
     first: 6
     last: 9
     low: 0
     high: 1.0e-5
-    value: -2.0
+    value: -3.0
   -
     first: 10
     last: 10
     low: 0
     high: 1.0e-5
-    value: -5.0
+    value: -6.0
   -
     first: 11
     last: 14
     low: 0
     high: 1.0e-5
-    value: -2.0
+    value: -3.0
   -
     first: 15
     last: 15
     low: 0
     high: 1.0e-5
-    value: -5.0
+    value: -6.0
   -
     first: 16
     last: 19
     low: 0
     high: 1.0e-5
-    value: -2.0
+    value: -3.0
   -
     first: 20
     last: 20
     low: 0
     high: 1.0e-5
-    value: -5.0
+    value: -6.0
   -
     first: 21
     last: 24
     low: 0
     high: 1.0e-5
-    value: -2.0
+    value: -3.0
   -
     first: 25
     last: 25
     low: 0
     high: 1.0e-5
-    value: -5.0
+    value: -6.0
   -
     first: 26
     last: 29
@@ -70,7 +70,7 @@ regularization:
     last: 30
     low: 0
     high: 1.0e-5
-    value: -5.0
+    value: -6.0
   -
     first: 31
     last: None
@@ -82,7 +82,7 @@ regularization:
     last: None
     low: 1.0e-5
     high: None
-    value: -2.0
+    value: -3.0
 
 pixelweights:
   -

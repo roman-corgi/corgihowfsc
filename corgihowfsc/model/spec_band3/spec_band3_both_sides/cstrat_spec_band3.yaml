@@ -4,25 +4,25 @@ regularization:
     last: 4
     low: 0
     high: 1.0e-5
-    value: -2.0
+    value: -3.0
   -
     first: 5
     last: 5
     low: 0
     high: 1.0e-5
-    value: -5.0
+    value: -6.0
   -
     first: 6
     last: None
     low: 0
     high: 1.0e-5
-    value: -2.0
+    value: -3.0
   -
     first: 1
     last: None
     low: 1.0e-5
     high: None
-    value: -2.0
+    value: -3.0
 
 pixelweights:
   -
