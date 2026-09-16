@@ -134,8 +134,7 @@ def process_onboard_frames():
     3. combine that mask with the fixed bad-pixel map;
     4. mean- or median-combine only the good samples;
     5. convert DN to electrons and divide by EM gain;
-    6. subtract the gain-divided master dark; and
-    7. divide by the flat field.
+    6. subtract the gain-divided master dark
 
     Pixels for which every input frame is bad are returned as ``NaN``.  The
     input arrays are never modified.
