@@ -119,15 +119,17 @@ class CorgisimManager:
         self.base_scene = scene.Scene(self.host_star_properties, point_source_info)
 
     def _get_bandpass_recipe(self, lind):
-        if self.bandpass == '3':
-            subband_option = ['a', 'b', 'c', 'd', 'e', 'g'] # band 3 has more subband options, need to update the function to account for this. For now we just default to 'a', 'b', 'c' for all bandpasses but this does not apply to some other bands
+        if self.bandpass == '2':
+            recipes = ['2a', '2b', '2c', '3a', '3b']
+        elif self.bandpass == '3':
+            recipes = ['3a', '3b', '3c', '3g', '3e']
         else:
-            subband_option = ['a', 'b', 'c']
+            recipes = [self.bandpass + suffix for suffix in ('a', 'b', 'c')]
 
-        if lind < 0 or lind >= len(subband_option):
-            raise ValueError(f"lind must be between 0 and {len(subband_option)-1}")
-        
-        return self.bandpass + subband_option[lind]
+        if lind < 0 or lind >= len(recipes):
+            raise ValueError(f"lind must be between 0 and {len(recipes)-1}")
+
+        return recipes[lind]
 
     def _get_passthrough_keywords(self):
         """
