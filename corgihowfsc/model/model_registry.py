@@ -45,7 +45,7 @@ PROBE_FILES = {
         default=['spec_band2_dmrel_1.0e-05_cos120_p0.fits', 'spec_band2_dmrel_1.0e-05_cos120_p1.fits', 'spec_band2_dmrel_1.0e-05_cos120_p2.fits'],
     ),
     'spec_band3': ProbeFiles(
-        default=['spec_band3_dmrel_ni1e-05_sin150_rot0.fits', 'spec_band3_dmrel_ni1e-05_sin210_rot0.fits', 'spec_band3_dmrel_ni1e-05_sin90_rot0.fits'],
+        default=['spec_band3_dmrel_1e-05_sin150_rot0.fits', 'spec_band3_dmrel_1e-05_sin210_rot0.fits', 'spec_band3_dmrel_1e-05_sin90_rot0.fits'],
     ),
     'wfov_band4': ProbeFiles(
         default=['wfov_band4_dmrel_1e-5_cos_constrained.fits', 'wfov_band4_dmrel_1e-5_sinlr_constrained.fits', 'wfov_band4_dmrel_1e-5_sinud_constrained.fits'],
