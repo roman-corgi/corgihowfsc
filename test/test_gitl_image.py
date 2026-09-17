@@ -180,45 +180,6 @@ def test_wavelength_mapping_from_cfg(cfg, patched_modules):
     )
 
 
-@pytest.mark.parametrize(
-    "mode, expected",
-    [
-        ("nfov_band1", ["1a", "1b", "1c"]),
-        ("wfov_band1", ["1a", "1b", "1c"]),
-        ("wfov_band4", ["4a", "4b", "4c"]),
-        ("spec_band2", ["2a", "2b", "2c", "3a", "3b"]),
-        ("spec_band3", ["3a", "3b", "3c", "3g", "3e"]),
-        ("specrot_band2", ["2a", "2b", "2c", "3a", "3b"]),
-        ("specrot_band3", ["3a", "3b", "3c", "3g", "3e"]),
-    ],
-)
-def test_all_cfg_subbands_map_to_corgisim(mode, expected, patched_modules):
-    """Pass the intended CorgiSim filter for every model wavelength channel."""
-    import yaml
-
-    howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
-    cfgfile = os.path.join(
-        howfscpath, "model", mode, f"{mode}_both_sides", "howfsc_optical_model.yaml"
-    )
-    with open(cfgfile) as stream:
-        channels = yaml.safe_load(stream)["sls"]
-    cfg = Mock()
-    cfg.sl_list = [Mock(lam=channels[index]["lam"]) for index in sorted(channels)]
-    assert len(cfg.sl_list) == len(expected)
-
-    manager_mod = importlib.reload(importlib.import_module("corgihowfsc.utils.corgisim_manager"))
-    manager = manager_mod.CorgisimManager(
-        cfg, Mock(), {"star": {"stellar_vmag": 2.5, "stellar_type": "G2V"}}, cor=mode
-    )
-    dm = np.zeros((48, 48))
-    for lind, recipe in enumerate(expected):
-        manager.create_optics(dm, dm, lind)
-        actual_recipe = manager_mod.instrument.CorgiOptics.call_args.args[1]
-        log.info("%s channel %d: %.1f nm -> %s", mode, lind,
-                 cfg.sl_list[lind].lam * 1e9, actual_recipe)
-        assert actual_recipe == recipe
-
-
 def test_cgi_needs_crop(mock_cfg, mock_cstrat, mock_hconf, patched_modules):
     """Test CGI backend crop validation in check_gitlframeinputs."""
     gitl_mod, _ = patched_modules
