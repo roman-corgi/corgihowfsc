@@ -98,7 +98,7 @@ def _get_dm_startmap_files(mode):
 
     # Get the path to roman_preflight_proper/examples directory
     roman_preflight_base = os.path.dirname(os.path.abspath(roman_preflight_proper.__file__))
-    roman_preflight_examples = os.path.join(roman_preflight_base, 'examples')
+    roman_preflight_examples = os.path.join(roman_preflight_base, 'examples', 'dm_solutions')
 
     dmstartmap_filenames = [
         os.path.join(roman_preflight_examples, dm1_file),
