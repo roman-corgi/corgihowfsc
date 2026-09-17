@@ -4,8 +4,8 @@ coro_mode_parent: 'spec_band2'
 cal_bandpass: '2c'
 lam_central: 660.0E-9  # 656.0E-9
 ppl_meas_ref: 2.5974
-subband_list: ['2A', '2B', '2C', '3A', '3B']
-n_subband: 5
+subband_list: ['2A', '2B', '2C']
+n_subband: 3
 bw: 0.170  # Used only in sim when using different number of subbands from actual instrument
 fn_ref_howfsc_yaml: './homf_dmreg/howfsc_optical_model_dmreg_only_band_2c.yaml'
 
@@ -25,7 +25,7 @@ n_fpm: 97  # >= 2*9.4*5+1
 ppl_fpm_ref: 25
 ppl_fpm_central: 5
 
-# FIELD STOP 
+# FIELD STOP
 fn_fs: null
 # ppl_fs_ref: 25
 # fs_rot_deg: 0  # degrees
@@ -51,8 +51,8 @@ fn_amp_end2end: './gen_model/out/pupil/2c/poked_none/amp_end2end.fits'
 fn_ph_end2end: './gen_model/out/pupil/2c/poked_none/phase_end2end.fits'
 fn_ph_backend: './gen_model/out/pupil/2c/poked_none/phase_backend.fits'
 
-# DO NOT CHANGE 
+# DO NOT CHANGE
 n_excam: 153
-fn_howfsc_yaml: 'howfsc_optical_model.yaml' 
-tip_list: [0, 0, 0, 0, 0]  # x_excam
-tilt_list: [0, 0, 0, 0, 0]  # y_excam
+fn_howfsc_yaml: 'howfsc_optical_model.yaml'
+tip_list: [0, 0, 0]  # x_excam
+tilt_list: [0, 0, 0]  # y_excam
