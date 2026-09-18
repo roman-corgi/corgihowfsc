@@ -17,7 +17,7 @@ from corgihowfsc.utils.howfsc_initialization import get_args, load_files, get_cp
 from corgihowfsc.sensing.DefaultEstimator import DefaultEstimator
 from corgihowfsc.sensing.PerfectEstimator import PerfectEstimator
 from corgihowfsc.sensing.GettingProbes import ProbesShapes
-from corgihowfsc.utils.contrast_nomalization import CorgiNormalization, EETCNormalization, CorgiNormalizationOnAxis
+from corgihowfsc.utils.contrast_normalization import CorgiNormalization, EETCNormalization, CorgiNormalizationOnAxis
 from corgihowfsc.gitl.nulling_gitl import nulling_gitl
 from corgihowfsc.utils.corgisim_gitl_frames import GitlImage
 from corgihowfsc.utils.output_management import make_output_file_structure
