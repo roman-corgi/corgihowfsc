@@ -208,11 +208,107 @@ def process_onboard_frames(
 
     Returns
     -------
-    OnboardProcessingResult
-        Calibrated floating-point image, per-frame masks, and number of good
-        samples contributing to each output pixel.
+    OnboardProcessingResult: A dataclass containing the following attributes:
+        - image : numpy.ndarray
+            The final calibrated image in electrons.
+        - cosmic_ray_mask : numpy.ndarray
+            Boolean mask with ``True`` for pixels rejected as cosmic-contaminated.
+        - bad_pixel_map : numpy.ndarray
+            Boolean mask with ``True`` for pixels rejected as cosmic-contaminated or fixed bad pixels.
+        - good_frame_count : numpy.ndarray
+            Count of good frames contributing to each pixel in the final image.
     """
 
+    # Check the input
+    scalar_parameters = {
+        "bias_e": bias_e,
+        "e_per_dn": e_per_dn,
+        "em_gain": em_gain,
+        "full_well_image_e": full_well_image_e,
+        "full_well_serial_e": full_well_serial_e,
+    }
+
+    for name, value in scalar_parameters.items():
+        if not np.isscalar(value) or not np.isfinite(value):
+            raise ValueError(f"{name} must be a finite scalar")
+    
+    for name in (
+        "e_per_dn",
+        "em_gain",
+        "full_well_image_e",
+        "full_well_serial_e",
+    ):
+        if scalar_parameters[name] <= 0:
+            raise ValueError(f"{name} must be greater than zero")
+
+    frames = np.asarray(frames_dn)
+    if frames.ndim != 3 or frames.shape[0] == 0:
+        raise ValueError("frames_dn must contain at least one 2-D frame")
+    if not np.issubdtype(frames.dtype, np.number):
+        raise TypeError("frames_dn must contain numeric values")
+    if not np.all(np.isfinite(frames)):
+        raise ValueError("frames_dn values must be finite")
+
+    # Validate the fixed bad pixel mask if provided
+    image_shape = frames.shape[1:]    
+    if fixed_bp is None: # This is coming from the cfg
+        fixed_mask = np.zeros(image_shape, dtype=bool)
+    else:
+        fixed_mask = np.asarray(fixed_bp)
+        if fixed_mask.shape != image_shape:
+            raise ValueError("fixed_bp must match the frame shape")
+        if fixed_mask.dtype != bool:
+            raise TypeError("fixed_bp must have boolean dtype")
+
+    # Convert the master dark to a float array for subtraction
+    master_dark = np.asarray(master_dark_e, dtype=float)
+    if master_dark.shape != image_shape:
+        raise ValueError("master_dark_e must match the frame shape")
+
+    # Convert bias from electrons to DN for subtraction
+    bias_dn = bias_e / e_per_dn 
+    bias_subtracted = frames.astype(float, copy=True) - bias_dn
+    
+    # CHECK - Calculate the effective full well in DN, as we have em_gain 
+    # TODO - If indeed we need a calibration,  is it full_well * em_gain or the other way around?
+    effective_full_well_e = min(full_well_image_e * em_gain, full_well_serial_e)
+    # Convert to DN for cosmic ray detection
+    effective_full_well_dn = effective_full_well_e / e_per_dn
+
+    cosmic_masks = np.zeros(frames.shape, dtype=bool)
+    for frame_index, frame in enumerate(bias_subtracted):
+        cosmic_masks[frame_index] = make_cosmic_ray_mask(
+            frame,
+            effective_full_well_dn,
+            cosmic_filter_width=cosmic_filter_width,
+            saturation_threshold=saturation_threshold,
+            plateau_threshold=plateau_threshold,
+        )
+    
+    # Combine the cosmic ray masks with the fixed bad pixel mask
+    bad_masks = cosmic_masks | fixed_mask[np.newaxis, :, :]
+    good_frame_count = np.sum(~bad_masks, axis=0)
+    masked_frames = np.where(bad_masks, np.nan, bias_subtracted)
+
+    if combine == "mean":
+        total = np.nansum(masked_frames, axis=0)
+        combined_dn = np.full(image_shape, np.nan, dtype=float)
+        np.divide(
+            total,
+            good_frame_count,
+            out=combined_dn,
+            where=good_frame_count > 0,
+        )
+    elif combine == "median":
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message="All-NaN slice encountered")
+            combined_dn = np.nanmedian(masked_frames, axis=0)
+    else:
+        raise ValueError("combine must be either 'mean' or 'median'")
+
+    combined_e = combined_dn * e_per_dn / em_gain
+    calibrated = combined_e - master_dark
+    calibrated[good_frame_count == 0] = np.nan
 
     return OnboardProcessingResult(
         image=calibrated,
