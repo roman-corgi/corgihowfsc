@@ -147,20 +147,64 @@ def make_cosmic_ray_mask(
     return mask
 
 
-def process_onboard_frames():
-    """Apply the complete onboard treatment to a stack of detector frames.
+def process_onboard_frames(
+    frames_dn,
+    bias_e,
+    e_per_dn,
+    em_gain,
+    full_well_image_e,
+    full_well_serial_e,
+    master_dark_e,
+    fixed_bp=None,
+    combine="mean",
+    cosmic_filter_width=2,
+    saturation_threshold=0.99,
+    plateau_threshold=0.85,
+):
+    """
+    Apply cosmic ray filtering and frame combination (similar to the process performed onboard on Roman CGI). 
 
-    The processing order is:
-
-    1. subtract detector bias from every raw DN frame;
-    2. create a per-frame cosmic-ray mask;
-    3. combine that mask with the fixed bad-pixel map;
-    4. mean- or median-combine only the good samples;
-    5. convert DN to electrons and divide by EM gain;
-    6. subtract the gain-divided master dark
+    For each frame, the following steps are performed:
+        1. subtract detector bias from every raw frame
+        2. remove cosmic rays and make a create cosmic-ray mask 
+        3. combine that mask with the fixed bad-pixel map
+    
+    Then after making the combined mask, the following steps are performed:
+        4. mean- or median-combine of all the frames and produce a floating-point image. When combining, only the good samples are used. 
+        5. convert DN to electrons 
+        6. Divide by EM gain
+        7. Subtract bias-subtracted, the gain-divided master dark in electrons
 
     Pixels for which every input frame is bad are returned as ``NaN``.  The
     input arrays are never modified.
+
+    Parameters
+    ----------
+    frames_dn : array_like
+        Raw integer detector frames with shape ``(nframes, nrows, ncols)``.
+    bias_e : float
+        Detector bias used by ``emccd_detect``.
+    e_per_dn : float
+        Detector conversion gain in electrons per DN.
+    em_gain : float
+        gain used by ``emccd_detect``, norminally calculated from eetc.  
+    full_well_image_e, full_well_serial_e : float
+        Image-area and serial-register full wells in electrons.
+    master_dark_e : float or array_like
+        Bias-subtracted and EM-gain-divided master dark in electrons.
+    fixed_bp : array_like of bool, optional
+        Two-dimensional fixed bad-pixel mask.  Defaults to no fixed bad pixels.
+    combine : {"mean", "median"}, optional
+        Method used to combine frames.  Defaults to ``"mean"``.
+    cosmic_filter_width : int, optional
+        User-provided width of the row-wise cosmic-ray median filter.
+        Defaults to 2 pixels.
+    saturation_threshold : float, optional
+        Full-well fractions used for saturation detection.
+        Defaults to 0.99.
+    plateau_threshold : float, optional
+        Full-well fractions used for plateau detection after a saturated pixel is found.
+        Defaults to 0.85. 
 
     Returns
     -------
