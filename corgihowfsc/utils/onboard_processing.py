@@ -173,6 +173,6 @@ def process_onboard_frames():
     return OnboardProcessingResult(
         image=calibrated,
         cosmic_ray_mask=cosmic_masks,
-        bad_pixel_mask=bad_masks,
+        bad_pixel_map=bad_masks,
         good_frame_count=good_frame_count,
     )
