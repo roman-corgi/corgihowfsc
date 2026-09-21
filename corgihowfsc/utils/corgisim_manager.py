@@ -220,7 +220,7 @@ class CorgisimManager:
 
         return optics
 
-    def generate_on_axis_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, nframes=1, bias=0):
+    def generate_on_axis_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, nframes=1):
         """
         Generate the on-axis (host star) PSF with optional detector noise simulation.
 
@@ -244,8 +244,6 @@ class CorgisimManager:
             EMCCD EM gain. Default is 1.
         nframes : int, optional
             Number of frames to generate and coadd. Default is 1.
-        bias : float, optional
-            Detector bias level. Default is 0.
 
         Returns
         -------
@@ -287,17 +285,35 @@ class CorgisimManager:
         else:
             # generate detector image
             detector = self.create_emccd_detector(gain)
+
+            # initialize cosmic ray filtering parameters
+            self._initialize_cosmic_ray_filtering()
+
             # sim_scene.image_on_detector.data is not gain corrected or bias subtracted
             master_dark = self.generate_master_dark(detector, exptime)
-            B = self.bias * np.ones((self.output_dim, self.output_dim))
 
-            coadd = np.zeros((self.output_dim, self.output_dim))
+            # Get the raw frames from the detector
+            raw_frames_dn = []
             for n in range(nframes):
                 sim_scene = detector.generate_detector_image(sim_scene, exptime)
-                frame = (self.k_gain * sim_scene.image_on_detector.data - B) / detector.emccd.em_gain - master_dark
-                coadd += frame
-            # frame = (sim_scene.image_on_detector.data - B) * self.k_gain / self.em_gain - master_dark
-            return coadd/nframes
+                raw_frames_dn.append(sim_scene.image_on_detector.data)
+
+            # Apply cosmic ray filtering
+            ProcessedFrame = onboard_processing.process_onboard_frames(
+                raw_frames_dn,
+                bias_e = self.bias,
+                e_per_dn = detector.emccd.eperdn,
+                em_gain = gain,
+                full_well_image_e = detector.emccd.full_well_image,
+                full_well_serial_e = detector.emccd.full_well_serial,
+                master_dark_e = master_dark,
+                cosmic_filter_width = self.cosmic_filter_width,
+                saturation_threshold = self.cosmic_saturation_threshold,
+                plateau_threshold = self.cosmic_plateau_threshold,
+                combine = self.frame_combine)
+
+            filtered_frame = ProcessedFrame.calibrated
+            return filtered_frame
 
 
     def generate_host_star_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, nframes=1, bias=0):
