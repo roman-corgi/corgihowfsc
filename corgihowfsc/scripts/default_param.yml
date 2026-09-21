@@ -81,7 +81,7 @@ models:
       # Parameters forwarded to CorgiDetector initialization
       bias: 0 # default value, but can be overridden by user in the config file
       cr_rate: 0 # default value, but can be overridden by user in the config file
-      cosmic_filter_width: 2 # literal row-wise median-filter width in pixels
+      cosmic_filter_width: 2 # row-wise median-filter width in pixels
       cosmic_saturation_threshold: 0.99 # fraction of effective full well
       cosmic_plateau_threshold: 0.85 # fraction used to locate plateau start
-      frame_combine: "mean" # combine good samples with "mean" or "median"
+      frame_combine: "mean" # combine filtered frames with "mean" or "median"
