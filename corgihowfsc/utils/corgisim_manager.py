@@ -9,7 +9,8 @@ from corgihowfsc.utils.corgisim_utils import (
     CGI_TO_CORGI_MAPPING,
     SUPPORTED_CGI_MODES,
     map_wavelength_to_corgisim_bandpass, 
-    _MANAGER_KEYS
+    _MANAGER_KEYS, 
+    onboard_processing
     )
 
 class CorgisimManager:
@@ -23,7 +24,7 @@ class CorgisimManager:
     - PSF and detector image
     """
 
-    def __init__(self, cfg, cstrat, hconf, cor=None, corgi_overrides=None, emccd_overrides=None):
+    def __init__(self, cfg, cstrat, hconf, cor=None, corgi_overrides=None, emccd_overrides=None, cosmic_ray_filtering=None):
         """
         Args:
             cfg:
@@ -51,6 +52,11 @@ class CorgisimManager:
                 - em_gain: float, EM gain setting (default: 1)
                 - bias: float, detector bias level (default: 0)
                 - cr_rate: float, cosmic ray rate (default: 5)
+            cosmic_ray_filtering: Optional dict of cosmic ray filtering parameters:
+                - cosmic_filter_width
+                - cosmic_saturation_threshold
+                - cosmic_plateau_threshold
+                - frame_combine
         """
 
         if corgi_overrides is None: 
@@ -58,6 +64,9 @@ class CorgisimManager:
 
         if emccd_overrides is None:
             emccd_overrides = {}
+
+        if cosmic_ray_filtering is None:
+            cosmic_ray_filtering = {}
         
         self.cfg = cfg 
         self.cstrat = cstrat
@@ -65,7 +74,7 @@ class CorgisimManager:
         self.cor = cor 
         self.corgi_overrides = corgi_overrides
         self.emccd_overrides = emccd_overrides
-
+        self.cosmic_ray_filtering = cosmic_ray_filtering
         self._validate_inputs()
         self._initialize_config()
         self._initialize_base_scene()
@@ -126,11 +135,12 @@ class CorgisimManager:
         self.bias = self.emccd_overrides.get('bias', 0) # default should be 1500
         self.cr_rate = self.emccd_overrides.get('cr_rate', 0) # default should be 5
 
+    def _initialize_cosmic_ray_filtering(self):
         # Setup the onboard processing parameters for cosmic ray filtering and frame combination
-        self.cosmic_filter_width = self.emccd_overrides.get('cosmic_filter_width', 2)
-        self.cosmic_saturation_threshold = self.emccd_overrides.get('cosmic_saturation_threshold', 0.99)
-        self.cosmic_plateau_threshold = self.emccd_overrides.get('cosmic_plateau_threshold', 0.85)
-        self.frame_combine = self.emccd_overrides.get('frame_combine', 'mean')
+        self.cosmic_filter_width = self.cosmic_ray_filtering.get('cosmic_filter_width', 2)
+        self.cosmic_saturation_threshold = self.cosmic_ray_filtering.get('cosmic_saturation_threshold', 0.99)
+        self.cosmic_plateau_threshold = self.cosmic_ray_filtering.get('cosmic_plateau_threshold', 0.85)
+        self.frame_combine = self.cosmic_ray_filtering.get('frame_combine', 'mean')
 
     def _initialize_base_scene(self):
         # Initialise scene object 
