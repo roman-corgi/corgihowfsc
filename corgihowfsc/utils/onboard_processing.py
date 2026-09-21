@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class OnboardProcessingResult:
     """Output image and masks produced by `process_onboard_frames`."""
-
     image: np.ndarray
     cosmic_ray_mask: np.ndarray
     bad_pixel_map: np.ndarray
