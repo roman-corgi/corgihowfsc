@@ -18,7 +18,20 @@ class OnboardProcessingResult:
 
 
 def _median_filter_rows(image, size):
-    """Median-filter the columns of each row using nearest-edge padding."""
+    """
+    Median-filter the columns of each row using nearest-edge padding. 
+
+    Args:
+        image (numpy.ndarray): The input image.
+        size (int): 
+            The size of the median filter window. This is a user-provided tuning parameter for the filter.
+
+    Raises:
+        ValueError: If the size is less than 1.
+
+    Returns:
+        numpy.ndarray: The median-filtered image.
+    """
     if size < 1:
         raise ValueError("median-filter size must be at least 1")
 
