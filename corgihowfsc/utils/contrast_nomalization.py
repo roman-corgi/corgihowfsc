@@ -183,7 +183,7 @@ class CorgiNormalization(Normalization):
 
 
 class CorgiNormalizationOnAxis(CorgiNormalization):
-    def __init__(self, cfg, cstrat, hconf, cor=None, corgi_overrides=None, emccd_overrides=None, cosmic_ray_filtering=cosmic_ray_filtering, separation_lamD=None, exptime_norm=1):
+    def __init__(self, cfg, cstrat, hconf, cor=None, corgi_overrides=None, emccd_overrides=None, cosmic_ray_filtering=None, separation_lamD=None, exptime_norm=1):
         super().__init__(cfg, cstrat, hconf, cor=cor, corgi_overrides=corgi_overrides, emccd_overrides=emccd_overrides, cosmic_ray_filtering=cosmic_ray_filtering,separation_lamD=None, exptime_norm=exptime_norm)
 
     def calc_flux_rate(self, get_cgi_eetc, hconf, sl_ind, dm1v, dm2v, gain=1):
