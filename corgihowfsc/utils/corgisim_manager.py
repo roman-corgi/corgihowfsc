@@ -386,7 +386,7 @@ class CorgisimManager:
                 full_well_image_e = detector.emccd.full_well_image,
                 full_well_serial_e = detector.emccd.full_well_serial,
                 master_dark_e = master_dark,
-                fixed_bp = fixedbp,
+                fixed_bp = None, # FIX - it should be a real fixed bad pixel map here
                 cosmic_filter_width = self.cosmic_filter_width,
                 saturation_threshold = self.cosmic_saturation_threshold,
                 plateau_threshold = self.cosmic_plateau_threshold,
