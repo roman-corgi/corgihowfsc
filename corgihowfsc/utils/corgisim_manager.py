@@ -9,9 +9,9 @@ from corgihowfsc.utils.corgisim_utils import (
     CGI_TO_CORGI_MAPPING,
     SUPPORTED_CGI_MODES,
     map_wavelength_to_corgisim_bandpass, 
-    _MANAGER_KEYS, 
-    onboard_processing
+    _MANAGER_KEYS
     )
+from corgihowfsc.utils import onboard_processing
 
 class CorgisimManager:
     """
