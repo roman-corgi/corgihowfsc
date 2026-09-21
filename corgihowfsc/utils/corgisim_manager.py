@@ -430,6 +430,9 @@ class CorgisimManager:
 
     def generate_master_dark(self, detector, exptime):
         """
+        Generate a master dark frame for the EMCCD detector.
+        For onboard-processing, we need a subtract bias-subtracted, gain-divided master dark in electrons.
+        
         dark:  master dark
         FPM: fixed pattern noise map
         gain: EM gain
