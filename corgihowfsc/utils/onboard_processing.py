@@ -112,25 +112,36 @@ def make_cosmic_ray_mask(
     plateau_level = plateau_threshold * full_well_dn
     mask = np.zeros(frame.shape, dtype=bool)
 
-    # Only visit rows that contain a candidate plateau.  If several candidates
-    # occur in one row, masking from the earliest plateau covers all later ones.
+    # Only visit rows that contain at least one pixel over the saturation threshold in the filtered image.
     candidate_rows = np.flatnonzero(np.any(filtered >= saturated_level, axis=1))
+
     for row_index in candidate_rows:
-        candidate_columns = np.flatnonzero(
-            filtered[row_index] >= saturated_level
-        )
+        # Find the columns of saturated pixels in this row. 
+        # These are detected from the filtered image, so single pixel spikes are less likely to trigger a false positive.
+        candidate_columns = np.flatnonzero(filtered[row_index] >= saturated_level)
+
+        # Initialise the first plateau column to the end of the row.  This will be updated to the leftmost plateau start found in this row.
         first_plateau = frame.shape[1]
+
         for column_index in candidate_columns:
+            # Start from a saturated pixel and move left through the unfiltered row, while the signal remains above the plateau threshold.
             plateau_start = int(column_index)
+
             while (
                 plateau_start > 0
                 and frame[row_index, plateau_start] >= plateau_level
             ):
                 plateau_start -= 1
+            
+            # If we stepped one pixel past the plateau, move back to the first pixel that is still part of the plateau.  
+            # If we never found a plateau, this will move the index to the right of the saturated pixel.
             if frame[row_index, plateau_start] < plateau_level:
                 plateau_start += 1
+
+            # Keep the lowest-index (leftmost) plateau start found in this row. 
             first_plateau = min(first_plateau, plateau_start)
 
+        # If a plateau was found, mask everything from its first pixel to the end of the row. If no plateau was found, first_plateau will be equal to frame.shape[1] and nothing will be masked.
         if first_plateau < frame.shape[1]:
             mask[row_index, first_plateau:] = True
 
