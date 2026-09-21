@@ -1,0 +1,318 @@
+from dataclasses import dataclass
+import warnings
+import logging
+
+import numpy as np
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+@dataclass(frozen=True)
+class OnboardProcessingResult:
+    """Output image and masks produced by `process_onboard_frames`."""
+    image: np.ndarray
+    cosmic_ray_mask: np.ndarray
+    bad_pixel_map: np.ndarray
+    good_frame_count: np.ndarray
+
+
+def _median_filter_rows(image, size):
+    """
+    Median-filter the columns of each row using nearest-edge padding. 
+
+    Args:
+        image (numpy.ndarray): The input image.
+        size (int): 
+            The size of the median filter window. This is a user-provided tuning parameter for the filter.
+
+    Raises:
+        ValueError: If the size is less than 1.
+
+    Returns:
+        numpy.ndarray: The median-filtered image.
+    """
+    if size < 1:
+        raise ValueError("median-filter size must be at least 1")
+
+    # With an odd window this is centered on each pixel.  The implementation
+    # also defines deterministic placement for an even window, with the extra
+    # sample on the lower-column side.
+    pad_before = size // 2
+    pad_after = size - pad_before - 1
+    padded = np.pad(image, ((0, 0), (pad_before, pad_after)), mode="edge")
+    windows = np.lib.stride_tricks.sliding_window_view(
+        padded, window_shape=size, axis=1
+    )
+    return np.median(windows, axis=-1)
+
+
+def make_cosmic_ray_mask(
+    bias_subtracted_frame_dn,
+    full_well_dn,
+    cosmic_filter_width=2,
+    saturation_threshold=0.99,
+    plateau_threshold=0.85,
+):
+    """
+    Create the onboard cosmic-ray mask for one bias-subtracted frame. 
+    This function applies a median filter to each row of the input frame to identify and mask cosmic-ray events.
+    If a filtered value reaches ``saturation_threshold (user-provided) * full_well_dn``, the code
+    walks toward lower column indices in the unfiltered row until it finds the
+    beginning of the >= ``plateau_threshold (user-provided) * full_well_dn`` plateau.  The
+    plateau beginning and every subsequent pixel in that row are marked bad.
+
+    ``cosmic_filter_width`` is a user-provided tuning parameter for the median filter.
+    A value of 2 therefore takes the median of each pixel and its neighbor at the lower column index. 
+    This suppresses an isolated saturated pixel while retaining a two-pixel saturated plateau.
+
+    Parameters
+    ----------
+    bias_subtracted_frame_dn : array_like
+        Detector frame in DN after bias subtraction.
+    full_well_dn : float
+        Effective full-well capacity in DN.
+    cosmic_filter_width : int, optional
+        User-provided width of the row-wise median filter in pixels.  
+        Defaults to 2.
+    saturation_threshold : float, optional
+        User-provided fraction of full well capacity used to identify pixel saturation.  
+        Defaults to 0.99.
+    plateau_threshold : float, optional
+        User-provided fraction of full well capacity used to find the leading plateau edge.  
+        Defaults to 0.85.
+
+    Returns
+    -------
+    numpy.ndarray
+        Boolean mask with ``True`` for pixels rejected as cosmic-contaminated.
+    """
+    frame = np.asarray(bias_subtracted_frame_dn)
+    
+    # Validate inputs
+    if frame.ndim != 2:
+        raise ValueError("bias_subtracted_frame_dn must be a 2-D array")
+    if not np.issubdtype(frame.dtype, np.number):
+        raise TypeError("bias_subtracted_frame_dn must contain numeric values")
+    if not np.isfinite(full_well_dn) or full_well_dn <= 0:
+        raise ValueError("full_well_dn must be finite and greater than zero")
+    if isinstance(cosmic_filter_width, bool) or not isinstance(cosmic_filter_width, (int, np.integer)):
+        raise TypeError("cosmic_filter_width must be an integer")
+    if cosmic_filter_width < 1:
+        raise ValueError("cosmic_filter_width must be at least 1")
+    if not 0 < saturation_threshold <= 1:
+        raise ValueError("saturation_threshold must be in (0, 1]")
+    if not 0 < plateau_threshold <= saturation_threshold:
+        raise ValueError(
+            "plateau_threshold must be in (0, saturation_threshold]"
+        )
+
+    filtered = _median_filter_rows(frame, cosmic_filter_width)
+    saturated_level = saturation_threshold * full_well_dn
+    plateau_level = plateau_threshold * full_well_dn
+    mask = np.zeros(frame.shape, dtype=bool)
+
+    # Only visit rows that contain at least one pixel over the saturation threshold in the filtered image.
+    candidate_rows = np.flatnonzero(np.any(filtered >= saturated_level, axis=1))
+
+    for row_index in candidate_rows:
+        # Find the columns of saturated pixels in this row. 
+        # These are detected from the filtered image, so single pixel spikes are less likely to trigger a false positive.
+        candidate_columns = np.flatnonzero(filtered[row_index] >= saturated_level)
+
+        # Initialise the first plateau column to the end of the row.  This will be updated to the leftmost plateau start found in this row.
+        first_plateau = frame.shape[1]
+
+        for column_index in candidate_columns:
+            # Start from a saturated pixel and move left through the unfiltered row, while the signal remains above the plateau threshold.
+            plateau_start = int(column_index)
+
+            while (
+                plateau_start > 0
+                and frame[row_index, plateau_start] >= plateau_level
+            ):
+                plateau_start -= 1
+            
+            # If we stepped one pixel past the plateau, move back to the first pixel that is still part of the plateau.  
+            # If we never found a plateau, this will move the index to the right of the saturated pixel.
+            if frame[row_index, plateau_start] < plateau_level:
+                plateau_start += 1
+
+            # Keep the lowest-index (leftmost) plateau start found in this row. 
+            first_plateau = min(first_plateau, plateau_start)
+
+        # If a plateau was found, mask everything from its first pixel to the end of the row. If no plateau was found, first_plateau will be equal to frame.shape[1] and nothing will be masked.
+        if first_plateau < frame.shape[1]:
+            mask[row_index, first_plateau:] = True
+
+    return mask
+
+
+def process_onboard_frames(
+    frames_dn,
+    bias_e,
+    e_per_dn,
+    em_gain,
+    full_well_image_e,
+    full_well_serial_e,
+    master_dark_e,
+    fixed_bp=None,
+    combine="mean",
+    cosmic_filter_width=2,
+    saturation_threshold=0.99,
+    plateau_threshold=0.85,
+):
+    """
+    Apply cosmic ray filtering and frame combination (similar to the process performed onboard on Roman CGI). 
+
+    For each frame, the following steps are performed:
+        1. subtract detector bias from every raw frame
+        2. remove cosmic rays and make a create cosmic-ray mask 
+        3. combine that mask with the fixed bad-pixel map
+    
+    Then after making the combined mask, the following steps are performed:
+        4. mean- or median-combine of all the frames and produce a floating-point image. When combining, only the good samples are used. 
+        5. convert DN to electrons 
+        6. Divide by EM gain
+        7. Subtract bias-subtracted, the gain-divided master dark in electrons
+
+    Pixels for which every input frame is bad are returned as ``NaN``.  The
+    input arrays are never modified.
+
+    Parameters
+    ----------
+    frames_dn : array_like
+        Raw integer detector frames with shape ``(nframes, nrows, ncols)``.
+    bias_e : float
+        Detector bias used by ``emccd_detect``.
+    e_per_dn : float
+        Detector conversion gain in electrons per DN.
+    em_gain : float
+        gain used by ``emccd_detect``, norminally calculated from eetc.  
+    full_well_image_e, full_well_serial_e : float
+        Image-area and serial-register full wells in electrons.
+    master_dark_e : float or array_like
+        Bias-subtracted and EM-gain-divided master dark in electrons.
+    fixed_bp : array_like of bool, optional
+        Two-dimensional fixed bad-pixel mask.  Defaults to no fixed bad pixels.
+    combine : {"mean", "median"}, optional
+        Method used to combine frames.  Defaults to ``"mean"``.
+    cosmic_filter_width : int, optional
+        User-provided width of the row-wise cosmic-ray median filter.
+        Defaults to 2 pixels.
+    saturation_threshold : float, optional
+        Full-well fractions used for saturation detection.
+        Defaults to 0.99.
+    plateau_threshold : float, optional
+        Full-well fractions used for plateau detection after a saturated pixel is found.
+        Defaults to 0.85. 
+
+    Returns
+    -------
+    OnboardProcessingResult: A dataclass containing the following attributes:
+        - image : numpy.ndarray
+            The final calibrated image in electrons.
+        - cosmic_ray_mask : numpy.ndarray
+            Boolean mask with ``True`` for pixels rejected as cosmic-contaminated.
+        - bad_pixel_map : numpy.ndarray
+            Boolean mask with ``True`` for pixels rejected as cosmic-contaminated or fixed bad pixels.
+        - good_frame_count : numpy.ndarray
+            Count of good frames contributing to each pixel in the final image.
+    """
+
+    # Check the input
+    scalar_parameters = {
+        "bias_e": bias_e,
+        "e_per_dn": e_per_dn,
+        "em_gain": em_gain,
+        "full_well_image_e": full_well_image_e,
+        "full_well_serial_e": full_well_serial_e,
+    }
+
+    for name, value in scalar_parameters.items():
+        if not np.isscalar(value) or not np.isfinite(value):
+            raise ValueError(f"{name} must be a finite scalar")
+    
+    for name in (
+        "e_per_dn",
+        "em_gain",
+        "full_well_image_e",
+        "full_well_serial_e",
+    ):
+        if scalar_parameters[name] <= 0:
+            raise ValueError(f"{name} must be greater than zero")
+
+    frames = np.asarray(frames_dn)
+    if frames.ndim != 3 or frames.shape[0] == 0:
+        raise ValueError("frames_dn must contain at least one 2-D frame")
+    if not np.issubdtype(frames.dtype, np.number):
+        raise TypeError("frames_dn must contain numeric values")
+    if not np.all(np.isfinite(frames)):
+        raise ValueError("frames_dn values must be finite")
+
+    # Validate the fixed bad pixel mask if provided
+    image_shape = frames.shape[1:]    
+    if fixed_bp is None: # This is coming from the cfg
+        fixed_mask = np.zeros(image_shape, dtype=bool)
+    else:
+        fixed_mask = np.asarray(fixed_bp)
+        if fixed_mask.shape != image_shape:
+            raise ValueError("fixed_bp must match the frame shape")
+        if fixed_mask.dtype != bool:
+            raise TypeError("fixed_bp must have boolean dtype")
+
+    # Convert the master dark to a float array for subtraction
+    master_dark = np.asarray(master_dark_e, dtype=float)
+    if master_dark.shape != image_shape:
+        raise ValueError("master_dark_e must match the frame shape")
+
+    # Convert bias from electrons to DN for subtraction
+    bias_dn = bias_e / e_per_dn 
+    bias_subtracted = frames.astype(float, copy=True) - bias_dn
+    
+    # CHECK - Calculate the effective full well in DN, as we have em_gain 
+    # TODO - If indeed we need a calibration,  is it full_well * em_gain or the other way around?
+    effective_full_well_e = min(full_well_image_e * em_gain, full_well_serial_e)
+    # Convert to DN for cosmic ray detection
+    effective_full_well_dn = effective_full_well_e / e_per_dn
+
+    cosmic_masks = np.zeros(frames.shape, dtype=bool)
+    for frame_index, frame in enumerate(bias_subtracted):
+        cosmic_masks[frame_index] = make_cosmic_ray_mask(
+            frame,
+            effective_full_well_dn,
+            cosmic_filter_width=cosmic_filter_width,
+            saturation_threshold=saturation_threshold,
+            plateau_threshold=plateau_threshold,
+        )
+    
+    # Combine the cosmic ray masks with the fixed bad pixel mask
+    bad_masks = cosmic_masks | fixed_mask[np.newaxis, :, :]
+    good_frame_count = np.sum(~bad_masks, axis=0)
+    masked_frames = np.where(bad_masks, np.nan, bias_subtracted)
+
+    if combine == "mean":
+        total = np.nansum(masked_frames, axis=0)
+        combined_dn = np.full(image_shape, np.nan, dtype=float)
+        np.divide(
+            total,
+            good_frame_count,
+            out=combined_dn,
+            where=good_frame_count > 0,
+        )
+    elif combine == "median":
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message="All-NaN slice encountered")
+            combined_dn = np.nanmedian(masked_frames, axis=0)
+    else:
+        raise ValueError("combine must be either 'mean' or 'median'")
+
+    combined_e = combined_dn * e_per_dn / em_gain
+    calibrated = combined_e - master_dark
+    calibrated[good_frame_count == 0] = np.nan
+
+    return OnboardProcessingResult(
+        image=calibrated,
+        cosmic_ray_mask=cosmic_masks,
+        bad_pixel_map=bad_masks,
+        good_frame_count=good_frame_count,
+    )

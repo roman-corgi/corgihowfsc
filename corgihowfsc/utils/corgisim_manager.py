@@ -104,7 +104,7 @@ class CorgisimManager:
         else:
             self.host_star_properties = {
                 'Vmag': 2.25,  # default to del Leo
-                'spectral_type': '05',
+                'spectral_type': 'O5',
                 'ref_flag': 1
             }
         
