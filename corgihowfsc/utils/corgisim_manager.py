@@ -316,7 +316,7 @@ class CorgisimManager:
             return filtered_frame
 
 
-    def generate_host_star_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, nframes=1, bias=0):
+    def generate_host_star_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, nframes=1, fixedbp=None):
         """
         Generate the host star PSF using the standard coronagraph configuration.
 
@@ -339,8 +339,9 @@ class CorgisimManager:
             EMCCD EM gain. Default is 1.
         nframes : int, optional
             Number of frames to generate and coadd. Default is 1.
-        bias : float, optional
-            Detector bias level in ADU. Default is 0.
+        fixedbp : array_like of bool, optional
+            Fixed bad-pixel mask forwarded to onboard processing. Defaults to
+            no fixed bad pixels.
 
         Returns
         -------
