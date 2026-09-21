@@ -312,7 +312,7 @@ class CorgisimManager:
                 plateau_threshold = self.cosmic_plateau_threshold,
                 combine = self.frame_combine)
 
-            filtered_frame = ProcessedFrame.calibrated
+            filtered_frame = ProcessedFrame.image
             return filtered_frame
 
 
@@ -392,7 +392,7 @@ class CorgisimManager:
                 plateau_threshold = self.cosmic_plateau_threshold,
                 combine = self.frame_combine)
 
-            filtered_frame = ProcessedFrame.calibrated
+            filtered_frame = ProcessedFrame.image
             return filtered_frame
 
     def generate_efield(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, bias=0, crop=None):
@@ -500,5 +500,5 @@ class CorgisimManager:
                 plateau_threshold = self.cosmic_plateau_threshold,
                 combine = self.frame_combine)
 
-            filtered_frame = ProcessedFrame.calibrated
+            filtered_frame = ProcessedFrame.image
             return filtered_frame
