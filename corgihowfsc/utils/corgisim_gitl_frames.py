@@ -97,7 +97,7 @@ class GitlImage:
 
         # Backend specific initialisation
         if self.backend == 'corgihowfsc':
-            self._init_corgihowfsc(corgi_overrides, emccd_overrides)
+            self._init_corgihowfsc(corgi_overrides, emccd_overrides, cosmic_ray_filtering)
 
         else: 
             from howfsc.util.loadyaml import loadyaml
