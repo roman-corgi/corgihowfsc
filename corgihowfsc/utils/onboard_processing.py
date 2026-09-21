@@ -54,33 +54,33 @@ def make_cosmic_ray_mask(
     saturation_threshold=0.99,
     plateau_threshold=0.85,
 ):
-    """Create the onboard cosmic-ray mask for one bias-subtracted frame.
-
-    Each detector row is median-filtered to reject isolated bright pixels.  If
-    a filtered value reaches ``saturation_threshold * full_well_dn``, the code
+    """
+    Create the onboard cosmic-ray mask for one bias-subtracted frame. 
+    This function applies a median filter to each row of the input frame to identify and mask cosmic-ray events.
+    If a filtered value reaches ``saturation_threshold (user-provided) * full_well_dn``, the code
     walks toward lower column indices in the unfiltered row until it finds the
-    beginning of the >= ``plateau_threshold * full_well_dn`` plateau.  The
+    beginning of the >= ``plateau_threshold (user-provided) * full_well_dn`` plateau.  The
     plateau beginning and every subsequent pixel in that row are marked bad.
 
-    ``cosmic_filter_width`` is the literal onboard median-window width.  A
-    value of 2 therefore takes the median of each pixel and its neighbor at the
-    lower column index.  For two values, NumPy defines the median as their
-    arithmetic mean.  This suppresses an isolated saturated pixel while
-    retaining a two-pixel saturated plateau.
+    ``cosmic_filter_width`` is a user-provided tuning parameter for the median filter.
+    A value of 2 therefore takes the median of each pixel and its neighbor at the lower column index. 
+    This suppresses an isolated saturated pixel while retaining a two-pixel saturated plateau.
 
     Parameters
     ----------
     bias_subtracted_frame_dn : array_like
-        Two-dimensional detector frame in DN after bias subtraction.
+        Detector frame in DN after bias subtraction.
     full_well_dn : float
         Effective full-well capacity in DN.
     cosmic_filter_width : int, optional
-        Width of the row-wise median filter in pixels.  Defaults to 2.
+        User-provided width of the row-wise median filter in pixels.  
+        Defaults to 2.
     saturation_threshold : float, optional
-        Fraction of full well used to identify saturation.  Defaults to 0.99.
+        User-provided fraction of full well capacity used to identify pixel saturation.  
+        Defaults to 0.99.
     plateau_threshold : float, optional
-        Fraction of full well used to find the leading plateau edge.  Defaults
-        to 0.85.
+        User-provided fraction of full well capacity used to find the leading plateau edge.  
+        Defaults to 0.85.
 
     Returns
     -------
@@ -88,15 +88,15 @@ def make_cosmic_ray_mask(
         Boolean mask with ``True`` for pixels rejected as cosmic-contaminated.
     """
     frame = np.asarray(bias_subtracted_frame_dn)
+    
+    # Validate inputs
     if frame.ndim != 2:
         raise ValueError("bias_subtracted_frame_dn must be a 2-D array")
     if not np.issubdtype(frame.dtype, np.number):
         raise TypeError("bias_subtracted_frame_dn must contain numeric values")
     if not np.isfinite(full_well_dn) or full_well_dn <= 0:
         raise ValueError("full_well_dn must be finite and greater than zero")
-    if isinstance(cosmic_filter_width, bool) or not isinstance(
-        cosmic_filter_width, (int, np.integer)
-    ):
+    if isinstance(cosmic_filter_width, bool) or not isinstance(cosmic_filter_width, (int, np.integer)):
         raise TypeError("cosmic_filter_width must be an integer")
     if cosmic_filter_width < 1:
         raise ValueError("cosmic_filter_width must be at least 1")
