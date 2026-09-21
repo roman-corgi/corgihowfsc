@@ -256,14 +256,14 @@ def process_onboard_frames(
     else:
         fixed_mask = np.asarray(fixed_bp)
         if fixed_mask.shape != image_shape:
-            raise ValueError("fixed_bp must match the frame shape")
+            raise ValueError("fixed_bp must match the frame shape, but got {} and {}".format(fixed_mask.shape, image_shape))
         if fixed_mask.dtype != bool:
             raise TypeError("fixed_bp must have boolean dtype")
 
     # Convert the master dark to a float array for subtraction
     master_dark = np.asarray(master_dark_e, dtype=float)
     if master_dark.shape != image_shape:
-        raise ValueError("master_dark_e must match the frame shape")
+        raise ValueError("master_dark_e must match the frame shape, but got {} and {}".format(master_dark.shape, image_shape))
 
     # Convert bias from electrons to DN for subtraction
     bias_dn = bias_e / e_per_dn 

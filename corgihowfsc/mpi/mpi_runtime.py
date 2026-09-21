@@ -118,7 +118,7 @@ def validate_mpi_allocation(comm, num_imager_worker=None, num_proper_process=Non
             )
 
 
-def build_worker_init_config(args, cfgfile, cstratfile, hconffile, backend_type, mode, corgi_overrides, emccd_overrides):
+def build_worker_init_config(args, cfgfile, cstratfile, hconffile, backend_type, mode, corgi_overrides, emccd_overrides, cosmic_ray_filtering):
     """
     Build the one-time serialisable payload to initialise MPI workers. 
 
@@ -137,6 +137,7 @@ def build_worker_init_config(args, cfgfile, cstratfile, hconffile, backend_type,
         'mode': mode,
         'corgi_overrides': corgi_overrides,
         'emccd_overrides': emccd_overrides,
+        'cosmic_ray_filtering': cosmic_ray_filtering,
         'debug': getattr(args, 'debug', False),
         'logfile': getattr(args, 'logfile', None),
         'stellar_vmag': getattr(args, 'stellarvmag', None),
