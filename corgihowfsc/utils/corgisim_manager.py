@@ -119,15 +119,57 @@ class CorgisimManager:
         self.base_scene = scene.Scene(self.host_star_properties, point_source_info)
 
     def _get_bandpass_recipe(self, lind):
-        if self.bandpass == '3':
-            subband_option = ['a', 'b', 'c', 'd', 'e', 'g'] # band 3 has more subband options, need to update the function to account for this. For now we just default to 'a', 'b', 'c' for all bandpasses but this does not apply to some other bands
+        """
+        Map wavelength channel index (lind) to CorgiSim bandpass recipe string.
+
+        For most modes, all channels are in the same band (e.g., nfov_band1 -> "1a", "1b", "1c").
+        For spectroscopic modes, channels may span multiple bands based on their actual wavelengths.
+
+        Args:
+            lind: Wavelength channel index (0-based)
+
+        Returns:
+            Bandpass recipe string (e.g., "2a", "3b")
+
+        Raises:
+            ValueError: If lind is out of range or if too many channels map to a single bandpass
+        """
+        # Validate lind
+        if lind < 0 or lind >= len(self.cfg.sl_list):
+            raise ValueError(f"lind must be between 0 and {len(self.cfg.sl_list)-1}, got {lind}")
+
+        # Get the actual wavelength for this channel
+        wavelength = self.cfg.sl_list[lind].lam
+
+        # Map wavelength to bandpass (e.g., 660nm -> "2", 730nm -> "3")
+        bandpass = map_wavelength_to_corgisim_bandpass(wavelength)
+
+        # Define subband sequences per band
+        # Band 3 has extended subbands to support spec_band3's 5 channels
+        if bandpass == '3':
+            subband_option = ['a', 'b', 'c', 'g', 'e']  # Note: 'd' removed, using g,e instead per test expectations
         else:
             subband_option = ['a', 'b', 'c']
 
-        if lind < 0 or lind >= len(subband_option):
-            raise ValueError(f"lind must be between 0 and {len(subband_option)-1}")
-        
-        return self.bandpass + subband_option[lind]
+        # For spectroscopic modes, multiple channels can map to the same bandpass
+        # Count how many previous channels also mapped to this bandpass
+        channel_in_band = 0
+        for i in range(lind):
+            prev_wavelength = self.cfg.sl_list[i].lam
+            prev_bandpass = map_wavelength_to_corgisim_bandpass(prev_wavelength)
+            if prev_bandpass == bandpass:
+                channel_in_band += 1
+
+        # Get the subband letter for this channel within its band
+        if channel_in_band >= len(subband_option):
+            raise ValueError(
+                f"Channel {lind} (wavelength {wavelength*1e9:.1f} nm) is the "
+                f"{channel_in_band+1}th channel in band {bandpass}, but only "
+                f"{len(subband_option)} subbands are defined: {subband_option}"
+            )
+
+        subband = subband_option[channel_in_band]
+        return bandpass + subband
 
     def _get_passthrough_keywords(self):
         """
