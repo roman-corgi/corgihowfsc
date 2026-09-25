@@ -10,6 +10,7 @@ from astropy.io import fits
 import roman_preflight_proper
 
 from howfsc.util.load import load
+from howfsc.util.loadyaml import loadyaml
 import warnings
 from collections import namedtuple
 
@@ -397,19 +398,22 @@ def load_files(args, howfscpath):
     # Get the model directories based on the mode and dark hole
     dirs = _get_model_dirs(mode, args.dark_hole, howfscpath)
 
-    n2clistfiles = [
-        os.path.join(dirs.model_path_all, 'ones_like_fs.fits'),
-        os.path.join(dirs.model_path_all, 'ones_like_fs.fits'),
-        os.path.join(dirs.model_path_all, 'ones_like_fs.fits'),
-    ]
-
     # Load the configuration files based on the mode and dark hole
     if mode not in DEFAULT_FILES:
         raise ValueError(f"Mode '{mode}' not recognized. Supported modes: {sorted(DEFAULT_FILES)}")
 
-    cfgfile = os.path.join(dirs.modelpath, 'howfsc_optical_model.yaml')
     hconffile = os.path.join(dirs.modelpath_band, DEFAULT_FILES[mode])
     cstratfile = os.path.join(dirs.modelpath, f'cstrat_{mode}_{args.dark_hole}.yaml') #cstrat_nfov_band1_both_sides
+    cfgfile = os.path.join(dirs.modelpath, 'howfsc_optical_model.yaml')
+
+    # One NI-to-contrast conversion file per wavelength channel. The number of
+    # channels is the number of 'sls' entries in the optical model, which varies
+    # by mode (e.g. 3 for band 1, 5 for spec_band2), so size the list to match
+    # rather than hardcoding it.
+    nlam = len(loadyaml(cfgfile, custom_exception=IOError)['sls'])
+    n2clistfiles = [
+        os.path.join(dirs.model_path_all, 'ones_like_fs.fits')
+    ] * nlam
 
     # Apply any explicit path overrides before validating existence, so an
     # override can rescue a mode whose computed default doesn't exist.

@@ -91,52 +91,52 @@ def howfsc_computation(framelist, dm1_list, dm2_list, cfg, jac, jtwj_map,
         log.exception('Returning with status code %s',
                           status_codes['TypeError'])
         return (None, None, None, None, None, None, None, None, None,
-                status_codes['TypeError'], None)
+                status_codes['TypeError'], None, {})
     except ValueError:
         log.exception('Returning with status code %s',
                           status_codes['ValueError'])
         return (None, None, None, None, None, None, None, None, None,
-                status_codes['ValueError'], None)
+                status_codes['ValueError'], None, {})
     except ConstrainDMException:
         log.exception('Returning with status code %s',
                           status_codes['ConstrainDMException'])
         return (None, None, None, None, None, None, None, None, None,
-                status_codes['ConstrainDMException'], None)
+                status_codes['ConstrainDMException'], None, {})
     except InversionException:
         log.exception('Returning with status code %s',
                           status_codes['InversionException'])
         return (None, None, None, None, None, None, None, None, None,
-                status_codes['InversionException'], None)
+                status_codes['InversionException'], None, {})
     except ZeroDivisionError:
         log.exception('Returning with status code %s',
                           status_codes['ZeroDivisionError'])
         return (None, None, None, None, None, None, None, None, None,
-                status_codes['ZeroDivisionError'], None)
+                status_codes['ZeroDivisionError'], None, {})
     except KeyError:
         log.exception('Returning with status code %s',
                           status_codes['KeyError'])
         return (None, None, None, None, None, None, None, None, None,
-                status_codes['KeyError'], None)
+                status_codes['KeyError'], None, {})
     except IOError:
         log.exception('Returning with status code %s',
                           status_codes['IOError'])
         return (None, None, None, None, None, None, None, None, None,
-                status_codes['IOError'], None)
+                status_codes['IOError'], None, {})
     except CalcJacsException:
         log.exception('Returning with status code %s',
                           status_codes['CalcJacsException'])
         return (None, None, None, None, None, None, None, None, None,
-                status_codes['CalcJacsException'], None)
+                status_codes['CalcJacsException'], None, {})
     except CSException:
         log.exception('Returning with status code %s',
                           status_codes['CSException'])
         return (None, None, None, None, None, None, None, None, None,
-                status_codes['CSException'], None)
+                status_codes['CSException'], None, {})
     except MDFException:
         log.exception('Returning with status code %s',
                           status_codes['MDFException'])
         return (None, None, None, None, None, None, None, None, None,
-                status_codes['MDFException'], None)
+                status_codes['MDFException'], None, {})
     except ActLimitException:
         log.exception('Returning with status code %s',
                           status_codes['ActLimitException'])
