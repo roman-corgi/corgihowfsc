@@ -16,19 +16,28 @@ from howfsc.model.mode import CoronagraphMode
 
 log = logging.getLogger(__name__)
 
+# (mode, dark_hole, expected CorgiSim subband label per wavelength channel).
+# The expected labels are the cgisim subbands whose ranges span each channel's
+# wavelength; spectroscopic modes tile the band and cross into band-3 subbands.
 KNOWN_CFGS = [
-    ("nfov_band1", "360deg"),
-    ("nfov_band1", "half_top"),
-    ("spec_band2", "both_sides"),
-    ("spec_band3", "both_sides"),
-    ("wfov_band4", "360deg"),
+    ("nfov_band1", "both_sides", ["1a", "1b", "1c"]),
+    ("wfov_band1", "both_sides", ["1a", "1b", "1c"]),
+    ("wfov_band4", "both_sides", ["4a", "4b", "4c"]),
+    ("spec_band2", "both_sides", ["2a", "2b", "2c", "3a", "3b"]),
+    ("spec_band3", "both_sides", ["3a", "3b", "3c", "3g", "3e"]),
+    ("specrot_band2", "both_sides", ["2a", "2b", "2c", "3a", "3b"]),
+    ("specrot_band3", "both_sides", ["3a", "3b", "3c", "3g", "3e"]),
 ]
 
 
 @pytest.fixture(params=KNOWN_CFGS, ids=lambda p: f"{p[0]}-{p[1]}")
 def cfg(request):
-    """Load a real CoronagraphMode for each known (mode, dark_hole)."""
-    mode, dark_hole = request.param
+    """Load a real CoronagraphMode for each known (mode, dark_hole).
+
+    Exposes the expected per-channel CorgiSim subband labels as
+    ``cfg.expected_subbands`` for the wavelength-mapping test.
+    """
+    mode, dark_hole, expected_subbands = request.param
 
     howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
     modelpath = os.path.join(
@@ -43,6 +52,8 @@ def cfg(request):
 
     cfg = CoronagraphMode(cfgfile)
     cfg.modelpath = modelpath
+    cfg.mode = mode
+    cfg.expected_subbands = expected_subbands
     return cfg
 
 
@@ -157,64 +168,47 @@ def test_missing_params(mock_hconf, patched_modules):
         GitlImage(None, None, mock_hconf, cor="narrowfov")
 
 
-def test_wavelength_mapping_from_cfg(cfg, patched_modules):
-    """For each real cfg, map the middle wavelength to a CORGISIM bandpass."""
-    _, utils_mod = patched_modules
-    map_wavelength_to_corgisim_bandpass = utils_mod.map_wavelength_to_corgisim_bandpass
+def test_wavelength_maps_to_expected_subband(cfg, patched_modules):
+    """Every model wavelength channel maps to the CorgiSim subband spanning it.
 
-    idx = len(cfg.sl_list) // 2
-    wvl = cfg.sl_list[idx].lam
-    band = map_wavelength_to_corgisim_bandpass(wvl)
+    Exercises map_wavelength_to_corgisim_subband directly for all channels (not
+    just the middle one), so a regression in the wavelength -> subband mapping
+    is caught for the spectroscopic modes whose channels tile the band.
+    """
+    _, utils_mod = patched_modules
+    map_wavelength_to_corgisim_subband = utils_mod.map_wavelength_to_corgisim_subband
 
     wavelengths = [sl.lam for sl in cfg.sl_list]
+    assert len(wavelengths) == len(cfg.expected_subbands)
 
-    log.info("\n--- CFG TEST ---")
-    log.info("Model path: %s", cfg.modelpath)
-    log.info("Wavelength list: %s", wavelengths)
-    log.info("Selected index: %d", idx)
-    log.info("Selected wavelength: %.2e", wvl)
-    log.info("Mapped band: %s", band)
+    actual = [map_wavelength_to_corgisim_subband(wvl) for wvl in wavelengths]
 
-    assert band in {"1", "2", "3", "4"}, (
-        f"Unexpected band {band} for wvl={wvl} (idx={idx}, nlam={len(cfg.sl_list)})"
-    )
+    log.info("\n--- %s ---", cfg.mode)
+    for wvl, label in zip(wavelengths, actual):
+        log.info("%.1f nm -> %s", wvl * 1e9, label)
+
+    assert actual == cfg.expected_subbands
 
 
-@pytest.mark.parametrize(
-    "mode, expected",
-    [
-        ("nfov_band1", ["1a", "1b", "1c"]),
-        ("wfov_band1", ["1a", "1b", "1c"]),
-        ("wfov_band4", ["4a", "4b", "4c"]),
-        ("spec_band2", ["2a", "2b", "2c", "3a", "3b"]),
-        ("spec_band3", ["3a", "3b", "3c", "3g", "3e"]),
-        ("specrot_band2", ["2a", "2b", "2c", "3a", "3b"]),
-        ("specrot_band3", ["3a", "3b", "3c", "3g", "3e"]),
-    ],
-)
-def test_all_cfg_subbands_map_to_corgisim(mode, expected, patched_modules):
-    """Pass the intended CorgiSim filter for every model wavelength channel."""
-    import yaml
+def test_all_cfg_subbands_map_to_corgisim(cfg, patched_modules):
+    """Pass the intended CorgiSim filter for every model wavelength channel.
 
-    howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
-    cfgfile = os.path.join(
-        howfscpath, "model", mode, f"{mode}_both_sides", "howfsc_optical_model.yaml"
-    )
-    with open(cfgfile) as stream:
-        channels = yaml.safe_load(stream)["sls"]
-    cfg = Mock()
-    cfg.sl_list = [Mock(lam=channels[index]["lam"]) for index in sorted(channels)]
+    End-to-end counterpart to test_wavelength_maps_to_expected_subband: verifies
+    the subband label actually reaches CorgiOptics through create_optics(), not
+    just that the mapping function returns it.
+    """
+    expected = cfg.expected_subbands
     assert len(cfg.sl_list) == len(expected)
 
     manager_mod = importlib.reload(importlib.import_module("corgihowfsc.utils.corgisim_manager"))
     manager = manager_mod.CorgisimManager(
-        cfg, Mock(), {"star": {"stellar_vmag": 2.5, "stellar_type": "G2V"}}, cor=mode
+        cfg, Mock(), {"star": {"stellar_vmag": 2.5, "stellar_type": "G2V"}}, cor=cfg.mode
     )
     dm = np.zeros((48, 48))
     for lind, recipe in enumerate(expected):
         manager.create_optics(dm, dm, lind)
         actual_recipe = manager_mod.instrument.CorgiOptics.call_args.args[1]
-        log.info("%s channel %d: %.1f nm -> %s", mode, lind,
+        log.info("%s channel %d: %.1f nm -> %s", cfg.mode, lind,
                  cfg.sl_list[lind].lam * 1e9, actual_recipe)
         assert actual_recipe == recipe
 
