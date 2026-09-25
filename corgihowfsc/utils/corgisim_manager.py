@@ -7,7 +7,7 @@ log = logging.getLogger(__name__)
 from corgihowfsc.utils.corgisim_utils import (
     _extract_host_properties_from_hconf,
     SUPPORTED_CGI_MODES,
-    map_wavelength_to_corgisim_bandpass, 
+    map_wavelength_to_corgisim_subband,
     map_cgi_to_corgisim_mode,
     _MANAGER_KEYS
     )
@@ -79,7 +79,9 @@ class CorgisimManager:
             mid_index = len(self.cfg.sl_list) // 2
             wavelength = self.cfg.sl_list[mid_index].lam
             log.info(f"Mapping wavelength {wavelength*1e9:.1f} nm to CorgiSim bandpass...")
-            self.bandpass = map_wavelength_to_corgisim_bandpass(wavelength)
+            # The band number is the first character of the subband label that
+            # contains the middle channel (e.g. '2c' -> '2', '3c' -> '3').
+            self.bandpass = map_wavelength_to_corgisim_subband(wavelength)[0]
         else:
             self.bandpass = self.corgi_overrides['bandpass']
 
@@ -120,56 +122,30 @@ class CorgisimManager:
 
     def _get_bandpass_recipe(self, lind):
         """
-        Map wavelength channel index (lind) to CorgiSim bandpass recipe string.
+        Map wavelength channel index (lind) to a CorgiSim subband label.
 
-        For most modes, all channels are in the same band (e.g., nfov_band1 -> "1a", "1b", "1c").
-        For spectroscopic modes, channels may span multiple bands based on their actual wavelengths.
+        The label (e.g. "2a", "3b") is the cgisim subband whose wavelength range
+        contains this channel's wavelength, and is a valid ``bandpass`` argument
+        for ``CorgiOptics``. This works uniformly for single-band modes (whose
+        channels sit in consecutive subbands) and spectroscopic modes (whose
+        channels tile the band).
 
         Args:
             lind: Wavelength channel index (0-based)
 
         Returns:
-            Bandpass recipe string (e.g., "2a", "3b")
+            Subband label string (e.g., "2a", "3b")
 
         Raises:
-            ValueError: If lind is out of range or if too many channels map to a single bandpass
+            ValueError: If lind is out of range, or the channel wavelength falls
+                in no defined cgisim subband.
         """
         # Validate lind
         if lind < 0 or lind >= len(self.cfg.sl_list):
             raise ValueError(f"lind must be between 0 and {len(self.cfg.sl_list)-1}, got {lind}")
 
-        # Get the actual wavelength for this channel
         wavelength = self.cfg.sl_list[lind].lam
-
-        # Map wavelength to bandpass (e.g., 660nm -> "2", 730nm -> "3")
-        bandpass = map_wavelength_to_corgisim_bandpass(wavelength)
-
-        # Define subband sequences per band
-        # Band 3 has extended subbands to support spec_band3's 5 channels
-        if bandpass == '3':
-            subband_option = ['a', 'b', 'c', 'g', 'e']  # Note: 'd' removed, using g,e instead per test expectations
-        else:
-            subband_option = ['a', 'b', 'c']
-
-        # For spectroscopic modes, multiple channels can map to the same bandpass
-        # Count how many previous channels also mapped to this bandpass
-        channel_in_band = 0
-        for i in range(lind):
-            prev_wavelength = self.cfg.sl_list[i].lam
-            prev_bandpass = map_wavelength_to_corgisim_bandpass(prev_wavelength)
-            if prev_bandpass == bandpass:
-                channel_in_band += 1
-
-        # Get the subband letter for this channel within its band
-        if channel_in_band >= len(subband_option):
-            raise ValueError(
-                f"Channel {lind} (wavelength {wavelength*1e9:.1f} nm) is the "
-                f"{channel_in_band+1}th channel in band {bandpass}, but only "
-                f"{len(subband_option)} subbands are defined: {subband_option}"
-            )
-
-        subband = subband_option[channel_in_band]
-        return bandpass + subband
+        return map_wavelength_to_corgisim_subband(wavelength)
 
     def _get_passthrough_keywords(self):
         """

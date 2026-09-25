@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
 
 
 # import helper functions 
-from corgihowfsc.utils.corgisim_utils import _extract_host_properties_from_hconf, CGI_TO_CORGI_MAPPING, SUPPORTED_CORGI_MODES, SUPPORTED_CGI_MODES, map_wavelength_to_corgisim_bandpass
+from corgihowfsc.utils.corgisim_utils import _extract_host_properties_from_hconf, CGI_TO_CORGI_MAPPING, SUPPORTED_CORGI_MODES, SUPPORTED_CGI_MODES
 
 from corgihowfsc.utils.corgisim_manager import CorgisimManager
 
