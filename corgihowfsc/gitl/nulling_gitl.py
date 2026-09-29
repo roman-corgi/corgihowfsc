@@ -350,8 +350,16 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             pass
         t1 = time.time()
 
-        # Check if howfsc_computation encountered an error
-        if status != status_codes['nominal']:
+        # Check if howfsc_computation encountered an error.
+        # LowerThanExpectedSNR (17) is explicitly not an exception, just a warning that the second optimizer had to
+        # select settings below the SNR target; the iteration is still usable, so continue.  Every other non-nominal
+        # status maps to a raised exception and is fatal.
+        if status == status_codes['nominal']:
+            pass
+        elif status == status_codes['LowerThanExpectedSNR']:
+            log.warning(f"howfsc_computation reported lower-than-expected SNR "
+                        f"(status {status}) at iteration {iteration}; continuing")
+        else:
             log.error(f"howfsc_computation failed with status {status} at iteration {iteration}")
             log.error("Aborting GITL loop due to error in howfsc_computation")
             break
