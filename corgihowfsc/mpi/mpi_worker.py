@@ -69,6 +69,7 @@ def initialize_mpi_worker_state(worker_config):
         cor=worker_config['mode'],
         corgi_overrides=worker_config['corgi_overrides'],
         emccd_overrides=worker_config['emccd_overrides'],
+        cosmic_ray_filtering=worker_config.get('cosmic_ray_filtering'),
     )
     return {
         'frame_cfg': frame_cfg,
