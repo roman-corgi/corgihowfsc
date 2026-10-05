@@ -168,6 +168,34 @@ class CorgisimManager:
         else:
             return {k: v for k, v in self.emccd_overrides.items() if k not in _MANAGER_KEYS}
 
+    def _crop_fixedbp(self, fixedbp, crop):
+        """
+        Cut a full-frame fixed bad pixel map down to the simulated HOWFSC frame. Regions of the crop that fall off the full
+        frame are marked True (bad), matching howfsc/control/cs.py: padding has no data.
+        """
+        if fixedbp is None:
+            return None
+        full_frame_bp = np.asarray(fixedbp)
+        sim_shape = (self.output_dim, self.output_dim)
+        if full_frame_bp.shape == sim_shape:
+            return full_frame_bp  # already the right size
+        if crop is None:
+            raise ValueError(
+                f"crop is required to cut fixedbp of shape {full_frame_bp.shape} down to {sim_shape}"
+            )
+        start_row, start_col, num_rows, num_cols = crop
+        if (num_rows, num_cols) != sim_shape:
+            raise ValueError(f"crop size {(num_rows, num_cols)} does not match output_dim {sim_shape}")
+
+        # Region of the full frame covered by the crop (may be clipped at the frame edge)
+        cropped_region = full_frame_bp[start_row:start_row + num_rows,
+                                       start_col:start_col + num_cols]
+
+        # Place it in a frame of the simulated size; anything off the edge stays True (bad)
+        corgi_frame_bp = np.ones(sim_shape, dtype=bool)
+        corgi_frame_bp[:cropped_region.shape[0], :cropped_region.shape[1]] = cropped_region
+        return corgi_frame_bp
+
     def create_emccd_detector(self, gain=None):
         """
         Create a CorgiDetector instance with the specified EMCCD parameters.
@@ -316,7 +344,7 @@ class CorgisimManager:
             return filtered_frame
 
 
-    def generate_host_star_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, nframes=1, fixedbp=None):
+    def generate_host_star_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, nframes=1, fixedbp=None, crop=None):
         """
         Generate the host star PSF using the standard coronagraph configuration.
 
@@ -340,8 +368,13 @@ class CorgisimManager:
         nframes : int, optional
             Number of frames to generate and coadd. Default is 1.
         fixedbp : array_like of bool, optional
-            Fixed bad-pixel mask forwarded to onboard processing. Defaults to
-            no fixed bad pixels.
+            Fixed bad-pixel mask for a full clean frame (e.g. 1024x1024). It is
+            cropped to the simulated frame using `crop` before onboard processing.
+            Defaults to no fixed bad pixels.
+        crop : tuple of int, optional
+            (lower row, lower col, number of rows, number of cols) locating the
+            simulated frame within the full clean frame. Required to crop a
+            full-frame `fixedbp`.
 
         Returns
         -------
@@ -370,6 +403,7 @@ class CorgisimManager:
 
             # sim_scene.image_on_detector.data is not gain corrected or bias subtracted
             master_dark = self.generate_master_dark(detector, exptime)
+            fixedbp = self._crop_fixedbp(fixedbp, crop)
 
             # Get the raw frames from the detector
             raw_frames_dn = []
@@ -386,7 +420,7 @@ class CorgisimManager:
                 full_well_image_e = detector.emccd.full_well_image,
                 full_well_serial_e = detector.emccd.full_well_serial,
                 master_dark_e = master_dark,
-                fixed_bp = None, # FIX - it should be a real fixed bad pixel map here
+                fixedbp = fixedbp, 
                 cosmic_filter_width = self.cosmic_filter_width,
                 saturation_threshold = self.cosmic_saturation_threshold,
                 plateau_threshold = self.cosmic_plateau_threshold,
@@ -394,6 +428,8 @@ class CorgisimManager:
 
             filtered_frame = ProcessedFrame.image
             return filtered_frame
+
+
 
     def generate_efield(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, bias=0, crop=None):
         """
