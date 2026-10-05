@@ -5,6 +5,8 @@ import logging
 import yaml
 import sys
 
+import numpy as np
+
 
 def setup_logging(debug=False, logfile=None):
     """Configure root logging for the current process."""
@@ -99,3 +101,73 @@ def update_yml(path, updates: dict):
 
     with path.open("w", encoding="utf-8") as f:
         yaml.safe_dump(merged, f, sort_keys=False)
+
+
+def plot_onboard_debug(debug_list, framelist, nlam, ndm, iteration, fileout):
+    """
+    Save one figure per iteration showing the onboard-processing masks for every frame.
+
+    Frames are laid out with wavelength channels as rows and DM settings as
+    columns, matching the frame index ``indj * ndm + indk``. Each panel shows
+    the frame with flagged pixels coloured by source: fixed bad pixels (cyan), cosmic
+    rays (fraction of the ``nframes`` raw frames in which a pixel was flagged),
+    and the random bad pixels injected by ``fracbadpix``.
+
+    Args:
+        debug_list: list of per-frame debug dicts (or None) from ``_get_image_worker``
+        framelist: list of the corresponding output frames
+        nlam, ndm: number of wavelength channels and DM settings per channel
+        iteration: iteration number, used in the filename
+        fileout: path to the main output file; the figure is saved next to it.
+            If None, nothing is saved.
+    """
+    if fileout is None:
+        return
+
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    from matplotlib.colors import to_rgb
+
+    fig, axes = plt.subplots(nlam, ndm, figsize=(2.5 * ndm, 2.5 * nlam),
+                             squeeze=False)
+    for indj in range(nlam):
+        for indk in range(ndm):
+            ax = axes[indj, indk]
+            ax.set_xticks([])
+            ax.set_yticks([])
+            index = indj * ndm + indk
+            info = debug_list[index]
+            if info is None:
+                ax.text(0.5, 0.5, 'no onboard\nresult', ha='center', va='center',
+                        transform=ax.transAxes)
+                continue
+
+            bad = info['bad_pixel_map']
+            cosmic = info['cosmic_ray_mask']
+            cosmic_frac = cosmic.mean(axis=0)                     # fraction of frames flagged
+            fixed = (bad & ~cosmic).all(axis=0)                   # bad in every frame, not from cosmics
+            random_bp = info['random_bad_pixels']
+
+            ax.imshow(np.log10(np.clip(framelist[index], 1e-10, None)),
+                      origin='lower', cmap='gray')
+            for mask, color in ((fixed, 'cyan'), (cosmic_frac, 'red'), (random_bp, 'lime')):
+                overlay = np.zeros(mask.shape + (4,))
+                overlay[..., :3] = to_rgb(color)
+                overlay[..., 3] = np.where(mask > 0, np.clip(mask, 0.3, 1), 0)
+                ax.imshow(overlay, origin='lower', interpolation='nearest')
+            if indj == 0:
+                ax.set_title(f'Probe {indk}', fontsize=8)
+            if indk == 0:
+                ax.set_ylabel(f'lam {indj}', fontsize=8)
+
+    fig.suptitle(f'Iteration {iteration}: fixed (cyan), cosmic (red), random (lime)',
+                 fontsize=9)
+    fig.tight_layout()
+    iterpath = os.path.join(os.path.dirname(fileout), f'iteration_{iteration + 1:04d}')
+    os.makedirs(iterpath, exist_ok=True)
+    path = os.path.join(iterpath, 'onboard_debug.png')
+    fig.savefig(path, dpi=100)
+    plt.close(fig)
+    return path
+

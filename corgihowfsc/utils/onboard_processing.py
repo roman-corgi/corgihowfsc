@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 class OnboardProcessingResult:
     """Output image and masks produced by `process_onboard_frames`. TODO - do we acutally need to save all these outputs? If not, we can remove the dataclass. """
     image: np.ndarray
-    cosmic_ray_mask: np.ndarray
-    bad_pixel_map: np.ndarray
+    cosmic_ray_mask: np.ndarray # cosmic ray mask for each frame
+    bad_pixel_map: np.ndarray # combined mask of cosmic ray mask and fixed bad pixel map
     good_frame_count: np.ndarray
 
 

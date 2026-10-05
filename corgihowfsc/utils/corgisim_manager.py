@@ -390,6 +390,8 @@ class CorgisimManager:
         generate_on_axis_psf : Equivalent method with explicit optics keyword construction.
         """
 
+        self.last_onboard_result = None  # only set in the noisy branch, so never stale
+
         optics = self.create_optics(dm1v, dm2v, lind)
 
         sim_scene = optics.get_host_star_psf(self.base_scene)
@@ -429,6 +431,7 @@ class CorgisimManager:
                 cosmic_filter_enabled = self.cosmic_filter_enabled,
                 combine = self.frame_combine)
 
+            self.last_onboard_result = ProcessedFrame  # kept for debug output
             filtered_frame = ProcessedFrame.image
             return filtered_frame
 

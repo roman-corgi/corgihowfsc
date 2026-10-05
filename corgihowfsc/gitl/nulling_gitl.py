@@ -37,6 +37,7 @@ from howfsc.precomp import howfsc_precomputation
 from corgihowfsc.gitl.modular_gitl import howfsc_computation
 from corgihowfsc.utils.saving_output import save_outputs, save_outputs_iter
 from corgihowfsc.utils.output_management import (
+    plot_onboard_debug,
     save_run_config,
     setup_logging,
     update_yml,
@@ -288,6 +289,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             fracbadpix=fracbadpix,
             iteration=0,
             max_workers=safe_cpu_count,
+            debug=debug,
         )
     else:
         framelist = _collect_framelist(
@@ -304,8 +306,13 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             fracbadpix=fracbadpix,
             iteration=0,
             n_jobs=safe_cpu_count,
+            debug=debug,
         )
     t1 = time.time()
+
+    if debug:
+        framelist, debug_list = framelist
+        plot_onboard_debug(debug_list, framelist, nlam, ndm, 0, fileout)
 
     log.info('Initial framelist collection time: %s seconds (mpi=%s)',
                 t1-t0, use_mpi)
@@ -509,6 +516,7 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
                 fracbadpix=fracbadpix,
                 iteration=iteration,
                 max_workers=safe_cpu_count,
+                debug=debug,
             )
         else:
             framelist = _collect_framelist(
@@ -525,9 +533,15 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
                 fracbadpix=fracbadpix,
                 iteration=iteration,
                 n_jobs=safe_cpu_count,
+                debug=debug,
             )
 
         t1 = time.time()
+
+        if debug:
+            framelist, debug_list = framelist
+            plot_onboard_debug(debug_list, framelist, nlam, ndm, iteration, fileout)
+
         log.info('Framelist collection time for iteration %d: %s seconds (mpi=%s)',
                     iteration, t1-t0, use_mpi)
 

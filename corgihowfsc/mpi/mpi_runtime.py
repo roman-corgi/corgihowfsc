@@ -16,6 +16,7 @@ from corgihowfsc.mpi.mpi_worker import (
 )
 
 from corgihowfsc.utils.output_management import setup_logging
+from corgihowfsc.utils.gitl_worker import split_debug_results
 
 log = logging.getLogger(__name__)
 
@@ -253,7 +254,7 @@ def worker_loop(comm):
 def collect_framelist_mpi(comm, imager, cfg, dm1_list, dm2_list, exptime_list,
                           gain_list, nframes_list, croplist,
                           normalization_strategy, get_cgi_eetc, hconf, ndm,
-                          cstrat, fracbadpix, iteration=0, max_workers=None):
+                          cstrat, fracbadpix, iteration=0, max_workers=None, debug=False):
     """
     Collect detector frames for the full framelist by distributing explicit frame tasks over MPI workers.
 
@@ -277,9 +278,12 @@ def collect_framelist_mpi(comm, imager, cfg, dm1_list, dm2_list, exptime_list,
         max_workers : int or None, optional
             Maximum number of MPI worker ranks to use for this queue. This caps the
             active worker count even if the MPI job was launched with more ranks.
+        debug : bool, optional
+            If True, also gather the onboard-processing masks for every frame.
 
     Returns: 
         list: Ordered list of generated detector frames, one element per requested frame task.
+        If ``debug`` is True, returns ``(framelist, debug_list)``.
     """
     if comm is None:
         raise ValueError('collect_framelist_mpi requires an MPI communicator')
@@ -308,13 +312,15 @@ def collect_framelist_mpi(comm, imager, cfg, dm1_list, dm2_list, exptime_list,
             'fracbadpix': fracbadpix,
             'iteration': iteration,
             'seed_offset': indj * ndm + indk,
+            'debug': debug,
         }
         for indj in range(len(cfg.sl_list))
         for indk in range(ndm)
     ]
     log.info("MPI manager starting FRAME queue with %d jobs", len(frame_tasks))
 
-    return _run_manager_task_queue(comm, TASK_FRAME, frame_tasks, max_workers=max_workers)
+    results = _run_manager_task_queue(comm, TASK_FRAME, frame_tasks, max_workers=max_workers)
+    return split_debug_results(results, debug)
 
 
 def precompute_jac_mpi(comm, cfg, dmset_list, cstrat, subcroplist,
