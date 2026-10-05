@@ -7,9 +7,9 @@ import numpy as np
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-@dataclass(frozen=True)
+@dataclass
 class OnboardProcessingResult:
-    """Output image and masks produced by `process_onboard_frames`."""
+    """Output image and masks produced by `process_onboard_frames`. TODO - do we acutally need to save all these outputs? If not, we can remove the dataclass. """
     image: np.ndarray
     cosmic_ray_mask: np.ndarray
     bad_pixel_map: np.ndarray
@@ -155,11 +155,12 @@ def process_onboard_frames(
     full_well_image_e,
     full_well_serial_e,
     master_dark_e,
-    fixed_bp=None,
+    fixedbp=None,
     combine="mean",
     cosmic_filter_width=2,
     saturation_threshold=0.99,
     plateau_threshold=0.85,
+    cosmic_filter_enabled=True,
 ):
     """
     Apply cosmic ray filtering and frame combination (similar to the process performed onboard on Roman CGI). 
@@ -192,7 +193,7 @@ def process_onboard_frames(
         Image-area and serial-register full wells in electrons.
     master_dark_e : float or array_like
         Bias-subtracted and EM-gain-divided master dark in electrons.
-    fixed_bp : array_like of bool, optional
+    fixedbp : array_like of bool, optional
         Two-dimensional fixed bad-pixel mask.  Defaults to no fixed bad pixels.
     combine : {"mean", "median"}, optional
         Method used to combine frames.  Defaults to ``"mean"``.
@@ -204,7 +205,11 @@ def process_onboard_frames(
         Defaults to 0.99.
     plateau_threshold : float, optional
         Full-well fractions used for plateau detection after a saturated pixel is found.
-        Defaults to 0.85. 
+        Defaults to 0.85.
+    cosmic_filter_enabled : bool, optional
+        If False, skip cosmic-ray filtering (the cosmic-ray mask is all ``False``);
+        the fixed bad-pixel mask, frame combination and calibration still apply.
+        Defaults to True.
 
     Returns
     -------
@@ -251,19 +256,19 @@ def process_onboard_frames(
 
     # Validate the fixed bad pixel mask if provided
     image_shape = frames.shape[1:]    
-    if fixed_bp is None: # This is coming from the cfg
+    if fixedbp is None: # This is coming from the cfg
         fixed_mask = np.zeros(image_shape, dtype=bool)
     else:
-        fixed_mask = np.asarray(fixed_bp)
+        fixed_mask = np.asarray(fixedbp)
         if fixed_mask.shape != image_shape:
-            raise ValueError("fixed_bp must match the frame shape")
+            raise ValueError("fixedbp must match the frame shape, but got {} and {}".format(fixed_mask.shape, image_shape))
         if fixed_mask.dtype != bool:
-            raise TypeError("fixed_bp must have boolean dtype")
+            raise TypeError("fixedbp must have boolean dtype")
 
     # Convert the master dark to a float array for subtraction
     master_dark = np.asarray(master_dark_e, dtype=float)
     if master_dark.shape != image_shape:
-        raise ValueError("master_dark_e must match the frame shape")
+        raise ValueError("master_dark_e must match the frame shape, but got {} and {}".format(master_dark.shape, image_shape))
 
     # Convert bias from electrons to DN for subtraction
     bias_dn = bias_e / e_per_dn 
@@ -276,14 +281,15 @@ def process_onboard_frames(
     effective_full_well_dn = effective_full_well_e / e_per_dn
 
     cosmic_masks = np.zeros(frames.shape, dtype=bool)
-    for frame_index, frame in enumerate(bias_subtracted):
-        cosmic_masks[frame_index] = make_cosmic_ray_mask(
-            frame,
-            effective_full_well_dn,
-            cosmic_filter_width=cosmic_filter_width,
-            saturation_threshold=saturation_threshold,
-            plateau_threshold=plateau_threshold,
-        )
+    if cosmic_filter_enabled:
+        for frame_index, frame in enumerate(bias_subtracted):
+            cosmic_masks[frame_index] = make_cosmic_ray_mask(
+                frame,
+                effective_full_well_dn,
+                cosmic_filter_width=cosmic_filter_width,
+                saturation_threshold=saturation_threshold,
+                plateau_threshold=plateau_threshold,
+            )
     
     # Combine the cosmic ray masks with the fixed bad pixel mask
     bad_masks = cosmic_masks | fixed_mask[np.newaxis, :, :]

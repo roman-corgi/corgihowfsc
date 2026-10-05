@@ -11,6 +11,7 @@ from corgihowfsc.utils.corgisim_utils import (
     map_wavelength_to_corgisim_bandpass, 
     _MANAGER_KEYS
     )
+from corgihowfsc.utils import onboard_processing
 
 class CorgisimManager:
     """
@@ -23,7 +24,7 @@ class CorgisimManager:
     - PSF and detector image
     """
 
-    def __init__(self, cfg, cstrat, hconf, cor=None, corgi_overrides=None, emccd_overrides=None):
+    def __init__(self, cfg, cstrat, hconf, cor=None, corgi_overrides=None, emccd_overrides=None, cosmic_ray_filtering=None):
         """
         Args:
             cfg:
@@ -51,6 +52,11 @@ class CorgisimManager:
                 - em_gain: float, EM gain setting (default: 1)
                 - bias: float, detector bias level (default: 0)
                 - cr_rate: float, cosmic ray rate (default: 5)
+            cosmic_ray_filtering: Optional dict of cosmic ray filtering parameters:
+                - cosmic_filter_width
+                - cosmic_saturation_threshold
+                - cosmic_plateau_threshold
+                - frame_combine
         """
 
         if corgi_overrides is None: 
@@ -58,6 +64,9 @@ class CorgisimManager:
 
         if emccd_overrides is None:
             emccd_overrides = {}
+
+        if cosmic_ray_filtering is None:
+            cosmic_ray_filtering = {}
         
         self.cfg = cfg 
         self.cstrat = cstrat
@@ -65,7 +74,7 @@ class CorgisimManager:
         self.cor = cor 
         self.corgi_overrides = corgi_overrides
         self.emccd_overrides = emccd_overrides
-
+        self.cosmic_ray_filtering = cosmic_ray_filtering
         self._validate_inputs()
         self._initialize_config()
         self._initialize_base_scene()
@@ -126,6 +135,14 @@ class CorgisimManager:
         self.bias = self.emccd_overrides.get('bias', 0) # default should be 1500
         self.cr_rate = self.emccd_overrides.get('cr_rate', 0) # default should be 5
 
+    def _initialize_cosmic_ray_filtering(self):
+        # Setup the onboard processing parameters for cosmic ray filtering and frame combination
+        self.cosmic_filter_enabled = self.cosmic_ray_filtering.get('enabled', True)
+        self.cosmic_filter_width = self.cosmic_ray_filtering.get('cosmic_filter_width', 2)
+        self.cosmic_saturation_threshold = self.cosmic_ray_filtering.get('cosmic_saturation_threshold', 0.99)
+        self.cosmic_plateau_threshold = self.cosmic_ray_filtering.get('cosmic_plateau_threshold', 0.85)
+        self.frame_combine = self.cosmic_ray_filtering.get('frame_combine', 'mean')
+
     def _initialize_base_scene(self):
         # Initialise scene object 
         point_source_info = [] # default is just none, tbc whether there should be point source or not
@@ -151,6 +168,34 @@ class CorgisimManager:
             return {k: v for k, v in self.corgi_overrides.items() if k not in _MANAGER_KEYS}
         else:
             return {k: v for k, v in self.emccd_overrides.items() if k not in _MANAGER_KEYS}
+
+    def _crop_fixedbp(self, fixedbp, crop):
+        """
+        Cut a full-frame fixed bad pixel map down to the simulated HOWFSC frame. Regions of the crop that fall off the full
+        frame are marked True (bad), matching howfsc/control/cs.py: padding has no data.
+        """
+        if fixedbp is None:
+            return None
+        full_frame_bp = np.asarray(fixedbp)
+        sim_shape = (self.output_dim, self.output_dim)
+        if full_frame_bp.shape == sim_shape:
+            return full_frame_bp  # already the right size
+        if crop is None:
+            raise ValueError(
+                f"crop is required to cut fixedbp of shape {full_frame_bp.shape} down to {sim_shape}"
+            )
+        start_row, start_col, num_rows, num_cols = crop
+        if (num_rows, num_cols) != sim_shape:
+            raise ValueError(f"crop size {(num_rows, num_cols)} does not match output_dim {sim_shape}")
+
+        # Region of the full frame covered by the crop (may be clipped at the frame edge)
+        cropped_region = full_frame_bp[start_row:start_row + num_rows,
+                                       start_col:start_col + num_cols]
+
+        # Place it in a frame of the simulated size; anything off the edge stays True (bad)
+        corgi_frame_bp = np.ones(sim_shape, dtype=bool)
+        corgi_frame_bp[:cropped_region.shape[0], :cropped_region.shape[1]] = cropped_region
+        return corgi_frame_bp
 
     def create_emccd_detector(self, gain=None):
         """
@@ -204,7 +249,7 @@ class CorgisimManager:
 
         return optics
 
-    def generate_on_axis_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, nframes=1, bias=0):
+    def generate_on_axis_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, nframes=1):
         """
         Generate the on-axis (host star) PSF with optional detector noise simulation.
 
@@ -228,8 +273,6 @@ class CorgisimManager:
             EMCCD EM gain. Default is 1.
         nframes : int, optional
             Number of frames to generate and coadd. Default is 1.
-        bias : float, optional
-            Detector bias level. Default is 0.
 
         Returns
         -------
@@ -271,20 +314,39 @@ class CorgisimManager:
         else:
             # generate detector image
             detector = self.create_emccd_detector(gain)
+
+            # initialize cosmic ray filtering parameters
+            self._initialize_cosmic_ray_filtering()
+
             # sim_scene.image_on_detector.data is not gain corrected or bias subtracted
             master_dark = self.generate_master_dark(detector, exptime)
-            B = self.bias * np.ones((self.output_dim, self.output_dim))
 
-            coadd = np.zeros((self.output_dim, self.output_dim))
+            # Get the raw frames from the detector
+            raw_frames_dn = []
             for n in range(nframes):
                 sim_scene = detector.generate_detector_image(sim_scene, exptime)
-                frame = (self.k_gain * sim_scene.image_on_detector.data - B) / detector.emccd.em_gain - master_dark
-                coadd += frame
-            # frame = (sim_scene.image_on_detector.data - B) * self.k_gain / self.em_gain - master_dark
-            return coadd/nframes
+                raw_frames_dn.append(sim_scene.image_on_detector.data)
+
+            # Apply cosmic ray filtering
+            ProcessedFrame = onboard_processing.process_onboard_frames(
+                raw_frames_dn,
+                bias_e = self.bias,
+                e_per_dn = detector.emccd.eperdn,
+                em_gain = gain,
+                full_well_image_e = detector.emccd.full_well_image,
+                full_well_serial_e = detector.emccd.full_well_serial,
+                master_dark_e = master_dark,
+                cosmic_filter_width = self.cosmic_filter_width,
+                saturation_threshold = self.cosmic_saturation_threshold,
+                plateau_threshold = self.cosmic_plateau_threshold,
+                cosmic_filter_enabled = self.cosmic_filter_enabled,
+                combine = self.frame_combine)
+
+            filtered_frame = ProcessedFrame.image
+            return filtered_frame
 
 
-    def generate_host_star_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, nframes=1, bias=0):
+    def generate_host_star_psf(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, nframes=1, fixedbp=None, crop=None):
         """
         Generate the host star PSF using the standard coronagraph configuration.
 
@@ -307,8 +369,14 @@ class CorgisimManager:
             EMCCD EM gain. Default is 1.
         nframes : int, optional
             Number of frames to generate and coadd. Default is 1.
-        bias : float, optional
-            Detector bias level in ADU. Default is 0.
+        fixedbp : array_like of bool, optional
+            Fixed bad-pixel mask for a full clean frame (e.g. 1024x1024). It is
+            cropped to the simulated frame using `crop` before onboard processing.
+            Defaults to no fixed bad pixels.
+        crop : tuple of int, optional
+            (lower row, lower col, number of rows, number of cols) locating the
+            simulated frame within the full clean frame. Required to crop a
+            full-frame `fixedbp`.
 
         Returns
         -------
@@ -331,17 +399,40 @@ class CorgisimManager:
         else:
             # generate detector image
             detector = self.create_emccd_detector(gain)
+
+            # initialize cosmic ray filtering parameters
+            self._initialize_cosmic_ray_filtering()
+
             # sim_scene.image_on_detector.data is not gain corrected or bias subtracted
             master_dark = self.generate_master_dark(detector, exptime)
-            B = self.bias * np.ones((self.output_dim, self.output_dim))
+            fixedbp = self._crop_fixedbp(fixedbp, crop)
 
-            coadd = np.zeros((self.output_dim, self.output_dim))
+            # Get the raw frames from the detector
+            raw_frames_dn = []
             for n in range(nframes):
                 sim_scene = detector.generate_detector_image(sim_scene, exptime)
-                frame = (self.k_gain * sim_scene.image_on_detector.data - B) / gain - master_dark
-                coadd += frame
-            # frame = (sim_scene.image_on_detector.data - B) * self.k_gain / gain - master_dark
-            return coadd/nframes
+                raw_frames_dn.append(sim_scene.image_on_detector.data)
+
+            # Apply cosmic ray filtering
+            ProcessedFrame = onboard_processing.process_onboard_frames(
+                raw_frames_dn,
+                bias_e = self.bias,
+                e_per_dn = detector.emccd.eperdn,
+                em_gain = gain,
+                full_well_image_e = detector.emccd.full_well_image,
+                full_well_serial_e = detector.emccd.full_well_serial,
+                master_dark_e = master_dark,
+                fixedbp = fixedbp, 
+                cosmic_filter_width = self.cosmic_filter_width,
+                saturation_threshold = self.cosmic_saturation_threshold,
+                plateau_threshold = self.cosmic_plateau_threshold,
+                cosmic_filter_enabled = self.cosmic_filter_enabled,
+                combine = self.frame_combine)
+
+            filtered_frame = ProcessedFrame.image
+            return filtered_frame
+
+
 
     def generate_efield(self, dm1v, dm2v, lind=0, exptime=1.0, gain=1, bias=0, crop=None):
         """
@@ -378,6 +469,9 @@ class CorgisimManager:
 
     def generate_master_dark(self, detector, exptime):
         """
+        Generate a master dark frame for the EMCCD detector.
+        For onboard-processing, we need a subtract bias-subtracted, gain-divided master dark in electrons.
+        
         dark:  master dark
         FPM: fixed pattern noise map
         gain: EM gain
@@ -393,7 +487,7 @@ class CorgisimManager:
 
         return dark
     
-    def generate_off_axis_psf(self, dm1v, dm2v, dx, dy, companion_vmag=None, lind=0, exptime=1.0, gain=1):
+    def generate_off_axis_psf(self, dm1v, dm2v, dx, dy, companion_vmag=None, lind=0, exptime=1.0, gain=1, nframes=1):
         if companion_vmag is None:
             companion_vmag = self.Vmag
         
@@ -418,9 +512,33 @@ class CorgisimManager:
         else:
             # generate detector image
             detector = self.create_emccd_detector(gain)
-            master_dark = self.generate_master_dark(detector, exptime)
-            sim_scene = detector.generate_detector_image(sim_scene, exptime)
-            # sim_scene.image_on_detector.data is not gain corrected or bias subtracted
-            B = self.bias * np.ones((self.output_dim, self.output_dim))
-            return (self.k_gain*sim_scene.image_on_detector.data - B)/detector.emccd.em_gain - master_dark
 
+            # initialize cosmic ray filtering parameters
+            self._initialize_cosmic_ray_filtering()
+
+            # sim_scene.image_on_detector.data is not gain corrected or bias subtracted
+            master_dark = self.generate_master_dark(detector, exptime)
+
+            # Get the raw frames from the detector
+            raw_frames_dn = []
+            for n in range(nframes):
+                sim_scene = detector.generate_detector_image(sim_scene, exptime)
+                raw_frames_dn.append(sim_scene.image_on_detector.data)
+            
+            # Apply cosmic ray filtering
+            ProcessedFrame = onboard_processing.process_onboard_frames(
+                raw_frames_dn,
+                bias_e=self.bias,
+                e_per_dn=detector.emccd.eperdn,
+                em_gain=gain,
+                full_well_image_e=detector.emccd.full_well_image,
+                full_well_serial_e=detector.emccd.full_well_serial,
+                master_dark_e=master_dark,
+                cosmic_filter_width=self.cosmic_filter_width,
+                saturation_threshold=self.cosmic_saturation_threshold,
+                plateau_threshold=self.cosmic_plateau_threshold,
+                cosmic_filter_enabled=self.cosmic_filter_enabled,
+                combine=self.frame_combine)
+
+            filtered_frame = ProcessedFrame.image
+            return filtered_frame
