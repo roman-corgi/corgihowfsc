@@ -109,7 +109,7 @@ def plot_onboard_debug(debug_list, framelist, nlam, ndm, iteration, fileout):
 
     Frames are laid out with wavelength channels as rows and DM settings as
     columns, matching the frame index ``indj * ndm + indk``. Each panel shows
-    the frame with flagged pixels coloured by source: fixed bad pixels, cosmic
+    the frame with flagged pixels coloured by source: fixed bad pixels (cyan), cosmic
     rays (fraction of the ``nframes`` raw frames in which a pixel was flagged),
     and the random bad pixels injected by ``fracbadpix``.
 
@@ -127,6 +127,7 @@ def plot_onboard_debug(debug_list, framelist, nlam, ndm, iteration, fileout):
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
+    from matplotlib.colors import to_rgb
 
     fig, axes = plt.subplots(nlam, ndm, figsize=(2.5 * ndm, 2.5 * nlam),
                              squeeze=False)
@@ -150,15 +151,17 @@ def plot_onboard_debug(debug_list, framelist, nlam, ndm, iteration, fileout):
 
             ax.imshow(np.log10(np.clip(framelist[index], 1e-10, None)),
                       origin='lower', cmap='gray')
-            for mask, cmap in ((fixed, 'Blues'), (cosmic_frac, 'Reds'), (random_bp, 'Greens')):
-                overlay = np.ma.masked_where(mask == 0, mask.astype(float))
-                ax.imshow(overlay, origin='lower', cmap=cmap, vmin=0, vmax=1, alpha=0.8)
+            for mask, color in ((fixed, 'cyan'), (cosmic_frac, 'red'), (random_bp, 'lime')):
+                overlay = np.zeros(mask.shape + (4,))
+                overlay[..., :3] = to_rgb(color)
+                overlay[..., 3] = np.where(mask > 0, np.clip(mask, 0.3, 1), 0)
+                ax.imshow(overlay, origin='lower', interpolation='nearest')
             if indj == 0:
                 ax.set_title(f'Probe {indk}', fontsize=8)
             if indk == 0:
                 ax.set_ylabel(f'lam {indj}', fontsize=8)
 
-    fig.suptitle(f'Iteration {iteration}: fixed (blue), cosmic (red), random (green)',
+    fig.suptitle(f'Iteration {iteration}: fixed (cyan), cosmic (red), random (lime)',
                  fontsize=9)
     fig.tight_layout()
     iterpath = os.path.join(os.path.dirname(fileout), f'iteration_{iteration + 1:04d}')
@@ -208,9 +211,7 @@ def save_onboard_debug(debug_list, nlam, ndm, iteration, fileout):
         frame_hdr['LIND'] = index // ndm
         frame_hdr['DMIND'] = index % ndm
         for name, key, dtype in (('COSMIC', 'cosmic_ray_mask', np.uint8),
-                                 ('BADPIX', 'bad_pixel_map', np.uint8),
-                                 ('NGOOD', 'good_frame_count', np.int32),
-                                 ('RANDBP', 'random_bad_pixels', np.uint8)):
+                                 ('BADPIX', 'bad_pixel_map', np.uint8),):
             hdul.append(pyfits.ImageHDU(np.asarray(info[key]).astype(dtype),
                                         header=frame_hdr, name=f'{name}_{index}'))
 

@@ -183,7 +183,6 @@ def _get_image_worker(imager, dm1v, dm2v, exptime, gain, nframes, crop, lind,
     debug_info = None if onboard is None else {
         'cosmic_ray_mask': onboard.cosmic_ray_mask,
         'bad_pixel_map': onboard.bad_pixel_map,
-        'good_frame_count': onboard.good_frame_count,
         'random_bad_pixels': bpmeas,
     }
     return f, debug_info
