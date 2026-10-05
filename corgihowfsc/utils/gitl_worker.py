@@ -12,7 +12,7 @@ def _collect_framelist(imager, cfg, dm1_list, dm2_list, exptime_list,
                        gain_list, nframes_list, croplist, normalization_strategy,
                        get_cgi_eetc, hconf, ndm, cstrat, fracbadpix,
                        iteration=0,
-                       n_jobs=1):
+                       n_jobs=1, debug=False):
     """
     Generate and collect the full framelist using local multiprocessing. 
     This helper is the local, non MPI version of framelist collection.
@@ -52,9 +52,13 @@ def _collect_framelist(imager, cfg, dm1_list, dm2_list, exptime_list,
             frame.
         n_jobs : int, optional
             Number of local worker processes to use. ``n_jobs=1`` runs serially.
+        debug : bool, optional
+            If True, also collect the onboard-processing masks for every frame.
 
     Returns: 
         list: Ordered list of simulated detector frames, one element per requested frame in the probing sequence.
+        If ``debug`` is True, returns ``(framelist, debug_list)`` where ``debug_list`` holds one
+        ``debug_info`` dict (or None) per frame, in the same order.
     """
 
     # pre-compute peakflux per wavelength before parallelising
@@ -82,21 +86,34 @@ def _collect_framelist(imager, cfg, dm1_list, dm2_list, exptime_list,
          fracbadpix,
          iteration,
          indj * ndm + indk,   # seed_offset
+         debug,
         )
         for indj in range(len(cfg.sl_list))
         for indk in range(ndm)
     ]
 
-    return run_parallel(
+    results = run_parallel(
         _get_image_worker,
         args_list,
         n_jobs=n_jobs,
         allow_nesting=True,
         start_method="spawn",
     )
+    return split_debug_results(results, debug)
+
+
+def split_debug_results(results, debug):
+    """
+    Split ``_get_image_worker`` results into ``framelist`` and ``debug_list``.
+    With ``debug`` False the results are already a plain framelist.
+    """
+    if not debug:
+        return results
+    framelist, debug_list = zip(*results)
+    return list(framelist), list(debug_list)
 
 def _get_image_worker(imager, dm1v, dm2v, exptime, gain, nframes, crop, lind,
-                      peakflux, fixedbp, fracbadpix, iteration, seed_offset):
+                      peakflux, fixedbp, fracbadpix, iteration, seed_offset, debug=False):
     """
     Generate a frame for a single wavelength and DM setting.
 
@@ -131,9 +148,15 @@ def _get_image_worker(imager, dm1v, dm2v, exptime, gain, nframes, crop, lind,
         seed_offset : int
             Per frame seed offset used to make the random bad pixel pattern distinct
             but reproducible across frames.
+        debug : bool, optional
+            If True, also return the onboard-processing masks for this frame.
 
     Returns:
         ndarray: Simulated detector frame with injected bad pixels set to ``NaN``.
+        If ``debug`` is True, returns ``(frame, debug_info)`` instead, where
+        ``debug_info`` is a dict of ``cosmic_ray_mask``, ``bad_pixel_map``,
+        ``good_frame_count`` and ``random_bad_pixels``, or None if the backend
+        produced no onboard-processing result (e.g. noise-free mode).
     """
     f = imager.get_image(
         dm1v, dm2v, exptime,
@@ -153,7 +176,17 @@ def _get_image_worker(imager, dm1v, dm2v, exptime, gain, nframes, crop, lind,
     bpmeas = rng.random(f.shape) > (1 - fracbadpix)
     f[bpmeas] = np.nan
 
-    return f
+    if not debug:
+        return f
+
+    onboard = getattr(getattr(imager, 'corgisim_manager', None), 'last_onboard_result', None)
+    debug_info = None if onboard is None else {
+        'cosmic_ray_mask': onboard.cosmic_ray_mask,
+        'bad_pixel_map': onboard.bad_pixel_map,
+        'good_frame_count': onboard.good_frame_count,
+        'random_bad_pixels': bpmeas,
+    }
+    return f, debug_info
 
 def _jac_worker(cfg, ijproc, dm0list, jacmethod, num_threads):
     """
