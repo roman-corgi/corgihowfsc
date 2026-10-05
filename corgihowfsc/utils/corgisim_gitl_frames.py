@@ -158,7 +158,7 @@ class GitlImage:
           boolean array with the same size as a cleaned frame.
          exptime: Exposure time used when collecting the data in in.  Should be a
           real scalar > 0. If is_noise_free = True, this can be any positive value.
-         crop: 4-tuple of (lower row, lower col, number of rows, number of cols). Currently not in used
+         crop: 4-tuple of (lower row, lower col, number of rows, number of cols). Used to crop the full-frame fixedbp to the simulated frame
          lind = 0: integer >= 0 indicating which wavelength channel in use.
          nframes: number of frames averaged if backend_type='corgihowfsc' and corgi_overrides['is_noise_free'] = False
 
@@ -166,7 +166,7 @@ class GitlImage:
         """        
         self.check_gitlframeinputs(dm1v, dm2v, fixedbp, exptime=exptime, crop=crop, cleanrow=cleanrow, cleancol=cleancol)
 
-        return self.corgisim_manager.generate_host_star_psf(dm1v, dm2v, lind=lind, exptime=exptime, gain=gain, nframes=nframes, fixedbp=fixedbp)
+        return self.corgisim_manager.generate_host_star_psf(dm1v, dm2v, lind=lind, exptime=exptime, gain=gain, nframes=nframes, fixedbp=fixedbp, crop=crop)
 
     def gitlframe_cgihowfsc(self, dmlist, peakflux, fixedbp, exptime, crop, lind, cleanrow=1024, cleancol=1024):
         """ 
