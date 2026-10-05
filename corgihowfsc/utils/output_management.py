@@ -5,6 +5,8 @@ import logging
 import yaml
 import sys
 
+import numpy as np
+
 
 def setup_logging(debug=False, logfile=None):
     """Configure root logging for the current process."""
@@ -99,3 +101,117 @@ def update_yml(path, updates: dict):
 
     with path.open("w", encoding="utf-8") as f:
         yaml.safe_dump(merged, f, sort_keys=False)
+
+
+def plot_onboard_debug(debug_list, framelist, nlam, ndm, iteration, fileout):
+    """
+    Save one figure per iteration showing the onboard-processing masks for every frame.
+
+    Frames are laid out with wavelength channels as rows and DM settings as
+    columns, matching the frame index ``indj * ndm + indk``. Each panel shows
+    the frame with flagged pixels coloured by source: fixed bad pixels, cosmic
+    rays (fraction of the ``nframes`` raw frames in which a pixel was flagged),
+    and the random bad pixels injected by ``fracbadpix``.
+
+    Args:
+        debug_list: list of per-frame debug dicts (or None) from ``_get_image_worker``
+        framelist: list of the corresponding output frames
+        nlam, ndm: number of wavelength channels and DM settings per channel
+        iteration: iteration number, used in the filename
+        fileout: path to the main output file; the figure is saved next to it.
+            If None, nothing is saved.
+    """
+    if fileout is None:
+        return
+
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(nlam, ndm, figsize=(2.5 * ndm, 2.5 * nlam),
+                             squeeze=False)
+    for indj in range(nlam):
+        for indk in range(ndm):
+            ax = axes[indj, indk]
+            ax.set_xticks([])
+            ax.set_yticks([])
+            index = indj * ndm + indk
+            info = debug_list[index]
+            if info is None:
+                ax.text(0.5, 0.5, 'no onboard\nresult', ha='center', va='center',
+                        transform=ax.transAxes)
+                continue
+
+            bad = info['bad_pixel_map']
+            cosmic = info['cosmic_ray_mask']
+            cosmic_frac = cosmic.mean(axis=0)                     # fraction of frames flagged
+            fixed = (bad & ~cosmic).all(axis=0)                   # bad in every frame, not from cosmics
+            random_bp = info['random_bad_pixels']
+
+            ax.imshow(np.log10(np.clip(framelist[index], 1e-10, None)),
+                      origin='lower', cmap='gray')
+            for mask, cmap in ((fixed, 'Blues'), (cosmic_frac, 'Reds'), (random_bp, 'Greens')):
+                overlay = np.ma.masked_where(mask == 0, mask.astype(float))
+                ax.imshow(overlay, origin='lower', cmap=cmap, vmin=0, vmax=1, alpha=0.8)
+            if indj == 0:
+                ax.set_title(f'DM {indk}', fontsize=8)
+            if indk == 0:
+                ax.set_ylabel(f'lam {indj}', fontsize=8)
+
+    fig.suptitle(f'Iteration {iteration}: fixed (blue), cosmic (red), random (green)',
+                 fontsize=9)
+    fig.tight_layout()
+    path = os.path.join(os.path.dirname(fileout), f'onboard_debug_iter{iteration:03d}.png')
+    fig.savefig(path, dpi=100)
+    plt.close(fig)
+    return path
+
+
+def save_onboard_debug(debug_list, nlam, ndm, iteration, fileout):
+    """
+    Save the onboard-processing masks for every frame to one FITS file per iteration.
+
+    Each frame with a result adds four image extensions named
+    ``COSMIC_{index}``, ``BADPIX_{index}``, ``NGOOD_{index}`` and
+    ``RANDBP_{index}``, where ``index = indj * ndm + indk`` (wavelength channel
+    ``indj``, DM setting ``indk``). The cosmic and bad-pixel masks keep their
+    per-raw-frame axis, shape (nframes, ny, nx). Boolean masks are stored as uint8.
+    Frames with no onboard result (e.g. noise-free mode) are skipped.
+
+    Args:
+        debug_list: list of per-frame debug dicts (or None) from ``_get_image_worker``
+        nlam, ndm: number of wavelength channels and DM settings per channel
+        iteration: iteration number, used in the filename
+        fileout: path to the main output file; the FITS file is saved next to it.
+            If None, nothing is saved.
+
+    Returns:
+        Path of the saved file, or None if nothing was saved.
+    """
+    if fileout is None or all(info is None for info in debug_list):
+        return None
+
+    import astropy.io.fits as pyfits
+
+    hdr = pyfits.Header()
+    hdr['ITER'] = iteration
+    hdr['NLAM'] = nlam
+    hdr['NDM'] = ndm
+    hdul = pyfits.HDUList([pyfits.PrimaryHDU(header=hdr)])
+
+    for index, info in enumerate(debug_list):
+        if info is None:
+            continue
+        frame_hdr = pyfits.Header()
+        frame_hdr['LIND'] = index // ndm
+        frame_hdr['DMIND'] = index % ndm
+        for name, key, dtype in (('COSMIC', 'cosmic_ray_mask', np.uint8),
+                                 ('BADPIX', 'bad_pixel_map', np.uint8),
+                                 ('NGOOD', 'good_frame_count', np.int32),
+                                 ('RANDBP', 'random_bad_pixels', np.uint8)):
+            hdul.append(pyfits.ImageHDU(np.asarray(info[key]).astype(dtype),
+                                        header=frame_hdr, name=f'{name}_{index}'))
+
+    path = os.path.join(os.path.dirname(fileout), f'onboard_debug_iter{iteration:03d}.fits')
+    hdul.writeto(path, overwrite=True)
+    return path
