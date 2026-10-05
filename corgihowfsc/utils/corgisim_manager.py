@@ -137,6 +137,7 @@ class CorgisimManager:
 
     def _initialize_cosmic_ray_filtering(self):
         # Setup the onboard processing parameters for cosmic ray filtering and frame combination
+        self.cosmic_filter_enabled = self.cosmic_ray_filtering.get('enabled', True)
         self.cosmic_filter_width = self.cosmic_ray_filtering.get('cosmic_filter_width', 2)
         self.cosmic_saturation_threshold = self.cosmic_ray_filtering.get('cosmic_saturation_threshold', 0.99)
         self.cosmic_plateau_threshold = self.cosmic_ray_filtering.get('cosmic_plateau_threshold', 0.85)
@@ -338,6 +339,7 @@ class CorgisimManager:
                 cosmic_filter_width = self.cosmic_filter_width,
                 saturation_threshold = self.cosmic_saturation_threshold,
                 plateau_threshold = self.cosmic_plateau_threshold,
+                cosmic_filter_enabled = self.cosmic_filter_enabled,
                 combine = self.frame_combine)
 
             filtered_frame = ProcessedFrame.image
@@ -424,6 +426,7 @@ class CorgisimManager:
                 cosmic_filter_width = self.cosmic_filter_width,
                 saturation_threshold = self.cosmic_saturation_threshold,
                 plateau_threshold = self.cosmic_plateau_threshold,
+                cosmic_filter_enabled = self.cosmic_filter_enabled,
                 combine = self.frame_combine)
 
             filtered_frame = ProcessedFrame.image
@@ -525,16 +528,17 @@ class CorgisimManager:
             # Apply cosmic ray filtering
             ProcessedFrame = onboard_processing.process_onboard_frames(
                 raw_frames_dn,
-                bias_e = self.bias,
-                e_per_dn = detector.emccd.eperdn,
-                em_gain = gain,
-                full_well_image_e = detector.emccd.full_well_image,
-                full_well_serial_e = detector.emccd.full_well_serial,
-                master_dark_e = master_dark,
-                cosmic_filter_width = self.cosmic_filter_width,
-                saturation_threshold = self.cosmic_saturation_threshold,
-                plateau_threshold = self.cosmic_plateau_threshold,
-                combine = self.frame_combine)
+                bias_e=self.bias,
+                e_per_dn=detector.emccd.eperdn,
+                em_gain=gain,
+                full_well_image_e=detector.emccd.full_well_image,
+                full_well_serial_e=detector.emccd.full_well_serial,
+                master_dark_e=master_dark,
+                cosmic_filter_width=self.cosmic_filter_width,
+                saturation_threshold=self.cosmic_saturation_threshold,
+                plateau_threshold=self.cosmic_plateau_threshold,
+                cosmic_filter_enabled=self.cosmic_filter_enabled,
+                combine=self.frame_combine)
 
             filtered_frame = ProcessedFrame.image
             return filtered_frame

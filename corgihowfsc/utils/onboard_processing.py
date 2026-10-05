@@ -160,6 +160,7 @@ def process_onboard_frames(
     cosmic_filter_width=2,
     saturation_threshold=0.99,
     plateau_threshold=0.85,
+    cosmic_filter_enabled=True,
 ):
     """
     Apply cosmic ray filtering and frame combination (similar to the process performed onboard on Roman CGI). 
@@ -204,7 +205,11 @@ def process_onboard_frames(
         Defaults to 0.99.
     plateau_threshold : float, optional
         Full-well fractions used for plateau detection after a saturated pixel is found.
-        Defaults to 0.85. 
+        Defaults to 0.85.
+    cosmic_filter_enabled : bool, optional
+        If False, skip cosmic-ray filtering (the cosmic-ray mask is all ``False``);
+        the fixed bad-pixel mask, frame combination and calibration still apply.
+        Defaults to True.
 
     Returns
     -------
@@ -276,14 +281,15 @@ def process_onboard_frames(
     effective_full_well_dn = effective_full_well_e / e_per_dn
 
     cosmic_masks = np.zeros(frames.shape, dtype=bool)
-    for frame_index, frame in enumerate(bias_subtracted):
-        cosmic_masks[frame_index] = make_cosmic_ray_mask(
-            frame,
-            effective_full_well_dn,
-            cosmic_filter_width=cosmic_filter_width,
-            saturation_threshold=saturation_threshold,
-            plateau_threshold=plateau_threshold,
-        )
+    if cosmic_filter_enabled:
+        for frame_index, frame in enumerate(bias_subtracted):
+            cosmic_masks[frame_index] = make_cosmic_ray_mask(
+                frame,
+                effective_full_well_dn,
+                cosmic_filter_width=cosmic_filter_width,
+                saturation_threshold=saturation_threshold,
+                plateau_threshold=plateau_threshold,
+            )
     
     # Combine the cosmic ray masks with the fixed bad pixel mask
     bad_masks = cosmic_masks | fixed_mask[np.newaxis, :, :]
