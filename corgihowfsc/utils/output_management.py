@@ -154,14 +154,16 @@ def plot_onboard_debug(debug_list, framelist, nlam, ndm, iteration, fileout):
                 overlay = np.ma.masked_where(mask == 0, mask.astype(float))
                 ax.imshow(overlay, origin='lower', cmap=cmap, vmin=0, vmax=1, alpha=0.8)
             if indj == 0:
-                ax.set_title(f'DM {indk}', fontsize=8)
+                ax.set_title(f'Probe {indk}', fontsize=8)
             if indk == 0:
                 ax.set_ylabel(f'lam {indj}', fontsize=8)
 
     fig.suptitle(f'Iteration {iteration}: fixed (blue), cosmic (red), random (green)',
                  fontsize=9)
     fig.tight_layout()
-    path = os.path.join(os.path.dirname(fileout), f'onboard_debug_iter{iteration:03d}.png')
+    iterpath = os.path.join(os.path.dirname(fileout), f'iteration_{iteration + 1:04d}')
+    os.makedirs(iterpath, exist_ok=True)
+    path = os.path.join(iterpath, 'onboard_debug.png')
     fig.savefig(path, dpi=100)
     plt.close(fig)
     return path
@@ -169,7 +171,7 @@ def plot_onboard_debug(debug_list, framelist, nlam, ndm, iteration, fileout):
 
 def save_onboard_debug(debug_list, nlam, ndm, iteration, fileout):
     """
-    Save the onboard-processing masks for every frame to one FITS file per iteration.
+    Save the onboard-processing masks for every frame to one FITS file.
 
     Each frame with a result adds four image extensions named
     ``COSMIC_{index}``, ``BADPIX_{index}``, ``NGOOD_{index}`` and
@@ -212,6 +214,8 @@ def save_onboard_debug(debug_list, nlam, ndm, iteration, fileout):
             hdul.append(pyfits.ImageHDU(np.asarray(info[key]).astype(dtype),
                                         header=frame_hdr, name=f'{name}_{index}'))
 
-    path = os.path.join(os.path.dirname(fileout), f'onboard_debug_iter{iteration:03d}.fits')
+    iterpath = os.path.join(os.path.dirname(fileout), f'iteration_{iteration + 1:04d}')
+    os.makedirs(iterpath, exist_ok=True)
+    path = os.path.join(iterpath, 'onboard_debug.fits')
     hdul.writeto(path, overwrite=True)
     return path
