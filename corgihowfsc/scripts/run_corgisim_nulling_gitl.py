@@ -196,6 +196,9 @@ def main(param_file_name='default_param.yml', fullpath=False):
     # emccd overrides
     emccd_overrides = model_cfg.get('emccd_overrides', {}).copy()
 
+    # cosmic ray filtering
+    cr_filter_param = model_cfg.get('cosmic_ray_filtering', {}).copy()
+
     if num_proper_process is not None:
         corgi_overrides['NCPUS'] = num_proper_process
 
@@ -212,7 +215,8 @@ def main(param_file_name='default_param.yml', fullpath=False):
                 backend_type,
                 mode,
                 corgi_overrides,
-                emccd_overrides
+                emccd_overrides,
+                cr_filter_param
             ),
         )
     else:
@@ -225,7 +229,8 @@ def main(param_file_name='default_param.yml', fullpath=False):
         backend=backend_type,
         cor=mode,
         corgi_overrides=corgi_overrides,
-        emccd_overrides=emccd_overrides
+        emccd_overrides=emccd_overrides, 
+        cosmic_ray_filtering=cr_filter_param
     )
 
     # Estimator selection
@@ -250,6 +255,7 @@ def main(param_file_name='default_param.yml', fullpath=False):
                                                   cor=args.mode,
                                                   corgi_overrides=corgi_overrides,
                                                   emccd_overrides=emccd_overrides,
+                                                  cosmic_ray_filtering=cr_filter_param,
                                                   separation_lamD=7,
                                                   exptime_norm=0.01)
    
@@ -260,6 +266,7 @@ def main(param_file_name='default_param.yml', fullpath=False):
                                                         cor=args.mode,
                                                         corgi_overrides=corgi_overrides,
                                                         emccd_overrides=emccd_overrides,
+                                                        cosmic_ray_filtering=cr_filter_param,
                                                         exptime_norm=0.01)
     else:
       raise ValueError('Invalid normalization type or backend-normalization combo.')
@@ -285,6 +292,7 @@ def main(param_file_name='default_param.yml', fullpath=False):
         "crop_params": crop_params,
         "corgi_overrides": corgi_overrides,
         "emccd_overrides": emccd_overrides,
+        "cosmic_ray_filtering": cr_filter_param,
         # --- resolved file paths ---
         "fileout": str(args.fileout),
         "jacpath": str(args.jacpath),
