@@ -392,7 +392,7 @@ def create_gaussian_probe_sets_sigma_sweep(modelpath, cfgfile, dmlist, sigma_ran
 
 
 def save_gaussian_probe_sets_sigma_sweep(dpv_sets_dict, sigma_values, dh_mask, metadata, output_path,
-                                         mode='nfov_band1', dark_hole='360deg', prefix='gaussian_sigma_sweep'):
+                                         mode='nfov_band1', dark_hole='both_sides', prefix='gaussian_sigma_sweep'):
     """
     Save Gaussian probe sets from sigma sweep to disk as FITS files.
 
@@ -1272,7 +1272,7 @@ def plot_sigma_sweep_ptv_analysis(dpv_sets_dict, sigma_values, cfg, dmlist, dh_m
 
 
 def load_gaussian_probe_sets_sigma_sweep(input_path, prefix='gaussian_sigma_sweep',
-                                         mode='nfov_band1', dark_hole='360deg'):
+                                         mode='nfov_band1', dark_hole='both_sides'):
     """
     Load Gaussian probe sets from sigma sweep saved on disk.
 
@@ -1525,7 +1525,7 @@ def plot_dm_amplitude_vs_sigma(dpv_sets_dict, sigma_values, dpv_list_sincs, cfg,
 
 if __name__ == '__main__':
     mode = 'nfov_band1'
-    dark_hole = '360deg'
+    dark_hole = 'both_sides'
     analysis_path = '/Users/ilaginja/Nextcloud/Areas/RomanCPP/alternate_probes/probe_comparison/active_analysis'
 
     # Load probes and DH mask from the analysis path
@@ -1603,12 +1603,12 @@ if __name__ == '__main__':
     #
     # print("\nSaving Gaussian probe sets to disk...")
     # save_gaussian_probe_sets_sigma_sweep(dpv_sets_dict, sigma_values, dh_mask, metadata, output_path,
-    #                                      mode='nfov_band1', dark_hole='360deg', prefix='gaussian_sigma_sweep')
+    #                                      mode='nfov_band1', dark_hole='both_sides', prefix='gaussian_sigma_sweep')
 
     # Option 2: Load existing Gaussian probe sets from disk
     print("\nLoading Gaussian probe sets from disk...")
     dpv_sets_dict, sigma_values, dh_mask, metadata = load_gaussian_probe_sets_sigma_sweep(
-        output_path, prefix='gaussian_sigma_sweep', mode='nfov_band1', dark_hole='360deg'
+        output_path, prefix='gaussian_sigma_sweep', mode='nfov_band1', dark_hole='both_sides'
     )
 
     # Plot sigma sweep mean DH intensity analysis

@@ -33,6 +33,7 @@ from howfsc.model.mode import CoronagraphMode
 from howfsc.util.loadyaml import loadyaml
 from howfsc.util.gitl_tools import param_order_to_list
 from howfsc.precomp import howfsc_precomputation
+from howfsc.status_codes import status_codes
 
 from corgihowfsc.gitl.modular_gitl import howfsc_computation
 from corgihowfsc.utils.saving_output import save_outputs, save_outputs_iter
@@ -355,6 +356,20 @@ def nulling_gitl(cstrat, estimator, probes, normalization_strategy, imager, cfg,
             pr.disable()
             pass
         t1 = time.time()
+
+        # Check if howfsc_computation encountered an error.
+        # LowerThanExpectedSNR (17) is explicitly not an exception, just a warning that the second optimizer had to
+        # select settings below the SNR target; the iteration is still usable, so continue.  Every other non-nominal
+        # status maps to a raised exception and is fatal.
+        if status == status_codes['nominal']:
+            pass
+        elif status == status_codes['LowerThanExpectedSNR']:
+            log.warning(f"howfsc_computation reported lower-than-expected SNR "
+                        f"(status {status}) at iteration {iteration}; continuing")
+        else:
+            log.error(f"howfsc_computation failed with status {status} at iteration {iteration}")
+            log.error("Aborting GITL loop due to error in howfsc_computation")
+            break
 
         otherlist.append(other)
         abs_dm1list.append(abs_dm1)
