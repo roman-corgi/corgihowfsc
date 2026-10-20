@@ -7,9 +7,114 @@ import glob
 
 import numpy as np
 from astropy.io import fits
+import roman_preflight_proper
 
 from howfsc.util.load import load
+from howfsc.util.loadyaml import loadyaml
 import warnings
+from collections import namedtuple
+
+from corgihowfsc.model.model_registry import DEFAULT_FILES, PROBE_FILES, DM_STARTMAP_FILES
+
+MODEL_DIRS = namedtuple('ModelDirs', ['modelpath_band', 'modelpath', 'probepath', 'model_path_all', 'model_any_dir'])
+
+def _get_model_dirs(mode, dark_hole, howfscpath):
+    """
+    Resolve and validate every model subdirectory load_files() needs.
+
+    Returns a namedtuple with the following fields:
+        modelpath: path to the specific mode/dark_hole variant directory
+        modelpath_band: path to the mode/dark_hole variant directory
+        probepath: path to the probes directory
+        model_path_all: path to the every_mask_config directory
+        model_any_dir: path to the any directory
+    """
+    modelpath_band = os.path.join(howfscpath, 'model', mode)
+    modelpath = os.path.join(modelpath_band, f"{mode}_{dark_hole}")
+
+    if not os.path.isdir(modelpath):
+        raise ValueError(f"No model directory found for mode '{mode}' and dark_hole '{dark_hole}' at {modelpath}")
+    
+    probepath = os.path.join(howfscpath, 'model', 'probes')
+    model_path_all = os.path.join(howfscpath, 'model', 'every_mask_config')
+    model_any_dir = os.path.join(modelpath_band, 'any')
+
+    return MODEL_DIRS(modelpath_band=modelpath_band, modelpath=modelpath, probepath=probepath, model_path_all=model_path_all, model_any_dir=model_any_dir)
+
+def _get_probe_files(mode, probe_shape, dirs):
+    """
+    Resolve and validate the probe files for the given mode and probe shape.
+
+    Returns a dictionary mapping probe indices to file paths.
+
+    # probe_names = getattr(PROBE_FILES[mode], args.probe_shape)
+    # probe0file = os.path.join(dirs.probepath, probe_names[0])
+    # probe1file = os.path.join(dirs.probepath, probe_names[1])
+    # probe2file = os.path.join(dirs.probepath, probe_names[2])
+    # probefiles = {}
+    # probefiles[0] = probe0file
+    # probefiles[2] = probe1file
+    # probefiles[1] = probe2file
+
+    """
+    if mode not in PROBE_FILES:
+        raise ValueError(f"Mode '{mode}' not recognized. Supported modes: {list(PROBE_FILES.keys())}")
+
+    probe_names = getattr(PROBE_FILES[mode], probe_shape)
+    if probe_names is None:
+        raise ValueError(f"Probe shape '{probe_shape}' not available for mode '{mode}'")
+
+    probefiles = {
+        0: os.path.join(dirs.probepath, probe_names[0]),
+        1: os.path.join(dirs.probepath, probe_names[2]),  # Note: index 2 corresponds to probe 1
+        2: os.path.join(dirs.probepath, probe_names[1]),  # Note: index 1 corresponds to probe 2
+    }
+
+    return probefiles
+
+def _get_dm_startmap_files(mode):
+    """
+    Resolve the default DM start map file paths for the given mode.
+
+    Returns a list of two absolute paths to the flat_wfe_dm files from
+    roman_preflight_proper/examples directory.
+
+    Args:
+        mode: str, coronagraph mode (e.g., 'nfov_band1', 'wfov_band1', etc.)
+
+    Returns:
+        list of two absolute paths to DM start map FITS files
+
+    Raises:
+        ValueError: if mode is not recognized
+        FileNotFoundError: if the expected files don't exist
+    """
+    if mode not in DM_STARTMAP_FILES:
+        raise ValueError(
+            f"No default flat_wfe_dm files defined for mode '{mode}'. "
+            f"Supported modes: {sorted(DM_STARTMAP_FILES.keys())}"
+        )
+
+    dm1_file, dm2_file = DM_STARTMAP_FILES[mode]
+
+    # Get the path to roman_preflight_proper/examples directory
+    roman_preflight_base = os.path.dirname(os.path.abspath(roman_preflight_proper.__file__))
+    roman_preflight_examples = os.path.join(roman_preflight_base, 'examples', 'dm_solutions')
+
+    dmstartmap_filenames = [
+        os.path.join(roman_preflight_examples, dm1_file),
+        os.path.join(roman_preflight_examples, dm2_file),
+    ]
+
+    # Verify the files exist
+    for filepath in dmstartmap_filenames:
+        if not os.path.isfile(filepath):
+            raise FileNotFoundError(
+                f"Default DM start map not found: {filepath}. "
+                f"Please ensure the roman_preflight_proper examples directory contains the required files."
+            )
+
+    return dmstartmap_filenames
 
 def get_cpu_allocation(num_process=None, num_imager_worker=None, num_proper_process=None):
     """
@@ -85,7 +190,7 @@ def get_cpu_allocation(num_process=None, num_imager_worker=None, num_proper_proc
 
 def get_args(niter=5,
                     mode='narrowfov',
-                    dark_hole='360deg',
+                    dark_hole='both_sides',
                     probe_shape='default',
                     profile=False,
                     fracbadpix=0,
@@ -286,218 +391,39 @@ def load_files(args, howfscpath):
 
     if args.probe_shape not in supported_shapes:
         raise ValueError(
-            f"Probe shape '{args.probe_shape}' not recognized. "
+            f"Probe shape '{args.probe_shape}' not recognized."
             f"Supported: {', '.join(supported_shapes)}"
         )
 
-    model_path_all = os.path.join(howfscpath, 'model', 'every_mask_config')
+    # Get the model directories based on the mode and dark hole
+    dirs = _get_model_dirs(mode, args.dark_hole, howfscpath)
+
+    # Load the configuration files based on the mode and dark hole
+    if mode not in DEFAULT_FILES:
+        raise ValueError(f"Mode '{mode}' not recognized. Supported modes: {sorted(DEFAULT_FILES)}")
+
+    hconffile = os.path.join(dirs.modelpath_band, DEFAULT_FILES[mode])
+    cstratfile = os.path.join(dirs.modelpath, f'cstrat_{mode}_{args.dark_hole}.yaml') #cstrat_nfov_band1_both_sides
+    cfgfile = os.path.join(dirs.modelpath, 'howfsc_optical_model.yaml')
+
+    # One NI-to-contrast conversion file per wavelength channel. The number of
+    # channels is the number of 'sls' entries in the optical model, which varies
+    # by mode (e.g. 3 for band 1, 5 for spec_band2), so size the list to match
+    # rather than hardcoding it.
+    nlam = len(loadyaml(cfgfile, custom_exception=IOError)['sls'])
     n2clistfiles = [
-        os.path.join(model_path_all, 'ones_like_fs.fits'),
-        os.path.join(model_path_all, 'ones_like_fs.fits'),
-        os.path.join(model_path_all, 'ones_like_fs.fits'),
-    ]
-    if mode == 'nfov_band1':
-        modelpath_band = os.path.join(howfscpath, 'model', 'nfov_band1')
-        modelpath = os.path.join(modelpath_band, mode+'_'+args.dark_hole)
-        probepath = os.path.join(howfscpath, 'model', 'probes')
-        cfgfile = os.path.join(modelpath, 'howfsc_optical_model.yaml')
-        if jacpath is not None:
-            jacfile = os.path.join(jacpath, 'jac' + mode + '_' + args.dark_hole + '.fits')
-        else:
-            jacfile = []
+        os.path.join(dirs.model_path_all, 'ones_like_fs.fits')
+    ] * nlam
 
-        if '360deg' in args.dark_hole:
-            hconffile = os.path.join(modelpath_band, 'hconf_nfov_flat.yaml')
-            cstratfile = os.path.join(modelpath, 'cstrat_nfov_band1.yaml')
-            if args.probe_shape == 'default':
-                # Sinc-sin-sin probes
-                probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_cos.fits')
-                probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinlr.fits')
-                probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinud.fits')
-            elif args.probe_shape == 'single':
-                # Single actuator probes
-                probe0file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act0.fits')
-                probe1file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act1.fits')
-                probe2file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act2.fits')
-            elif args.probe_shape == 'gaussian':
-                # Gaussian probes
-                probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian0.fits')
-                probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian1.fits')
-                probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian2.fits')
-            elif args.probe_shape == 'unmodulated_sinc':
-                # Unmodulated sinc probes
-                probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinc.fits')
-                probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinc_shifted_right.fits')
-                probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinc_shifted_diag_ur.fits')
-            else:
-                # Raise an error if the probe shape is not recognized
-                raise ValueError(f"Probe shape '{args.probe_shape}' is not recognized. "
-                                 "Supported shapes are: 'default', 'single', 'gaussian' and 'unmodulated_sinc'.")
-            # if args.dm_start_shape is not None:
-            #     dm_start_file = os.path.join(modelpath, args.dm_start_shape)
-            # else:
-            #     # If no starting point is given, we will load the last file globbed
-            #     start_options = glob.glob(os.path.join(modelpath, 'iter_*_dm*'))
-            #     start_parts = start_options[0].split('\\')[-1].split('_')
-            #     dm_start_file = os.path.join(modelpath, start_parts[0] + '_' + start_parts[1] + '_')
-            #     print('Using ' + start_parts[0] + '_' + start_parts[1] + '_' + ' as starting DM shape')
-
-            if dmstartmap_filenames is None:
-                dmstartmap_filenames = ['gitl_start_compact_dm1.fits', 'gitl_start_compact_dm2.fits']
-
-        elif 'half' in args.dark_hole:
-            hconffile = os.path.join(modelpath_band, 'hconf_nfov_flat.yaml')
-            cstratfile = os.path.join(modelpath, 'cstrat_nfov_band1_half.yaml')
-
-            if args.probe_shape == 'single':
-                # Single actuator alternate probes
-                probe0file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act0.fits')
-                probe1file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act1.fits')
-                probe2file = os.path.join(probepath, 'narrowfov_dmrel_1.0e-05_act2.fits')
-            elif args.probe_shape == 'default':
-                # Sinc probes
-                probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_cos.fits')
-                probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinlr.fits')
-                probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_sinud.fits')
-            elif args.probe_shape == 'gaussian':
-                # Gaussian alternate probes
-                probe0file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian0.fits')
-                probe1file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian1.fits')
-                probe2file = os.path.join(probepath, 'nfov_dm_dmrel_4_1.0e-05_gaussian2.fits')
-            else:
-                # Raise an error if the probe shape is not recognized
-                raise ValueError(f"Probe shape '{args.probe_shape}' is not recognized. "
-                                 "Supported shapes are: 'single', 'default' and 'gaussian'.")
-            if 'top' in args.dark_hole:
-                if dmstartmap_filenames is None:
-                    dmstartmap_filenames = ['iter_061_dm1.fits', 'iter_061_dm2.fits']
-
-        probefiles = {}
-        probefiles[0] = probe0file
-        probefiles[2] = probe1file
-        probefiles[1] = probe2file
-
-    elif mode == 'spec_band2':
-        if args.dark_hole != 'both_sides':
-            raise ValueError("For spectroscopy modes, dark hole must be 'both_sides'")
-        modelpath_band = os.path.join(howfscpath, 'model', 'spec_band2')
-        modelpath = os.path.join(modelpath_band, mode + '_' + args.dark_hole)
-        probepath = os.path.join(howfscpath, 'model', 'probes')
-
-        hconffile = os.path.join(modelpath_band, 'hconf_spec_band2.yaml')
-
-        cfgfile = os.path.join(modelpath, 'howfsc_optical_model.yaml')
-        cstratfile = os.path.join(modelpath, 'cstrat_spec_band2.yaml')
-
-        # BUG - file missing - only exist in cgihowfsc but not in corgihowfsc
-        probe0file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_cos.fits')
-        probe1file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_sinlr.fits')
-        probe2file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_sinud.fits')
-        probefiles = {}
-        probefiles[0] = probe0file
-        probefiles[2] = probe1file
-        probefiles[1] = probe2file
-
-        if jacpath is not None:
-            jacfile = os.path.join(jacpath, 'spec_band2_jac.fits')
-        else:
-            jacfile = []
-
-        # TODO: check how many subband folders there are and load the appropriate number here
-        n2clistfiles = [
-            os.path.join(model_path_all, 'ones_like_fs.fits'),
-            os.path.join(model_path_all, 'ones_like_fs.fits'),
-            os.path.join(model_path_all, 'ones_like_fs.fits'),
-            os.path.join(model_path_all, 'ones_like_fs.fits'),
-            os.path.join(model_path_all, 'ones_like_fs.fits'),
-        ]
-
-        if dmstartmap_filenames is None:
-            print('No DM start maps provided, loading default...')
-            dmstartmap_filenames = ['iter_061_dm1.fits', 'iter_061_dm2.fits']
-        else:
-            print('Using provided DM start maps: ', dmstartmap_filenames)
-
-    elif mode == 'spec_band3':
-        if args.dark_hole != 'both_sides':
-            raise ValueError("For spectroscopy modes, dark hole must be 'both_sides'")
-        modelpath_band = os.path.join(howfscpath, 'model', 'spec_band3')
-        modelpath = os.path.join(modelpath_band, mode + '_' + args.dark_hole)
-        probepath = os.path.join(howfscpath, 'model', 'probes')
-
-        hconffile = os.path.join(modelpath_band, 'hconf_spec_band3.yaml')
-
-        cfgfile = os.path.join(modelpath, 'howfsc_optical_model.yaml')
-        cstratfile = os.path.join(modelpath, 'cstrat_spec_band3.yaml')
-
-        # BUG - file missing - only exist in cgihowfsc but not in corgihowfsc
-        probe0file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_cos.fits')
-        probe1file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_sinlr.fits')
-        probe2file = os.path.join(probepath, 'spectroscopy_dmrel_1.0e-05_sinud.fits')
-        probefiles = {}
-        probefiles[0] = probe0file
-        probefiles[2] = probe1file
-        probefiles[1] = probe2file
-
-        if jacpath is not None:
-            jacfile = os.path.join(jacpath, 'cstrat_spec_band3.fits')
-        else:
-            jacfile = []
-
-        n2clistfiles = [
-            os.path.join(model_path_all, 'ones_like_fs.fits'),
-            os.path.join(model_path_all, 'ones_like_fs.fits'),
-            os.path.join(model_path_all, 'ones_like_fs.fits'),
-            os.path.join(model_path_all, 'ones_like_fs.fits'),
-            os.path.join(model_path_all, 'ones_like_fs.fits'),
-        ]
-
-        if dmstartmap_filenames is None:
-            dmstartmap_filenames = ['iter_061_dm1.fits', 'iter_061_dm2.fits']
-
-    elif mode == 'wfov_band4':
-        modelpath_band = os.path.join(howfscpath, 'model', 'wfov_band4')
-        modelpath = os.path.join(modelpath_band, mode + '_' + args.dark_hole)
-        probepath = os.path.join(howfscpath, 'model', 'probes')
-
-        hconffile = os.path.join(modelpath_band, 'hconf_wfov_band4.yaml')
-
-        cfgfile = os.path.join(modelpath, 'howfsc_optical_model.yaml')
-        cstratfile = os.path.join(modelpath, 'cstrat_wfov_band4.yaml')
-
-        probe0file = os.path.join(probepath, 'wfov_dmrel_1e-5_cos_constrained.fits')
-        probe1file = os.path.join(probepath, 'wfov_dmrel_1e-5_sinlr_constrained.fits')
-        probe2file = os.path.join(probepath, 'wfov_dmrel_1e-5_sinud_constrained.fits')
-        probefiles = {}
-        probefiles[0] = probe0file
-        probefiles[2] = probe1file
-        probefiles[1] = probe2file
-
-        if jacpath is not None:
-            jacfile = os.path.join(jacpath, 'wfov_band4_jac.fits')
-        else:
-            jacfile = []
-
-        n2clistfiles = [
-            os.path.join(model_path_all, 'ones_like_fs.fits'),
-            os.path.join(model_path_all, 'ones_like_fs.fits'),
-            os.path.join(model_path_all, 'ones_like_fs.fits'),
-        ]
-
-        if dmstartmap_filenames is None:
-            dmstartmap_filenames = ['iter_061_dm1.fits', 'iter_061_dm2.fits']
-
-    else:
-        # should not reach here; argparse should catch this
-        raise ValueError('Invalid coronagraph mode type')
-
-    # Apply any explicit path overrides
+    # Apply any explicit path overrides before validating existence, so an
+    # override can rescue a mode whose computed default doesn't exist.
     _local_paths = {'cfgfile': cfgfile, 'cstratfile': cstratfile, 'hconffile': hconffile}
+
     for key, val in getattr(args, 'path_overrides', {}).items():
-        if key in _local_paths:
-            _local_paths[key] = val
-        else:
+        if key not in _local_paths:
             raise ValueError(f"Unrecognized path override key: '{key}'")
+        if val is not None:
+            _local_paths[key] = val
 
     cfgfile, cstratfile, hconffile = (
         _local_paths['cfgfile'],
@@ -505,6 +431,29 @@ def load_files(args, howfscpath):
         _local_paths['hconffile'],
     )
 
+    # Verify cfg/cstrat/hconf files before loading the probe 
+    # fails here with a clear message naming exactly what's missing, instead
+    # of being masked by a later, unrelated probe-resolution error.
+    _missing_config = {name: p for name, p in _local_paths.items() if not os.path.isfile(p)}
+    if _missing_config:
+        raise FileNotFoundError(
+            f"load_files(mode='{mode}', dark_hole='{args.dark_hole}') resolved to "
+            f"{len(_missing_config)} missing file(s): {_missing_config}"
+        )
+
+    if jacpath is not None:
+        jacfile = os.path.join(jacpath, 'jac' + mode + '_' + args.dark_hole + '.fits')
+    else:
+        jacfile = []
+
+    # Load the probe files based on the mode and probe shape
+    probefiles = _get_probe_files(mode, args.probe_shape, dirs)
+
+    # Handle DM start maps: if None, load default flat_wfe_dm files from roman_preflight_proper_public
+    if dmstartmap_filenames is None:
+        dmstartmap_filenames = _get_dm_startmap_files(mode)
+
+    # Apply DM start map path overrides if provided
     dm_abs_flags = [os.path.isabs(p) for p in dmstartmap_filenames]
 
     if any(dm_abs_flags) and not all(dm_abs_flags):
@@ -521,26 +470,8 @@ def load_files(args, howfscpath):
         ]
     else:
         dmstartmaps = [
-            fits.getdata(os.path.join(modelpath, dmstartmap_filenames[0])),
-            fits.getdata(os.path.join(modelpath, dmstartmap_filenames[1])),
+            fits.getdata(os.path.join(dirs.modelpath, dmstartmap_filenames[0])),
+            fits.getdata(os.path.join(dirs.modelpath, dmstartmap_filenames[1])),
         ]
-    # dmstartmaps = load_dm_start_maps(dm_start_file)
 
-
-    return modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps
-
-
-# def load_dm_start_maps(dm_start_file):
-#     dmkeylist = ['DM1', 'DM2']
-#     # Load DM settings used to collect channel data
-#     dmstartmaps = []
-#     for dmkey in dmkeylist:
-#         ipath = dm_start_file + dmkey.lower() + '.fits'
-#         dmstartmap = load(ipath)
-#         dmstartmaps.append(dmstartmap)
-
-#     return dmstartmaps
-
-
-
-
+    return dirs.modelpath, cfgfile, jacfile, cstratfile, probefiles, hconffile, n2clistfiles, dmstartmaps

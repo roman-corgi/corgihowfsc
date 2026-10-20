@@ -1,0 +1,23 @@
+# EXCAM pixels per meter at the DMs. Can be computed
+# by the user as 46.3e-3 m divided by the pupil diameter in pixels
+# observed at EXCAM (~296 pixels expected). This number was derived
+# from the Zemax ray trace and is the mean of dx and dy
+dm_m_per_excam_pix: 1.564e-04
+
+# input_transform is for converting DM offsets observed in EXCAM
+# coordinates to the DM offsets in Zemax coordinates at EXCAM. Leave as
+# normalized. Use the dm_m_per_excam_pix instead for
+# magnitude changes.
+input_transform:
+- - -1
+  - 0
+- - 0
+  - -1
+
+# output_transform is for converting PSF offsets in Zemax coordinates to the
+# PSF offsets in EXCAM coordinates. Leave as normalized.
+output_transform:
+- - -1
+  - 0
+- - 0
+  - -1

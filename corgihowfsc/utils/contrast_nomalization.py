@@ -105,7 +105,7 @@ class EETCNormalization(Normalization):
         # If the imager is the noise-free option the image is already a rate
         if self.backend == 'corgihowfsc' and self.corgi_overrides['is_noise_free']:
             exptime = 1
-        return im/exptime/peakflux
+        return im / exptime / peakflux
 
 
 class CorgiNormalization(Normalization):
@@ -113,7 +113,6 @@ class CorgiNormalization(Normalization):
         super().__init__()
 
         self.separation_lamD = separation_lamD
-
 
         # Initialize corgisime manager
         self.corgisim_manager = CorgisimManager(cfg, cstrat, hconf, cor, corgi_overrides=corgi_overrides, emccd_overrides=emccd_overrides, cosmic_ray_filtering=cosmic_ray_filtering)
@@ -123,10 +122,9 @@ class CorgiNormalization(Normalization):
         else:
             self.exptime_norm = exptime_norm
 
-
     def calc_flux_rate(self, get_cgi_eetc, hconf, sl_ind, dm1v, dm2v, gain=1):
         """
-        Calculate peak flux rate for normalization using an off-axis point source (with the stellar PSF input), placed at specified separation in lambda/D. 
+        Calculate peak flux rate for normalization using an off-axis point source (with the stellar PSF input), placed at specified separation in lambda/D.
 
         Args:
             dm1v: 2D array of DM1 voltages
@@ -139,7 +137,7 @@ class CorgiNormalization(Normalization):
             peakflux: float, peak flux value from the off-axis PSF in [counts/s] or [photons/s]
 
         Note: the off-axis source is placed at (dx=0, dy=separation_lamD) in mas. lambda/D is calculated at the central wavelength of the bandpass.
-        
+
         """
         # Inject off-axis source at specified separation at central wavelength
         # TODO - make sure this is the central wavelength
@@ -158,12 +156,12 @@ class CorgiNormalization(Normalization):
                                                                        lind=sl_ind,
                                                                        exptime=self.exptime_norm,
                                                                        gain=gain)
-        if (np.nanmax(image_comp_corgi) > 89610) and (not self.corgisim_manager.is_noise_free): #10300:
+        if (np.nanmax(image_comp_corgi) > 89610) and (not self.corgisim_manager.is_noise_free):  # 10300:
             print("**** WARNING: off-axis PSF saturated ****")
+        # peakflux = np.nanmax(image_comp_corgi) / self.exptime_norm
+        peakflux = np.nanmax(image_comp_corgi) / exptime
 
-        peakflux = np.nanmax(image_comp_corgi) / self.exptime_norm
-
-        return image_comp_corgi/self.exptime_norm, peakflux
+        return image_comp_corgi / self.exptime_norm, peakflux
 
     def normalize(self, im, peakflux, exptime):
         """
@@ -205,10 +203,10 @@ class CorgiNormalizationOnAxis(CorgiNormalization):
         """
 
         image_comp_corgi = self.corgisim_manager.generate_on_axis_psf(dm1v,
-                                                                       dm2v,
-                                                                       lind=sl_ind,
-                                                                       exptime=self.exptime_norm,
-                                                                       gain=gain)
+                                                                      dm2v,
+                                                                      lind=sl_ind,
+                                                                      exptime=self.exptime_norm,
+                                                                      gain=gain)
         if (np.nanmax(image_comp_corgi) > 89610) and (not self.corgisim_manager.is_noise_free):  # 10300:
             print("**** WARNING: off-axis PSF saturated ****")
 

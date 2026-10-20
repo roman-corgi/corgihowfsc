@@ -39,7 +39,7 @@ def main():
     args = get_args(
         niter=5,
         mode='nfov_band1',
-        dark_hole='360deg',
+        dark_hole='both_sides',
         probe_shape='default',
         precomp=precomp,
         num_process=0,
