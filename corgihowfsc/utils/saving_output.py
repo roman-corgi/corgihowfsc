@@ -217,8 +217,7 @@ def save_outputs_iter(i, fileout, cfg, camlist, framelistlist, otherlist, measur
     # Create iteration subdirectory
     # i = len(framelistlist)-1
     iterpath = os.path.join(outpath, f"iteration_{i + 1:04d}")
-    if not os.path.exists(iterpath):
-        os.makedirs(iterpath)
+    os.makedirs(iterpath, exist_ok=True)
 
     # Initialize lists to collect e-field data across all iterations
     # all_efields_complex = []  # Will collect complex e-fields per iteration
