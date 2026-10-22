@@ -88,8 +88,20 @@ The initial contrast is set via:
 ```yaml
 starting_contrast: 3.5e-4 
 ```
-This is mainly relevant if `active_model: "corgihowfsc" ` since the predicted starting contrast is used to acquire the initial camera parameters. If `starting_contrast` is wrong, this can lead to bad exposure times being chosen which also impacts the estimate. 
+This is mainly relevant if `active_model: "corgihowfsc" ` since the predicted starting contrast is used to acquire the initial camera parameters. If `starting_contrast` is wrong, this can lead to bad exposure times being chosen which also impacts the estimate. A table of suggested starting points is included below.
 
+| Mode / variant | dmstartmap_filename | Initial contrast |
+|----------------|---------------------|------------------|
+| nfov_band1 | hlc_seed_tvac_plus_50_nlam3_dm1_v.fits / dm2_v.fits | 2.556870e-05 |
+| nfov_band1 | flat | 5.216912e-05 |
+| nfov_band1 | hlc_seed_from_tvac_dm1.fits / dm2.fits | 8.041886e-05 |
+| wfov_band1 | wfov_band1_seed_dm1_v.fits / dm2_v.fits | 7.202863e-06 |
+| wfov_band1 | flat | 9.074399e-06 |
+| wfov_band4 | flat | 3.869250e-06 |
+| spec_band2 | flat | 8.889583e-06 |
+| spec_band3 | flat | N/A |
+| specrot_band2 | flat | 1.650931e-05 |
+| specrot_band3 | flat | 1.218088e-05 |
     
 The initial DM setting seed commands are different by mode (e.g., NFOV band 1), but the respective file names are always the same:
 ```yaml
