@@ -28,8 +28,11 @@ howfscpath = os.path.dirname(os.path.abspath(corgihowfsc.__file__))
 
 def main(param_file_name='default_param.yml', fullpath=False):
 
-    # make sure each worker has access to the roman preflight model for mpi 
-    roman_preflight_proper.copy_here()
+    # make sure each worker has access to the roman preflight model for mpi
+    if os.path.isfile('roman_preflight.py'):
+        print('roman_preflight.py already present in CWD; skipping copy_here()')
+    else:
+        roman_preflight_proper.copy_here()
     
     # Set the path to the default parameter file relative to this script
     default_param_file = param_file_name if fullpath else os.path.join(os.path.dirname(__file__), param_file_name)
