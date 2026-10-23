@@ -39,7 +39,7 @@ def make_output_file_structure(loop_framework, backend_type, base_path, base_cor
 
     current_datetime = datetime.now()
     output_folder_name = f'{current_datetime.strftime('%Y-%m-%d_%H%M%S')}_{optical_model_type}{tag_str}'
-
+    
     fileout_path = os.path.join(base_output_path, output_folder_name, final_filename)
     os.makedirs(os.path.dirname(fileout_path), exist_ok=True)
     return fileout_path
