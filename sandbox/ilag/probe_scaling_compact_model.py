@@ -65,11 +65,13 @@ mask = np.ones_like(efield_ref).astype('bool')
 mask[out_mask_idx] = False
 
 # Plot DH mask
+"""
 plt.figure()
 plt.imshow(mask, cmap='Greys_r')
 plt.title('Extracted DH mask')
 plt.colorbar()
 plt.show()
+"""
 
 # ============================================================
 # ITERATIVE LOOP TO ADJUST amp UNTIL cp_to_use ≈ ni_target
