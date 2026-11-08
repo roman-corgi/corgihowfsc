@@ -92,6 +92,7 @@ def default_cfg():
 
 
 DM_NAME = "DM1"   # the probes are applied on DM1
+ZOOM_HALF_D = 0.12   # half-width of the square zoom inset, in pupil diameters (fixed)
 
 
 def load_model(cfg_file, subband=0):
@@ -461,11 +462,9 @@ def make_figure(model, probes, regchk, openings, out_file, origin="upper",
     # Combined panel
     ax4 = grid[n]
     centers = np.array([p["metrics"]["center_px_row_col"] for p in probes]) - shift
-    spread = np.ptp(centers, axis=0).max() if n > 1 else 0.0
-    r_hm = max(p["metrics"]["half_max_radius_act"] for p in probes) \
-        * regchk["px_per_act_along_act_cols"]
-    zoom_half = max(0.08 * pdp, 0.5 * spread + 2.5 * r_hm)
-    use_inset = zoom_half < 0.25 * pdp
+    # Fixed inset size (half-width in units of pupil diameter), independent of the probes
+    zoom_half = ZOOM_HALF_D * pdp
+    use_inset = True
     axes = [ax4]
     if use_inset:
         ax_zoom = ax4.inset_axes([0.30, 0.30, 0.40, 0.40])
