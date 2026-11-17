@@ -30,8 +30,8 @@ DEFAULT_FILES = {
 # field (with a None default) to ProbeFiles below; every existing mode's
 # entry keeps working unchanged since unset fields default to None.
 ProbeFiles = namedtuple(
-    'ProbeFiles', ['default', 'single', 'gaussian', 'unmodulated_sinc'],
-    defaults=[None, None, None, None],  # default value for each probe shape
+    'ProbeFiles', ['default', 'single', 'gaussian', 'unmodulated_sinc', 'relocated_mean_i_matched_seeded'],
+    defaults=[None, None, None, None, None],  # default value for each probe shape
 )
 
 PROBE_FILES = {
@@ -51,7 +51,8 @@ PROBE_FILES = {
         default=['wfov_band4_dmrel_1e-5_cos_constrained.fits', 'wfov_band4_dmrel_1e-5_sinlr_constrained.fits', 'wfov_band4_dmrel_1e-5_sinud_constrained.fits'],
     ),
     'wfov_band1': ProbeFiles(
-        default=['wfov_band1_dmrel_1.0e-05_cos.fits', 'wfov_band1_dmrel_1.0e-05_sinlr.fits', 'wfov_band1_dmrel_1.0e-05_sinud.fits']
+        default=['wfov_band1_dmrel_1.0e-05_cos.fits', 'wfov_band1_dmrel_1.0e-05_sinlr.fits', 'wfov_band1_dmrel_1.0e-05_sinud.fits'],
+        relocated_mean_i_matched_seeded=['spc_wfov_band1_seeded__relocated_mean_I_matched_band4__probe_comm0.fits', 'spc_wfov_band1_seeded__relocated_mean_I_matched_band4__probe_comm1.fits', 'spc_wfov_band1_seeded__relocated_mean_I_matched_band4__probe_comm2.fits'],
     ),
     'specrot_band2': ProbeFiles(
         default=['specrot_band2_dmrel_1.0e-05_cos120_p0.fits', 'specrot_band2_dmrel_1.0e-05_cos120_p1.fits', 'specrot_band2_dmrel_1.0e-05_cos120_p2.fits'],

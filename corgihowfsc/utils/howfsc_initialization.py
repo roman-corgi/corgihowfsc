@@ -64,6 +64,20 @@ def _get_probe_files(mode, probe_shape, dirs):
     if probe_names is None:
         raise ValueError(f"Probe shape '{probe_shape}' not available for mode '{mode}'")
 
+    if probe_shape == 'relocated_mean_i_matched_seeded':
+        if len(probe_names) != 3:
+            raise ValueError("Expected exactly three seeded SPC WFoV Band 1 probe commands")
+
+        probefiles = {
+            slot: os.path.join(dirs.probepath, name)
+            for slot, name in enumerate(probe_names)
+        }
+        missing = [path for path in probefiles.values() if not os.path.isfile(path)]
+        if missing:
+            raise FileNotFoundError(f"Missing seeded probe files: {missing}")
+
+        return probefiles
+
     probefiles = {
         0: os.path.join(dirs.probepath, probe_names[0]),
         1: os.path.join(dirs.probepath, probe_names[2]),  # Note: index 2 corresponds to probe 1
@@ -387,7 +401,7 @@ def load_files(args, howfscpath):
         raise ValueError('Number of bad frames cannot be less than 0.')
 
     # Check probes shapes : Default = sinc-sin-sin, others are alternates probes
-    supported_shapes = {'default', 'single', 'gaussian', 'unmodulated_sinc'}
+    supported_shapes = {'default', 'single', 'gaussian', 'unmodulated_sinc', 'relocated_mean_i_matched_seeded',}
 
     if args.probe_shape not in supported_shapes:
         raise ValueError(

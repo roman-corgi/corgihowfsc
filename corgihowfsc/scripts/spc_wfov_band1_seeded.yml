@@ -1,0 +1,96 @@
+active_model: corgihowfsc # "cgi-howfsc" # choose from "cgi-howfsc" or "corgihowfsc". This will determine which imager model is used and which settings are applied to the imager initialization.
+
+runtime:
+  # PROPER processes inside each image worker.
+  # MPI: match this to --cpus-per-task.
+  num_proper_process: 5 
+
+  # Local only: Jacobian worker processes. Ignored in MPI mode.
+  num_jac_process: 6 
+
+  # Local: image worker processes; null means serial image generation.
+  # MPI: active worker ranks; usually total MPI ranks minus 1 manager.
+  num_imager_worker: null
+
+  # false: local run; true: MPI manager-worker run.
+  use_mpi: false 
+
+  # Extra logs/debug outputs; MPI also writes per-rank worker logs.
+  debug: false
+
+sim_settings:
+  loop_framework: "corgi-howfsc" # do not modify 
+  precomp: "precomp_jacs_always" # options: 'precomp_jacs_always', 'precomp_all_once', 'load_all' (only if defjacpath is not None)
+  output_every_iter: true # whether to save the output frames at every iteration (true) or after all iterations are done (false)
+  niter: 10 # 3 # number of iterations to run
+  mode: wfov_band1 # "nfov_band1" # options: see models
+  dark_hole: "both_sides"  # options: see models
+  probe_shape: relocated_mean_i_matched_seeded # "default" 
+
+paths:
+  base_path: "~" # default to home directory, but user can change to a different path
+  base_corgiloop_path: "corgiloop_data" # this is the proposed default but can be changed
+  defjacpath: "temp" # this is the proposed default but can be changed, should be somewhere outside the repo if used
+  final_filename: "final_frames.fits" # this is the proposed default but can be changed
+  folder_tag: null # this is an optional string that will be appended to the folder name where results are saved
+
+path_overrides:
+  # Set any of these to an absolute path to override the mode-derived default.
+  # Leave as null to use the mode-derived path.
+  # Can also override defjacpath and dmstartmap_filenames by providing full paths
+  cfgfile: null
+  cstratfile: null
+  hconffile: 'C:/Users/ebian/OneDrive/Documents/GitHub/corgihowfsc_develop/corgihowfsc/model/wfov_band1/hconf_wfov_band1_seeded.yaml' # null
+
+crop:
+  nrow: 153 # Do not modify
+  ncol: 153 # Do not modify
+
+# model-specific settings that will be used to initialize the imager (cgi-howfsc for compact model and corgihowfsc for full model).
+models: 
+  cgi-howfsc:
+    backend_type: "cgi-howfsc"
+    normalization_type: "eetc"
+    estimator: "default" # options are "perfect" and "default"; perfect estimator uses the model e-field for estimation, while default estimator uses the standard pairwise probing method
+    starting_contrast: 6e-10 # starting contrast value for dmstartmap_filenames; not actually used in compact model
+    dmstartmap_filenames:
+    # Initial DM shape. Provide either:
+    # - two filenames relative to modelpath under <mode>/any/, or
+    # - two absolute paths.
+    # - null. It uses mode_flat_wfe_dm1_v and mode_flat_wfe_dm2_v from roman_preflight_proper if no dmstartmap_filenames are provided.
+    # Mixed absolute/relative entries are not supported.
+       - "hlc_seed_tvac_plus_50_nlam3_dm1_v.fits"  # can provide full path including filename or just a filename if the file is located in the modelpath
+       - "hlc_seed_tvac_plus_50_nlam3_dm2_v.fits"  # can provide full path including filename or just a filename if the file is located in the modelpath
+    lrow: 436 # Do not modify
+    lcol: 436 # Do not modify
+
+  corgihowfsc:
+    backend_type: "corgihowfsc"
+    normalization_type: "eetc" # other options are "corgisim-off-axis" and "corgisim-on-axis"
+    estimator: "default" # options are "perfect" and "default"; perfect estimator uses the model e-field for estimation, while default estimator uses the standard pairwise probing method  
+    starting_contrast: 7.20282e-6 # 3.5e-4 # starting contrast value for dmstartmap_filenames; if changing starting DM maps update this value
+    dmstartmap_filenames:
+      # Initial DM shape. Provide either:
+      # - two filenames relative to modelpath under <mode>/any/, or
+      # - two absolute paths.
+      # - null. It uses mode_flat_wfe_dm1_v and mode_flat_wfe_dm2_v from roman_preflight_proper if no dmstartmap_filenames are provided.
+      ## - "hlc_seed_tvac_plus_50_nlam3_dm1_v.fits"  # can provide full path including filename or just a filename if the file is located in the modelpath
+      ## - "hlc_seed_tvac_plus_50_nlam3_dm2_v.fits"  # can provide full path including filename or just a filename if the file is located in the modelpath
+      - wfov_band1_seed_dm1_v.fits
+      - wfov_band1_seed_dm2_v.fits
+    lrow: 0 # Do not modify
+    lcol: 0 # Do not modify
+    corgi_overrides: 
+      # Parameters forwarded to GitlImage initialization
+      is_noise_free: false
+      oversampling_factor: 3 # always odd number
+    emccd_overrides:
+      # Parameters forwarded to CorgiDetector initialization
+      bias: 0 # default value, but can be overridden by user in the config file
+      cr_rate: 0 # default value, but can be overridden by user in the config file
+    cosmic_ray_filtering:
+      enabled: true # set false to skip cosmic-ray rejection (frame combining still applies)
+      cosmic_filter_width: 2 # row-wise median-filter width in pixels
+      cosmic_saturation_threshold: 0.99 # fraction of effective full well
+      cosmic_plateau_threshold: 0.85 # fraction used to locate plateau start
+      frame_combine: "mean" # combine filtered frames with "mean" or "median"
